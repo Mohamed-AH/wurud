@@ -98,6 +98,7 @@ app.get('/', (req, res) => {
           <p>✅ Phase 1: Foundation Setup Complete</p>
           <p>✅ Phase 2: Database Models Complete</p>
           <p>✅ Phase 3: Authentication System Complete</p>
+          <p>✅ Phase 4: File Upload & Storage Complete</p>
         </div>
       </div>
     </body>
@@ -117,9 +118,11 @@ app.get('/health', (req, res) => {
 // Routes
 const authRoutes = require('./routes/auth');
 const adminRoutes = require('./routes/admin');
+const lecturesApiRoutes = require('./routes/api/lectures');
 
 app.use('/auth', authRoutes);
 app.use('/admin', adminRoutes);
+app.use('/api/lectures', lecturesApiRoutes);
 
 // 404 handler
 app.use((req, res) => {

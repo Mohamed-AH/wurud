@@ -12,7 +12,7 @@ A web platform for hosting and streaming ~160 Arabic Islamic lecture audio files
 
 ## 📌 Project State
 
-**Current Phase**: Phase 3 Complete ✅ - Ready for Phase 4 (File Upload)
+**Current Phase**: Phase 4 Complete ✅ - Ready for Phase 5 (Audio Streaming)
 **Last Updated**: 2026-01-20
 **Branch**: `claude/review-docs-plan-HTIzu`
 
@@ -47,19 +47,32 @@ A web platform for hosting and streaming ~160 Arabic Islamic lecture audio files
   - Session management with Passport serialization/deserialization
   - Server integration with Passport middleware
   - Google OAuth setup documentation (docs/GOOGLE_OAUTH_SETUP.md)
+- ✅ **Phase 4 Complete**: File upload & storage system
+  - Multer configuration with audio file validation (config/storage.js)
+  - Upload directory auto-creation and management
+  - File validation middleware (middleware/fileValidation.js) - 3 validators
+  - Audio metadata extraction utility (utils/audioMetadata.js) using music-metadata
+  - File management utilities (utils/fileManager.js) - 9 functions
+  - Upload API endpoint (routes/api/lectures.js) - POST/GET with full CRUD
+  - Automatic metadata extraction (duration, bitrate, file size, format)
+  - Sheikh and Series lecture count auto-increment
+  - Support for 5 audio formats (MP3, M4A, WAV, OGG, FLAC)
+  - Security: path traversal prevention, MIME type validation, size limits (60MB)
+  - Storage statistics and orphaned file cleanup
+  - Test script validates all components (scripts/test-upload.js)
+  - Server integration and tested
 
 ### What's Missing
-- ❌ No file upload system
-- ❌ No audio streaming functionality
+- ❌ No audio streaming with HTTP Range support
 - ❌ No public interface
 - ℹ️ Google OAuth credentials needed for live authentication testing
 
-### Next Immediate Steps (Phase 4)
-1. Configure Multer for file uploads
-2. Create file validation middleware
-3. Build audio metadata extraction utility
-4. Create file management utilities
-5. Build upload API endpoint
+### Next Immediate Steps (Phase 5)
+1. Create stream handler middleware (HTTP Range requests)
+2. Build streaming controller
+3. Set up streaming routes
+4. Configure caching headers
+5. Test audio streaming and seeking
 
 ---
 
@@ -87,15 +100,15 @@ A web platform for hosting and streaming ~160 Arabic Islamic lecture audio files
 - [x] Create basic login page
 - [x] Test: Can log in with Google (requires real OAuth credentials)
 
-### Phase 4: File Upload & Storage System ⏳ NEXT
-- [ ] Configure Multer for file uploads
-- [ ] Create file validation middleware
-- [ ] Build audio metadata extraction utility
-- [ ] Create file management utilities
-- [ ] Build upload API endpoint
-- [ ] Test: Can upload audio files
+### Phase 4: File Upload & Storage System ✅ COMPLETE
+- [x] Configure Multer for file uploads
+- [x] Create file validation middleware
+- [x] Build audio metadata extraction utility
+- [x] Create file management utilities
+- [x] Build upload API endpoint
+- [x] Test: Can upload audio files
 
-### Phase 5: Audio Streaming with HTTP Range Requests
+### Phase 5: Audio Streaming with HTTP Range Requests ⏳ NEXT
 - [ ] Create stream handler middleware
 - [ ] Build streaming controller
 - [ ] Set up streaming routes
