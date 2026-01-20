@@ -4,9 +4,13 @@ const path = require('path');
 const helmet = require('helmet');
 const compression = require('compression');
 const session = require('express-session');
+const connectDB = require('./config/database');
 
 const app = express();
 const PORT = process.env.PORT || 3000;
+
+// Connect to MongoDB
+connectDB();
 
 // View engine setup
 app.set('view engine', 'ejs');
@@ -86,7 +90,8 @@ app.get('/', (req, res) => {
         <p>Islamic Audio Lectures Platform</p>
         <div class="status">
           <p>✅ Server is running successfully!</p>
-          <p>Phase 1: Foundation Setup Complete</p>
+          <p>✅ Phase 1: Foundation Setup Complete</p>
+          <p>✅ Phase 2: Database Models Complete</p>
         </div>
       </div>
     </body>
