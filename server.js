@@ -5,6 +5,7 @@ const helmet = require('helmet');
 const compression = require('compression');
 const session = require('express-session');
 const connectDB = require('./config/database');
+const passport = require('./config/passport');
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -39,6 +40,10 @@ app.use(session({
     secure: process.env.NODE_ENV === 'production',
   }
 }));
+
+// Passport middleware (must be after session)
+app.use(passport.initialize());
+app.use(passport.session());
 
 // Static files
 app.use(express.static(path.join(__dirname, 'public')));
@@ -92,6 +97,7 @@ app.get('/', (req, res) => {
           <p>✅ Server is running successfully!</p>
           <p>✅ Phase 1: Foundation Setup Complete</p>
           <p>✅ Phase 2: Database Models Complete</p>
+          <p>✅ Phase 3: Authentication System Complete</p>
         </div>
       </div>
     </body>
@@ -107,6 +113,13 @@ app.get('/health', (req, res) => {
     uptime: process.uptime()
   });
 });
+
+// Routes
+const authRoutes = require('./routes/auth');
+const adminRoutes = require('./routes/admin');
+
+app.use('/auth', authRoutes);
+app.use('/admin', adminRoutes);
 
 // 404 handler
 app.use((req, res) => {
