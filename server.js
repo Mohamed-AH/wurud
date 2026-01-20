@@ -99,6 +99,7 @@ app.get('/', (req, res) => {
           <p>✅ Phase 2: Database Models Complete</p>
           <p>✅ Phase 3: Authentication System Complete</p>
           <p>✅ Phase 4: File Upload & Storage Complete</p>
+          <p>✅ Phase 5: Audio Streaming Complete</p>
         </div>
       </div>
     </body>
@@ -119,10 +120,14 @@ app.get('/health', (req, res) => {
 const authRoutes = require('./routes/auth');
 const adminRoutes = require('./routes/admin');
 const lecturesApiRoutes = require('./routes/api/lectures');
+const streamRoutes = require('./routes/stream');
+const downloadRoutes = require('./routes/download');
 
 app.use('/auth', authRoutes);
 app.use('/admin', adminRoutes);
 app.use('/api/lectures', lecturesApiRoutes);
+app.use('/stream', streamRoutes);
+app.use('/download', downloadRoutes);
 
 // 404 handler
 app.use((req, res) => {
