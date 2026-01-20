@@ -1,0 +1,251 @@
+<%- include('../partials/header', { search: typeof search !== 'undefined' ? search : '' }) %>
+
+<style>
+  .page-header {
+    background: white;
+    padding: 32px 0;
+    margin-bottom: 40px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+  }
+
+  .page-title {
+    font-size: 36px;
+    color: var(--text-primary);
+    margin-bottom: 8px;
+  }
+
+  .page-subtitle {
+    color: var(--text-secondary);
+    font-size: 16px;
+  }
+
+  .content-wrapper {
+    display: grid;
+    grid-template-columns: 280px 1fr;
+    gap: 32px;
+    margin-bottom: 60px;
+  }
+
+  .filters-sidebar {
+    background: white;
+    border-radius: 12px;
+    padding: 24px;
+    height: fit-content;
+    position: sticky;
+    top: 20px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+  }
+
+  .filter-section {
+    margin-bottom: 24px;
+  }
+
+  .filter-section:last-child {
+    margin-bottom: 0;
+  }
+
+  .filter-title {
+    font-size: 16px;
+    font-weight: 600;
+    margin-bottom: 12px;
+    color: var(--text-primary);
+  }
+
+  .filter-select {
+    width: 100%;
+    padding: 10px 12px;
+    border: 1px solid #ddd;
+    border-radius: 6px;
+    font-family: 'Noto Naskh Arabic', serif;
+    font-size: 14px;
+    background: white;
+  }
+
+  .filter-btn {
+    width: 100%;
+    padding: 12px;
+    background: var(--primary);
+    color: white;
+    border: none;
+    border-radius: 8px;
+    font-family: 'Noto Naskh Arabic', serif;
+    font-size: 15px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.3s;
+    margin-top: 16px;
+  }
+
+  .filter-btn:hover {
+    background: #154A46;
+  }
+
+  .clear-filters {
+    width: 100%;
+    padding: 10px;
+    background: white;
+    color: var(--text-secondary);
+    border: 1px solid #ddd;
+    border-radius: 6px;
+    font-family: 'Noto Naskh Arabic', serif;
+    font-size: 14px;
+    cursor: pointer;
+    transition: all 0.3s;
+    margin-top: 8px;
+  }
+
+  .clear-filters:hover {
+    border-color: var(--primary);
+    color: var(--primary);
+  }
+
+  .lectures-content {
+    min-height: 400px;
+  }
+
+  .results-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 24px;
+    padding-bottom: 16px;
+    border-bottom: 2px solid #f0f0f0;
+  }
+
+  .results-count {
+    font-size: 16px;
+    color: var(--text-secondary);
+  }
+
+  .sort-select {
+    padding: 8px 12px;
+    border: 1px solid #ddd;
+    border-radius: 6px;
+    font-family: 'Noto Naskh Arabic', serif;
+    font-size: 14px;
+  }
+
+  .lectures-grid {
+    display: grid;
+    gap: 16px;
+  }
+
+  .empty-state {
+    text-align: center;
+    padding: 80px 20px;
+    color: var(--text-secondary);
+  }
+
+  .empty-state-icon {
+    font-size: 64px;
+    margin-bottom: 16px;
+  }
+
+  .pagination {
+    display: flex;
+    justify-content: center;
+    gap: 8px;
+    margin-top: 40px;
+  }
+
+  .pagination a,
+  .pagination span {
+    padding: 10px 16px;
+    background: white;
+    border: 1px solid #ddd;
+    border-radius: 6px;
+    text-decoration: none;
+    color: var(--text-primary);
+    transition: all 0.3s;
+  }
+
+  .pagination a:hover {
+    background: var(--primary);
+    color: white;
+    border-color: var(--primary);
+  }
+
+  .pagination .active {
+    background: var(--primary);
+    color: white;
+    border-color: var(--primary);
+  }
+
+  @media (max-width: 968px) {
+    .content-wrapper {
+      grid-template-columns: 1fr;
+    }
+
+    .filters-sidebar {
+      position: static;
+    }
+
+    .page-title {
+      font-size: 28px;
+    }
+  }
+</style>
+
+<div class="page-header">
+  <div class="container">
+    <h1 class="page-title">جميع المحاضرات</h1>
+    <p class="page-subtitle">تصفح وابحث عن المحاضرات الإسلامية</p>
+  </div>
+</div>
+
+<div class="container">
+  <div class="content-wrapper">
+    <!-- Filters Sidebar -->
+    <aside class="filters-sidebar">
+      <form action="/browse" method="GET" id="filtersForm">
+        <div class="filter-section">
+          <h3 class="filter-title">التصنيف</h3>
+          <select name="category" class="filter-select">
+            <option value="">جميع التصنيفات</option>
+            <option value="Aqeedah" <%= category === 'Aqeedah' ? 'selected' : '' %>>العقيدة</option>
+            <option value="Fiqh" <%= category === 'Fiqh' ? 'selected' : '' %>>الفقه</option>
+            <option value="Tafsir" <%= category === 'Tafsir' ? 'selected' : '' %>>التفسير</option>
+            <option value="Hadith" <%= category === 'Hadith' ? 'selected' : '' %>>الحديث</option>
+            <option value="Seerah" <%= category === 'Seerah' ? 'selected' : '' %>>السيرة</option>
+            <option value="Akhlaq" <%= category === 'Akhlaq' ? 'selected' : '' %>>الأخلاق</option>
+          </select>
+        </div>
+
+        <% if (typeof search !== 'undefined' && search) { %>
+          <input type="hidden" name="search" value="<%= search %>">
+        <% } %>
+
+        <button type="submit" class="filter-btn">تطبيق الفلتر</button>
+        <button type="button" class="clear-filters" onclick="window.location.href='/browse'">مسح الفلتر</button>
+      </form>
+    </aside>
+
+    <!-- Lectures Content -->
+    <main class="lectures-content">
+      <div class="results-header">
+        <span class="results-count">
+          <%= lectures.length %> محاضرة
+          <% if (typeof search !== 'undefined' && search) { %>
+            - نتائج البحث عن: "<%= search %>"
+          <% } %>
+        </span>
+      </div>
+
+      <% if (lectures && lectures.length > 0) { %>
+        <div class="lectures-grid">
+          <% lectures.forEach(lecture => { %>
+            <%- include('../partials/lectureCard', { lecture }) %>
+          <% }) %>
+        </div>
+      <% } else { %>
+        <div class="empty-state">
+          <div class="empty-state-icon">🔍</div>
+          <h3>لم يتم العثور على محاضرات</h3>
+          <p>جرب تغيير معايير البحث أو الفلتر</p>
+        </div>
+      <% } %>
+    </main>
+  </div>
+</div>
+
+<%- include('../partials/footer') %>

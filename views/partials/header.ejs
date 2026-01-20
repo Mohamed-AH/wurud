@@ -1,0 +1,37 @@
+<header class="header">
+  <div class="header-top">
+    <div class="container">
+      <div class="header-content">
+        <a href="/" class="logo">
+          <span class="logo-icon">🎙️</span>
+          <div class="logo-text">
+            <h1>دروس</h1>
+            <p>محاضرات إسلامية صوتية</p>
+          </div>
+        </a>
+
+        <nav class="header-nav">
+          <a href="/">الرئيسية</a>
+          <a href="/browse">جميع المحاضرات</a>
+          <a href="/sheikhs">الشيوخ</a>
+          <a href="/series">السلاسل</a>
+        </nav>
+      </div>
+    </div>
+  </div>
+
+  <div class="search-section">
+    <div class="container">
+      <form action="/browse" method="GET" class="search-container">
+        <input
+          type="text"
+          name="search"
+          class="search-input"
+          placeholder="ابحث عن محاضرة أو شيخ أو سلسلة..."
+          value="<%= typeof search !== 'undefined' ? search : '' %>"
+        >
+        <button type="submit" class="search-btn">بحث</button>
+      </form>
+    </div>
+  </div>
+</header>

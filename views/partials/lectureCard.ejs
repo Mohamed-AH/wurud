@@ -1,0 +1,164 @@
+<div class="lecture-card">
+  <div class="lecture-icon">🎵</div>
+
+  <div class="lecture-content">
+    <h3 class="lecture-title">
+      <a href="/lectures/<%= lecture._id %>"><%= lecture.titleArabic %></a>
+    </h3>
+
+    <div class="lecture-meta">
+      <span class="lecture-sheikh">
+        <% if (lecture.sheikhId) { %>
+          <%= lecture.sheikhId.nameArabic %>
+          <% if (lecture.sheikhId.honorific) { %>
+            <%= lecture.sheikhId.honorific %>
+          <% } %>
+        <% } %>
+      </span>
+
+      <% if (lecture.seriesId) { %>
+        <span class="lecture-divider">•</span>
+        <span class="lecture-series"><%= lecture.seriesId.titleArabic %></span>
+      <% } %>
+    </div>
+
+    <div class="lecture-info">
+      <span class="lecture-duration">⏱️ <%= lecture.durationFormatted %></span>
+      <span class="lecture-divider">•</span>
+      <span class="lecture-plays">▶️ <%= lecture.playCount %> مرة</span>
+      <% if (lecture.category && lecture.category !== 'Other') { %>
+        <span class="lecture-divider">•</span>
+        <span class="lecture-category"><%= lecture.category %></span>
+      <% } %>
+    </div>
+  </div>
+
+  <div class="lecture-actions">
+    <a href="/stream/<%= lecture._id %>" class="btn-play" title="استماع">▶️</a>
+    <a href="/download/<%= lecture._id %>" class="btn-download" title="تحميل">⬇️</a>
+  </div>
+</div>
+
+<style>
+  .lecture-card {
+    background: white;
+    border-radius: 12px;
+    padding: 20px;
+    display: flex;
+    gap: 16px;
+    align-items: center;
+    transition: all 0.3s ease;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+  }
+
+  .lecture-card:hover {
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.1);
+    transform: translateY(-2px);
+  }
+
+  .lecture-icon {
+    font-size: 32px;
+    flex-shrink: 0;
+  }
+
+  .lecture-content {
+    flex: 1;
+    min-width: 0;
+  }
+
+  .lecture-title {
+    font-size: 18px;
+    margin-bottom: 8px;
+    font-weight: 600;
+  }
+
+  .lecture-title a {
+    color: var(--text-primary);
+    text-decoration: none;
+    transition: color 0.3s;
+  }
+
+  .lecture-title a:hover {
+    color: var(--primary);
+  }
+
+  .lecture-meta {
+    color: var(--text-secondary);
+    font-size: 14px;
+    margin-bottom: 8px;
+  }
+
+  .lecture-sheikh {
+    font-weight: 500;
+    color: var(--primary);
+  }
+
+  .lecture-info {
+    color: var(--text-secondary);
+    font-size: 13px;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    align-items: center;
+  }
+
+  .lecture-divider {
+    opacity: 0.5;
+  }
+
+  .lecture-category {
+    background: #f0f0f0;
+    padding: 2px 8px;
+    border-radius: 4px;
+    font-size: 12px;
+  }
+
+  .lecture-actions {
+    display: flex;
+    gap: 8px;
+    flex-shrink: 0;
+  }
+
+  .btn-play,
+  .btn-download {
+    width: 40px;
+    height: 40px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: var(--primary);
+    color: white;
+    border-radius: 8px;
+    text-decoration: none;
+    font-size: 18px;
+    transition: all 0.3s;
+  }
+
+  .btn-play:hover {
+    background: #154A46;
+  }
+
+  .btn-download {
+    background: var(--accent-gold);
+  }
+
+  .btn-download:hover {
+    background: #C4A037;
+  }
+
+  @media (max-width: 640px) {
+    .lecture-card {
+      flex-direction: column;
+      align-items: flex-start;
+    }
+
+    .lecture-actions {
+      width: 100%;
+      justify-content: center;
+    }
+
+    .lecture-title {
+      font-size: 16px;
+    }
+  }
+</style>

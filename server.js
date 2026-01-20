@@ -48,65 +48,6 @@ app.use(passport.session());
 // Static files
 app.use(express.static(path.join(__dirname, 'public')));
 
-// Basic route for testing
-app.get('/', (req, res) => {
-  res.send(`
-    <!DOCTYPE html>
-    <html lang="ar" dir="rtl">
-    <head>
-      <meta charset="UTF-8">
-      <meta name="viewport" content="width=device-width, initial-scale=1.0">
-      <title>Duroos - Islamic Audio Lectures</title>
-      <style>
-        body {
-          font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-          background: linear-gradient(135deg, #1A5F5A 0%, #2C3E35 100%);
-          color: white;
-          margin: 0;
-          padding: 0;
-          display: flex;
-          justify-content: center;
-          align-items: center;
-          min-height: 100vh;
-          text-align: center;
-        }
-        .container {
-          padding: 2rem;
-        }
-        h1 {
-          font-size: 3rem;
-          margin-bottom: 1rem;
-        }
-        p {
-          font-size: 1.2rem;
-          opacity: 0.9;
-        }
-        .status {
-          margin-top: 2rem;
-          padding: 1rem;
-          background: rgba(255, 255, 255, 0.1);
-          border-radius: 8px;
-        }
-      </style>
-    </head>
-    <body>
-      <div class="container">
-        <h1>🎙️ Duroos</h1>
-        <p>Islamic Audio Lectures Platform</p>
-        <div class="status">
-          <p>✅ Server is running successfully!</p>
-          <p>✅ Phase 1: Foundation Setup Complete</p>
-          <p>✅ Phase 2: Database Models Complete</p>
-          <p>✅ Phase 3: Authentication System Complete</p>
-          <p>✅ Phase 4: File Upload & Storage Complete</p>
-          <p>✅ Phase 5: Audio Streaming Complete</p>
-        </div>
-      </div>
-    </body>
-    </html>
-  `);
-});
-
 // Health check route
 app.get('/health', (req, res) => {
   res.json({
@@ -117,6 +58,7 @@ app.get('/health', (req, res) => {
 });
 
 // Routes
+const publicRoutes = require('./routes/index');
 const authRoutes = require('./routes/auth');
 const adminRoutes = require('./routes/admin');
 const lecturesApiRoutes = require('./routes/api/lectures');
@@ -125,6 +67,7 @@ const seriesApiRoutes = require('./routes/api/series');
 const streamRoutes = require('./routes/stream');
 const downloadRoutes = require('./routes/download');
 
+app.use('/', publicRoutes);
 app.use('/auth', authRoutes);
 app.use('/admin', adminRoutes);
 app.use('/api/lectures', lecturesApiRoutes);
