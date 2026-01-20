@@ -4,8 +4,10 @@ const path = require('path');
 const helmet = require('helmet');
 const compression = require('compression');
 const session = require('express-session');
+const cookieParser = require('cookie-parser');
 const connectDB = require('./config/database');
 const passport = require('./config/passport');
+const { i18nMiddleware } = require('./utils/i18n');
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -47,6 +49,12 @@ app.use(passport.session());
 
 // Static files
 app.use(express.static(path.join(__dirname, 'public')));
+
+// Cookie parser (for locale storage)
+app.use(cookieParser());
+
+// i18n middleware (must be before routes)
+app.use(i18nMiddleware);
 
 // Health check route
 app.get('/health', (req, res) => {

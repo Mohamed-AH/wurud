@@ -1,9 +1,9 @@
 <!DOCTYPE html>
-<html lang="ar" dir="rtl">
+<html lang="<%= locale %>" dir="<%= isRTL ? 'rtl' : 'ltr' %>">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title><%= title %> - دروس</title>
+  <title><%= title %> - <%= locale === 'ar' ? 'دروس' : 'Duroos' %></title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Amiri:wght@400;700&family=Noto+Naskh+Arabic:wght@400;500;600;700&display=swap" rel="stylesheet">
@@ -97,6 +97,31 @@
 
     .header-nav a:hover {
       opacity: 0.8;
+    }
+
+    /* Language Toggle */
+    .lang-toggle {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      padding: 8px 16px;
+      background: rgba(255, 255, 255, 0.15);
+      border: 1px solid rgba(255, 255, 255, 0.3);
+      border-radius: 20px;
+      color: white;
+      font-family: inherit;
+      font-size: 14px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.3s;
+    }
+
+    .lang-toggle:hover {
+      background: rgba(255, 255, 255, 0.25);
+    }
+
+    .lang-toggle svg {
+      stroke-width: 2;
     }
 
     /* Search Bar */
@@ -197,6 +222,27 @@
       font-size: 14px;
     }
 
+    /* LTR Mode Support */
+    html[dir="ltr"] body {
+      font-family: 'Spectral', 'Georgia', serif;
+      direction: ltr;
+      text-align: left;
+    }
+
+    html[dir="ltr"] h1,
+    html[dir="ltr"] h2,
+    html[dir="ltr"] h3,
+    html[dir="ltr"] h4,
+    html[dir="ltr"] h5,
+    html[dir="ltr"] h6 {
+      font-family: 'Cormorant Garamond', 'Georgia', serif;
+    }
+
+    html[dir="ltr"] .search-input,
+    html[dir="ltr"] .search-btn {
+      font-family: 'Spectral', serif;
+    }
+
     /* Responsive */
     @media (max-width: 768px) {
       .header-content {
@@ -229,5 +275,28 @@
   </main>
 
   <%- include('partials/footer') %>
+
+  <script>
+    // Language Toggle Functionality
+    (function() {
+      const langToggle = document.getElementById('langToggle');
+      const langText = document.getElementById('langText');
+
+      if (langToggle) {
+        langToggle.addEventListener('click', function() {
+          const currentLocale = '<%= locale %>';
+          const newLocale = currentLocale === 'ar' ? 'en' : 'ar';
+
+          // Set cookie for 1 year
+          document.cookie = `locale=${newLocale}; path=/; max-age=${60 * 60 * 24 * 365}`;
+
+          // Reload page with new locale
+          const url = new URL(window.location.href);
+          url.searchParams.set('lang', newLocale);
+          window.location.href = url.toString();
+        });
+      }
+    })();
+  </script>
 </body>
 </html>

@@ -5,16 +5,26 @@
         <a href="/" class="logo">
           <span class="logo-icon">🎙️</span>
           <div class="logo-text">
-            <h1>دروس</h1>
-            <p>محاضرات إسلامية صوتية</p>
+            <h1><%= locale === 'ar' ? 'دروس' : 'Duroos' %></h1>
+            <p><%= locale === 'ar' ? 'محاضرات إسلامية صوتية' : 'Islamic Audio Lectures' %></p>
           </div>
         </a>
 
         <nav class="header-nav">
-          <a href="/">الرئيسية</a>
-          <a href="/browse">جميع المحاضرات</a>
-          <a href="/sheikhs">الشيوخ</a>
-          <a href="/series">السلاسل</a>
+          <a href="/"><%= t('nav_home') %></a>
+          <a href="/browse"><%= t('nav_lectures') %></a>
+          <a href="/sheikhs"><%= t('nav_sheikhs') %></a>
+          <a href="/series"><%= t('nav_series') %></a>
+
+          <!-- Language Toggle -->
+          <button id="langToggle" class="lang-toggle" aria-label="Toggle language">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <circle cx="12" cy="12" r="10"></circle>
+              <path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"></path>
+              <path d="M2 12h20"></path>
+            </svg>
+            <span id="langText"><%= locale === 'ar' ? 'EN' : 'عربي' %></span>
+          </button>
         </nav>
       </div>
     </div>
@@ -27,10 +37,10 @@
           type="text"
           name="search"
           class="search-input"
-          placeholder="ابحث عن محاضرة أو شيخ أو سلسلة..."
+          placeholder="<%= t('nav_search') %>"
           value="<%= typeof search !== 'undefined' ? search : '' %>"
         >
-        <button type="submit" class="search-btn">بحث</button>
+        <button type="submit" class="search-btn"><%= locale === 'ar' ? 'بحث' : 'Search' %></button>
       </form>
     </div>
   </div>
