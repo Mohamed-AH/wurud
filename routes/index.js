@@ -158,6 +158,52 @@ router.get('/sheikhs', async (req, res) => {
   }
 });
 
+// @route   GET /sheikhs/:id
+// @desc    Single sheikh profile page
+// @access  Public
+router.get('/sheikhs/:id', async (req, res) => {
+  try {
+    // Get sheikh by ID
+    const sheikh = await Sheikh.findById(req.params.id).lean();
+
+    if (!sheikh) {
+      return res.status(404).send('Sheikh not found');
+    }
+
+    // Get all lectures by this sheikh
+    const lectures = await Lecture.find({
+      sheikhId: req.params.id,
+      published: true
+    })
+      .sort({ createdAt: -1 })
+      .populate('seriesId', 'titleArabic titleEnglish')
+      .lean();
+
+    // Calculate statistics
+    const stats = {
+      totalLectures: lectures.length,
+      totalPlays: lectures.reduce((sum, lecture) => sum + (lecture.playCount || 0), 0),
+      totalDuration: lectures.reduce((sum, lecture) => sum + (lecture.duration || 0), 0)
+    };
+
+    // Get series by this sheikh
+    const series = await Series.find({ sheikhId: req.params.id })
+      .sort({ titleArabic: 1 })
+      .lean();
+
+    res.render('public/sheikh', {
+      title: sheikh.nameArabic,
+      sheikh,
+      lectures,
+      series,
+      stats
+    });
+  } catch (error) {
+    console.error('Sheikh profile error:', error);
+    res.status(500).send('Error loading sheikh profile');
+  }
+});
+
 // @route   GET /series
 // @desc    List all series
 // @access  Public
@@ -175,6 +221,49 @@ router.get('/series', async (req, res) => {
   } catch (error) {
     console.error('Series page error:', error);
     res.status(500).send('Error loading series page');
+  }
+});
+
+// @route   GET /series/:id
+// @desc    Single series profile page
+// @access  Public
+router.get('/series/:id', async (req, res) => {
+  try {
+    // Get series by ID
+    const series = await Series.findById(req.params.id)
+      .populate('sheikhId', 'nameArabic nameEnglish honorific bioArabic bioEnglish')
+      .lean();
+
+    if (!series) {
+      return res.status(404).send('Series not found');
+    }
+
+    // Get all lectures in this series (ordered by lecture number)
+    const lectures = await Lecture.find({
+      seriesId: req.params.id,
+      published: true
+    })
+      .sort({ lectureNumber: 1, createdAt: 1 })
+      .populate('sheikhId', 'nameArabic nameEnglish honorific')
+      .lean();
+
+    // Calculate statistics
+    const stats = {
+      totalLectures: lectures.length,
+      totalPlays: lectures.reduce((sum, lecture) => sum + (lecture.playCount || 0), 0),
+      totalDuration: lectures.reduce((sum, lecture) => sum + (lecture.duration || 0), 0),
+      completeLectures: lectures.filter(l => l.lectureNumber).length
+    };
+
+    res.render('public/series-detail', {
+      title: series.titleArabic,
+      series,
+      lectures,
+      stats
+    });
+  } catch (error) {
+    console.error('Series profile error:', error);
+    res.status(500).send('Error loading series profile');
   }
 });
 
