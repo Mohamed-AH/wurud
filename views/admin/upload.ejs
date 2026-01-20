@@ -1,0 +1,537 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title><%= title %> - Duroos</title>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, sans-serif;
+      background: #f5f5f5;
+      color: #333;
+    }
+
+    .header {
+      background: #1A5F5A;
+      color: white;
+      padding: 16px 24px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+    }
+
+    .header h1 {
+      font-size: 24px;
+      font-weight: 600;
+    }
+
+    .header a {
+      color: white;
+      text-decoration: none;
+      margin-left: 20px;
+      opacity: 0.9;
+    }
+
+    .header a:hover {
+      opacity: 1;
+    }
+
+    .container {
+      max-width: 900px;
+      margin: 0 auto;
+      padding: 32px 24px;
+    }
+
+    .upload-section {
+      background: white;
+      border-radius: 12px;
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+      padding: 32px;
+      margin-bottom: 32px;
+    }
+
+    .upload-section h2 {
+      font-size: 20px;
+      margin-bottom: 20px;
+      color: #2C3E35;
+    }
+
+    .drop-zone {
+      border: 3px dashed #D4AF37;
+      border-radius: 12px;
+      padding: 60px 20px;
+      text-align: center;
+      cursor: pointer;
+      transition: all 0.3s ease;
+      background: #FAFAF8;
+    }
+
+    .drop-zone.dragging {
+      background: #FFF9E6;
+      border-color: #1A5F5A;
+    }
+
+    .drop-zone:hover {
+      background: #FFF9E6;
+    }
+
+    .drop-zone-icon {
+      font-size: 48px;
+      margin-bottom: 12px;
+    }
+
+    .drop-zone-text {
+      font-size: 16px;
+      color: #666;
+      margin-bottom: 8px;
+    }
+
+    .drop-zone-hint {
+      font-size: 14px;
+      color: #999;
+    }
+
+    .file-input {
+      display: none;
+    }
+
+    .file-info {
+      margin-top: 20px;
+      padding: 16px;
+      background: #f8f8f8;
+      border-radius: 8px;
+      display: none;
+    }
+
+    .file-info.show {
+      display: block;
+    }
+
+    .file-info strong {
+      color: #1A5F5A;
+    }
+
+    .form-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 20px;
+      margin-top: 24px;
+    }
+
+    .form-group {
+      display: flex;
+      flex-direction: column;
+    }
+
+    .form-group.full-width {
+      grid-column: 1 / -1;
+    }
+
+    .form-group label {
+      font-size: 14px;
+      font-weight: 500;
+      margin-bottom: 6px;
+      color: #333;
+    }
+
+    .form-group label .required {
+      color: #c33;
+    }
+
+    .form-group input,
+    .form-group select,
+    .form-group textarea {
+      padding: 10px 12px;
+      border: 1px solid #ddd;
+      border-radius: 6px;
+      font-size: 14px;
+      font-family: inherit;
+    }
+
+    .form-group textarea {
+      resize: vertical;
+      min-height: 80px;
+    }
+
+    .form-group input:focus,
+    .form-group select:focus,
+    .form-group textarea:focus {
+      outline: none;
+      border-color: #1A5F5A;
+    }
+
+    .form-actions {
+      display: flex;
+      gap: 12px;
+      margin-top: 24px;
+    }
+
+    .btn {
+      padding: 12px 24px;
+      border: none;
+      border-radius: 8px;
+      font-size: 16px;
+      font-weight: 500;
+      cursor: pointer;
+      transition: all 0.3s ease;
+    }
+
+    .btn-primary {
+      background: #1A5F5A;
+      color: white;
+    }
+
+    .btn-primary:hover:not(:disabled) {
+      background: #154A46;
+    }
+
+    .btn-primary:disabled {
+      background: #ccc;
+      cursor: not-allowed;
+    }
+
+    .btn-secondary {
+      background: #e0e0e0;
+      color: #333;
+    }
+
+    .btn-secondary:hover {
+      background: #d0d0d0;
+    }
+
+    .message {
+      padding: 12px 16px;
+      border-radius: 8px;
+      margin-bottom: 20px;
+      display: none;
+    }
+
+    .message.show {
+      display: block;
+    }
+
+    .message.success {
+      background: #d4edda;
+      color: #155724;
+      border: 1px solid #c3e6cb;
+    }
+
+    .message.error {
+      background: #f8d7da;
+      color: #721c24;
+      border: 1px solid #f5c6cb;
+    }
+
+    .checkbox-group {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .checkbox-group input[type="checkbox"] {
+      width: auto;
+      margin: 0;
+    }
+
+    @media (max-width: 768px) {
+      .form-grid {
+        grid-template-columns: 1fr;
+      }
+
+      .container {
+        padding: 20px 16px;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="header">
+    <h1>🎙️ Upload Lecture</h1>
+    <div>
+      <a href="/admin/dashboard">Dashboard</a>
+      <a href="/admin/manage">Manage</a>
+      <a href="/auth/logout">Logout</a>
+    </div>
+  </div>
+
+  <div class="container">
+    <div class="message" id="message"></div>
+
+    <div class="upload-section">
+      <h2>Upload Audio File</h2>
+
+      <div class="drop-zone" id="dropZone">
+        <div class="drop-zone-icon">🎵</div>
+        <div class="drop-zone-text">Drag and drop audio file here</div>
+        <div class="drop-zone-hint">or click to browse (MP3, M4A, WAV, OGG, FLAC - Max 60MB)</div>
+      </div>
+
+      <input type="file" id="fileInput" class="file-input" accept="audio/*">
+
+      <div class="file-info" id="fileInfo">
+        <strong>Selected file:</strong> <span id="fileName"></span><br>
+        <strong>Size:</strong> <span id="fileSize"></span>
+      </div>
+
+      <form id="uploadForm">
+        <div class="form-grid">
+          <div class="form-group full-width">
+            <label>Arabic Title <span class="required">*</span></label>
+            <input type="text" name="titleArabic" required placeholder="عنوان المحاضرة بالعربي">
+          </div>
+
+          <div class="form-group full-width">
+            <label>English Title</label>
+            <input type="text" name="titleEnglish" placeholder="Lecture Title in English">
+          </div>
+
+          <div class="form-group">
+            <label>Sheikh <span class="required">*</span></label>
+            <select name="sheikhId" required id="sheikhSelect">
+              <option value="">Select Sheikh...</option>
+            </select>
+          </div>
+
+          <div class="form-group">
+            <label>Series</label>
+            <select name="seriesId" id="seriesSelect">
+              <option value="">None (Standalone Lecture)</option>
+            </select>
+          </div>
+
+          <div class="form-group">
+            <label>Lecture Number</label>
+            <input type="number" name="lectureNumber" min="1" placeholder="1">
+          </div>
+
+          <div class="form-group">
+            <label>Category</label>
+            <select name="category">
+              <option value="Other">Other</option>
+              <option value="Aqeedah">Aqeedah</option>
+              <option value="Fiqh">Fiqh</option>
+              <option value="Tafsir">Tafsir</option>
+              <option value="Hadith">Hadith</option>
+              <option value="Seerah">Seerah</option>
+              <option value="Akhlaq">Akhlaq</option>
+            </select>
+          </div>
+
+          <div class="form-group full-width">
+            <label>Arabic Description</label>
+            <textarea name="descriptionArabic" placeholder="وصف المحاضرة"></textarea>
+          </div>
+
+          <div class="form-group full-width">
+            <label>English Description</label>
+            <textarea name="descriptionEnglish" placeholder="Lecture description"></textarea>
+          </div>
+
+          <div class="form-group">
+            <label>Location</label>
+            <input type="text" name="location" placeholder="مسجد الورود، جدة">
+          </div>
+
+          <div class="form-group">
+            <label>Date Recorded</label>
+            <input type="date" name="dateRecorded">
+          </div>
+
+          <div class="form-group">
+            <label>Date (Hijri)</label>
+            <input type="text" name="dateRecordedHijri" placeholder="١٥ رمضان ١٤٤٥">
+          </div>
+
+          <div class="form-group">
+            <div class="checkbox-group">
+              <input type="checkbox" name="published" id="published">
+              <label for="published">Publish immediately</label>
+            </div>
+            <div class="checkbox-group">
+              <input type="checkbox" name="featured" id="featured">
+              <label for="featured">Feature on homepage</label>
+            </div>
+          </div>
+        </div>
+
+        <div class="form-actions">
+          <button type="submit" class="btn btn-primary" id="submitBtn" disabled>Upload Lecture</button>
+          <button type="button" class="btn btn-secondary" id="resetBtn">Reset</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <script>
+    const dropZone = document.getElementById('dropZone');
+    const fileInput = document.getElementById('fileInput');
+    const fileInfo = document.getElementById('fileInfo');
+    const fileName = document.getElementById('fileName');
+    const fileSize = document.getElementById('fileSize');
+    const uploadForm = document.getElementById('uploadForm');
+    const submitBtn = document.getElementById('submitBtn');
+    const resetBtn = document.getElementById('resetBtn');
+    const message = document.getElementById('message');
+    const sheikhSelect = document.getElementById('sheikhSelect');
+    const seriesSelect = document.getElementById('seriesSelect');
+
+    let selectedFile = null;
+
+    // Load sheikhs and series
+    async function loadData() {
+      try {
+        // Load sheikhs
+        const sheikhsRes = await fetch('/api/sheikhs');
+        const sheikhsData = await sheikhsRes.json();
+        if (sheikhsData.success) {
+          sheikhsData.sheikhs.forEach(sheikh => {
+            const option = document.createElement('option');
+            option.value = sheikh._id;
+            option.textContent = `${sheikh.nameArabic} - ${sheikh.nameEnglish || ''}`;
+            sheikhSelect.appendChild(option);
+          });
+        }
+
+        // Load series
+        const seriesRes = await fetch('/api/series');
+        const seriesData = await seriesRes.json();
+        if (seriesData.success) {
+          seriesData.series.forEach(series => {
+            const option = document.createElement('option');
+            option.value = series._id;
+            option.textContent = series.titleArabic;
+            seriesSelect.appendChild(option);
+          });
+        }
+      } catch (error) {
+        console.error('Error loading data:', error);
+      }
+    }
+
+    loadData();
+
+    // Drag and drop handlers
+    dropZone.addEventListener('click', () => fileInput.click());
+
+    dropZone.addEventListener('dragover', (e) => {
+      e.preventDefault();
+      dropZone.classList.add('dragging');
+    });
+
+    dropZone.addEventListener('dragleave', () => {
+      dropZone.classList.remove('dragging');
+    });
+
+    dropZone.addEventListener('drop', (e) => {
+      e.preventDefault();
+      dropZone.classList.remove('dragging');
+      const files = e.dataTransfer.files;
+      if (files.length > 0) {
+        handleFile(files[0]);
+      }
+    });
+
+    fileInput.addEventListener('change', (e) => {
+      if (e.target.files.length > 0) {
+        handleFile(e.target.files[0]);
+      }
+    });
+
+    function handleFile(file) {
+      // Validate file type
+      if (!file.type.startsWith('audio/')) {
+        showMessage('Please select an audio file', 'error');
+        return;
+      }
+
+      // Validate file size (60MB)
+      if (file.size > 60 * 1024 * 1024) {
+        showMessage('File too large. Maximum size is 60MB', 'error');
+        return;
+      }
+
+      selectedFile = file;
+      fileName.textContent = file.name;
+      fileSize.textContent = (file.size / (1024 * 1024)).toFixed(2) + ' MB';
+      fileInfo.classList.add('show');
+      submitBtn.disabled = false;
+    }
+
+    // Form submission
+    uploadForm.addEventListener('submit', async (e) => {
+      e.preventDefault();
+
+      if (!selectedFile) {
+        showMessage('Please select an audio file', 'error');
+        return;
+      }
+
+      const formData = new FormData();
+      formData.append('audioFile', selectedFile);
+
+      // Add form fields
+      const fields = new FormData(uploadForm);
+      for (const [key, value] of fields) {
+        if (key === 'published' || key === 'featured') {
+          formData.append(key, document.getElementById(key).checked);
+        } else if (value) {
+          formData.append(key, value);
+        }
+      }
+
+      submitBtn.disabled = true;
+      submitBtn.textContent = 'Uploading...';
+
+      try {
+        const response = await fetch('/api/lectures', {
+          method: 'POST',
+          body: formData
+        });
+
+        const data = await response.json();
+
+        if (data.success) {
+          showMessage('Lecture uploaded successfully!', 'success');
+          resetForm();
+          setTimeout(() => {
+            window.location.href = '/admin/dashboard';
+          }, 2000);
+        } else {
+          showMessage(data.message || 'Upload failed', 'error');
+          submitBtn.disabled = false;
+          submitBtn.textContent = 'Upload Lecture';
+        }
+      } catch (error) {
+        showMessage('Upload error: ' + error.message, 'error');
+        submitBtn.disabled = false;
+        submitBtn.textContent = 'Upload Lecture';
+      }
+    });
+
+    resetBtn.addEventListener('click', resetForm);
+
+    function resetForm() {
+      uploadForm.reset();
+      selectedFile = null;
+      fileInfo.classList.remove('show');
+      submitBtn.disabled = true;
+      fileInput.value = '';
+    }
+
+    function showMessage(text, type) {
+      message.textContent = text;
+      message.className = 'message show ' + type;
+      setTimeout(() => {
+        message.classList.remove('show');
+      }, 5000);
+    }
+  </script>
+</body>
+</html>

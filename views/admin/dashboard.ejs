@@ -32,6 +32,23 @@
       font-weight: 600;
     }
 
+    .header-nav {
+      display: flex;
+      align-items: center;
+      gap: 16px;
+    }
+
+    .header-nav a {
+      color: white;
+      text-decoration: none;
+      opacity: 0.9;
+      font-size: 15px;
+    }
+
+    .header-nav a:hover {
+      opacity: 1;
+    }
+
     .user-info {
       display: flex;
       align-items: center;
@@ -174,6 +191,11 @@
 <body>
   <div class="header">
     <h1>🎙️ Duroos Admin</h1>
+    <div class="header-nav">
+      <a href="/admin/dashboard">Dashboard</a>
+      <a href="/admin/upload">Upload</a>
+      <a href="/admin/manage">Manage</a>
+    </div>
     <div class="user-info">
       <% if (user.profilePhoto) { %>
         <img src="<%= user.profilePhoto %>" alt="<%= user.displayName %>" class="user-photo">

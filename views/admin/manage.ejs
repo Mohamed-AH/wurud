@@ -1,0 +1,159 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title><%= title %> - Duroos</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, sans-serif;
+      background: #f5f5f5;
+      color: #333;
+    }
+    .header {
+      background: #1A5F5A;
+      color: white;
+      padding: 16px 24px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+    }
+    .header h1 { font-size: 24px; font-weight: 600; }
+    .header-nav { display: flex; align-items: center; gap: 16px; }
+    .header-nav a { color: white; text-decoration: none; opacity: 0.9; }
+    .header-nav a:hover { opacity: 1; }
+    .container { max-width: 1400px; margin: 0 auto; padding: 32px 24px; }
+    .section {
+      background: white;
+      border-radius: 12px;
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+      padding: 24px;
+      margin-bottom: 24px;
+    }
+    .section h2 { font-size: 20px; margin-bottom: 16px; color: #2C3E35; }
+    table { width: 100%; border-collapse: collapse; }
+    thead { background: #f8f8f8; }
+    th, td { padding: 12px; text-align: left; border-bottom: 1px solid #eee; }
+    th { font-weight: 600; color: #666; font-size: 13px; text-transform: uppercase; }
+    .badge {
+      display: inline-block;
+      padding: 4px 8px;
+      border-radius: 4px;
+      font-size: 12px;
+      font-weight: 500;
+    }
+    .badge-success { background: #d4edda; color: #155724; }
+    .badge-warning { background: #fff3cd; color: #856404; }
+    .actions { display: flex; gap: 8px; }
+    .btn {
+      padding: 6px 12px;
+      border: none;
+      border-radius: 4px;
+      font-size: 13px;
+      cursor: pointer;
+      text-decoration: none;
+      display: inline-block;
+    }
+    .btn-danger { background: #f44336; color: white; }
+    .btn-danger:hover { background: #d32f2f; }
+    .message { padding: 12px 16px; border-radius: 8px; margin-bottom: 20px; display: none; }
+    .message.show { display: block; }
+    .message.success { background: #d4edda; color: #155724; border: 1px solid #c3e6cb; }
+    .message.error { background: #f8d7da; color: #721c24; border: 1px solid #f5c6cb; }
+    @media (max-width: 768px) {
+      table { font-size: 13px; }
+      th, td { padding: 8px; }
+    }
+  </style>
+</head>
+<body>
+  <div class="header">
+    <h1>🎙️ Manage Lectures</h1>
+    <div class="header-nav">
+      <a href="/admin/dashboard">Dashboard</a>
+      <a href="/admin/upload">Upload</a>
+      <a href="/admin/manage">Manage</a>
+      <a href="/auth/logout">Logout</a>
+    </div>
+  </div>
+
+  <div class="container">
+    <div class="message" id="message"></div>
+
+    <div class="section">
+      <h2>All Lectures (<%= lectures.length %>)</h2>
+      <% if (lectures.length > 0) { %>
+        <table>
+          <thead>
+            <tr>
+              <th>Title (Arabic)</th>
+              <th>Sheikh</th>
+              <th>Series</th>
+              <th>Status</th>
+              <th>Plays</th>
+              <th>Actions</th>
+            </tr>
+          </thead>
+          <tbody>
+            <% lectures.forEach(lecture => { %>
+              <tr>
+                <td><%= lecture.titleArabic %></td>
+                <td><%= lecture.sheikhId?.nameArabic || 'N/A' %></td>
+                <td><%= lecture.seriesId?.titleArabic || 'Standalone' %></td>
+                <td>
+                  <% if (lecture.published) { %>
+                    <span class="badge badge-success">Published</span>
+                  <% } else { %>
+                    <span class="badge badge-warning">Draft</span>
+                  <% } %>
+                </td>
+                <td><%= lecture.playCount %></td>
+                <td class="actions">
+                  <button class="btn btn-danger" onclick="deleteLecture('<%= lecture._id %>', '<%= lecture.titleArabic %>')">Delete</button>
+                </td>
+              </tr>
+            <% }) %>
+          </tbody>
+        </table>
+      <% } else { %>
+        <p style="text-align: center; padding: 48px; color: #666;">No lectures yet. Upload your first lecture!</p>
+      <% } %>
+    </div>
+  </div>
+
+  <script>
+    const message = document.getElementById('message');
+
+    async function deleteLecture(id, title) {
+      if (!confirm(`Are you sure you want to delete "${title}"?`)) {
+        return;
+      }
+
+      try {
+        const response = await fetch(`/api/lectures/${id}`, {
+          method: 'DELETE'
+        });
+
+        const data = await response.json();
+
+        if (data.success) {
+          showMessage('Lecture deleted successfully', 'success');
+          setTimeout(() => location.reload(), 1500);
+        } else {
+          showMessage(data.message || 'Failed to delete lecture', 'error');
+        }
+      } catch (error) {
+        showMessage('Error: ' + error.message, 'error');
+      }
+    }
+
+    function showMessage(text, type) {
+      message.textContent = text;
+      message.className = 'message show ' + type;
+      setTimeout(() => message.classList.remove('show'), 5000);
+    }
+  </script>
+</body>
+</html>

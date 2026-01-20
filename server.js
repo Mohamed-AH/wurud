@@ -120,12 +120,16 @@ app.get('/health', (req, res) => {
 const authRoutes = require('./routes/auth');
 const adminRoutes = require('./routes/admin');
 const lecturesApiRoutes = require('./routes/api/lectures');
+const sheikhsApiRoutes = require('./routes/api/sheikhs');
+const seriesApiRoutes = require('./routes/api/series');
 const streamRoutes = require('./routes/stream');
 const downloadRoutes = require('./routes/download');
 
 app.use('/auth', authRoutes);
 app.use('/admin', adminRoutes);
 app.use('/api/lectures', lecturesApiRoutes);
+app.use('/api/sheikhs', sheikhsApiRoutes);
+app.use('/api/series', seriesApiRoutes);
 app.use('/stream', streamRoutes);
 app.use('/download', downloadRoutes);
 

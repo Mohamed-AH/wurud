@@ -249,4 +249,100 @@ router.get('/:id', async (req, res) => {
   }
 });
 
+// @route   PUT /api/lectures/:id
+// @desc    Update lecture
+// @access  Private (Admin only)
+router.put('/:id', isAdminAPI, async (req, res) => {
+  try {
+    const {
+      titleArabic,
+      titleEnglish,
+      descriptionArabic,
+      descriptionEnglish,
+      published,
+      featured
+    } = req.body;
+
+    const lecture = await Lecture.findByIdAndUpdate(
+      req.params.id,
+      {
+        titleArabic,
+        titleEnglish,
+        descriptionArabic,
+        descriptionEnglish,
+        published,
+        featured
+      },
+      { new: true, runValidators: true }
+    ).populate('sheikhId', 'nameArabic nameEnglish')
+     .populate('seriesId', 'titleArabic titleEnglish');
+
+    if (!lecture) {
+      return res.status(404).json({
+        success: false,
+        message: 'Lecture not found'
+      });
+    }
+
+    res.json({
+      success: true,
+      message: 'Lecture updated successfully',
+      lecture: lecture
+    });
+  } catch (error) {
+    console.error('Update lecture error:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Failed to update lecture',
+      error: error.message
+    });
+  }
+});
+
+// @route   DELETE /api/lectures/:id
+// @desc    Delete lecture
+// @access  Private (Admin only)
+router.delete('/:id', isAdminAPI, async (req, res) => {
+  try {
+    const lecture = await Lecture.findById(req.params.id);
+
+    if (!lecture) {
+      return res.status(404).json({
+        success: false,
+        message: 'Lecture not found'
+      });
+    }
+
+    // Delete the audio file
+    deleteFile(lecture.audioFileName);
+
+    // Decrement sheikh lecture count
+    await Sheikh.findByIdAndUpdate(lecture.sheikhId, {
+      $inc: { lectureCount: -1 }
+    });
+
+    // Decrement series lecture count (if applicable)
+    if (lecture.seriesId) {
+      await Series.findByIdAndUpdate(lecture.seriesId, {
+        $inc: { lectureCount: -1 }
+      });
+    }
+
+    // Delete lecture from database
+    await Lecture.findByIdAndDelete(req.params.id);
+
+    res.json({
+      success: true,
+      message: 'Lecture deleted successfully'
+    });
+  } catch (error) {
+    console.error('Delete lecture error:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Failed to delete lecture',
+      error: error.message
+    });
+  }
+});
+
 module.exports = router;

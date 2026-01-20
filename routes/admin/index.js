@@ -67,4 +67,38 @@ router.get('/dashboard', isAdmin, async (req, res) => {
   }
 });
 
+// @route   GET /admin/upload
+// @desc    Upload lecture page
+// @access  Private (Admin only)
+router.get('/upload', isAdmin, (req, res) => {
+  res.render('admin/upload', {
+    title: 'Upload Lecture',
+    user: req.user
+  });
+});
+
+// @route   GET /admin/manage
+// @desc    Manage lectures page
+// @access  Private (Admin only)
+router.get('/manage', isAdmin, async (req, res) => {
+  try {
+    const { Lecture } = require('../../models');
+
+    const lectures = await Lecture.find()
+      .sort({ createdAt: -1 })
+      .populate('sheikhId', 'nameArabic nameEnglish')
+      .populate('seriesId', 'titleArabic titleEnglish')
+      .lean();
+
+    res.render('admin/manage', {
+      title: 'Manage Lectures',
+      user: req.user,
+      lectures
+    });
+  } catch (error) {
+    console.error('Manage error:', error);
+    res.status(500).send('Error loading manage page');
+  }
+});
+
 module.exports = router;
