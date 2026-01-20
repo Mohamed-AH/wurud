@@ -12,7 +12,7 @@ A web platform for hosting and streaming ~160 Arabic Islamic lecture audio files
 
 ## 📌 Project State
 
-**Current Phase**: Phase 10 Complete ✅ - Ready for Phase 11 (Bilingual Support)
+**Current Phase**: Phase 11 Complete ✅ - Ready for Phase 12 (Tailwind CSS Styling)
 **Last Updated**: 2026-01-20
 **Branch**: `claude/review-docs-plan-HTIzu`
 
@@ -170,19 +170,52 @@ A web platform for hosting and streaming ~160 Arabic Islamic lecture audio files
   - Fully responsive design (mobile/tablet/desktop)
   - Interactive cards with hover effects
   - Server integration and tested
+- ✅ **Phase 11 Complete**: Bilingual Support & Language Toggle
+  - Translation system (utils/i18n.js):
+    * Comprehensive Arabic/English translations for all UI elements
+    * Translation keys for navigation, stats, categories, common text
+    * i18nMiddleware for automatic locale detection
+    * Locale from query param, cookie, or defaults to Arabic
+    * Translation function (t) injected into all templates
+  - Server integration:
+    * Added cookie-parser middleware
+    * i18n middleware integrated before routes
+    * Locale and isRTL available in res.locals
+  - Language toggle button (header):
+    * Globe icon with language indicator
+    * Shows "EN" in Arabic mode, "عربي" in English mode
+    * Frosted glass effect styling
+    * Mobile-responsive
+  - RTL/LTR support (layout.ejs):
+    * Dynamic html lang and dir attributes
+    * CSS for LTR mode with English fonts (Spectral, Cormorant Garamond)
+    * Arabic mode uses Amiri/Noto Naskh fonts
+    * Automatic text direction and alignment
+  - Language switching JavaScript:
+    * Client-side toggle handler
+    * Sets locale cookie (1 year expiry)
+    * Reloads page with lang query parameter
+    * Preserves current URL and query strings
+  - Updated templates:
+    * Header: Translation keys for all navigation items
+    * Footer: Translation keys for about, links, categories
+    * Layout: Dynamic branding based on locale
+  - Package updates:
+    * Added cookie-parser@^1.4.7 dependency
+  - Server tested and working without errors
 
 ### What's Missing
-- ❌ No bilingual support / language toggle
 - ❌ No Tailwind CSS styling (using custom CSS)
+- ℹ️ Content pages show bilingual database content but some hardcoded UI text remains
 - ℹ️ Google OAuth credentials needed for live authentication testing
 
-### Next Immediate Steps (Phase 11)
-1. Create translation system for UI text
-2. Build language toggle mechanism (Arabic/English)
-3. Add RTL/LTR CSS switching
-4. Update all templates with translation keys
-5. Store language preference in localStorage
-6. Test language switching functionality
+### Next Immediate Steps (Phase 12)
+1. Configure Tailwind CSS
+2. Set up typography (Amiri, Noto Naskh, Spectral, Cormorant)
+3. Style all components with Tailwind classes
+4. Add background patterns
+5. Ensure responsive design
+6. Test design across devices
 
 ---
 
@@ -259,12 +292,12 @@ A web platform for hosting and streaming ~160 Arabic Islamic lecture audio files
 - [x] Build series page
 - [x] Test: Pages load with related lectures
 
-### Phase 11: Bilingual Support & Language Toggle
-- [ ] Create translation system
-- [ ] Build language toggle mechanism
-- [ ] Add RTL/LTR CSS
-- [ ] Update all templates for bilingual
-- [ ] Test: Can toggle languages
+### Phase 11: Bilingual Support & Language Toggle ✅ COMPLETE
+- [x] Create translation system
+- [x] Build language toggle mechanism
+- [x] Add RTL/LTR CSS
+- [x] Update all templates for bilingual
+- [x] Test: Can toggle languages
 
 ### Phase 12: Frontend Styling - Tailwind CSS & Islamic Aesthetic
 - [ ] Configure Tailwind CSS
