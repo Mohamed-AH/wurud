@@ -345,4 +345,36 @@ router.delete('/:id', isAdminAPI, async (req, res) => {
   }
 });
 
+// @route   POST /api/lectures/:id/play
+// @desc    Increment play count
+// @access  Public
+router.post('/:id/play', async (req, res) => {
+  try {
+    const lecture = await Lecture.findByIdAndUpdate(
+      req.params.id,
+      { $inc: { playCount: 1 } },
+      { new: true }
+    );
+
+    if (!lecture) {
+      return res.status(404).json({
+        success: false,
+        message: 'Lecture not found'
+      });
+    }
+
+    res.json({
+      success: true,
+      playCount: lecture.playCount
+    });
+  } catch (error) {
+    console.error('Increment play count error:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Failed to increment play count',
+      error: error.message
+    });
+  }
+});
+
 module.exports = router;

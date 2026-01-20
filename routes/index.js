@@ -86,6 +86,59 @@ router.get('/browse', async (req, res) => {
   }
 });
 
+// @route   GET /lectures/:id
+// @desc    Single lecture detail page
+// @access  Public
+router.get('/lectures/:id', async (req, res) => {
+  try {
+    // Get lecture by ID
+    const lecture = await Lecture.findById(req.params.id)
+      .populate('sheikhId', 'nameArabic nameEnglish honorific bioArabic bioEnglish')
+      .populate('seriesId', 'titleArabic titleEnglish descriptionArabic descriptionEnglish category')
+      .lean();
+
+    if (!lecture || !lecture.published) {
+      return res.status(404).send('Lecture not found');
+    }
+
+    // Get related lectures (same series or same sheikh, excluding current)
+    const relatedQuery = {
+      _id: { $ne: lecture._id },
+      published: true,
+      $or: []
+    };
+
+    if (lecture.seriesId) {
+      relatedQuery.$or.push({ seriesId: lecture.seriesId._id });
+    }
+    if (lecture.sheikhId) {
+      relatedQuery.$or.push({ sheikhId: lecture.sheikhId._id });
+    }
+
+    // If no series or sheikh, get by category
+    if (relatedQuery.$or.length === 0) {
+      delete relatedQuery.$or;
+      relatedQuery.category = lecture.category;
+    }
+
+    const relatedLectures = await Lecture.find(relatedQuery)
+      .sort({ createdAt: -1 })
+      .limit(6)
+      .populate('sheikhId', 'nameArabic nameEnglish honorific')
+      .populate('seriesId', 'titleArabic titleEnglish')
+      .lean();
+
+    res.render('public/lecture', {
+      title: lecture.titleArabic,
+      lecture,
+      relatedLectures
+    });
+  } catch (error) {
+    console.error('Lecture detail error:', error);
+    res.status(500).send('Error loading lecture');
+  }
+});
+
 // @route   GET /sheikhs
 // @desc    List all sheikhs
 // @access  Public

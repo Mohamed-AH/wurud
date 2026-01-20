@@ -1,0 +1,857 @@
+<%- include('../layout', { body: `
+<div class="lecture-detail-page">
+  <!-- Breadcrumb -->
+  <nav class="breadcrumb">
+    <a href="/">الرئيسية</a>
+    <span class="separator">›</span>
+    <a href="/browse">المحاضرات</a>
+    <span class="separator">›</span>
+    <span class="current">${lecture.titleArabic}</span>
+  </nav>
+
+  <!-- Main Content -->
+  <div class="lecture-container">
+    <!-- Lecture Header -->
+    <div class="lecture-header">
+      <h1 class="lecture-title">${lecture.titleArabic}</h1>
+      ${lecture.titleEnglish ? `<h2 class="lecture-title-en">${lecture.titleEnglish}</h2>` : ''}
+
+      <div class="lecture-meta">
+        <!-- Sheikh -->
+        ${lecture.sheikhId ? `
+        <div class="meta-item sheikh-info">
+          <svg class="icon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+            <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
+            <circle cx="12" cy="7" r="4"></circle>
+          </svg>
+          <a href="/sheikhs/${lecture.sheikhId._id}" class="sheikh-link">
+            ${lecture.sheikhId.nameArabic}
+            ${lecture.sheikhId.honorific ? `<span class="honorific">${lecture.sheikhId.honorific}</span>` : ''}
+          </a>
+        </div>
+        ` : ''}
+
+        <!-- Series -->
+        ${lecture.seriesId ? `
+        <div class="meta-item series-info">
+          <svg class="icon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+            <path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"></path>
+            <path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"></path>
+          </svg>
+          <a href="/series/${lecture.seriesId._id}" class="series-link">
+            ${lecture.seriesId.titleArabic}
+            ${lecture.lectureNumber ? `<span class="lecture-number">(الدرس ${lecture.lectureNumber})</span>` : ''}
+          </a>
+        </div>
+        ` : ''}
+
+        <!-- Category -->
+        ${lecture.category ? `
+        <div class="meta-item category-badge">
+          <span class="badge badge-${lecture.category.toLowerCase()}">${lecture.category}</span>
+        </div>
+        ` : ''}
+      </div>
+    </div>
+
+    <!-- Audio Player Section -->
+    <div class="audio-player-section">
+      <div class="custom-audio-player" id="audioPlayer">
+        <audio id="audioElement" preload="metadata">
+          <source src="/stream/${lecture._id}" type="${lecture.format || 'audio/mpeg'}">
+          متصفحك لا يدعم تشغيل الملفات الصوتية.
+        </audio>
+
+        <!-- Album Art / Placeholder -->
+        <div class="player-artwork">
+          <svg class="artwork-icon" width="80" height="80" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+            <circle cx="12" cy="12" r="10"></circle>
+            <polygon points="10 8 16 12 10 16 10 8"></polygon>
+          </svg>
+        </div>
+
+        <!-- Controls -->
+        <div class="player-controls">
+          <!-- Play/Pause Button -->
+          <button id="playPauseBtn" class="btn-play-pause" aria-label="تشغيل">
+            <svg class="icon-play" width="24" height="24" viewBox="0 0 24 24" fill="currentColor">
+              <polygon points="5 3 19 12 5 21 5 3"></polygon>
+            </svg>
+            <svg class="icon-pause" width="24" height="24" viewBox="0 0 24 24" fill="currentColor" style="display: none;">
+              <rect x="6" y="4" width="4" height="16"></rect>
+              <rect x="14" y="4" width="4" height="16"></rect>
+            </svg>
+          </button>
+
+          <!-- Time Display -->
+          <div class="time-display">
+            <span id="currentTime">0:00</span>
+          </div>
+
+          <!-- Progress Bar -->
+          <div class="progress-bar-container">
+            <input type="range" id="progressBar" class="progress-bar" min="0" max="100" value="0" step="0.1">
+            <div class="progress-fill" id="progressFill"></div>
+          </div>
+
+          <!-- Duration -->
+          <div class="time-display">
+            <span id="duration">${lecture.formattedDuration || '0:00'}</span>
+          </div>
+
+          <!-- Volume Control -->
+          <div class="volume-control">
+            <button id="muteBtn" class="btn-mute" aria-label="كتم الصوت">
+              <svg class="icon-volume" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                <polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"></polygon>
+                <path d="M19.07 4.93a10 10 0 0 1 0 14.14"></path>
+                <path d="M15.54 8.46a5 5 0 0 1 0 7.07"></path>
+              </svg>
+              <svg class="icon-mute" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" style="display: none;">
+                <polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"></polygon>
+                <line x1="23" y1="9" x2="17" y2="15"></line>
+                <line x1="17" y1="9" x2="23" y2="15"></line>
+              </svg>
+            </button>
+            <input type="range" id="volumeBar" class="volume-bar" min="0" max="100" value="80" step="1">
+          </div>
+
+          <!-- Playback Speed -->
+          <div class="speed-control">
+            <button id="speedBtn" class="btn-speed" aria-label="سرعة التشغيل">
+              <span id="speedText">1x</span>
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Action Buttons -->
+      <div class="action-buttons">
+        <a href="/download/${lecture._id}" class="btn btn-download" download>
+          <svg class="icon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+            <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+            <polyline points="7 10 12 15 17 10"></polyline>
+            <line x1="12" y1="15" x2="12" y2="3"></line>
+          </svg>
+          تحميل المحاضرة
+          ${lecture.formattedFileSize ? `<span class="file-size">(${lecture.formattedFileSize})</span>` : ''}
+        </a>
+
+        <button class="btn btn-share" id="shareBtn">
+          <svg class="icon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+            <circle cx="18" cy="5" r="3"></circle>
+            <circle cx="6" cy="12" r="3"></circle>
+            <circle cx="18" cy="19" r="3"></circle>
+            <line x1="8.59" y1="13.51" x2="15.42" y2="17.49"></line>
+            <line x1="15.41" y1="6.51" x2="8.59" y2="10.49"></line>
+          </svg>
+          مشاركة
+        </button>
+      </div>
+
+      <!-- Lecture Stats -->
+      <div class="lecture-stats">
+        <div class="stat-item">
+          <svg class="icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+            <circle cx="12" cy="12" r="10"></circle>
+            <polyline points="12 6 12 12 16 14"></polyline>
+          </svg>
+          <span>${lecture.formattedDuration || 'غير محدد'}</span>
+        </div>
+        <div class="stat-item">
+          <svg class="icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+            <polygon points="23 7 16 12 23 17 23 7"></polygon>
+            <polygon points="14 7 7 12 14 17 14 7"></polygon>
+          </svg>
+          <span>${lecture.playCount || 0} تشغيل</span>
+        </div>
+        ${lecture.recordDate ? `
+        <div class="stat-item">
+          <svg class="icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+            <rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect>
+            <line x1="16" y1="2" x2="16" y2="6"></line>
+            <line x1="8" y1="2" x2="8" y2="6"></line>
+            <line x1="3" y1="10" x2="21" y2="10"></line>
+          </svg>
+          <span>${new Date(lecture.recordDate).toLocaleDateString('ar-SA')}</span>
+        </div>
+        ` : ''}
+      </div>
+    </div>
+
+    <!-- Description Section -->
+    ${lecture.descriptionArabic || lecture.descriptionEnglish || lecture.location ? `
+    <div class="lecture-description">
+      <h3 class="section-title">عن المحاضرة</h3>
+      ${lecture.descriptionArabic ? `<p class="description-text">${lecture.descriptionArabic}</p>` : ''}
+      ${lecture.descriptionEnglish ? `<p class="description-text-en">${lecture.descriptionEnglish}</p>` : ''}
+      ${lecture.location ? `
+      <div class="location-info">
+        <svg class="icon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+          <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"></path>
+          <circle cx="12" cy="10" r="3"></circle>
+        </svg>
+        <span>${lecture.location}</span>
+      </div>
+      ` : ''}
+    </div>
+    ` : ''}
+
+    <!-- Sheikh Bio Section -->
+    ${lecture.sheikhId && lecture.sheikhId.bioArabic ? `
+    <div class="sheikh-bio-section">
+      <h3 class="section-title">نبذة عن الشيخ</h3>
+      <div class="sheikh-bio">
+        <p class="bio-text">${lecture.sheikhId.bioArabic}</p>
+        <a href="/sheikhs/${lecture.sheikhId._id}" class="btn btn-link">المزيد من محاضرات الشيخ ←</a>
+      </div>
+    </div>
+    ` : ''}
+
+    <!-- Related Lectures -->
+    ${relatedLectures && relatedLectures.length > 0 ? `
+    <div class="related-lectures-section">
+      <h3 class="section-title">محاضرات ذات صلة</h3>
+      <div class="lectures-grid">
+        ${relatedLectures.map(related => `
+          <%- include('../partials/lectureCard', { lecture: ${JSON.stringify(related)} }) %>
+        `).join('')}
+      </div>
+    </div>
+    ` : ''}
+  </div>
+</div>
+
+<style>
+.lecture-detail-page {
+  padding: 2rem 0;
+  max-width: 1200px;
+  margin: 0 auto;
+}
+
+.breadcrumb {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 0.9rem;
+  color: var(--text-secondary);
+  margin-bottom: 2rem;
+  padding: 0 1rem;
+}
+
+.breadcrumb a {
+  color: var(--text-secondary);
+  text-decoration: none;
+  transition: color 0.2s;
+}
+
+.breadcrumb a:hover {
+  color: var(--primary);
+}
+
+.breadcrumb .separator {
+  color: var(--text-secondary);
+  opacity: 0.5;
+}
+
+.breadcrumb .current {
+  color: var(--text-primary);
+  font-weight: 500;
+}
+
+.lecture-container {
+  background: white;
+  border-radius: 12px;
+  padding: 2rem;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+}
+
+/* Header */
+.lecture-header {
+  text-align: center;
+  border-bottom: 2px solid var(--bg-cream);
+  padding-bottom: 1.5rem;
+  margin-bottom: 2rem;
+}
+
+.lecture-title {
+  font-family: 'Amiri', serif;
+  font-size: 2rem;
+  color: var(--primary);
+  margin-bottom: 0.5rem;
+  line-height: 1.6;
+}
+
+.lecture-title-en {
+  font-family: 'Cormorant Garamond', serif;
+  font-size: 1.5rem;
+  color: var(--text-secondary);
+  font-weight: 400;
+  margin-bottom: 1rem;
+}
+
+.lecture-meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 1rem;
+  justify-content: center;
+  align-items: center;
+  margin-top: 1rem;
+}
+
+.meta-item {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 0.95rem;
+}
+
+.meta-item .icon {
+  color: var(--primary);
+  stroke-width: 2;
+}
+
+.sheikh-link, .series-link {
+  color: var(--text-primary);
+  text-decoration: none;
+  font-weight: 500;
+  transition: color 0.2s;
+}
+
+.sheikh-link:hover, .series-link:hover {
+  color: var(--primary);
+}
+
+.honorific {
+  font-size: 0.85rem;
+  color: var(--text-secondary);
+  margin-right: 0.25rem;
+}
+
+.lecture-number {
+  color: var(--text-secondary);
+  font-size: 0.9rem;
+}
+
+.badge {
+  padding: 0.25rem 0.75rem;
+  border-radius: 20px;
+  font-size: 0.85rem;
+  font-weight: 500;
+}
+
+.badge-aqeedah { background: #E8F5E9; color: #2E7D32; }
+.badge-fiqh { background: #E3F2FD; color: #1565C0; }
+.badge-tafsir { background: #FFF3E0; color: #E65100; }
+.badge-hadith { background: #F3E5F5; color: #6A1B9A; }
+.badge-seerah { background: #FCE4EC; color: #C2185B; }
+.badge-general { background: var(--bg-cream); color: var(--text-primary); }
+
+/* Audio Player */
+.audio-player-section {
+  background: linear-gradient(135deg, var(--primary) 0%, #145450 100%);
+  border-radius: 12px;
+  padding: 2rem;
+  margin-bottom: 2rem;
+  color: white;
+}
+
+.custom-audio-player {
+  background: rgba(255,255,255,0.1);
+  border-radius: 12px;
+  padding: 1.5rem;
+  backdrop-filter: blur(10px);
+}
+
+.player-artwork {
+  display: flex;
+  justify-content: center;
+  margin-bottom: 1.5rem;
+}
+
+.artwork-icon {
+  opacity: 0.6;
+  stroke-width: 1.5;
+}
+
+.player-controls {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  flex-wrap: wrap;
+}
+
+.btn-play-pause {
+  width: 56px;
+  height: 56px;
+  border-radius: 50%;
+  background: white;
+  color: var(--primary);
+  border: none;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: transform 0.2s, box-shadow 0.2s;
+  flex-shrink: 0;
+}
+
+.btn-play-pause:hover {
+  transform: scale(1.05);
+  box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+}
+
+.btn-play-pause:active {
+  transform: scale(0.95);
+}
+
+.time-display {
+  font-family: 'Courier New', monospace;
+  font-size: 0.9rem;
+  min-width: 45px;
+  text-align: center;
+}
+
+.progress-bar-container {
+  flex: 1;
+  height: 6px;
+  background: rgba(255,255,255,0.2);
+  border-radius: 3px;
+  position: relative;
+  cursor: pointer;
+  min-width: 150px;
+}
+
+.progress-bar {
+  position: absolute;
+  width: 100%;
+  height: 100%;
+  opacity: 0;
+  cursor: pointer;
+}
+
+.progress-fill {
+  height: 100%;
+  background: var(--accent-gold);
+  border-radius: 3px;
+  width: 0%;
+  transition: width 0.1s linear;
+  pointer-events: none;
+}
+
+.volume-control {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.btn-mute {
+  background: transparent;
+  border: none;
+  color: white;
+  cursor: pointer;
+  padding: 0.5rem;
+  display: flex;
+  align-items: center;
+  transition: opacity 0.2s;
+}
+
+.btn-mute:hover {
+  opacity: 0.8;
+}
+
+.volume-bar {
+  width: 80px;
+  height: 4px;
+  -webkit-appearance: none;
+  appearance: none;
+  background: rgba(255,255,255,0.2);
+  border-radius: 2px;
+  outline: none;
+}
+
+.volume-bar::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 12px;
+  height: 12px;
+  background: white;
+  border-radius: 50%;
+  cursor: pointer;
+}
+
+.volume-bar::-moz-range-thumb {
+  width: 12px;
+  height: 12px;
+  background: white;
+  border-radius: 50%;
+  cursor: pointer;
+  border: none;
+}
+
+.speed-control {
+  margin-right: 0.5rem;
+}
+
+.btn-speed {
+  background: rgba(255,255,255,0.2);
+  border: none;
+  color: white;
+  padding: 0.5rem 1rem;
+  border-radius: 20px;
+  cursor: pointer;
+  font-family: inherit;
+  font-size: 0.9rem;
+  transition: background 0.2s;
+}
+
+.btn-speed:hover {
+  background: rgba(255,255,255,0.3);
+}
+
+/* Action Buttons */
+.action-buttons {
+  display: flex;
+  gap: 1rem;
+  margin-top: 1.5rem;
+  flex-wrap: wrap;
+}
+
+.btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.75rem 1.5rem;
+  border-radius: 8px;
+  font-family: inherit;
+  font-size: 1rem;
+  cursor: pointer;
+  transition: all 0.2s;
+  text-decoration: none;
+  border: none;
+}
+
+.btn-download {
+  background: white;
+  color: var(--primary);
+  flex: 1;
+  justify-content: center;
+}
+
+.btn-download:hover {
+  background: var(--bg-cream);
+  transform: translateY(-1px);
+  box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+}
+
+.btn-share {
+  background: rgba(255,255,255,0.2);
+  color: white;
+  border: 1px solid rgba(255,255,255,0.3);
+}
+
+.btn-share:hover {
+  background: rgba(255,255,255,0.3);
+}
+
+.file-size {
+  font-size: 0.85rem;
+  opacity: 0.8;
+}
+
+/* Lecture Stats */
+.lecture-stats {
+  display: flex;
+  gap: 1.5rem;
+  margin-top: 1rem;
+  flex-wrap: wrap;
+  justify-content: center;
+  color: white;
+  opacity: 0.9;
+}
+
+.stat-item {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  font-size: 0.9rem;
+}
+
+/* Description */
+.lecture-description, .sheikh-bio-section, .related-lectures-section {
+  margin-top: 2rem;
+  padding-top: 2rem;
+  border-top: 2px solid var(--bg-cream);
+}
+
+.section-title {
+  font-family: 'Amiri', serif;
+  font-size: 1.5rem;
+  color: var(--primary);
+  margin-bottom: 1rem;
+}
+
+.description-text {
+  line-height: 2;
+  color: var(--text-primary);
+  margin-bottom: 1rem;
+}
+
+.description-text-en {
+  font-family: 'Spectral', serif;
+  line-height: 1.8;
+  color: var(--text-secondary);
+  font-style: italic;
+  direction: ltr;
+  text-align: left;
+}
+
+.location-info {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  color: var(--text-secondary);
+  margin-top: 1rem;
+  padding: 0.75rem;
+  background: var(--bg-cream);
+  border-radius: 8px;
+  width: fit-content;
+}
+
+/* Sheikh Bio */
+.sheikh-bio {
+  background: var(--bg-cream);
+  padding: 1.5rem;
+  border-radius: 8px;
+}
+
+.bio-text {
+  line-height: 2;
+  color: var(--text-primary);
+  margin-bottom: 1rem;
+}
+
+.btn-link {
+  color: var(--primary);
+  font-weight: 500;
+}
+
+.btn-link:hover {
+  text-decoration: underline;
+}
+
+/* Related Lectures Grid */
+.lectures-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+  gap: 1.5rem;
+  margin-top: 1.5rem;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+  .lecture-container {
+    padding: 1.5rem;
+  }
+
+  .lecture-title {
+    font-size: 1.5rem;
+  }
+
+  .lecture-title-en {
+    font-size: 1.2rem;
+  }
+
+  .audio-player-section {
+    padding: 1.5rem;
+  }
+
+  .player-controls {
+    gap: 0.75rem;
+  }
+
+  .btn-play-pause {
+    width: 48px;
+    height: 48px;
+  }
+
+  .volume-control {
+    width: 100%;
+    justify-content: space-between;
+  }
+
+  .action-buttons {
+    flex-direction: column;
+  }
+
+  .btn-download {
+    width: 100%;
+  }
+
+  .lectures-grid {
+    grid-template-columns: 1fr;
+  }
+}
+</style>
+
+<script>
+// Custom Audio Player JavaScript
+(function() {
+  const audio = document.getElementById('audioElement');
+  const playPauseBtn = document.getElementById('playPauseBtn');
+  const iconPlay = playPauseBtn.querySelector('.icon-play');
+  const iconPause = playPauseBtn.querySelector('.icon-pause');
+  const currentTimeEl = document.getElementById('currentTime');
+  const durationEl = document.getElementById('duration');
+  const progressBar = document.getElementById('progressBar');
+  const progressFill = document.getElementById('progressFill');
+  const muteBtn = document.getElementById('muteBtn');
+  const iconVolume = muteBtn.querySelector('.icon-volume');
+  const iconMute = muteBtn.querySelector('.icon-mute');
+  const volumeBar = document.getElementById('volumeBar');
+  const speedBtn = document.getElementById('speedBtn');
+  const speedText = document.getElementById('speedText');
+  const shareBtn = document.getElementById('shareBtn');
+
+  let isPlaying = false;
+  let isSeeking = false;
+
+  // Format time helper
+  function formatTime(seconds) {
+    if (isNaN(seconds)) return '0:00';
+    const h = Math.floor(seconds / 3600);
+    const m = Math.floor((seconds % 3600) / 60);
+    const s = Math.floor(seconds % 60);
+    if (h > 0) {
+      return h + ':' + (m < 10 ? '0' : '') + m + ':' + (s < 10 ? '0' : '') + s;
+    }
+    return m + ':' + (s < 10 ? '0' : '') + s;
+  }
+
+  // Play/Pause
+  playPauseBtn.addEventListener('click', () => {
+    if (isPlaying) {
+      audio.pause();
+    } else {
+      audio.play();
+    }
+  });
+
+  audio.addEventListener('play', () => {
+    isPlaying = true;
+    iconPlay.style.display = 'none';
+    iconPause.style.display = 'block';
+    playPauseBtn.setAttribute('aria-label', 'إيقاف مؤقت');
+  });
+
+  audio.addEventListener('pause', () => {
+    isPlaying = false;
+    iconPlay.style.display = 'block';
+    iconPause.style.display = 'none';
+    playPauseBtn.setAttribute('aria-label', 'تشغيل');
+  });
+
+  // Update duration when metadata loads
+  audio.addEventListener('loadedmetadata', () => {
+    durationEl.textContent = formatTime(audio.duration);
+    progressBar.max = audio.duration;
+  });
+
+  // Update progress
+  audio.addEventListener('timeupdate', () => {
+    if (!isSeeking) {
+      const percent = (audio.currentTime / audio.duration) * 100;
+      progressBar.value = audio.currentTime;
+      progressFill.style.width = percent + '%';
+      currentTimeEl.textContent = formatTime(audio.currentTime);
+    }
+  });
+
+  // Seek
+  progressBar.addEventListener('input', () => {
+    isSeeking = true;
+    const percent = (progressBar.value / audio.duration) * 100;
+    progressFill.style.width = percent + '%';
+    currentTimeEl.textContent = formatTime(progressBar.value);
+  });
+
+  progressBar.addEventListener('change', () => {
+    audio.currentTime = progressBar.value;
+    isSeeking = false;
+  });
+
+  // Volume
+  volumeBar.addEventListener('input', () => {
+    audio.volume = volumeBar.value / 100;
+    if (audio.volume === 0) {
+      iconVolume.style.display = 'none';
+      iconMute.style.display = 'block';
+    } else {
+      iconVolume.style.display = 'block';
+      iconMute.style.display = 'none';
+    }
+  });
+
+  // Mute toggle
+  muteBtn.addEventListener('click', () => {
+    if (audio.volume > 0) {
+      audio.dataset.prevVolume = audio.volume;
+      audio.volume = 0;
+      volumeBar.value = 0;
+      iconVolume.style.display = 'none';
+      iconMute.style.display = 'block';
+    } else {
+      const prevVolume = parseFloat(audio.dataset.prevVolume || 0.8);
+      audio.volume = prevVolume;
+      volumeBar.value = prevVolume * 100;
+      iconVolume.style.display = 'block';
+      iconMute.style.display = 'none';
+    }
+  });
+
+  // Playback speed
+  const speeds = [0.5, 0.75, 1, 1.25, 1.5, 2];
+  let currentSpeedIndex = 2; // 1x
+  speedBtn.addEventListener('click', () => {
+    currentSpeedIndex = (currentSpeedIndex + 1) % speeds.length;
+    audio.playbackRate = speeds[currentSpeedIndex];
+    speedText.textContent = speeds[currentSpeedIndex] + 'x';
+  });
+
+  // Share button
+  shareBtn.addEventListener('click', async () => {
+    const url = window.location.href;
+    const title = document.querySelector('.lecture-title').textContent;
+
+    if (navigator.share) {
+      try {
+        await navigator.share({ title, url });
+      } catch (err) {
+        console.log('Share cancelled');
+      }
+    } else {
+      // Fallback: copy to clipboard
+      try {
+        await navigator.clipboard.writeText(url);
+        alert('تم نسخ الرابط!');
+      } catch (err) {
+        prompt('انسخ هذا الرابط:', url);
+      }
+    }
+  });
+
+  // Set initial volume
+  audio.volume = 0.8;
+
+  // Increment play count on first play
+  let playCountIncremented = false;
+  audio.addEventListener('play', () => {
+    if (!playCountIncremented) {
+      fetch('/api/lectures/${lecture._id}/play', { method: 'POST' })
+        .catch(err => console.error('Failed to increment play count:', err));
+      playCountIncremented = true;
+    }
+  });
+})();
+</script>
+` }) %>
