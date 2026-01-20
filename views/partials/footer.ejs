@@ -1,0 +1,35 @@
+<footer class="footer">
+  <div class="container">
+    <div class="footer-content">
+      <div class="footer-about">
+        <h3><%= t('footer_about') %></h3>
+        <p><%= t('footer_about_text') %></p>
+      </div>
+
+      <div class="footer-links-section">
+        <h3><%= t('footer_quick_links') %></h3>
+        <ul class="footer-links">
+          <li><a href="/"><%= t('nav_home') %></a></li>
+          <li><a href="/browse"><%= t('nav_lectures') %></a></li>
+          <li><a href="/sheikhs"><%= t('nav_sheikhs') %></a></li>
+          <li><a href="/series"><%= t('nav_series') %></a></li>
+        </ul>
+      </div>
+
+      <div class="footer-categories">
+        <h3><%= t('footer_categories') %></h3>
+        <ul class="footer-links">
+          <li><a href="/browse?category=Aqeedah"><%= t('category_aqeedah') %></a></li>
+          <li><a href="/browse?category=Fiqh"><%= t('category_fiqh') %></a></li>
+          <li><a href="/browse?category=Tafsir"><%= t('category_tafsir') %></a></li>
+          <li><a href="/browse?category=Hadith"><%= t('category_hadith') %></a></li>
+          <li><a href="/browse?category=Seerah"><%= t('category_seerah') %></a></li>
+        </ul>
+      </div>
+    </div>
+
+    <div class="footer-bottom">
+      <p><%= t('footer_rights') %> © <%= new Date().getFullYear() %> <%= locale === 'ar' ? 'دروس' : 'Duroos' %></p>
+    </div>
+  </div>
+</footer>

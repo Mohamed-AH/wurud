@@ -1,0 +1,275 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title><%= title %> - Duroos</title>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, sans-serif;
+      background: #f5f5f5;
+      color: #333;
+    }
+
+    .header {
+      background: #1A5F5A;
+      color: white;
+      padding: 16px 24px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+    }
+
+    .header h1 {
+      font-size: 24px;
+      font-weight: 600;
+    }
+
+    .header-nav {
+      display: flex;
+      align-items: center;
+      gap: 16px;
+    }
+
+    .header-nav a {
+      color: white;
+      text-decoration: none;
+      opacity: 0.9;
+      font-size: 15px;
+    }
+
+    .header-nav a:hover {
+      opacity: 1;
+    }
+
+    .user-info {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .user-photo {
+      width: 36px;
+      height: 36px;
+      border-radius: 50%;
+      border: 2px solid white;
+    }
+
+    .logout-btn {
+      background: rgba(255, 255, 255, 0.2);
+      color: white;
+      border: 1px solid rgba(255, 255, 255, 0.3);
+      padding: 8px 16px;
+      border-radius: 6px;
+      text-decoration: none;
+      font-size: 14px;
+      transition: all 0.3s ease;
+    }
+
+    .logout-btn:hover {
+      background: rgba(255, 255, 255, 0.3);
+    }
+
+    .container {
+      max-width: 1200px;
+      margin: 0 auto;
+      padding: 32px 24px;
+    }
+
+    .stats-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+      gap: 20px;
+      margin-bottom: 32px;
+    }
+
+    .stat-card {
+      background: white;
+      padding: 24px;
+      border-radius: 12px;
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+    }
+
+    .stat-card h3 {
+      color: #666;
+      font-size: 14px;
+      font-weight: 500;
+      margin-bottom: 8px;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+
+    .stat-card .value {
+      font-size: 36px;
+      font-weight: 700;
+      color: #1A5F5A;
+    }
+
+    .section {
+      background: white;
+      border-radius: 12px;
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+      padding: 24px;
+      margin-bottom: 24px;
+    }
+
+    .section h2 {
+      font-size: 20px;
+      margin-bottom: 16px;
+      color: #2C3E35;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+    }
+
+    thead {
+      background: #f8f8f8;
+    }
+
+    th, td {
+      padding: 12px;
+      text-align: left;
+      border-bottom: 1px solid #eee;
+    }
+
+    th {
+      font-weight: 600;
+      color: #666;
+      font-size: 13px;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+
+    .badge {
+      display: inline-block;
+      padding: 4px 8px;
+      border-radius: 4px;
+      font-size: 12px;
+      font-weight: 500;
+    }
+
+    .badge-success {
+      background: #d4edda;
+      color: #155724;
+    }
+
+    .badge-warning {
+      background: #fff3cd;
+      color: #856404;
+    }
+
+    .empty-state {
+      text-align: center;
+      padding: 48px 24px;
+      color: #666;
+    }
+
+    @media (max-width: 768px) {
+      .stats-grid {
+        grid-template-columns: 1fr 1fr;
+      }
+
+      table {
+        font-size: 14px;
+      }
+
+      th, td {
+        padding: 8px;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="header">
+    <h1>🎙️ Duroos Admin</h1>
+    <div class="header-nav">
+      <a href="/admin/dashboard">Dashboard</a>
+      <a href="/admin/upload">Upload</a>
+      <a href="/admin/manage">Manage</a>
+    </div>
+    <div class="user-info">
+      <% if (user.profilePhoto) { %>
+        <img src="<%= user.profilePhoto %>" alt="<%= user.displayName %>" class="user-photo">
+      <% } %>
+      <span><%= user.displayName %></span>
+      <a href="/auth/logout" class="logout-btn">Logout</a>
+    </div>
+  </div>
+
+  <div class="container">
+    <div class="stats-grid">
+      <div class="stat-card">
+        <h3>Total Lectures</h3>
+        <div class="value"><%= stats.totalLectures %></div>
+      </div>
+      <div class="stat-card">
+        <h3>Published</h3>
+        <div class="value"><%= stats.publishedLectures %></div>
+      </div>
+      <div class="stat-card">
+        <h3>Total Plays</h3>
+        <div class="value"><%= stats.totalPlays.toLocaleString() %></div>
+      </div>
+      <div class="stat-card">
+        <h3>Downloads</h3>
+        <div class="value"><%= stats.totalDownloads.toLocaleString() %></div>
+      </div>
+      <div class="stat-card">
+        <h3>Sheikhs</h3>
+        <div class="value"><%= stats.totalSheikhs %></div>
+      </div>
+      <div class="stat-card">
+        <h3>Series</h3>
+        <div class="value"><%= stats.totalSeries %></div>
+      </div>
+    </div>
+
+    <div class="section">
+      <h2>Recent Lectures</h2>
+      <% if (recentLectures.length > 0) { %>
+        <table>
+          <thead>
+            <tr>
+              <th>Title (Arabic)</th>
+              <th>Sheikh</th>
+              <th>Series</th>
+              <th>Status</th>
+              <th>Plays</th>
+            </tr>
+          </thead>
+          <tbody>
+            <% recentLectures.forEach(lecture => { %>
+              <tr>
+                <td><%= lecture.titleArabic %></td>
+                <td><%= lecture.sheikhId?.nameArabic || 'N/A' %></td>
+                <td><%= lecture.seriesId?.titleArabic || 'N/A' %></td>
+                <td>
+                  <% if (lecture.published) { %>
+                    <span class="badge badge-success">Published</span>
+                  <% } else { %>
+                    <span class="badge badge-warning">Draft</span>
+                  <% } %>
+                </td>
+                <td><%= lecture.playCount %></td>
+              </tr>
+            <% }) %>
+          </tbody>
+        </table>
+      <% } else { %>
+        <div class="empty-state">
+          <p>No lectures yet. Upload your first lecture to get started!</p>
+        </div>
+      <% } %>
+    </div>
+  </div>
+</body>
+</html>

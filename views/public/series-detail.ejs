@@ -1,0 +1,510 @@
+<%- include('../layout', { body: `
+<div class="series-detail-page">
+  <!-- Breadcrumb -->
+  <nav class="breadcrumb">
+    <a href="/">الرئيسية</a>
+    <span class="separator">›</span>
+    <a href="/series">السلاسل</a>
+    <span class="separator">›</span>
+    <span class="current">${series.titleArabic}</span>
+  </nav>
+
+  <!-- Series Header -->
+  <div class="series-header">
+    <div class="series-header-icon">
+      <svg width="64" height="64" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+        <path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"></path>
+        <path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"></path>
+      </svg>
+    </div>
+
+    <div class="series-header-content">
+      <div class="series-category-badge">
+        ${series.category || 'عام'}
+      </div>
+
+      <h1 class="series-title">${series.titleArabic}</h1>
+      ${series.titleEnglish ? `<h2 class="series-title-en">${series.titleEnglish}</h2>` : ''}
+
+      <!-- Sheikh Info -->
+      ${series.sheikhId ? `
+      <div class="series-sheikh">
+        <svg class="icon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+          <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
+          <circle cx="12" cy="7" r="4"></circle>
+        </svg>
+        <a href="/sheikhs/${series.sheikhId._id}" class="sheikh-link">
+          ${series.sheikhId.nameArabic}
+          ${series.sheikhId.honorific ? `<span class="honorific">${series.sheikhId.honorific}</span>` : ''}
+        </a>
+      </div>
+      ` : ''}
+    </div>
+  </div>
+
+  <!-- Statistics -->
+  <div class="stats-grid">
+    <div class="stat-card">
+      <div class="stat-icon">
+        <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <circle cx="12" cy="12" r="10"></circle>
+          <polygon points="10 8 16 12 10 16 10 8"></polygon>
+        </svg>
+      </div>
+      <div class="stat-content">
+        <div class="stat-value">${stats.totalLectures}</div>
+        <div class="stat-label">محاضرة</div>
+      </div>
+    </div>
+
+    <div class="stat-card">
+      <div class="stat-icon">
+        <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <polygon points="23 7 16 12 23 17 23 7"></polygon>
+          <polygon points="14 7 7 12 14 17 14 7"></polygon>
+        </svg>
+      </div>
+      <div class="stat-content">
+        <div class="stat-value">${stats.totalPlays.toLocaleString('ar-SA')}</div>
+        <div class="stat-label">استماع</div>
+      </div>
+    </div>
+
+    <div class="stat-card">
+      <div class="stat-icon">
+        <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <circle cx="12" cy="12" r="10"></circle>
+          <polyline points="12 6 12 12 16 14"></polyline>
+        </svg>
+      </div>
+      <div class="stat-content">
+        <div class="stat-value">${Math.floor(stats.totalDuration / 3600)}</div>
+        <div class="stat-label">ساعة محتوى</div>
+      </div>
+    </div>
+
+    ${stats.completeLectures > 0 ? `
+    <div class="stat-card">
+      <div class="stat-icon">
+        <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path>
+          <polyline points="22 4 12 14.01 9 11.01"></polyline>
+        </svg>
+      </div>
+      <div class="stat-content">
+        <div class="stat-value">${Math.round((stats.completeLectures / stats.totalLectures) * 100)}%</div>
+        <div class="stat-label">مرقمة</div>
+      </div>
+    </div>
+    ` : ''}
+  </div>
+
+  <!-- Description -->
+  ${series.descriptionArabic || series.descriptionEnglish ? `
+  <div class="series-description-section">
+    <h2 class="section-title">وصف السلسلة</h2>
+    <div class="description-card">
+      ${series.descriptionArabic ? `<p class="description-text">${series.descriptionArabic}</p>` : ''}
+      ${series.descriptionEnglish ? `<p class="description-text-en">${series.descriptionEnglish}</p>` : ''}
+    </div>
+  </div>
+  ` : ''}
+
+  <!-- Sheikh Bio -->
+  ${series.sheikhId && series.sheikhId.bioArabic ? `
+  <div class="sheikh-bio-section">
+    <h2 class="section-title">نبذة عن الشيخ</h2>
+    <div class="bio-card">
+      <p class="bio-text">${series.sheikhId.bioArabic}</p>
+      <a href="/sheikhs/${series.sheikhId._id}" class="btn-link">المزيد من محاضرات الشيخ ←</a>
+    </div>
+  </div>
+  ` : ''}
+
+  <!-- Lectures Section -->
+  <div class="lectures-section">
+    <div class="section-header">
+      <h2 class="section-title">محاضرات السلسلة</h2>
+      <p class="section-subtitle">${lectures.length} محاضرة</p>
+    </div>
+
+    ${lectures && lectures.length > 0 ? `
+    <div class="lectures-list">
+      ${lectures.map((lecture, index) => `
+        <div class="lecture-item">
+          ${lecture.lectureNumber ? `
+            <div class="lecture-number-badge">
+              ${lecture.lectureNumber}
+            </div>
+          ` : `
+            <div class="lecture-number-badge unnumbered">
+              ${index + 1}
+            </div>
+          `}
+          <div class="lecture-item-content">
+            <%- include('../partials/lectureCard', { lecture: ${JSON.stringify(lecture)} }) %>
+          </div>
+        </div>
+      `).join('')}
+    </div>
+    ` : `
+    <div class="empty-state">
+      <svg width="64" height="64" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+        <circle cx="12" cy="12" r="10"></circle>
+        <line x1="12" y1="8" x2="12" y2="12"></line>
+        <line x1="12" y1="16" x2="12.01" y2="16"></line>
+      </svg>
+      <p>لا توجد محاضرات منشورة في هذه السلسلة حالياً</p>
+    </div>
+    `}
+  </div>
+</div>
+
+<style>
+.series-detail-page {
+  padding: 2rem 0;
+  max-width: 1200px;
+  margin: 0 auto;
+}
+
+.breadcrumb {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 0.9rem;
+  color: var(--text-secondary);
+  margin-bottom: 2rem;
+  padding: 0 1rem;
+}
+
+.breadcrumb a {
+  color: var(--text-secondary);
+  text-decoration: none;
+  transition: color 0.2s;
+}
+
+.breadcrumb a:hover {
+  color: var(--primary);
+}
+
+.breadcrumb .separator {
+  color: var(--text-secondary);
+  opacity: 0.5;
+}
+
+.breadcrumb .current {
+  color: var(--text-primary);
+  font-weight: 500;
+}
+
+/* Series Header */
+.series-header {
+  background: linear-gradient(135deg, var(--primary) 0%, #145450 100%);
+  border-radius: 16px;
+  padding: 3rem 2rem;
+  margin-bottom: 2rem;
+  color: white;
+  display: flex;
+  gap: 2rem;
+  align-items: center;
+}
+
+.series-header-icon {
+  width: 100px;
+  height: 100px;
+  border-radius: 16px;
+  background: rgba(255,255,255,0.2);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  backdrop-filter: blur(10px);
+}
+
+.series-header-content {
+  flex: 1;
+}
+
+.series-category-badge {
+  display: inline-block;
+  background: rgba(255,255,255,0.25);
+  padding: 0.5rem 1rem;
+  border-radius: 20px;
+  font-size: 0.9rem;
+  font-weight: 500;
+  margin-bottom: 1rem;
+  backdrop-filter: blur(10px);
+}
+
+.series-title {
+  font-family: 'Amiri', serif;
+  font-size: 2.5rem;
+  margin-bottom: 0.5rem;
+  line-height: 1.4;
+}
+
+.series-title-en {
+  font-family: 'Cormorant Garamond', serif;
+  font-size: 1.5rem;
+  opacity: 0.9;
+  font-weight: 400;
+  margin-bottom: 1rem;
+}
+
+.series-sheikh {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 1.1rem;
+  margin-top: 1rem;
+}
+
+.series-sheikh .icon {
+  stroke-width: 2;
+}
+
+.sheikh-link {
+  color: white;
+  text-decoration: none;
+  font-weight: 500;
+  transition: opacity 0.2s;
+}
+
+.sheikh-link:hover {
+  opacity: 0.8;
+  text-decoration: underline;
+}
+
+.honorific {
+  font-size: 0.9rem;
+  opacity: 0.85;
+  margin-right: 0.25rem;
+}
+
+/* Statistics Grid */
+.stats-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 1.5rem;
+  margin-bottom: 3rem;
+  padding: 0 1rem;
+}
+
+.stat-card {
+  background: white;
+  border-radius: 12px;
+  padding: 1.5rem;
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+  transition: all 0.3s;
+}
+
+.stat-card:hover {
+  box-shadow: 0 4px 16px rgba(0,0,0,0.1);
+  transform: translateY(-2px);
+}
+
+.stat-icon {
+  width: 56px;
+  height: 56px;
+  border-radius: 12px;
+  background: linear-gradient(135deg, var(--primary) 0%, #145450 100%);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: white;
+  flex-shrink: 0;
+}
+
+.stat-content {
+  flex: 1;
+}
+
+.stat-value {
+  font-family: 'Amiri', serif;
+  font-size: 2rem;
+  font-weight: 700;
+  color: var(--primary);
+  line-height: 1;
+  margin-bottom: 0.25rem;
+}
+
+.stat-label {
+  font-size: 0.9rem;
+  color: var(--text-secondary);
+}
+
+/* Description Section */
+.series-description-section, .sheikh-bio-section {
+  margin-bottom: 3rem;
+  padding: 0 1rem;
+}
+
+.section-title {
+  font-family: 'Amiri', serif;
+  font-size: 1.75rem;
+  color: var(--primary);
+  margin-bottom: 1.5rem;
+}
+
+.description-card, .bio-card {
+  background: white;
+  border-radius: 12px;
+  padding: 2rem;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+}
+
+.description-text, .bio-text {
+  line-height: 2;
+  color: var(--text-primary);
+  font-size: 1.05rem;
+  margin-bottom: 1rem;
+}
+
+.description-text-en {
+  font-family: 'Spectral', serif;
+  line-height: 1.8;
+  color: var(--text-secondary);
+  font-style: italic;
+  direction: ltr;
+  text-align: left;
+}
+
+.btn-link {
+  color: var(--primary);
+  font-weight: 500;
+  text-decoration: none;
+}
+
+.btn-link:hover {
+  text-decoration: underline;
+}
+
+/* Lectures Section */
+.lectures-section {
+  padding: 0 1rem;
+}
+
+.section-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  margin-bottom: 1.5rem;
+}
+
+.section-subtitle {
+  color: var(--text-secondary);
+  font-size: 0.95rem;
+}
+
+.lectures-list {
+  display: grid;
+  gap: 1.5rem;
+}
+
+.lecture-item {
+  display: flex;
+  gap: 1rem;
+  align-items: flex-start;
+}
+
+.lecture-number-badge {
+  width: 48px;
+  height: 48px;
+  border-radius: 12px;
+  background: linear-gradient(135deg, var(--primary) 0%, #145450 100%);
+  color: white;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-family: 'Amiri', serif;
+  font-size: 1.25rem;
+  font-weight: 700;
+  flex-shrink: 0;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+}
+
+.lecture-number-badge.unnumbered {
+  background: var(--bg-cream);
+  color: var(--text-secondary);
+  border: 2px dashed var(--text-secondary);
+  opacity: 0.6;
+}
+
+.lecture-item-content {
+  flex: 1;
+  min-width: 0;
+}
+
+/* Empty State */
+.empty-state {
+  text-align: center;
+  padding: 4rem 2rem;
+  color: var(--text-secondary);
+}
+
+.empty-state svg {
+  margin-bottom: 1rem;
+  opacity: 0.3;
+}
+
+.empty-state p {
+  font-size: 1.1rem;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+  .series-header {
+    flex-direction: column;
+    text-align: center;
+    padding: 2rem 1.5rem;
+  }
+
+  .series-header-icon {
+    width: 80px;
+    height: 80px;
+  }
+
+  .series-header-icon svg {
+    width: 48px;
+    height: 48px;
+  }
+
+  .series-title {
+    font-size: 2rem;
+  }
+
+  .series-title-en {
+    font-size: 1.2rem;
+  }
+
+  .stats-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+
+  .section-header {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 0.5rem;
+  }
+
+  .lecture-item {
+    gap: 0.75rem;
+  }
+
+  .lecture-number-badge {
+    width: 40px;
+    height: 40px;
+    font-size: 1.1rem;
+  }
+}
+
+@media (max-width: 480px) {
+  .stats-grid {
+    grid-template-columns: 1fr;
+  }
+}
+</style>
+` }) %>
