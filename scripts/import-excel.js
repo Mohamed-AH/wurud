@@ -134,8 +134,12 @@ async function importExcel() {
       seriesCreated: 0,
       lecturesCreated: 0,
       lecturesSkipped: 0,
+      filenamesModified: 0,
       errors: []
     };
+
+    // Track filenames we've seen to handle duplicates
+    const seenFilenames = new Map(); // filename -> count
 
     for (const row of data) {
       try {
@@ -186,14 +190,37 @@ async function importExcel() {
           }
         }
 
-        // Check for duplicate lecture
-        const audioFileName = String(row.TelegramFileName).trim();
+        // Handle duplicate filenames by making them unique
+        let audioFileName = String(row.TelegramFileName).trim();
+
+        // Check if we've seen this filename before in this import
+        if (seenFilenames.has(audioFileName)) {
+          const count = seenFilenames.get(audioFileName);
+          seenFilenames.set(audioFileName, count + 1);
+
+          // Append counter before file extension
+          const lastDotIndex = audioFileName.lastIndexOf('.');
+          if (lastDotIndex > 0) {
+            const nameWithoutExt = audioFileName.substring(0, lastDotIndex);
+            const extension = audioFileName.substring(lastDotIndex);
+            audioFileName = `${nameWithoutExt}_${count}${extension}`;
+          } else {
+            audioFileName = `${audioFileName}_${count}`;
+          }
+
+          stats.filenamesModified++;
+          console.log(`🔄 Modified duplicate filename to: ${audioFileName}`);
+        } else {
+          seenFilenames.set(audioFileName, 1);
+        }
+
+        // Check if this modified filename already exists in database
         const existingLecture = await Lecture.findOne({
           audioFileName: audioFileName
         });
 
         if (existingLecture) {
-          console.log(`⏭️  Skipping duplicate lecture: ${audioFileName}`);
+          console.log(`⏭️  Skipping lecture (already in DB): ${audioFileName}`);
           stats.lecturesSkipped++;
           continue;
         }
@@ -258,6 +285,7 @@ async function importExcel() {
     console.log(`✅ Sheikhs created: ${stats.sheikhsCreated}`);
     console.log(`✅ Series created: ${stats.seriesCreated}`);
     console.log(`✅ Lectures created: ${stats.lecturesCreated}`);
+    console.log(`🔄 Duplicate filenames renamed: ${stats.filenamesModified}`);
     console.log(`⏭️  Lectures skipped: ${stats.lecturesSkipped}`);
     console.log(`❌ Errors: ${stats.errors.length}`);
 
