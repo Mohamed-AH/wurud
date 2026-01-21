@@ -19,7 +19,12 @@ function parseDuration(durationStr) {
   }
 
   try {
-    const cleanStr = String(durationStr).trim();
+    // Remove leading apostrophe (Excel text format marker) and trim
+    let cleanStr = String(durationStr).trim();
+    if (cleanStr.startsWith("'")) {
+      cleanStr = cleanStr.substring(1);
+    }
+
     const parts = cleanStr.split(':').map(p => {
       const num = parseInt(p, 10);
       return isNaN(num) ? 0 : num;
