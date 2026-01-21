@@ -1,0 +1,243 @@
+require('dotenv').config();
+const XLSX = require('xlsx');
+const path = require('path');
+const mongoose = require('mongoose');
+const { Lecture, Sheikh, Series } = require('../models');
+
+// Connect to MongoDB
+mongoose.connect(process.env.MONGODB_URI)
+  .then(() => console.log('✅ MongoDB Connected'))
+  .catch(err => {
+    console.error('❌ MongoDB connection failed:', err.message);
+    process.exit(1);
+  });
+
+// Parse duration from MM:SS or HH:MM:SS format to seconds
+function parseDuration(durationStr) {
+  if (!durationStr) return 0;
+
+  const parts = String(durationStr).split(':').map(p => parseInt(p, 10));
+
+  if (parts.length === 2) {
+    // MM:SS format
+    return parts[0] * 60 + parts[1];
+  } else if (parts.length === 3) {
+    // HH:MM:SS format
+    return parts[0] * 3600 + parts[1] * 60 + parts[2];
+  }
+
+  return 0;
+}
+
+// Parse date from DD.MM.YYYY format
+function parseDate(dateStr) {
+  if (!dateStr) return null;
+
+  try {
+    const parts = String(dateStr).split('.');
+    if (parts.length === 3) {
+      const [day, month, year] = parts.map(p => parseInt(p, 10));
+      return new Date(year, month - 1, day);
+    }
+  } catch (error) {
+    console.warn(`⚠️  Could not parse date: ${dateStr}`);
+  }
+
+  return null;
+}
+
+// Extract lecture number from Serial text
+function extractLectureNumber(serialText) {
+  if (!serialText) return null;
+
+  // Arabic numbers mapping
+  const arabicNumbers = {
+    'الأول': 1, 'الثاني': 2, 'الثالث': 3, 'الرابع': 4, 'الخامس': 5,
+    'السادس': 6, 'السابع': 7, 'الثامن': 8, 'التاسع': 9, 'العاشر': 10,
+    'الحادي عشر': 11, 'الثاني عشر': 12, 'الثالث عشر': 13, 'الرابع عشر': 14,
+    'الخامس عشر': 15, 'السادس عشر': 16, 'السابع عشر': 17, 'الثامن عشر': 18,
+    'التاسع عشر': 19, 'العشرون': 20, 'الحادي والعشرون': 21, 'الثاني والعشرون': 22,
+    'الثالث والعشرون': 23, 'الرابع والعشرون': 24, 'الخامس والعشرون': 25,
+    'السادس والعشرون': 26, 'السابع والعشرون': 27, 'الثامن والعشرون': 28,
+    'التاسع والعشرون': 29, 'الثلاثون': 30
+  };
+
+  const text = String(serialText).trim();
+
+  // Check for Arabic ordinal numbers
+  for (const [word, num] of Object.entries(arabicNumbers)) {
+    if (text.includes(word)) {
+      return num;
+    }
+  }
+
+  // Check for English numerals
+  const match = text.match(/\d+/);
+  if (match) {
+    return parseInt(match[0], 10);
+  }
+
+  return null;
+}
+
+async function importExcel() {
+  try {
+    console.log('📖 Reading Excel file...\n');
+
+    const filePath = path.join(__dirname, '../updatedData.xlsx');
+    const workbook = XLSX.readFile(filePath);
+    const sheetName = workbook.SheetNames[0];
+    const data = XLSX.utils.sheet_to_json(workbook.Sheets[sheetName]);
+
+    console.log(`📊 Found ${data.length} lectures in Excel file\n`);
+
+    const stats = {
+      sheikhsCreated: 0,
+      seriesCreated: 0,
+      lecturesCreated: 0,
+      lecturesSkipped: 0,
+      errors: []
+    };
+
+    for (const row of data) {
+      try {
+        // Validate required fields
+        if (!row.Sheikh || !row.TelegramFileName) {
+          console.log(`⏭️  Skipping row ${row['S.No']}: Missing sheikh or filename`);
+          stats.lecturesSkipped++;
+          continue;
+        }
+
+        // Find or create Sheikh
+        const sheikhNameArabic = String(row.Sheikh).trim();
+        let sheikh = await Sheikh.findOne({ nameArabic: sheikhNameArabic });
+
+        if (!sheikh) {
+          sheikh = await Sheikh.create({
+            nameArabic: sheikhNameArabic,
+            nameEnglish: sheikhNameArabic, // Can be updated later
+            honorific: 'حفظه الله',
+            bioArabic: `الشيخ ${sheikhNameArabic}`,
+            bioEnglish: `Sheikh ${sheikhNameArabic}`
+          });
+          stats.sheikhsCreated++;
+          console.log(`✅ Created sheikh: ${sheikhNameArabic}`);
+        }
+
+        // Find or create Series (if Type is "Series" and SeriesName exists)
+        let series = null;
+        if (row.Type === 'Series' && row.SeriesName) {
+          const seriesTitleArabic = String(row.SeriesName).trim();
+          series = await Series.findOne({
+            titleArabic: seriesTitleArabic,
+            sheikhId: sheikh._id
+          });
+
+          if (!series) {
+            series = await Series.create({
+              titleArabic: seriesTitleArabic,
+              titleEnglish: seriesTitleArabic, // Can be updated later
+              sheikhId: sheikh._id,
+              category: row.Category || 'General',
+              descriptionArabic: `سلسلة ${seriesTitleArabic}`,
+              descriptionEnglish: `Series: ${seriesTitleArabic}`,
+              lectureCount: 0
+            });
+            stats.seriesCreated++;
+            console.log(`✅ Created series: ${seriesTitleArabic}`);
+          }
+        }
+
+        // Check for duplicate lecture
+        const audioFileName = String(row.TelegramFileName).trim();
+        const existingLecture = await Lecture.findOne({
+          audioFileName: audioFileName
+        });
+
+        if (existingLecture) {
+          console.log(`⏭️  Skipping duplicate lecture: ${audioFileName}`);
+          stats.lecturesSkipped++;
+          continue;
+        }
+
+        // Parse duration and date
+        const duration = parseDuration(row.ClipLength);
+        const recordingDate = parseDate(row.DateInGreg);
+        const lectureNumber = extractLectureNumber(row.Serial);
+
+        // Create title
+        const titleArabic = row.Serial || row.SeriesName || 'محاضرة';
+
+        // Create Lecture
+        const lecture = await Lecture.create({
+          audioFileName: audioFileName,
+          titleArabic: titleArabic,
+          titleEnglish: titleArabic, // Can be updated later
+          sheikhId: sheikh._id,
+          seriesId: series ? series._id : null,
+          lectureNumber: lectureNumber,
+          duration: duration,
+          category: row.Category || 'General',
+          location: row['Location/Online'] || '',
+          recordingDate: recordingDate,
+          published: false, // Set to false until audio files are uploaded
+          featured: false,
+          descriptionArabic: row.OriginalAuthor ? `من كتاب: ${row.OriginalAuthor}` : '',
+          descriptionEnglish: row.OriginalAuthor ? `From book: ${row.OriginalAuthor}` : ''
+        });
+
+        // Update series lecture count
+        if (series) {
+          await Series.findByIdAndUpdate(series._id, {
+            $inc: { lectureCount: 1 }
+          });
+        }
+
+        stats.lecturesCreated++;
+
+        if (stats.lecturesCreated % 10 === 0) {
+          console.log(`📝 Imported ${stats.lecturesCreated} lectures...`);
+        }
+
+      } catch (error) {
+        console.error(`❌ Error processing row ${row['S.No']}:`, error.message);
+        stats.errors.push({
+          row: row['S.No'],
+          error: error.message
+        });
+      }
+    }
+
+    // Print final statistics
+    console.log('\n' + '='.repeat(60));
+    console.log('📊 Import Complete!');
+    console.log('='.repeat(60));
+    console.log(`✅ Sheikhs created: ${stats.sheikhsCreated}`);
+    console.log(`✅ Series created: ${stats.seriesCreated}`);
+    console.log(`✅ Lectures created: ${stats.lecturesCreated}`);
+    console.log(`⏭️  Lectures skipped: ${stats.lecturesSkipped}`);
+    console.log(`❌ Errors: ${stats.errors.length}`);
+
+    if (stats.errors.length > 0) {
+      console.log('\n⚠️  Errors encountered:');
+      stats.errors.forEach(err => {
+        console.log(`  Row ${err.row}: ${err.error}`);
+      });
+    }
+
+    console.log('\n💡 Next steps:');
+    console.log('1. Review imported data in MongoDB');
+    console.log('2. Upload actual audio files to the uploads folder');
+    console.log('3. Update lectures to published: true once audio files are available');
+
+  } catch (error) {
+    console.error('❌ Import failed:', error);
+  } finally {
+    await mongoose.connection.close();
+    console.log('\n👋 Database connection closed');
+    process.exit(0);
+  }
+}
+
+// Run the import
+importExcel();
