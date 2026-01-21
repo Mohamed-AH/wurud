@@ -5,6 +5,7 @@ const helmet = require('helmet');
 const compression = require('compression');
 const session = require('express-session');
 const cookieParser = require('cookie-parser');
+const expressLayouts = require('express-ejs-layouts');
 const connectDB = require('./config/database');
 const passport = require('./config/passport');
 const { i18nMiddleware } = require('./utils/i18n');
@@ -18,6 +19,10 @@ connectDB();
 // View engine setup
 app.set('view engine', 'ejs');
 app.set('views', path.join(__dirname, 'views'));
+app.use(expressLayouts);
+app.set('layout', 'layout');
+app.set('layout extractScripts', true);
+app.set('layout extractStyles', true);
 
 // Security middleware
 app.use(helmet({
