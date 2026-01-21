@@ -138,7 +138,7 @@ async function importExcel() {
               titleArabic: seriesTitleArabic,
               titleEnglish: seriesTitleArabic, // Can be updated later
               sheikhId: sheikh._id,
-              category: row.Category || 'General',
+              category: row.Category || 'Other',
               descriptionArabic: `سلسلة ${seriesTitleArabic}`,
               descriptionEnglish: `Series: ${seriesTitleArabic}`,
               lectureCount: 0
@@ -165,6 +165,10 @@ async function importExcel() {
         const recordingDate = parseDate(row.DateInGreg);
         const lectureNumber = extractLectureNumber(row.Serial);
 
+        // Estimate file size (approximate: 1MB per minute for typical MP3)
+        // This will be updated when actual audio files are uploaded
+        const estimatedFileSize = duration > 0 ? Math.round(duration / 60 * 1024 * 1024) : 1024 * 1024;
+
         // Create title
         const titleArabic = row.Serial || row.SeriesName || 'محاضرة';
 
@@ -177,7 +181,8 @@ async function importExcel() {
           seriesId: series ? series._id : null,
           lectureNumber: lectureNumber,
           duration: duration,
-          category: row.Category || 'General',
+          fileSize: estimatedFileSize, // Estimated, will be updated when audio uploaded
+          category: row.Category || 'Other',
           location: row['Location/Online'] || '',
           recordingDate: recordingDate,
           published: false, // Set to false until audio files are uploaded
