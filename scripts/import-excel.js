@@ -14,19 +14,36 @@ mongoose.connect(process.env.MONGODB_URI)
 
 // Parse duration from MM:SS or HH:MM:SS format to seconds
 function parseDuration(durationStr) {
-  if (!durationStr) return 0;
-
-  const parts = String(durationStr).split(':').map(p => parseInt(p, 10));
-
-  if (parts.length === 2) {
-    // MM:SS format
-    return parts[0] * 60 + parts[1];
-  } else if (parts.length === 3) {
-    // HH:MM:SS format
-    return parts[0] * 3600 + parts[1] * 60 + parts[2];
+  if (!durationStr || durationStr === '' || durationStr === null || durationStr === undefined) {
+    return 1; // Default 1 second for missing durations
   }
 
-  return 0;
+  try {
+    // Remove leading apostrophe (Excel text format marker) and trim
+    let cleanStr = String(durationStr).trim();
+    if (cleanStr.startsWith("'")) {
+      cleanStr = cleanStr.substring(1);
+    }
+
+    const parts = cleanStr.split(':').map(p => {
+      const num = parseInt(p, 10);
+      return isNaN(num) ? 0 : num;
+    });
+
+    if (parts.length === 2) {
+      // MM:SS format
+      return parts[0] * 60 + parts[1];
+    } else if (parts.length === 3) {
+      // HH:MM:SS format
+      return parts[0] * 3600 + parts[1] * 60 + parts[2];
+    }
+
+    // If format is unexpected, return default
+    return 1;
+  } catch (error) {
+    console.warn(`⚠️  Could not parse duration: ${durationStr}, using default`);
+    return 1;
+  }
 }
 
 // Parse date from DD.MM.YYYY format
@@ -78,6 +95,27 @@ function extractLectureNumber(serialText) {
   }
 
   return null;
+}
+
+// Map Excel category names to valid enum values
+function mapCategory(excelCategory) {
+  if (!excelCategory) return 'Other';
+
+  const categoryMap = {
+    'Tafseer': 'Tafsir',
+    'Tafsir': 'Tafsir',
+    'Hadeeth': 'Hadith',
+    'Hadith': 'Hadith',
+    'Fiqh': 'Fiqh',
+    'Aqeedah': 'Aqeedah',
+    'Seerah': 'Seerah',
+    'Akhlaq': 'Akhlaq',
+    'Khutba': 'Other', // Friday sermons
+    'Khutbah': 'Other'
+  };
+
+  const normalized = String(excelCategory).trim();
+  return categoryMap[normalized] || 'Other';
 }
 
 async function importExcel() {
@@ -138,7 +176,7 @@ async function importExcel() {
               titleArabic: seriesTitleArabic,
               titleEnglish: seriesTitleArabic, // Can be updated later
               sheikhId: sheikh._id,
-              category: row.Category || 'Other',
+              category: mapCategory(row.Category),
               descriptionArabic: `سلسلة ${seriesTitleArabic}`,
               descriptionEnglish: `Series: ${seriesTitleArabic}`,
               lectureCount: 0
@@ -182,7 +220,7 @@ async function importExcel() {
           lectureNumber: lectureNumber,
           duration: duration,
           fileSize: estimatedFileSize, // Estimated, will be updated when audio uploaded
-          category: row.Category || 'Other',
+          category: mapCategory(row.Category),
           location: row['Location/Online'] || '',
           recordingDate: recordingDate,
           published: false, // Set to false until audio files are uploaded
