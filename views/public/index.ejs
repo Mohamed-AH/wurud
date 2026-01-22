@@ -1,4 +1,7 @@
 <style>
+  /* ===== NEW DESIGN STYLES v2.0 - DESIGN_CRITIQUE.md FIXES ===== */
+  /* Last updated: 2026-01-22 - If you see this comment, CSS is loading! */
+
   /* Search Hero Section */
   .search-hero {
     background: linear-gradient(180deg, #5C4033 0%, #8B9D83 100%);
@@ -583,6 +586,20 @@
 </div>
 
 <script>
+  // CSS VERSION CHECK - Check browser console for this message
+  console.log('🎨 NEW DESIGN CSS v2.0 LOADED - DESIGN_CRITIQUE.md fixes applied');
+  console.log('📊 If you see old styles, press Ctrl+Shift+R (hard refresh) to clear cache');
+
+  // Verify critical styles are applied
+  const testCard = document.querySelector('.series-card');
+  if (testCard) {
+    const styles = window.getComputedStyle(testCard);
+    console.log('🔍 Series Card Styles:');
+    console.log('  - Background:', styles.backgroundColor);
+    console.log('  - Border:', styles.border);
+    console.log('  - Border-radius:', styles.borderRadius);
+  }
+
   // Toggle series expansion
   function toggleSeries(seriesId) {
     const episodesList = document.getElementById('episodes-' + seriesId);
