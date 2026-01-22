@@ -7,15 +7,11 @@ const { Lecture, Sheikh, Series } = require('../models');
 // @access  Public
 router.get('/', async (req, res) => {
   try {
-    console.log('🔍 DEBUG: Homepage route called');
-
     // Fetch all series with their sheikhs
     const series = await Series.find()
       .populate('sheikhId', 'nameArabic nameEnglish honorific')
       .sort({ createdAt: -1 })
       .lean();
-
-    console.log(`📊 DEBUG: Found ${series.length} series in database`);
 
     // For each series, fetch its lectures
     const seriesList = await Promise.all(
@@ -31,8 +27,6 @@ router.get('/', async (req, res) => {
         const originalAuthor = lectures.find(l => l.descriptionArabic)?.descriptionArabic
           ?.replace('من كتاب: ', '') || null;
 
-        console.log(`  📚 Series: ${s.titleArabic} -> ${lectures.length} lectures`);
-
         return {
           ...s,
           sheikh: s.sheikhId,
@@ -46,20 +40,12 @@ router.get('/', async (req, res) => {
     // Filter out series with no published lectures
     const filteredSeries = seriesList.filter(s => s.lectureCount > 0);
 
-    console.log(`✅ DEBUG: Rendering ${filteredSeries.length} series with lectures`);
-    console.log(`📋 DEBUG: First series data:`, filteredSeries[0] ? {
-      title: filteredSeries[0].titleArabic,
-      category: filteredSeries[0].category,
-      lectureCount: filteredSeries[0].lectureCount,
-      originalAuthor: filteredSeries[0].originalAuthor
-    } : 'No series');
-
     res.render('public/index', {
       title: 'المكتبة الصوتية',
       seriesList: filteredSeries
     });
   } catch (error) {
-    console.error('❌ Homepage error:', error);
+    console.error('Homepage error:', error);
     res.status(500).send('Error loading homepage');
   }
 });
