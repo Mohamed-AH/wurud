@@ -3,42 +3,46 @@ const router = express.Router();
 const { Lecture, Sheikh, Series } = require('../models');
 
 // @route   GET /
-// @desc    Homepage
+// @desc    Homepage - Series-based view
 // @access  Public
 router.get('/', async (req, res) => {
   try {
-    // Get statistics
-    const stats = {
-      totalLectures: await Lecture.countDocuments({ published: true }),
-      totalSheikhs: await Sheikh.countDocuments(),
-      totalSeries: await Series.countDocuments(),
-      totalPlays: await Lecture.aggregate([
-        { $match: { published: true } },
-        { $group: { _id: null, total: { $sum: '$playCount' } } }
-      ]).then(result => result[0]?.total || 0)
-    };
-
-    // Get featured lectures
-    const featuredLectures = await Lecture.find({ published: true, featured: true })
-      .sort({ createdAt: -1 })
-      .limit(3)
+    // Fetch all series with their sheikhs
+    const series = await Series.find()
       .populate('sheikhId', 'nameArabic nameEnglish honorific')
-      .populate('seriesId', 'titleArabic titleEnglish')
+      .sort({ createdAt: -1 })
       .lean();
 
-    // Get recent lectures
-    const recentLectures = await Lecture.find({ published: true })
-      .sort({ createdAt: -1 })
-      .limit(12)
-      .populate('sheikhId', 'nameArabic nameEnglish honorific')
-      .populate('seriesId', 'titleArabic titleEnglish')
-      .lean();
+    // For each series, fetch its lectures
+    const seriesList = await Promise.all(
+      series.map(async (s) => {
+        const lectures = await Lecture.find({
+          seriesId: s._id,
+          published: true
+        })
+          .sort({ lectureNumber: 1, createdAt: 1 })
+          .lean();
+
+        // Get original author from first lecture with description
+        const originalAuthor = lectures.find(l => l.descriptionArabic)?.descriptionArabic
+          ?.replace('من كتاب: ', '') || null;
+
+        return {
+          ...s,
+          sheikh: s.sheikhId,
+          lectures: lectures,
+          lectureCount: lectures.length,
+          originalAuthor: originalAuthor
+        };
+      })
+    );
+
+    // Filter out series with no published lectures
+    const filteredSeries = seriesList.filter(s => s.lectureCount > 0);
 
     res.render('public/index', {
-      title: 'الرئيسية',
-      stats,
-      featuredLectures,
-      recentLectures
+      title: 'المكتبة الصوتية',
+      seriesList: filteredSeries
     });
   } catch (error) {
     console.error('Homepage error:', error);

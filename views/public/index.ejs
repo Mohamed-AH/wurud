@@ -1,193 +1,549 @@
 <style>
-  .hero {
-    background: linear-gradient(135deg, var(--primary) 0%, #2C3E35 100%);
-    color: white;
-    padding: 60px 0;
+  /* Search Hero Section */
+  .search-hero {
+    background: linear-gradient(135deg, var(--primary-dark) 0%, var(--primary-brown) 100%);
+    padding: var(--space-2xl) var(--space-lg);
     text-align: center;
-    margin-bottom: 60px;
+    margin-bottom: var(--space-2xl);
+    border-bottom: 4px solid var(--accent-gold);
   }
 
-  .hero h1 {
-    font-size: 48px;
-    margin-bottom: 16px;
+  .search-hero-quote {
+    font-family: var(--font-arabic-display);
+    font-size: 24px;
+    color: var(--cream);
+    margin-bottom: var(--space-lg);
+    font-weight: 600;
+    line-height: 1.8;
+    text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.3);
   }
 
-  .hero p {
-    font-size: 20px;
-    opacity: 0.9;
+  .search-container {
     max-width: 600px;
     margin: 0 auto;
-  }
-
-  .section-title {
-    font-size: 32px;
-    margin-bottom: 32px;
-    color: var(--text-primary);
     display: flex;
-    align-items: center;
-    gap: 12px;
+    gap: var(--space-md);
   }
 
-  .section-title::after {
-    content: '';
+  .search-input {
     flex: 1;
-    height: 2px;
-    background: linear-gradient(to left, transparent, var(--accent-gold));
-  }
-
-  .lectures-grid {
-    display: grid;
-    gap: 20px;
-    margin-bottom: 60px;
-  }
-
-  .featured-section {
-    margin-bottom: 80px;
-  }
-
-  .recent-section {
-    margin-bottom: 80px;
-  }
-
-  .view-all-btn {
-    display: inline-block;
-    padding: 14px 32px;
-    background: var(--primary);
-    color: white;
-    text-decoration: none;
+    padding: 14px 20px;
+    border: 2px solid var(--accent-gold);
     border-radius: 8px;
+    font-family: var(--font-arabic-body);
+    font-size: 16px;
+    background: var(--paper);
+    color: var(--text-primary);
+  }
+
+  .search-input:focus {
+    outline: none;
+    box-shadow: 0 0 0 3px rgba(193, 154, 107, 0.3);
+  }
+
+  .search-btn {
+    padding: 14px 32px;
+    background: var(--accent-gold);
+    color: var(--primary-dark);
+    border: none;
+    border-radius: 8px;
+    font-family: var(--font-arabic-body);
     font-size: 16px;
     font-weight: 600;
-    transition: all 0.3s;
-    text-align: center;
+    cursor: pointer;
+    transition: all 0.3s ease;
   }
 
-  .view-all-btn:hover {
-    background: #154A46;
+  .search-btn:hover {
+    background: var(--accent-amber);
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px var(--shadow-warm);
+  }
+
+  /* Filter Chips */
+  .filters-section {
+    max-width: 1200px;
+    margin: 0 auto var(--space-xl);
+    padding: 0 var(--space-lg);
+  }
+
+  .filter-group {
+    margin-bottom: var(--space-lg);
+  }
+
+  .filter-label {
+    font-family: var(--font-arabic-display);
+    font-size: 16px;
+    font-weight: 600;
+    color: var(--text-secondary);
+    margin-bottom: var(--space-sm);
+    display: block;
+  }
+
+  .filter-chips {
+    display: flex;
+    gap: var(--space-sm);
+    flex-wrap: wrap;
+  }
+
+  .chip {
+    padding: 8px 20px;
+    border: 2px solid var(--accent-gold);
+    border-radius: 24px;
+    background: transparent;
+    color: var(--text-primary);
+    font-family: var(--font-arabic-body);
+    font-size: 14px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.3s ease;
+  }
+
+  .chip:hover {
+    background: var(--cream);
+  }
+
+  .chip.active {
+    background: var(--accent-gold);
+    color: var(--primary-dark);
+    font-weight: 600;
+  }
+
+  /* Series Cards */
+  .series-list {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 0 var(--space-lg) var(--space-3xl);
+  }
+
+  .series-card {
+    background: white;
+    border: 1px solid var(--border-light);
+    border-radius: 12px;
+    margin-bottom: var(--space-lg);
+    overflow: hidden;
+    box-shadow: 0 2px 8px var(--shadow-warm);
+    transition: all 0.3s ease;
+    position: relative;
+  }
+
+  /* Vertical gold accent bar */
+  .series-card::before {
+    content: '';
+    position: absolute;
+    right: 0;
+    top: 0;
+    bottom: 0;
+    width: 6px;
+    background: var(--accent-gold);
+  }
+
+  .series-card:hover {
+    box-shadow: 0 4px 16px var(--shadow-warm);
     transform: translateY(-2px);
   }
 
-  .stats-section {
-    background: white;
-    border-radius: 16px;
-    padding: 40px;
-    margin-bottom: 60px;
-    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.05);
+  .series-header {
+    padding: var(--space-lg);
+    padding-right: calc(var(--space-lg) + 12px);
+    cursor: pointer;
   }
 
-  .stats-grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-    gap: 32px;
-    text-align: center;
+  .series-title {
+    font-family: var(--font-arabic-display);
+    font-size: 22px;
+    font-weight: 700;
+    color: var(--text-primary);
+    margin-bottom: var(--space-sm);
+    line-height: 1.6;
   }
 
-  .stat-item h3 {
-    font-size: 42px;
-    color: var(--primary);
-    margin-bottom: 8px;
+  .series-meta {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--space-md);
+    align-items: center;
+    margin-bottom: var(--space-sm);
   }
 
-  .stat-item p {
+  /* Prominent author display */
+  .series-author {
+    font-family: var(--font-arabic-display);
+    font-size: 18px;
+    color: var(--accent-gold);
+    font-weight: 600;
+  }
+
+  .series-author-label {
+    color: var(--text-muted);
+    font-weight: 500;
+  }
+
+  .series-sheikh {
     font-size: 16px;
     color: var(--text-secondary);
   }
 
+  .series-info {
+    display: flex;
+    gap: var(--space-md);
+    font-size: 14px;
+    color: var(--text-muted);
+  }
+
+  .series-info span {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+  }
+
+  .category-badge {
+    display: inline-block;
+    padding: 4px 12px;
+    border-radius: 12px;
+    font-size: 12px;
+    font-weight: 600;
+    background: var(--cream);
+    color: var(--text-secondary);
+    border: 1px solid var(--border-light);
+  }
+
+  .expand-btn {
+    margin-top: var(--space-md);
+    padding: 10px 20px;
+    background: transparent;
+    border: 2px solid var(--accent-gold);
+    border-radius: 6px;
+    color: var(--text-primary);
+    font-family: var(--font-arabic-body);
+    font-size: 14px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    width: 100%;
+  }
+
+  .expand-btn:hover {
+    background: var(--cream);
+  }
+
+  .expand-btn.expanded {
+    background: var(--accent-gold);
+    color: var(--primary-dark);
+  }
+
+  /* Episodes List */
+  .episodes-list {
+    display: none;
+    border-top: 1px solid var(--border-light);
+    background: var(--cream);
+  }
+
+  .episodes-list.show {
+    display: block;
+  }
+
+  .episode-item {
+    padding: var(--space-md) var(--space-lg);
+    padding-right: calc(var(--space-lg) + 12px);
+    border-bottom: 1px solid var(--border-light);
+    transition: background 0.2s ease;
+  }
+
+  .episode-item:last-child {
+    border-bottom: none;
+  }
+
+  .episode-item:hover {
+    background: white;
+  }
+
+  .episode-title {
+    font-family: var(--font-arabic-body);
+    font-size: 16px;
+    font-weight: 600;
+    color: var(--text-primary);
+    margin-bottom: 6px;
+  }
+
+  .episode-meta {
+    font-size: 14px;
+    color: var(--text-muted);
+    margin-bottom: var(--space-sm);
+  }
+
+  .episode-actions {
+    display: flex;
+    gap: var(--space-sm);
+  }
+
+  .btn-play, .btn-download {
+    padding: 8px 16px;
+    border-radius: 6px;
+    font-size: 14px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    text-decoration: none;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+  }
+
+  .btn-play {
+    background: var(--accent-gold);
+    color: var(--primary-dark);
+    border: none;
+  }
+
+  .btn-play:hover {
+    background: var(--accent-amber);
+    transform: translateY(-2px);
+  }
+
+  .btn-download {
+    background: transparent;
+    border: 2px solid var(--accent-gold);
+    color: var(--text-primary);
+  }
+
+  .btn-download:hover {
+    background: var(--cream);
+  }
+
+  /* Empty State */
   .empty-state {
     text-align: center;
-    padding: 60px 20px;
+    padding: var(--space-3xl);
+    color: var(--text-muted);
+  }
+
+  .empty-icon {
+    font-size: 64px;
+    margin-bottom: var(--space-md);
+  }
+
+  .empty-title {
+    font-family: var(--font-arabic-display);
+    font-size: 24px;
+    font-weight: 600;
+    margin-bottom: var(--space-sm);
     color: var(--text-secondary);
   }
 
-  .empty-state-icon {
-    font-size: 64px;
-    margin-bottom: 16px;
+  .empty-text {
+    font-size: 16px;
   }
 
+  /* Responsive */
   @media (max-width: 768px) {
-    .hero h1 {
-      font-size: 32px;
+    .search-hero-quote {
+      font-size: 18px;
     }
 
-    .hero p {
-      font-size: 16px;
+    .search-container {
+      flex-direction: column;
     }
 
-    .section-title {
-      font-size: 24px;
+    .series-meta {
+      flex-direction: column;
+      align-items: flex-start;
     }
 
-    .stats-grid {
-      grid-template-columns: 1fr 1fr;
-      gap: 24px;
+    .episode-actions {
+      flex-direction: column;
     }
 
-    .stat-item h3 {
-      font-size: 32px;
+    .btn-play, .btn-download {
+      width: 100%;
+      justify-content: center;
     }
   }
 </style>
 
-<div class="hero">
-  <div class="container">
-    <h1>مرحباً بكم في دروس</h1>
-    <p>منصة لنشر المحاضرات الإسلامية الصوتية من مشايخ وطلبة علم موثوقين</p>
+<!-- Search Hero -->
+<div class="search-hero">
+  <div class="search-hero-quote">
+    <%= locale === 'ar'
+      ? '"طَلَبُ الْعِلْمِ فَرِيضَةٌ عَلَى كُلِّ مُسْلِمٍ"'
+      : '"Seeking knowledge is obligatory upon every Muslim"'
+    %>
+  </div>
+  <div class="search-container">
+    <input
+      type="text"
+      class="search-input"
+      id="searchInput"
+      placeholder="<%= locale === 'ar' ? 'ابحث عن سلسلة...' : 'Search for a series...' %>"
+    >
+    <button class="search-btn" onclick="performSearch()">
+      <%= locale === 'ar' ? 'بحث' : 'Search' %>
+    </button>
   </div>
 </div>
 
-<div class="container">
-  <!-- Statistics Section -->
-  <div class="stats-section">
-    <div class="stats-grid">
-      <div class="stat-item">
-        <h3><%= stats.totalLectures %></h3>
-        <p>محاضرة</p>
-      </div>
-      <div class="stat-item">
-        <h3><%= stats.totalSheikhs %></h3>
-        <p>شيخ</p>
-      </div>
-      <div class="stat-item">
-        <h3><%= stats.totalSeries %></h3>
-        <p>سلسلة</p>
-      </div>
-      <div class="stat-item">
-        <h3><%= (stats.totalPlays / 1000).toFixed(1) %>k</h3>
-        <p>استماع</p>
-      </div>
+<!-- Filters -->
+<div class="filters-section">
+  <div class="filter-group">
+    <span class="filter-label"><%= locale === 'ar' ? 'التصنيف:' : 'Category:' %></span>
+    <div class="filter-chips">
+      <button class="chip active" data-filter="all" data-type="category">
+        <%= locale === 'ar' ? 'الكل' : 'All' %>
+      </button>
+      <button class="chip" data-filter="Fiqh" data-type="category">
+        <%= locale === 'ar' ? 'الفقه' : 'Fiqh' %>
+      </button>
+      <button class="chip" data-filter="Aqeedah" data-type="category">
+        <%= locale === 'ar' ? 'العقيدة' : 'Aqeedah' %>
+      </button>
+      <button class="chip" data-filter="Tafsir" data-type="category">
+        <%= locale === 'ar' ? 'التفسير' : 'Tafsir' %>
+      </button>
+      <button class="chip" data-filter="Hadith" data-type="category">
+        <%= locale === 'ar' ? 'الحديث' : 'Hadith' %>
+      </button>
+      <button class="chip" data-filter="Seerah" data-type="category">
+        <%= locale === 'ar' ? 'السيرة' : 'Seerah' %>
+      </button>
+      <button class="chip" data-filter="Other" data-type="category">
+        <%= locale === 'ar' ? 'أخرى' : 'Other' %>
+      </button>
     </div>
   </div>
+</div>
 
-  <!-- Featured Lectures -->
-  <% if (featuredLectures && featuredLectures.length > 0) { %>
-    <div class="featured-section">
-      <h2 class="section-title">⭐ محاضرات مميزة</h2>
-      <div class="lectures-grid">
-        <% featuredLectures.forEach(lecture => { %>
-          <%- include('../partials/lectureCard', { lecture }) %>
-        <% }) %>
-      </div>
-    </div>
-  <% } %>
+<!-- Series List -->
+<div class="series-list">
+  <% if (seriesList && seriesList.length > 0) { %>
+    <% seriesList.forEach(series => { %>
+      <div class="series-card" data-category="<%= series.category %>">
+        <div class="series-header" onclick="toggleSeries('<%= series._id %>')">
+          <h2 class="series-title"><%= series.titleArabic %></h2>
 
-  <!-- Recent Lectures -->
-  <% if (recentLectures && recentLectures.length > 0) { %>
-    <div class="recent-section">
-      <h2 class="section-title">🕒 أحدث المحاضرات</h2>
-      <div class="lectures-grid">
-        <% recentLectures.forEach(lecture => { %>
-          <%- include('../partials/lectureCard', { lecture }) %>
-        <% }) %>
+          <div class="series-meta">
+            <% if (series.originalAuthor) { %>
+              <div class="series-author">
+                <span class="series-author-label"><%= locale === 'ar' ? 'المؤلف:' : 'Author:' %></span>
+                <%= series.originalAuthor %>
+              </div>
+            <% } %>
+            <div class="series-sheikh">
+              <%= locale === 'ar' ? 'الشيخ:' : 'Sheikh:' %>
+              <%= series.sheikh ? series.sheikh.nameArabic : '' %>
+            </div>
+          </div>
+
+          <div class="series-info">
+            <span><%= series.lectureCount %> <%= locale === 'ar' ? 'درس' : 'lectures' %></span>
+            <span class="category-badge"><%= series.category %></span>
+          </div>
+
+          <button class="expand-btn" id="btn-<%= series._id %>">
+            <%= locale === 'ar' ? 'عرض الدروس ▼' : 'View Lectures ▼' %>
+          </button>
+        </div>
+
+        <div class="episodes-list" id="episodes-<%= series._id %>">
+          <% series.lectures.forEach(lecture => { %>
+            <div class="episode-item">
+              <div class="episode-title">
+                <%= lecture.lectureNumber ? `${lecture.lectureNumber}. ` : '' %><%= lecture.titleArabic %>
+              </div>
+              <div class="episode-meta">
+                <%= Math.floor(lecture.duration / 60) %>:<%= String(lecture.duration % 60).padStart(2, '0') %>
+                <% if (lecture.location) { %>
+                  • <%= lecture.location %>
+                <% } %>
+              </div>
+              <div class="episode-actions">
+                <button class="btn-play" onclick="playAudio('<%= lecture._id %>', '<%= lecture.titleArabic %>')">
+                  ▶ <%= locale === 'ar' ? 'تشغيل' : 'Play' %>
+                </button>
+                <a href="/download/<%= lecture._id %>" class="btn-download">
+                  ⬇ <%= locale === 'ar' ? 'تحميل' : 'Download' %>
+                </a>
+              </div>
+            </div>
+          <% }); %>
+        </div>
       </div>
-      <div style="text-align: center; margin-top: 32px;">
-        <a href="/browse" class="view-all-btn">عرض جميع المحاضرات</a>
-      </div>
-    </div>
+    <% }); %>
   <% } else { %>
     <div class="empty-state">
-      <div class="empty-state-icon">📚</div>
-      <h3>لا توجد محاضرات بعد</h3>
-      <p>سيتم إضافة المحاضرات قريباً إن شاء الله</p>
+      <div class="empty-icon">📚</div>
+      <h3 class="empty-title">
+        <%= locale === 'ar' ? 'لا توجد محاضرات' : 'No lectures found' %>
+      </h3>
+      <p class="empty-text">
+        <%= locale === 'ar' ? 'جرب بحثاً آخر' : 'Try a different search' %>
+      </p>
     </div>
   <% } %>
 </div>
+
+<script>
+  // Toggle series expansion
+  function toggleSeries(seriesId) {
+    const episodesList = document.getElementById('episodes-' + seriesId);
+    const btn = document.getElementById('btn-' + seriesId);
+
+    episodesList.classList.toggle('show');
+    btn.classList.toggle('expanded');
+
+    if (episodesList.classList.contains('show')) {
+      btn.textContent = '<%= locale === 'ar' ? 'إخفاء الدروس ▲' : 'Hide Lectures ▲' %>';
+    } else {
+      btn.textContent = '<%= locale === 'ar' ? 'عرض الدروس ▼' : 'View Lectures ▼' %>';
+    }
+  }
+
+  // Filter chips
+  document.querySelectorAll('.chip').forEach(chip => {
+    chip.addEventListener('click', function() {
+      const filterType = this.dataset.type;
+      const filterValue = this.dataset.filter;
+
+      // Update active state
+      document.querySelectorAll(\`\${'.chip[data-type="'}\${filterType}\${'"]'}\`).forEach(c => c.classList.remove('active'));
+      this.classList.add('active');
+
+      // Filter series cards
+      document.querySelectorAll('.series-card').forEach(card => {
+        const category = card.dataset.category;
+
+        if (filterValue === 'all' || category === filterValue) {
+          card.style.display = 'block';
+        } else {
+          card.style.display = 'none';
+        }
+      });
+    });
+  });
+
+  // Search functionality
+  const searchInput = document.getElementById('searchInput');
+  searchInput.addEventListener('input', performSearch);
+
+  function performSearch() {
+    const searchTerm = searchInput.value.toLowerCase();
+
+    document.querySelectorAll('.series-card').forEach(card => {
+      const title = card.querySelector('.series-title').textContent.toLowerCase();
+      const author = card.querySelector('.series-author')?.textContent.toLowerCase() || '';
+      const sheikh = card.querySelector('.series-sheikh')?.textContent.toLowerCase() || '';
+
+      if (title.includes(searchTerm) || author.includes(searchTerm) || sheikh.includes(searchTerm)) {
+        card.style.display = 'block';
+      } else {
+        card.style.display = 'none';
+      }
+    });
+  }
+
+  // Placeholder for play function (will be implemented with audio player)
+  function playAudio(lectureId, title) {
+    console.log('Play lecture:', lectureId, title);
+    // TODO: Integrate with sticky audio player
+    alert('Sticky audio player will be added next!\\n\\nLecture: ' + title);
+  }
+</script>
