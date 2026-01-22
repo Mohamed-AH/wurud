@@ -641,12 +641,19 @@
 
 <script>
   // ===== COMPREHENSIVE CSS DEBUG =====
+  alert('🔍 JavaScript is running! Check browser console now (F12)');
   console.log('🎨 NEW DESIGN CSS v2.0 LOADED - DESIGN_CRITIQUE.md fixes applied');
   console.log('📊 If you see old styles, press Ctrl+Shift+R (hard refresh) to clear cache');
 
-  // Wait for DOM to be fully loaded
-  document.addEventListener('DOMContentLoaded', function() {
+  // Check for any errors
+  window.addEventListener('error', function(e) {
+    console.error('❌ JavaScript Error:', e.message, e.filename, e.lineno);
+  });
+
+  // Run debug immediately
+  (function runDebug() {
     console.log('\n=== CSS DEBUGGING START ===\n');
+    console.log('⏰ Script running at:', new Date().toISOString());
 
     // 1. Check CSS Variables
     const rootStyles = window.getComputedStyle(document.documentElement);
@@ -738,7 +745,7 @@
     });
 
     console.log('\n=== CSS DEBUGGING END ===\n');
-  });
+  })();
 
   // Toggle series expansion
   function toggleSeries(seriesId) {
