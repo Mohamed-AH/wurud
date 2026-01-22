@@ -12,11 +12,59 @@ A web platform for hosting and streaming ~160 Arabic Islamic lecture audio files
 
 ## 📌 Project State
 
-**Current Phase**: Phase 13 Complete ✅ - Local Testing Setup in Progress 🔄
-**Last Updated**: 2026-01-21
-**Branch**: `claude/review-claude-md-usy2P`
+**Current Phase**: Data Imported ✅ - Two Design Branches Active 🎨
+**Last Updated**: 2026-01-22
+**Active Branches**:
+- `claude/review-claude-md-usy2P` - **Current green/gold design (fully functional)**
+- `claude/new-design-usy2P` - **New brown/gold scholarly design (in progress)**
 
-### What We Have
+### 🌿 Branch 1: `claude/review-claude-md-usy2P` (Current Design - GREEN/GOLD)
+
+**Status**: ✅ Fully functional and tested
+**Design**: Islamic green (#1A5F5A) and gold (#D4AF37) palette
+**Fonts**: Amiri + Noto Naskh Arabic
+
+**What Works**:
+- ✅ All 162 lectures imported and published
+- ✅ Homepage with statistics, featured/recent lectures
+- ✅ Browse page with search and filters
+- ✅ Lecture detail pages with audio player
+- ✅ Sheikh and Series profile pages
+- ✅ Language toggle (Arabic ⟷ English)
+- ✅ Responsive design
+- ✅ Full navigation (multi-page structure)
+
+### 🎨 Branch 2: `claude/new-design-usy2P` (New Design - BROWN/GOLD)
+
+**Status**: 🔄 In progress - redesigning frontend
+**Design**: Warm scholarly brown (#2C1810, #5C4033) and gold (#C19A6B) manuscript aesthetic
+**Fonts**: Scheherazade New + Noto Naskh Arabic
+
+**Completed**:
+- ✅ New color palette (brown/gold)
+- ✅ Scheherazade New font integration
+- ✅ Islamic geometric background pattern
+- ✅ Gradient brown header with gold border
+- ✅ Updated button styles
+- ✅ Simplified header (logo + language toggle only)
+
+**In Progress**:
+- 🔄 Homepage redesign with expandable series cards
+- 🔄 Single-page structure (no separate browse pages)
+- ⏭️ Sticky bottom audio player
+- ⏭️ Prominent author display (18px gold)
+- ⏭️ Vertical gold accent bars on cards
+- ⏭️ Remove all icons policy
+
+**Next Steps**:
+1. Update homepage route to fetch/group lectures by series
+2. Create expandable series card components
+3. Add sticky audio player at bottom
+4. Test new design locally
+
+---
+
+### What We Have (Common to Both Branches)
 - ✅ Requirements document reviewed (requirements.md)
 - ✅ Comprehensive 20-phase implementation plan created
 - ✅ CSV data with 160 lecture metadata entries
