@@ -543,7 +543,7 @@
                 <% } %>
               </div>
               <div class="episode-actions">
-                <button class="btn-play" onclick="playAudio('<%= lecture._id %>', '<%= lecture.titleArabic %>')">
+                <button class="btn-play" onclick="playAudio('<%= lecture._id %>', '<%= lecture.titleArabic.replace(/'/g, "\\'") %>', '<%= series.sheikh ? series.sheikh.nameArabic.replace(/'/g, "\\'") : "" %>')">
                   ▶ <%= locale === 'ar' ? 'تشغيل' : 'Play' %>
                 </button>
                 <a href="/download/<%= lecture._id %>" class="btn-download">
@@ -627,10 +627,20 @@
     });
   }
 
-  // Placeholder for play function (will be implemented with audio player)
-  function playAudio(lectureId, title) {
-    console.log('Play lecture:', lectureId, title);
-    // TODO: Integrate with sticky audio player
-    alert('Sticky audio player will be added next!\\n\\nLecture: ' + title);
+  // Play audio using sticky audio player
+  function playAudio(lectureId, title, sheikh) {
+    console.log('▶️ Play lecture:', lectureId, title, sheikh);
+
+    // Wait for audio player to be initialized
+    if (window.audioPlayer) {
+      window.audioPlayer.play(lectureId, {
+        title: title,
+        titleArabic: title,
+        sheikh: sheikh || ''
+      });
+    } else {
+      console.error('❌ Audio player not initialized');
+      alert('Audio player is loading, please try again in a moment.');
+    }
   }
 </script>
