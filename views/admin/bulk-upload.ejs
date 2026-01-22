@@ -1,0 +1,681 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Bulk Upload Audio - Duroos Admin</title>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      background: #f5f5f5;
+      color: #333;
+    }
+
+    .header {
+      background: #1A5F5A;
+      color: white;
+      padding: 16px 24px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+    }
+
+    .header h1 {
+      font-size: 24px;
+      font-weight: 600;
+    }
+
+    .header a {
+      color: white;
+      text-decoration: none;
+      margin-left: 20px;
+      opacity: 0.9;
+    }
+
+    .header a:hover {
+      opacity: 1;
+    }
+
+    .container {
+      max-width: 1400px;
+      margin: 0 auto;
+      padding: 32px 24px;
+    }
+
+    .info-box {
+      background: #e3f2fd;
+      border-left: 4px solid #2196f3;
+      padding: 16px 20px;
+      margin-bottom: 24px;
+      border-radius: 4px;
+    }
+
+    .info-box h3 {
+      color: #1976d2;
+      margin-bottom: 8px;
+    }
+
+    .info-box p {
+      color: #555;
+      line-height: 1.6;
+    }
+
+    .upload-section {
+      background: white;
+      border-radius: 12px;
+      padding: 24px;
+      margin-bottom: 32px;
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+    }
+
+    .upload-section h2 {
+      margin-bottom: 16px;
+      color: #2C3E35;
+    }
+
+    .drop-zone {
+      border: 3px dashed #D4AF37;
+      border-radius: 12px;
+      padding: 40px 20px;
+      text-align: center;
+      cursor: pointer;
+      transition: all 0.3s ease;
+      background: #FAFAF8;
+      margin-bottom: 20px;
+    }
+
+    .drop-zone.dragging {
+      background: #FFF9E6;
+      border-color: #1A5F5A;
+    }
+
+    .drop-zone:hover {
+      background: #FFF9E6;
+    }
+
+    .drop-zone-text {
+      font-size: 16px;
+      color: #666;
+      margin-bottom: 8px;
+    }
+
+    .drop-zone-hint {
+      font-size: 14px;
+      color: #999;
+    }
+
+    .file-input {
+      display: none;
+    }
+
+    .btn {
+      padding: 12px 24px;
+      border: none;
+      border-radius: 8px;
+      font-size: 16px;
+      font-weight: 500;
+      cursor: pointer;
+      transition: all 0.3s ease;
+    }
+
+    .btn-primary {
+      background: #1A5F5A;
+      color: white;
+    }
+
+    .btn-primary:hover:not(:disabled) {
+      background: #154A46;
+    }
+
+    .btn-primary:disabled {
+      background: #ccc;
+      cursor: not-allowed;
+    }
+
+    .stats {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+      gap: 16px;
+      margin-bottom: 32px;
+    }
+
+    .stat-card {
+      background: white;
+      padding: 20px;
+      border-radius: 8px;
+      box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    }
+
+    .stat-card h3 {
+      font-size: 32px;
+      color: #1A5F5A;
+      margin-bottom: 4px;
+    }
+
+    .stat-card p {
+      color: #666;
+      font-size: 14px;
+    }
+
+    .lectures-table {
+      background: white;
+      border-radius: 12px;
+      overflow: hidden;
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+    }
+
+    .table-header {
+      background: #2C3E35;
+      color: white;
+      padding: 16px 20px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .search-box {
+      padding: 8px 12px;
+      border: 1px solid #ddd;
+      border-radius: 6px;
+      font-size: 14px;
+      width: 300px;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+    }
+
+    thead {
+      background: #f5f5f5;
+    }
+
+    th, td {
+      padding: 12px 16px;
+      text-align: left;
+      border-bottom: 1px solid #eee;
+    }
+
+    th {
+      font-weight: 600;
+      color: #555;
+      font-size: 13px;
+      text-transform: uppercase;
+    }
+
+    tr:hover {
+      background: #f9f9f9;
+    }
+
+    .status-badge {
+      display: inline-block;
+      padding: 4px 12px;
+      border-radius: 12px;
+      font-size: 12px;
+      font-weight: 600;
+    }
+
+    .status-missing {
+      background: #ffebee;
+      color: #c62828;
+    }
+
+    .status-uploaded {
+      background: #e8f5e9;
+      color: #2e7d32;
+    }
+
+    .btn-small {
+      padding: 6px 12px;
+      font-size: 13px;
+      border-radius: 6px;
+      border: none;
+      cursor: pointer;
+      transition: all 0.2s ease;
+    }
+
+    .btn-upload {
+      background: #1A5F5A;
+      color: white;
+    }
+
+    .btn-upload:hover {
+      background: #154A46;
+    }
+
+    .match-section {
+      margin-top: 32px;
+    }
+
+    .match-item {
+      background: white;
+      padding: 16px;
+      margin-bottom: 12px;
+      border-radius: 8px;
+      box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+      display: grid;
+      grid-template-columns: 1fr 1fr auto;
+      gap: 16px;
+      align-items: center;
+    }
+
+    .match-item.matched {
+      border-left: 4px solid #4caf50;
+    }
+
+    .match-item .file-name {
+      font-weight: 600;
+      color: #333;
+    }
+
+    .match-item select {
+      padding: 8px 12px;
+      border: 1px solid #ddd;
+      border-radius: 6px;
+      font-size: 14px;
+    }
+
+    .progress-bar {
+      width: 100%;
+      height: 8px;
+      background: #e0e0e0;
+      border-radius: 4px;
+      overflow: hidden;
+      margin-top: 8px;
+    }
+
+    .progress-fill {
+      height: 100%;
+      background: #4caf50;
+      width: 0%;
+      transition: width 0.3s ease;
+    }
+
+    .message {
+      padding: 12px 16px;
+      border-radius: 8px;
+      margin-bottom: 20px;
+      display: none;
+    }
+
+    .message.show {
+      display: block;
+    }
+
+    .message.success {
+      background: #d4edda;
+      color: #155724;
+      border: 1px solid #c3e6cb;
+    }
+
+    .message.error {
+      background: #f8d7da;
+      color: #721c24;
+      border: 1px solid #f5c6cb;
+    }
+
+    .hidden {
+      display: none;
+    }
+  </style>
+</head>
+<body>
+  <div class="header">
+    <h1>📦 Bulk Upload Audio Files</h1>
+    <div>
+      <a href="/admin/dashboard">Dashboard</a>
+      <a href="/admin/upload">Single Upload</a>
+      <a href="/admin/manage">Manage</a>
+      <a href="/auth/logout">Logout</a>
+    </div>
+  </div>
+
+  <div class="container">
+    <div class="info-box">
+      <h3>ℹ️ How to Use Bulk Upload</h3>
+      <p>
+        <strong>Step 1:</strong> Upload multiple audio files at once (or drag & drop)<br>
+        <strong>Step 2:</strong> Match each file to an existing lecture from the dropdown<br>
+        <strong>Step 3:</strong> Click "Upload All Matched Files" to save<br><br>
+        <strong>Note:</strong> The system will try to auto-match files by comparing filenames with lecture titles.
+      </p>
+    </div>
+
+    <div class="message" id="message"></div>
+
+    <div class="stats">
+      <div class="stat-card">
+        <h3 id="totalLectures">-</h3>
+        <p>Total Lectures</p>
+      </div>
+      <div class="stat-card">
+        <h3 id="withAudio">-</h3>
+        <p>With Audio</p>
+      </div>
+      <div class="stat-card">
+        <h3 id="missingAudio">-</h3>
+        <p>Missing Audio</p>
+      </div>
+    </div>
+
+    <div class="upload-section">
+      <h2>Select Audio Files</h2>
+
+      <div class="drop-zone" id="dropZone">
+        <div class="drop-zone-text">🎵 Drag and drop multiple audio files here</div>
+        <div class="drop-zone-hint">or click to browse (MP3, M4A, WAV, OGG, FLAC)</div>
+      </div>
+
+      <input type="file" id="fileInput" class="file-input" accept="audio/*" multiple>
+
+      <div id="matchSection" class="match-section hidden">
+        <h3>Match Files to Lectures (<span id="matchCount">0</span> files selected)</h3>
+        <div id="matchList"></div>
+
+        <div style="margin-top: 24px; display: flex; gap: 12px;">
+          <button class="btn btn-primary" id="uploadAllBtn" disabled>Upload All Matched Files</button>
+          <button class="btn" style="background: #e0e0e0;" id="clearBtn">Clear Selection</button>
+        </div>
+
+        <div class="progress-bar hidden" id="progressBar">
+          <div class="progress-fill" id="progressFill"></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="lectures-table">
+      <div class="table-header">
+        <h3>Lectures Without Audio (<span id="missingCount">0</span>)</h3>
+        <input type="text" class="search-box" id="searchBox" placeholder="Search lectures...">
+      </div>
+      <table>
+        <thead>
+          <tr>
+            <th>Arabic Title</th>
+            <th>Sheikh</th>
+            <th>Series</th>
+            <th>Status</th>
+          </tr>
+        </thead>
+        <tbody id="lecturesBody">
+          <tr>
+            <td colspan="4" style="text-align: center; padding: 40px;">
+              Loading lectures...
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <script>
+    let allLectures = [];
+    let lecturesWithoutAudio = [];
+    let selectedFiles = [];
+
+    // Load statistics and lectures
+    async function loadData() {
+      try {
+        // Fetch all lectures
+        const response = await fetch('/api/lectures');
+        const data = await response.json();
+
+        if (data.success) {
+          allLectures = data.lectures;
+          lecturesWithoutAudio = allLectures.filter(l => !l.audioFileName);
+
+          // Update stats
+          document.getElementById('totalLectures').textContent = allLectures.length;
+          document.getElementById('withAudio').textContent = allLectures.filter(l => l.audioFileName).length;
+          document.getElementById('missingAudio').textContent = lecturesWithoutAudio.length;
+          document.getElementById('missingCount').textContent = lecturesWithoutAudio.length;
+
+          // Render table
+          renderLecturesTable(lecturesWithoutAudio);
+        }
+      } catch (error) {
+        console.error('Error loading data:', error);
+        showMessage('Error loading lectures: ' + error.message, 'error');
+      }
+    }
+
+    function renderLecturesTable(lectures) {
+      const tbody = document.getElementById('lecturesBody');
+
+      if (lectures.length === 0) {
+        tbody.innerHTML = '<tr><td colspan="4" style="text-align: center; padding: 40px; color: #4caf50;">🎉 All lectures have audio files!</td></tr>';
+        return;
+      }
+
+      tbody.innerHTML = lectures.map(lecture => `
+        <tr>
+          <td>${lecture.titleArabic || 'No title'}</td>
+          <td>${lecture.sheikhId?.nameArabic || 'Unknown'}</td>
+          <td>${lecture.seriesId?.titleArabic || '-'}</td>
+          <td>
+            <span class="status-badge status-missing">Missing Audio</span>
+          </td>
+        </tr>
+      `).join('');
+    }
+
+    // Search functionality
+    document.getElementById('searchBox').addEventListener('input', (e) => {
+      const term = e.target.value.toLowerCase();
+      const filtered = lecturesWithoutAudio.filter(l =>
+        (l.titleArabic && l.titleArabic.toLowerCase().includes(term)) ||
+        (l.sheikhId?.nameArabic && l.sheikhId.nameArabic.toLowerCase().includes(term))
+      );
+      renderLecturesTable(filtered);
+    });
+
+    // File selection
+    const dropZone = document.getElementById('dropZone');
+    const fileInput = document.getElementById('fileInput');
+    const matchSection = document.getElementById('matchSection');
+    const matchList = document.getElementById('matchList');
+    const matchCount = document.getElementById('matchCount');
+    const uploadAllBtn = document.getElementById('uploadAllBtn');
+    const clearBtn = document.getElementById('clearBtn');
+
+    dropZone.addEventListener('click', () => fileInput.click());
+
+    dropZone.addEventListener('dragover', (e) => {
+      e.preventDefault();
+      dropZone.classList.add('dragging');
+    });
+
+    dropZone.addEventListener('dragleave', () => {
+      dropZone.classList.remove('dragging');
+    });
+
+    dropZone.addEventListener('drop', (e) => {
+      e.preventDefault();
+      dropZone.classList.remove('dragging');
+      const files = Array.from(e.dataTransfer.files).filter(f => f.type.startsWith('audio/'));
+      if (files.length > 0) {
+        handleFiles(files);
+      }
+    });
+
+    fileInput.addEventListener('change', (e) => {
+      const files = Array.from(e.target.files).filter(f => f.type.startsWith('audio/'));
+      if (files.length > 0) {
+        handleFiles(files);
+      }
+    });
+
+    function handleFiles(files) {
+      selectedFiles = files;
+      matchCount.textContent = files.length;
+      matchSection.classList.remove('hidden');
+
+      // Render match items
+      matchList.innerHTML = files.map((file, index) => {
+        const matchedLecture = findBestMatch(file.name);
+
+        return `
+          <div class="match-item ${matchedLecture ? 'matched' : ''}" data-index="${index}">
+            <div>
+              <div class="file-name">${file.name}</div>
+              <div style="font-size: 12px; color: #999;">${(file.size / (1024 * 1024)).toFixed(2)} MB</div>
+            </div>
+            <select class="lecture-select" data-file-index="${index}">
+              <option value="">-- Select Lecture --</option>
+              ${lecturesWithoutAudio.map(lecture => `
+                <option value="${lecture._id}" ${matchedLecture && matchedLecture._id === lecture._id ? 'selected' : ''}>
+                  ${lecture.titleArabic} - ${lecture.sheikhId?.nameArabic || ''}
+                </option>
+              `).join('')}
+            </select>
+            <button class="btn-small btn-upload" onclick="uploadSingle(${index})">Upload</button>
+          </div>
+        `;
+      }).join('');
+
+      updateUploadButton();
+    }
+
+    function findBestMatch(filename) {
+      // Simple fuzzy matching - you can improve this
+      const cleanName = filename.toLowerCase().replace(/[^a-z0-9\u0600-\u06FF\s]/gi, '');
+
+      let bestMatch = null;
+      let bestScore = 0;
+
+      lecturesWithoutAudio.forEach(lecture => {
+        const title = (lecture.titleArabic || '').toLowerCase().replace(/[^a-z0-9\u0600-\u06FF\s]/gi, '');
+        const words = title.split(/\s+/);
+
+        let score = 0;
+        words.forEach(word => {
+          if (word.length > 3 && cleanName.includes(word)) {
+            score += word.length;
+          }
+        });
+
+        if (score > bestScore) {
+          bestScore = score;
+          bestMatch = lecture;
+        }
+      });
+
+      return bestScore > 10 ? bestMatch : null;
+    }
+
+    matchList.addEventListener('change', updateUploadButton);
+
+    function updateUploadButton() {
+      const selects = document.querySelectorAll('.lecture-select');
+      const hasMatches = Array.from(selects).some(s => s.value);
+      uploadAllBtn.disabled = !hasMatches;
+    }
+
+    clearBtn.addEventListener('click', () => {
+      selectedFiles = [];
+      fileInput.value = '';
+      matchSection.classList.add('hidden');
+    });
+
+    // Upload functionality
+    async function uploadSingle(index) {
+      const file = selectedFiles[index];
+      const select = document.querySelector(`.lecture-select[data-file-index="${index}"]`);
+      const lectureId = select.value;
+
+      if (!lectureId) {
+        showMessage('Please select a lecture for this file', 'error');
+        return;
+      }
+
+      await uploadFile(file, lectureId, index);
+    }
+
+    uploadAllBtn.addEventListener('click', async () => {
+      const selects = document.querySelectorAll('.lecture-select');
+      const uploads = [];
+
+      selects.forEach((select, index) => {
+        if (select.value) {
+          uploads.push({ file: selectedFiles[index], lectureId: select.value, index });
+        }
+      });
+
+      if (uploads.length === 0) {
+        showMessage('Please match at least one file to a lecture', 'error');
+        return;
+      }
+
+      uploadAllBtn.disabled = true;
+      uploadAllBtn.textContent = `Uploading 0 / ${uploads.length}...`;
+      document.getElementById('progressBar').classList.remove('hidden');
+
+      for (let i = 0; i < uploads.length; i++) {
+        const { file, lectureId, index } = uploads[i];
+        uploadAllBtn.textContent = `Uploading ${i + 1} / ${uploads.length}...`;
+
+        const progress = ((i + 1) / uploads.length) * 100;
+        document.getElementById('progressFill').style.width = progress + '%';
+
+        await uploadFile(file, lectureId, index, true);
+      }
+
+      uploadAllBtn.textContent = 'Upload All Matched Files';
+      document.getElementById('progressBar').classList.add('hidden');
+      showMessage(`Successfully uploaded ${uploads.length} files!`, 'success');
+
+      // Reload data
+      setTimeout(() => {
+        clearBtn.click();
+        loadData();
+      }, 2000);
+    });
+
+    async function uploadFile(file, lectureId, index, silent = false) {
+      try {
+        const formData = new FormData();
+        formData.append('audioFile', file);
+        formData.append('lectureId', lectureId);
+
+        const response = await fetch('/api/lectures/bulk-upload-audio', {
+          method: 'POST',
+          body: formData
+        });
+
+        const data = await response.json();
+
+        if (data.success) {
+          if (!silent) {
+            showMessage('File uploaded successfully!', 'success');
+          }
+          // Mark as uploaded
+          document.querySelector(`[data-index="${index}"]`).style.opacity = '0.5';
+        } else {
+          showMessage(data.message || 'Upload failed', 'error');
+        }
+      } catch (error) {
+        showMessage('Upload error: ' + error.message, 'error');
+      }
+    }
+
+    function showMessage(text, type) {
+      const message = document.getElementById('message');
+      message.textContent = text;
+      message.className = 'message show ' + type;
+      setTimeout(() => {
+        message.classList.remove('show');
+      }, 5000);
+    }
+
+    // Initialize
+    loadData();
+  </script>
+</body>
+</html>

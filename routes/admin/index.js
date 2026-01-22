@@ -77,6 +77,16 @@ router.get('/upload', isAdmin, (req, res) => {
   });
 });
 
+// @route   GET /admin/bulk-upload
+// @desc    Bulk upload audio files for existing lectures
+// @access  Private (Admin only)
+router.get('/bulk-upload', isAdmin, (req, res) => {
+  res.render('admin/bulk-upload', {
+    title: 'Bulk Upload Audio',
+    user: req.user
+  });
+});
+
 // @route   GET /admin/manage
 // @desc    Manage lectures page
 // @access  Private (Admin only)
