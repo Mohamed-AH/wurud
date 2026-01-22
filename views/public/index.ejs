@@ -508,6 +508,15 @@
 <!-- DEBUG INFO -->
 <div style="background: #FFE5E5; border: 3px solid #FF0000; padding: 20px; margin: 20px; border-radius: 8px; font-family: monospace;">
   <h3 style="color: #FF0000; margin: 0 0 10px 0;">🐛 DEBUG INFO:</h3>
+  <div id="js-test" style="background: #FFCCCC; padding: 10px; margin: 10px 0; border: 2px dashed #FF0000;">
+    <strong>⚠️ JavaScript Status:</strong> NOT LOADED (If you see this, JavaScript hasn't run yet)
+  </div>
+  <script>
+    // This runs inline - should update immediately
+    document.getElementById('js-test').innerHTML = '<strong>✅ JavaScript Status:</strong> WORKING! (JS executed successfully)';
+    document.getElementById('js-test').style.background = '#CCFFCC';
+    document.getElementById('js-test').style.borderColor = '#00AA00';
+  </script>
   <p><strong>seriesList exists:</strong> <%= typeof seriesList !== 'undefined' ? 'YES' : 'NO' %></p>
   <p><strong>seriesList.length:</strong> <%= seriesList ? seriesList.length : 'N/A' %></p>
   <% if (seriesList && seriesList.length > 0) { %>
@@ -640,13 +649,21 @@
 </div>
 
 <script>
+  // IMMEDIATE TEST - This should run first
+  alert('TEST 1: JavaScript is working!');
+
   // ===== COMPREHENSIVE CSS DEBUG =====
-  alert('🔍 JavaScript is running! Check browser console now (F12)');
-  console.log('🎨 NEW DESIGN CSS v2.0 LOADED - DESIGN_CRITIQUE.md fixes applied');
-  console.log('📊 If you see old styles, press Ctrl+Shift+R (hard refresh) to clear cache');
+  try {
+    alert('TEST 2: Inside try block');
+    console.log('🎨 NEW DESIGN CSS v2.0 LOADED - DESIGN_CRITIQUE.md fixes applied');
+    console.log('📊 If you see old styles, press Ctrl+Shift+R (hard refresh) to clear cache');
+  } catch(err) {
+    alert('ERROR: ' + err.message);
+  }
 
   // Check for any errors
   window.addEventListener('error', function(e) {
+    alert('JS ERROR: ' + e.message);
     console.error('❌ JavaScript Error:', e.message, e.filename, e.lineno);
   });
 
