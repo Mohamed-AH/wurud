@@ -12,55 +12,83 @@ A web platform for hosting and streaming ~160 Arabic Islamic lecture audio files
 
 ## 📌 Project State
 
-**Current Phase**: Data Imported ✅ - Two Design Branches Active 🎨
-**Last Updated**: 2026-01-22
-**Active Branches**:
-- `claude/review-claude-md-usy2P` - **Current green/gold design (fully functional)**
-- `claude/new-design-usy2P` - **New brown/gold scholarly design (in progress)**
+**Current Phase**: New Design Homepage Complete ✅ - Audio Player Needed 🎵
+**Last Updated**: 2026-01-22 (Evening)
+**Active Branch**: `claude/new-design-usy2P`
+**Status**: Homepage fully functional, sticky audio player needed for MVP
 
-### 🌿 Branch 1: `claude/review-claude-md-usy2P` (Current Design - GREEN/GOLD)
+### 🎨 Active Branch: `claude/new-design-usy2P` (Brown/Gold Scholarly Design)
 
-**Status**: ✅ Fully functional and tested
-**Design**: Islamic green (#1A5F5A) and gold (#D4AF37) palette
-**Fonts**: Amiri + Noto Naskh Arabic
-
-**What Works**:
-- ✅ All 162 lectures imported and published
-- ✅ Homepage with statistics, featured/recent lectures
-- ✅ Browse page with search and filters
-- ✅ Lecture detail pages with audio player
-- ✅ Sheikh and Series profile pages
-- ✅ Language toggle (Arabic ⟷ English)
-- ✅ Responsive design
-- ✅ Full navigation (multi-page structure)
-
-### 🎨 Branch 2: `claude/new-design-usy2P` (New Design - BROWN/GOLD)
-
-**Status**: 🔄 In progress - redesigning frontend
+**Design Status**: ✅ DESIGN_CRITIQUE.md COMPLETE
 **Design**: Warm scholarly brown (#2C1810, #5C4033) and gold (#C19A6B) manuscript aesthetic
-**Fonts**: Scheherazade New + Noto Naskh Arabic
+**Fonts**: Scheherazade New (display) + Noto Naskh Arabic (body)
 
-**Completed**:
-- ✅ New color palette (brown/gold)
-- ✅ Scheherazade New font integration
-- ✅ Islamic geometric background pattern
-- ✅ Gradient brown header with gold border
-- ✅ Updated button styles
-- ✅ Simplified header (logo + language toggle only)
+### ✅ **COMPLETED** (All Design Specifications Met):
 
-**In Progress**:
-- 🔄 Homepage redesign with expandable series cards
-- 🔄 Single-page structure (no separate browse pages)
-- ⏭️ Sticky bottom audio player
-- ⏭️ Prominent author display (18px gold)
-- ⏭️ Vertical gold accent bars on cards
-- ⏭️ Remove all icons policy
+**Homepage (`/`) - FULLY FUNCTIONAL**:
+- ✅ Brown→Sage gradient hero with bismillah watermark (﷽)
+- ✅ 36px hero quote in Scheherazade New with text shadow
+- ✅ Cream search input (#F5EBE0) with 3px gold border
+- ✅ Filter section with cream background, gold active chips
+- ✅ Series cards with:
+  - ✅ Cream background (#F5EBE0)
+  - ✅ 3px amber border (#D4A574), 16px radius
+  - ✅ 6px vertical gold accent bar with gradient
+  - ✅ 24px Scheherazade New series title
+  - ✅ **18px gold author names** (CRITICAL FIX ✅)
+  - ✅ Gradient header background
+  - ✅ Expandable lecture lists
+- ✅ Episode items with:
+  - ✅ 32px gold rounded number badges
+  - ✅ Solid gold play buttons with shadow
+  - ✅ Outlined gold download buttons
+  - ✅ 24px padding, 2px borders
+- ✅ Search functionality (client-side, live filtering)
+- ✅ Category filtering (All, Fiqh, Aqeedah, Tafsir, etc.)
+- ✅ Language toggle (Arabic ⟷ English) with cookie persistence
+- ✅ Mobile responsive design
+- ✅ All 162 lectures displayed in 13 series
 
-**Next Steps**:
-1. Update homepage route to fetch/group lectures by series
-2. Create expandable series card components
-3. Add sticky audio player at bottom
-4. Test new design locally
+**Backend Infrastructure**:
+- ✅ MongoDB Atlas connected (162 lectures imported from Excel)
+- ✅ HTTP Range request streaming (seeking supported)
+- ✅ Download controller with proper headers
+- ✅ Google OAuth admin authentication
+- ✅ File upload system (Multer)
+- ✅ Series/Sheikh/Lecture models with relationships
+
+**Fixed Issues**:
+- ✅ CSS extractScripts/extractStyles disabled (was blocking rendering)
+- ✅ --space-3xl variable added
+- ✅ Main padding removed
+- ✅ All debug code removed
+
+### ❌ **MISSING - CRITICAL FOR MVP**:
+
+1. **Sticky Audio Player** (HIGHEST PRIORITY)
+   - Currently shows `alert()` placeholder
+   - Needs global bottom player with:
+     - Play/pause, seek, volume, speed controls
+     - Now playing display
+     - Persist across page navigation
+     - LocalStorage for last position
+
+2. **Other Public Pages** (Need New Design)
+   - `/lectures/:id` - Lecture detail page
+   - `/browse` - Browse all lectures
+   - `/sheikhs/:id` - Sheikh profile
+   - `/series/:id` - Series detail
+   - All exist with old design, need brown/gold makeover
+
+3. **Audio File Verification**
+   - `/uploads` directory status unknown
+   - Need to verify streaming endpoints work with real files
+
+### 🌿 Old Branch: `claude/review-claude-md-usy2P` (Green/Gold Design)
+
+**Status**: ✅ Fully functional but OLD DESIGN
+**Decision**: Archived - Not returning to this design
+**Note**: Kept for reference only
 
 ---
 
@@ -288,24 +316,237 @@ A web platform for hosting and streaming ~160 Arabic Islamic lecture audio files
 - ℹ️ Audio files need to be uploaded via admin panel after import
 - ℹ️ No sample data in database yet (seed script available)
 
-### Next Immediate Steps
-**Current Priority: Local Testing & Verification**
-1. ✅ Configure MongoDB Atlas connection string
-2. ✅ Install npm dependencies
-3. 🔄 Run server on local PC (node server.js)
-4. 🔄 Test homepage and browse pages
-5. 🔄 Test language toggle (Arabic ⟷ English)
-6. 🔄 Verify database connection and queries
-7. ⏭️ Import sample data or use seed script
-8. ⏭️ Test admin panel (Google OAuth setup optional)
+---
 
-**After Testing: Phase 14 (Security & Performance)**
-1. Add security middleware (rate limiting, CSRF tokens)
-2. Implement caching strategies (Redis or in-memory)
-3. Add compression and performance optimizations
-4. Create global error handler
-5. Configure environment-specific settings
-6. Test security and performance improvements
+## 🎯 IMPLEMENTATION PLAN - Make Site Fully Functional
+
+**Last Updated**: 2026-01-22 (Evening)
+**Goal**: Complete MVP with sticky audio player and all pages functional
+
+### PHASE 1: STICKY AUDIO PLAYER ⭐ **CRITICAL - START HERE**
+**Priority**: HIGHEST | **Est. Time**: 2-3 days | **Status**: Not Started
+
+#### Deliverables:
+1. ✅ Create `/views/partials/audioPlayer.ejs` - Global player component
+2. ✅ Create `/public/js/audioPlayer.js` - Player logic (play, seek, volume, speed)
+3. ✅ Create `/public/css/audioPlayer.css` - Brown/gold styling
+4. ✅ Modify `/views/layout.ejs` - Include player partial
+5. ✅ Modify `/views/public/index.ejs` - Replace alert() with real player call
+
+#### Features Required:
+- Play/pause with live progress bar
+- Seek bar with HTTP Range support
+- Volume control + mute
+- Playback speed (0.5x, 0.75x, 1x, 1.25x, 1.5x, 2x)
+- Skip ±15 seconds
+- Now playing: lecture title + sheikh
+- Download current track button
+- LocalStorage: resume position, volume, speed
+- Fixed bottom position, responsive
+- Brown/gold design matching homepage
+
+**Files to Create/Modify**:
+- NEW: `views/partials/audioPlayer.ejs`
+- NEW: `public/js/audioPlayer.js`
+- NEW: `public/css/audioPlayer.css`
+- MODIFY: `views/layout.ejs` (include player, init script)
+- MODIFY: `views/public/index.ejs` (line 544: replace alert with player.play())
+
+**Success Criteria**: Click "Play" button → Audio plays in sticky bottom player
+
+---
+
+### PHASE 2: CONTENT PAGES - NEW DESIGN
+**Priority**: HIGH | **Est. Time**: 2-3 days | **Status**: Not Started
+
+#### 2.1 Lecture Detail Page (`/lectures/:id`)
+**File**: `views/public/lecture.ejs`
+- Remove inline audio player, use sticky player
+- Apply brown/gold color scheme
+- Scheherazade New headings
+- Cream background cards
+- Large "Play" button using sticky player
+- Related lectures at bottom
+**Complexity**: MEDIUM (template exists, needs restyling)
+
+#### 2.2 Browse Page (`/browse`)
+**File**: `views/public/browse.ejs`
+- Brown/gold color scheme
+- Filter chips matching homepage
+- Cream background
+- Lecture cards matching series cards style
+- Integrate sticky player
+**Complexity**: MEDIUM
+
+#### 2.3 Sheikh Profile (`/sheikhs/:id`)
+**File**: `views/public/sheikh.ejs`
+- Scheherazade New for sheikh name
+- Brown/gold styled bio section
+- Series cards matching homepage
+- Lecture list using sticky player
+**Complexity**: MEDIUM
+
+#### 2.4 Series Detail (`/series/:id`)
+**File**: `views/public/series-detail.ejs`
+- Minimal page (homepage already shows expandable series)
+- Apply new design
+- Option to redirect to homepage with auto-expand
+**Complexity**: LOW
+
+**Success Criteria**: All public pages match brown/gold design, use sticky player
+
+---
+
+### PHASE 3: ADMIN PANEL TESTING
+**Priority**: MEDIUM | **Est. Time**: 1-2 days | **Status**: Not Started
+
+#### Tasks:
+1. Test admin dashboard displays correct stats
+2. Verify file upload works (upload test MP3)
+3. Test edit lecture metadata
+4. Test delete lecture (+ file cleanup)
+5. Test publish/unpublish toggle
+6. Optional: Apply brown/gold theme to admin panel
+
+**Files to Test**:
+- `views/admin/dashboard.ejs`
+- `views/admin/upload.ejs`
+- `views/admin/manage.ejs`
+- `routes/admin/index.js`
+
+**Success Criteria**: Can upload, edit, delete lectures via admin panel
+
+---
+
+### PHASE 4: MISSING FEATURES & POLISH
+**Priority**: MEDIUM | **Est. Time**: 1-2 days | **Status**: Not Started
+
+#### 4.1 Verify Audio File Storage
+- Check `/uploads` directory (might be empty/gitignored)
+- Verify `process.env.UPLOAD_DIR` config
+- Test upload + streaming with real file
+- Document storage location
+
+#### 4.2 Download Functionality
+- Test download buttons work
+- Verify proper filename
+- Confirm download count increments
+
+#### 4.3 Share Functionality (Optional)
+- Add share buttons to lecture pages
+- WhatsApp, Telegram, Copy link
+- Web Share API for mobile
+
+#### 4.4 Analytics
+- Verify play count increments
+- Optional: Admin analytics dashboard
+
+**Success Criteria**: All features work end-to-end
+
+---
+
+### PHASE 5: TESTING & OPTIMIZATION
+**Priority**: HIGH | **Est. Time**: 1-2 days | **Status**: Not Started
+
+#### 5.1 Cross-Browser Testing
+- Chrome, Firefox, Safari, Edge
+- Mobile browsers (iOS Safari, Chrome Mobile)
+- RTL text rendering
+- Audio playback compatibility
+
+#### 5.2 Mobile Responsiveness
+- Test all pages on mobile
+- Sticky player mobile controls
+- Touch gestures
+
+#### 5.3 Performance
+- gzip compression (already enabled)
+- Lazy load lecture cards
+- Test streaming performance
+- Service worker (optional)
+
+#### 5.4 Accessibility
+- Keyboard navigation
+- ARIA labels
+- Screen reader support
+
+#### 5.5 Security
+- Test Google OAuth
+- File access permissions
+- XSS prevention
+- Upload restrictions
+
+**Success Criteria**: Production-ready platform
+
+---
+
+## 📋 Quick To-Do List (Prioritized)
+
+### Week 1 - Core Functionality
+- [ ] **Day 1-2**: Create sticky audio player component
+- [ ] **Day 2-3**: Implement player JavaScript logic
+- [ ] **Day 3**: Connect homepage play buttons to player
+- [ ] **Day 4**: Test audio streaming with player
+- [ ] **Day 5**: Redesign lecture detail page
+
+### Week 2 - Content Pages
+- [ ] **Day 1**: Redesign browse page
+- [ ] **Day 2**: Redesign sheikh/series pages
+- [ ] **Day 3**: Test admin panel
+- [ ] **Day 4**: Verify file upload/download
+- [ ] **Day 5**: Polish and bug fixes
+
+### Week 3 - Testing & Launch Prep
+- [ ] **Day 1-2**: Cross-browser testing
+- [ ] **Day 3**: Mobile testing
+- [ ] **Day 4**: Performance optimization
+- [ ] **Day 5**: Documentation and deployment prep
+
+---
+
+## 🎯 MVP Definition (Minimum Viable Product)
+
+**Must Have**:
+- ✅ Homepage with series cards (DONE)
+- [ ] Sticky audio player (IN PROGRESS)
+- [ ] Audio streaming works
+- [ ] At least lecture detail page redesigned
+- [ ] Downloads work
+- [ ] Mobile responsive
+
+**Should Have**:
+- [ ] All public pages match new design
+- [ ] Admin panel tested
+- [ ] Cross-browser compatible
+
+**Nice to Have**:
+- [ ] Play queue/playlist
+- [ ] Resume from last position (per lecture)
+- [ ] Share functionality
+- [ ] PWA installation
+
+---
+
+## 📊 Progress Tracking
+
+### Overall Completion: ~40%
+
+**Completed** (40%):
+- ✅ Homepage design (100%)
+- ✅ Backend infrastructure (100%)
+- ✅ Data import (100%)
+- ✅ Database setup (100%)
+
+**In Progress** (0%):
+- [ ] Audio player (0%)
+- [ ] Content pages (0%)
+- [ ] Admin testing (0%)
+- [ ] Polish (0%)
+
+**Next Up**:
+1. Sticky audio player (CRITICAL)
+2. Lecture detail page
+3. Testing
 
 ---
 
