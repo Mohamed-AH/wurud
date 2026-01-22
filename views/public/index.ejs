@@ -494,6 +494,20 @@
   </div>
 </div>
 
+<!-- DEBUG INFO -->
+<div style="background: #FFE5E5; border: 3px solid #FF0000; padding: 20px; margin: 20px; border-radius: 8px; font-family: monospace;">
+  <h3 style="color: #FF0000; margin: 0 0 10px 0;">🐛 DEBUG INFO:</h3>
+  <p><strong>seriesList exists:</strong> <%= typeof seriesList !== 'undefined' ? 'YES' : 'NO' %></p>
+  <p><strong>seriesList.length:</strong> <%= seriesList ? seriesList.length : 'N/A' %></p>
+  <% if (seriesList && seriesList.length > 0) { %>
+    <p><strong>First series title:</strong> <%= seriesList[0].titleArabic %></p>
+    <p><strong>First series category:</strong> <%= seriesList[0].category %></p>
+    <p><strong>First series lecture count:</strong> <%= seriesList[0].lectureCount %></p>
+    <p><strong>First series author:</strong> <%= seriesList[0].originalAuthor || 'N/A' %></p>
+  <% } %>
+  <p><strong>Current locale:</strong> <%= locale %></p>
+</div>
+
 <!-- Series List -->
 <div class="series-list">
   <% if (seriesList && seriesList.length > 0) { %>
