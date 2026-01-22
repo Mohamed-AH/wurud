@@ -423,13 +423,34 @@
     // Load statistics and lectures
     async function loadData() {
       try {
-        // Fetch all lectures
-        const response = await fetch('/api/lectures');
+        console.log('🔍 Loading lectures data...');
+
+        // Fetch ALL lectures (not just first 20) - set high limit
+        const response = await fetch('/api/lectures?limit=1000');
         const data = await response.json();
+
+        console.log('📊 API Response:', data);
+        console.log('✅ Success:', data.success);
+        console.log('📚 Total lectures from API:', data.lectures.length);
+        console.log('📄 Pagination info:', data.pagination);
 
         if (data.success) {
           allLectures = data.lectures;
+
+          console.log('🔍 Checking audio files:');
+          allLectures.forEach((lecture, index) => {
+            if (index < 5) { // Log first 5 lectures
+              console.log(`  ${index + 1}. ${lecture.titleArabic}`);
+              console.log(`     audioFileName: ${lecture.audioFileName || 'MISSING'}`);
+            }
+          });
+
           lecturesWithoutAudio = allLectures.filter(l => !l.audioFileName);
+
+          console.log('📊 Stats:');
+          console.log('  Total lectures:', allLectures.length);
+          console.log('  With audio:', allLectures.filter(l => l.audioFileName).length);
+          console.log('  Missing audio:', lecturesWithoutAudio.length);
 
           // Update stats
           document.getElementById('totalLectures').textContent = allLectures.length;
@@ -439,9 +460,11 @@
 
           // Render table
           renderLecturesTable(lecturesWithoutAudio);
+        } else {
+          console.error('❌ API returned success: false');
         }
       } catch (error) {
-        console.error('Error loading data:', error);
+        console.error('❌ Error loading data:', error);
         showMessage('Error loading lectures: ' + error.message, 'error');
       }
     }
