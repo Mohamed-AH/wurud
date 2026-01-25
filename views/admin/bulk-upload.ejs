@@ -540,9 +540,17 @@
       matchCount.textContent = files.length;
       matchSection.classList.remove('hidden');
 
+      console.log(`\n🎵 Processing ${files.length} audio files for auto-matching...`);
+
       // Render match items
       matchList.innerHTML = files.map((file, index) => {
         const matchedLecture = findBestMatch(file.name);
+
+        if (matchedLecture) {
+          console.log(`✅ Auto-matched: "${file.name}" → "${matchedLecture.titleArabic}"`);
+        } else {
+          console.log(`⚠️  No match found for: "${file.name}"`);
+        }
 
         return `
           <div class="match-item ${matchedLecture ? 'matched' : ''}" data-index="${index}">
@@ -569,6 +577,12 @@
     function findBestMatch(filename) {
       // First try: Exact match with metadata.excelFilename
       const cleanFilename = filename.toLowerCase().replace(/\.(mp3|m4a|wav|ogg|flac)$/i, '');
+
+      // Debug: Check if metadata exists
+      const lecturesWithMetadata = lecturesWithoutAudio.filter(l => l.metadata && l.metadata.excelFilename);
+      if (lecturesWithMetadata.length === 0) {
+        console.warn('⚠️  No lectures have metadata.excelFilename field!');
+      }
 
       for (const lecture of lecturesWithoutAudio) {
         if (lecture.metadata && lecture.metadata.excelFilename) {
