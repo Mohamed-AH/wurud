@@ -134,7 +134,14 @@ async function importExcel() {
     const filePath = path.join(__dirname, '../updatedData.xlsx');
     const workbook = XLSX.readFile(filePath);
     const sheetName = workbook.SheetNames[0];
-    const data = XLSX.utils.sheet_to_json(workbook.Sheets[sheetName]);
+    let data = XLSX.utils.sheet_to_json(workbook.Sheets[sheetName]);
+
+    // Test mode - only import first 10 records
+    const testMode = process.env.TEST_MODE === 'yes';
+    if (testMode) {
+      data = data.slice(0, 10);
+      console.log('🧪 TEST MODE: Only importing first 10 records\n');
+    }
 
     console.log(`📊 Found ${data.length} lectures in Excel file\n`);
 
