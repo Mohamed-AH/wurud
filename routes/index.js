@@ -259,11 +259,31 @@ router.get('/series/:id', async (req, res) => {
       completeLectures: lectures.filter(l => l.lectureNumber).length
     };
 
+    // For consolidated Khutba series, also find related multi-lecture Khutba series
+    let relatedKhutbaSeries = [];
+    if (series.titleArabic === 'خطب الجمعة') {
+      relatedKhutbaSeries = await Series.find({
+        sheikhId: series.sheikhId._id,
+        titleArabic: /^خطبة.*الجمعة/i,
+        _id: { $ne: series._id } // Exclude current series
+      }).lean();
+
+      // For each related series, get lecture count
+      for (const relSeries of relatedKhutbaSeries) {
+        const count = await Lecture.countDocuments({
+          seriesId: relSeries._id,
+          published: true
+        });
+        relSeries.actualLectureCount = count;
+      }
+    }
+
     res.render('public/series-detail', {
       title: series.titleArabic,
       series,
       lectures,
-      stats
+      stats,
+      relatedKhutbaSeries
     });
   } catch (error) {
     console.error('Series profile error:', error);

@@ -221,6 +221,82 @@
     flex: 1;
   }
 
+  .series-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+    gap: 24px;
+    margin-bottom: 48px;
+  }
+
+  .series-card {
+    background: var(--cream);
+    border-radius: 12px;
+    padding: 24px;
+    text-decoration: none;
+    transition: all 0.3s;
+    border: 2px solid var(--accent-amber);
+    display: flex;
+    gap: 16px;
+    box-shadow: 0 4px 12px var(--shadow-warm);
+  }
+
+  .series-card:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 8px 20px var(--shadow-warm);
+    border-color: var(--accent-gold);
+  }
+
+  .series-icon {
+    width: 48px;
+    height: 48px;
+    border-radius: 8px;
+    background: var(--accent-gold);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+  }
+
+  .series-icon svg {
+    color: var(--primary-dark);
+  }
+
+  .series-content {
+    flex: 1;
+  }
+
+  .series-title {
+    font-family: var(--font-arabic-display);
+    font-size: 20px;
+    color: var(--primary-dark);
+    margin-bottom: 4px;
+  }
+
+  .series-title-en {
+    color: var(--text-muted);
+    font-size: 14px;
+    margin-bottom: 12px;
+  }
+
+  .series-meta {
+    display: flex;
+    gap: 12px;
+    font-size: 14px;
+    color: var(--text-secondary);
+  }
+
+  .series-category {
+    background: var(--accent-gold);
+    color: var(--primary-dark);
+    padding: 2px 8px;
+    border-radius: 8px;
+    font-weight: 600;
+  }
+
+  .series-count {
+    color: var(--text-secondary);
+  }
+
   .empty-state {
     text-align: center;
     padding: 80px 20px;
@@ -239,6 +315,10 @@
     }
 
     .stats-grid {
+      grid-template-columns: 1fr;
+    }
+
+    .series-grid {
       grid-template-columns: 1fr;
     }
 
@@ -381,10 +461,43 @@
     </div>
   <% } %>
 
+  <!-- Related Khutba Series (for consolidated خطب الجمعة only) -->
+  <% if (relatedKhutbaSeries && relatedKhutbaSeries.length > 0) { %>
+    <div class="content-section">
+      <div class="container">
+        <h2 class="section-title">سلاسل الخطب</h2>
+        <div class="series-grid">
+          <% relatedKhutbaSeries.forEach(relSeries => { %>
+            <a href="/series/<%= relSeries._id %>" class="series-card">
+              <div class="series-icon">
+                <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"></path>
+                  <path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"></path>
+                </svg>
+              </div>
+              <div class="series-content">
+                <h3 class="series-title"><%= relSeries.titleArabic %></h3>
+                <% if (relSeries.titleEnglish && relSeries.titleEnglish !== relSeries.titleArabic) { %>
+                  <p class="series-title-en"><%= relSeries.titleEnglish %></p>
+                <% } %>
+                <div class="series-meta">
+                  <% if (relSeries.category) { %>
+                    <span class="series-category"><%= relSeries.category %></span>
+                  <% } %>
+                  <span class="series-count"><%= relSeries.actualLectureCount || 0 %> محاضرة</span>
+                </div>
+              </div>
+            </a>
+          <% }); %>
+        </div>
+      </div>
+    </div>
+  <% } %>
+
   <!-- Lectures Section -->
   <div class="content-section">
     <div class="container">
-      <h2 class="section-title">محاضرات السلسلة (<%= lectures.length %>)</h2>
+      <h2 class="section-title"><%= relatedKhutbaSeries && relatedKhutbaSeries.length > 0 ? 'خطب متفرقة' : 'محاضرات السلسلة' %> (<%= lectures.length %>)</h2>
 
       <% if (lectures && lectures.length > 0) { %>
         <div class="lectures-list">
