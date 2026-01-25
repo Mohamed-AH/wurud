@@ -3,9 +3,9 @@ const mongoose = require('mongoose');
 const lectureSchema = new mongoose.Schema({
   audioFileName: {
     type: String,
-    required: true,
     trim: true,
-    unique: true
+    unique: true,
+    sparse: true // Allow multiple null values, but unique if present
   },
   titleArabic: {
     type: String,
@@ -44,11 +44,11 @@ const lectureSchema = new mongoose.Schema({
   },
   duration: {
     type: Number, // in seconds
-    required: true
+    default: 0
   },
   fileSize: {
     type: Number, // in bytes
-    required: true
+    default: 0
   },
   location: {
     type: String,
@@ -88,6 +88,12 @@ const lectureSchema = new mongoose.Schema({
     type: Number,
     default: 0,
     min: 0
+  },
+  metadata: {
+    type: Object,
+    default: {}
+    // Stores Excel import data for matching files later:
+    // { excelFilename: String, type: String, serial: String }
   }
 }, {
   timestamps: true
