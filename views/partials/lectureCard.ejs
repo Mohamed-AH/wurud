@@ -34,7 +34,15 @@
   </div>
 
   <div class="lecture-actions">
-    <a href="/lectures/<%= lecture._id %>" class="btn-play" title="استماع">▶️</a>
+    <% if (lecture.audioFileName) { %>
+      <button class="btn-play" onclick="playAudio('<%= lecture._id %>', '<%= lecture.titleArabic.replace(/'/g, "\\'") %>', '<%= lecture.sheikhId ? lecture.sheikhId.nameArabic.replace(/'/g, "\\'") : "" %>')" title="استماع">
+        ▶️
+      </button>
+    <% } else { %>
+      <button class="btn-play" disabled style="opacity: 0.5; cursor: not-allowed;" title="لا يوجد ملف صوتي">
+        ▶️
+      </button>
+    <% } %>
     <a href="/download/<%= lecture._id %>" class="btn-download" title="تحميل">⬇️</a>
   </div>
 </div>
