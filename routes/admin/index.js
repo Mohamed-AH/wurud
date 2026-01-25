@@ -92,7 +92,7 @@ router.get('/bulk-upload', isAdmin, (req, res) => {
 // @access  Private (Admin only)
 router.get('/manage', isAdmin, async (req, res) => {
   try {
-    const { Lecture } = require('../../models');
+    const { Lecture, Series } = require('../../models');
 
     const lectures = await Lecture.find()
       .sort({ createdAt: -1 })
@@ -100,10 +100,16 @@ router.get('/manage', isAdmin, async (req, res) => {
       .populate('seriesId', 'titleArabic titleEnglish')
       .lean();
 
+    const series = await Series.find()
+      .sort({ createdAt: -1 })
+      .populate('sheikhId', 'nameArabic nameEnglish')
+      .lean();
+
     res.render('admin/manage', {
       title: 'Manage Lectures',
       user: req.user,
-      lectures
+      lectures,
+      series
     });
   } catch (error) {
     console.error('Manage error:', error);
