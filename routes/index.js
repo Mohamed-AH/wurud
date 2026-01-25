@@ -180,6 +180,7 @@ router.get('/sheikhs/:id', async (req, res) => {
       published: true
     })
       .sort({ createdAt: -1 })
+      .populate('sheikhId', 'nameArabic nameEnglish honorific')
       .populate('seriesId', 'titleArabic titleEnglish')
       .lean();
 
