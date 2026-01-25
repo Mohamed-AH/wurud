@@ -571,15 +571,26 @@
 <script>
   // Toggle series expansion
   function toggleSeries(seriesId) {
+    console.log('🔄 Toggling series:', seriesId);
     const episodesList = document.getElementById('episodes-' + seriesId);
     const btn = document.getElementById('btn-' + seriesId);
+
+    console.log('  Episodes list found:', episodesList ? 'YES' : 'NO');
+    console.log('  Button found:', btn ? 'YES' : 'NO');
+
+    if (!episodesList || !btn) {
+      console.error('❌ Could not find elements for series:', seriesId);
+      return;
+    }
 
     episodesList.classList.toggle('show');
     btn.classList.toggle('expanded');
 
     if (episodesList.classList.contains('show')) {
+      console.log('  ✅ Series expanded');
       btn.textContent = '<%= locale === 'ar' ? 'إخفاء الدروس ▲' : 'Hide Lectures ▲' %>';
     } else {
+      console.log('  ✅ Series collapsed');
       btn.textContent = '<%= locale === 'ar' ? 'عرض الدروس ▼' : 'View Lectures ▼' %>';
     }
   }
@@ -629,10 +640,15 @@
 
   // Play audio using sticky audio player
   function playAudio(lectureId, title, sheikh) {
-    console.log('▶️ Play lecture:', lectureId, title, sheikh);
+    console.log('▶️ Play button clicked');
+    console.log('  Lecture ID:', lectureId);
+    console.log('  Title:', title);
+    console.log('  Sheikh:', sheikh);
+    console.log('  window.audioPlayer exists?', typeof window.audioPlayer);
 
     // Wait for audio player to be initialized
     if (window.audioPlayer) {
+      console.log('✅ Calling audioPlayer.play()...');
       window.audioPlayer.play(lectureId, {
         title: title,
         titleArabic: title,
@@ -640,6 +656,10 @@
       });
     } else {
       console.error('❌ Audio player not initialized');
+      console.error('   This might be because:');
+      console.error('   1. /js/audioPlayer.js failed to load');
+      console.error('   2. Script has JavaScript errors');
+      console.error('   3. Audio player partial not included in layout');
       alert('Audio player is loading, please try again in a moment.');
     }
   }

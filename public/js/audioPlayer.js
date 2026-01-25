@@ -338,8 +338,15 @@ class AudioPlayer {
 }
 
 // Initialize when DOM is ready
+console.log('🎵 Audio Player script loaded');
 if (document.readyState === 'loading') {
-  document.addEventListener('DOMContentLoaded', () => new AudioPlayer());
+  document.addEventListener('DOMContentLoaded', () => {
+    console.log('🎵 Initializing Audio Player...');
+    window.audioPlayer = new AudioPlayer();
+    console.log('✅ Audio Player initialized:', window.audioPlayer);
+  });
 } else {
-  new AudioPlayer();
+  console.log('🎵 Initializing Audio Player (already loaded)...');
+  window.audioPlayer = new AudioPlayer();
+  console.log('✅ Audio Player initialized:', window.audioPlayer);
 }
