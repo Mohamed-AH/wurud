@@ -262,19 +262,27 @@ router.get('/series/:id', async (req, res) => {
     // For consolidated Khutba series, also find related multi-lecture Khutba series
     let relatedKhutbaSeries = [];
     if (series.titleArabic === 'خطب الجمعة') {
+      // Find multi-lecture Khutba series (with underscores or spaces)
+      // Match patterns like "خطبة_الجمعة - X" or "خطبة الجمعة - X"
       relatedKhutbaSeries = await Series.find({
         sheikhId: series.sheikhId._id,
-        titleArabic: /^خطبة.*الجمعة/i,
+        titleArabic: {
+          $regex: 'خطبة.*جمعة',
+          $options: 'i'
+        },
         _id: { $ne: series._id } // Exclude current series
       }).lean();
 
-      // For each related series, get lecture count
+      console.log(`[DEBUG] Found ${relatedKhutbaSeries.length} related Khutba series for hierarchical display`);
+
+      // For each related series, get actual lecture count
       for (const relSeries of relatedKhutbaSeries) {
         const count = await Lecture.countDocuments({
           seriesId: relSeries._id,
           published: true
         });
         relSeries.actualLectureCount = count;
+        console.log(`[DEBUG] - ${relSeries.titleArabic}: ${count} lectures`);
       }
     }
 
