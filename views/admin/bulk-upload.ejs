@@ -567,7 +567,19 @@
     }
 
     function findBestMatch(filename) {
-      // Simple fuzzy matching - you can improve this
+      // First try: Exact match with metadata.excelFilename
+      const cleanFilename = filename.toLowerCase().replace(/\.(mp3|m4a|wav|ogg|flac)$/i, '');
+
+      for (const lecture of lecturesWithoutAudio) {
+        if (lecture.metadata && lecture.metadata.excelFilename) {
+          const excelFilename = lecture.metadata.excelFilename.toLowerCase().replace(/\.(mp3|m4a|wav|ogg|flac)$/i, '');
+          if (cleanFilename === excelFilename) {
+            return lecture; // Exact match!
+          }
+        }
+      }
+
+      // Second try: Fuzzy match against title
       const cleanName = filename.toLowerCase().replace(/[^a-z0-9\u0600-\u06FF\s]/gi, '');
 
       let bestMatch = null;
