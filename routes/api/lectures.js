@@ -257,6 +257,14 @@ router.post('/bulk-upload-audio', [isAdminAPI, upload.single('audioFile')], asyn
   try {
     const { lectureId } = req.body;
 
+    console.log('📤 Bulk upload request:');
+    console.log('   Lecture ID:', lectureId);
+    if (req.file) {
+      console.log('   ✅ File:', req.file.filename);
+      console.log('   📁 Path:', req.file.path);
+      console.log('   📦 Size:', (req.file.size / 1024 / 1024).toFixed(2), 'MB');
+    }
+
     if (!lectureId) {
       return res.status(400).json({
         success: false,

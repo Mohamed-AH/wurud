@@ -102,6 +102,11 @@ app.use((err, req, res, next) => {
 
 // Start server
 app.listen(PORT, () => {
+  const { uploadDir } = require('./config/storage');
+  const absoluteUploadPath = path.resolve(uploadDir);
+
   console.log(`🚀 Duroos server running on http://localhost:${PORT}`);
   console.log(`📝 Environment: ${process.env.NODE_ENV || 'development'}`);
+  console.log(`📁 Upload directory: ${absoluteUploadPath}`);
+  console.log(`   (${uploadDir})`);
 });

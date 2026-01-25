@@ -602,7 +602,7 @@
       const filterValue = this.dataset.filter;
 
       // Update active state
-      document.querySelectorAll(\`\${'.chip[data-type="'}\${filterType}\${'"]'}\`).forEach(c => c.classList.remove('active'));
+      document.querySelectorAll('.chip[data-type="' + filterType + '"]').forEach(c => c.classList.remove('active'));
       this.classList.add('active');
 
       // Filter series cards
