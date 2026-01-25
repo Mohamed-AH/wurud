@@ -456,10 +456,10 @@
       type="text"
       class="search-input"
       id="searchInput"
-      placeholder="<%= locale === 'ar' ? 'ابحث عن سلسلة...' : 'Search for a series...' %>"
+      placeholder="ابحث عن سلسلة..."
     >
     <button class="search-btn" onclick="performSearch()">
-      <%= locale === 'ar' ? 'بحث' : 'Search' %>
+      بحث
     </button>
   </div>
 </div>
@@ -467,28 +467,28 @@
 <!-- Filters -->
 <div class="filters-section">
   <div class="filter-group">
-    <span class="filter-label"><%= locale === 'ar' ? 'التصنيف:' : 'Category:' %></span>
+    <span class="filter-label">التصنيف:</span>
     <div class="filter-chips">
       <button class="chip active" data-filter="all" data-type="category">
-        <%= locale === 'ar' ? 'الكل' : 'All' %>
+        الكل
       </button>
       <button class="chip" data-filter="Fiqh" data-type="category">
-        <%= locale === 'ar' ? 'الفقه' : 'Fiqh' %>
+        الفقه
       </button>
       <button class="chip" data-filter="Aqeedah" data-type="category">
-        <%= locale === 'ar' ? 'العقيدة' : 'Aqeedah' %>
+        العقيدة
       </button>
       <button class="chip" data-filter="Tafsir" data-type="category">
-        <%= locale === 'ar' ? 'التفسير' : 'Tafsir' %>
+        التفسير
       </button>
       <button class="chip" data-filter="Hadith" data-type="category">
-        <%= locale === 'ar' ? 'الحديث' : 'Hadith' %>
+        الحديث
       </button>
       <button class="chip" data-filter="Seerah" data-type="category">
-        <%= locale === 'ar' ? 'السيرة' : 'Seerah' %>
+        السيرة
       </button>
       <button class="chip" data-filter="Other" data-type="category">
-        <%= locale === 'ar' ? 'أخرى' : 'Other' %>
+        أخرى
       </button>
     </div>
   </div>
@@ -505,23 +505,23 @@
           <div class="series-meta">
             <% if (series.originalAuthor) { %>
               <div class="series-author">
-                <span class="series-author-label"><%= locale === 'ar' ? 'المؤلف:' : 'Author:' %></span>
+                <span class="series-author-label">المؤلف:</span>
                 <%= series.originalAuthor %>
               </div>
             <% } %>
             <div class="series-sheikh">
-              <%= locale === 'ar' ? 'الشيخ:' : 'Sheikh:' %>
+              الشيخ:
               <%= series.sheikh ? series.sheikh.nameArabic : '' %>
             </div>
           </div>
 
           <div class="series-info">
-            <span><%= series.lectureCount %> <%= locale === 'ar' ? 'درس' : 'lectures' %></span>
+            <span><%= series.lectureCount %> درس</span>
             <span class="category-badge"><%= series.category %></span>
           </div>
 
           <button class="expand-btn" id="btn-<%= series._id %>">
-            <%= locale === 'ar' ? 'عرض الدروس ▼' : 'View Lectures ▼' %>
+            عرض الدروس ▼
           </button>
         </div>
 
@@ -544,10 +544,10 @@
               </div>
               <div class="episode-actions">
                 <button class="btn-play" onclick="playAudio('<%= lecture._id %>', '<%= lecture.titleArabic.replace(/'/g, "\\'") %>', '<%= series.sheikh ? series.sheikh.nameArabic.replace(/'/g, "\\'") : "" %>')">
-                  ▶ <%= locale === 'ar' ? 'تشغيل' : 'Play' %>
+                  ▶ تشغيل
                 </button>
                 <a href="/download/<%= lecture._id %>" class="btn-download">
-                  ⬇ <%= locale === 'ar' ? 'تحميل' : 'Download' %>
+                  ⬇ تحميل
                 </a>
               </div>
             </div>
@@ -559,10 +559,10 @@
     <div class="empty-state">
       <div class="empty-icon">📚</div>
       <h3 class="empty-title">
-        <%= locale === 'ar' ? 'لا توجد محاضرات' : 'No lectures found' %>
+        لا توجد محاضرات
       </h3>
       <p class="empty-text">
-        <%= locale === 'ar' ? 'جرب بحثاً آخر' : 'Try a different search' %>
+        جرب بحثاً آخر
       </p>
     </div>
   <% } %>
@@ -588,10 +588,10 @@
 
     if (episodesList.classList.contains('show')) {
       console.log('  ✅ Series expanded');
-      btn.textContent = '<%= locale === 'ar' ? 'إخفاء الدروس ▲' : 'Hide Lectures ▲' %>';
+      btn.textContent = 'إخفاء الدروس ▲';
     } else {
       console.log('  ✅ Series collapsed');
-      btn.textContent = '<%= locale === 'ar' ? 'عرض الدروس ▼' : 'View Lectures ▼' %>';
+      btn.textContent = 'عرض الدروس ▼';
     }
   }
 
