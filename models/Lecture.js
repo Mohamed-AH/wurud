@@ -3,9 +3,9 @@ const mongoose = require('mongoose');
 const lectureSchema = new mongoose.Schema({
   audioFileName: {
     type: String,
-    trim: true,
-    unique: true,
-    sparse: true // Allow multiple null values, but unique if present
+    trim: true
+    // Note: Uniqueness enforced by application logic during upload
+    // Multiple null values allowed for lectures without audio files
   },
   titleArabic: {
     type: String,
