@@ -12,10 +12,24 @@ A web platform for hosting and streaming ~160 Arabic Islamic lecture audio files
 
 ## 📌 Project State
 
-**Current Phase**: New Design Homepage Complete ✅ - Audio Player Needed 🎵
-**Last Updated**: 2026-01-22 (Evening)
+**Current Phase**: Sticky Audio Player Complete ✅ - Data Migration Blocked ⚠️
+**Last Updated**: 2026-01-25
 **Active Branch**: `claude/new-design-usy2P`
-**Status**: Homepage fully functional, sticky audio player needed for MVP
+**Status**: Audio player complete, data import issues identified, MongoDB connectivity blocked
+
+### ⚠️ CRITICAL BLOCKER: MongoDB Atlas Connectivity
+
+**Error**: `querySrv ECONNREFUSED _mongodb._tcp.cluster0.abhqc.mongodb.net`
+
+**Impact**: Cannot connect to MongoDB Atlas, blocking:
+- Data cleanup and re-import
+- Testing import scripts
+- Server startup
+- All database operations
+
+**Required Action**: Resolve network/DNS connectivity to MongoDB Atlas before proceeding
+
+**See**: `DATA_MIGRATION_GUIDE.md` for troubleshooting steps
 
 ### 🎨 Active Branch: `claude/new-design-usy2P` (Brown/Gold Scholarly Design)
 
@@ -24,6 +38,30 @@ A web platform for hosting and streaming ~160 Arabic Islamic lecture audio files
 **Fonts**: Scheherazade New (display) + Noto Naskh Arabic (body)
 
 ### ✅ **COMPLETED** (All Design Specifications Met):
+
+**Sticky Audio Player** ✅:
+- ✅ Global bottom player component (`views/partials/audioPlayer.ejs`)
+- ✅ Full JavaScript logic (`public/js/audioPlayer.js`)
+- ✅ Brown/gold styling matching design (`public/css/audioPlayer.css`)
+- ✅ Play/pause, seek, volume, speed controls (0.5x-2x)
+- ✅ Skip ±15 seconds with keyboard shortcuts
+- ✅ LocalStorage for resume position, volume, speed
+- ✅ Download button for current track
+- ✅ Now playing display (title + sheikh)
+- ✅ HTTP Range request support for seeking
+- ✅ Mobile responsive design
+- ✅ Integrated into layout and connected to homepage
+
+**Bulk Upload Feature** ✅:
+- ✅ Admin interface (`views/admin/bulk-upload.ejs`)
+- ✅ Statistics dashboard (Total/With Audio/Missing)
+- ✅ Drag & drop multiple files
+- ✅ Auto-matching by filename similarity
+- ✅ Manual lecture selection dropdowns
+- ✅ Upload all with progress tracking
+- ✅ Search/filter lectures without audio
+- ✅ API endpoint for bulk upload
+- ⚠️ Note: Shows incorrect counts due to bad data (see Data Issues below)
 
 **Homepage (`/`) - FULLY FUNCTIONAL**:
 - ✅ Brown→Sage gradient hero with bismillah watermark (﷽)
@@ -63,15 +101,19 @@ A web platform for hosting and streaming ~160 Arabic Islamic lecture audio files
 - ✅ Main padding removed
 - ✅ All debug code removed
 
-### ❌ **MISSING - CRITICAL FOR MVP**:
+### ❌ **DATA ISSUES - CRITICAL**:
 
-1. **Sticky Audio Player** (HIGHEST PRIORITY)
-   - Currently shows `alert()` placeholder
-   - Needs global bottom player with:
-     - Play/pause, seek, volume, speed controls
-     - Now playing display
-     - Persist across page navigation
-     - LocalStorage for last position
+1. **Incorrect Data Import** (HIGHEST PRIORITY)
+   - 162 lectures imported with wrong structure:
+     - ❌ Titles use `Serial` instead of `SeriesName`
+     - ❌ `audioFileName` set even though files don't exist
+     - ❌ Only created series for `Type==='Series'`
+     - ❌ No file existence tracking
+   - **Fixed Scripts Created**:
+     - ✅ `scripts/cleanup-bad-data.js` - Delete bad data
+     - ✅ `scripts/import-excel-fixed.js` - Correct import with TEST_MODE
+   - **Blocked by**: MongoDB connectivity issue (see above)
+   - **See**: `DATA_MIGRATION_GUIDE.md` for complete plan
 
 2. **Other Public Pages** (Need New Design)
    - `/lectures/:id` - Lecture detail page
@@ -323,36 +365,89 @@ A web platform for hosting and streaming ~160 Arabic Islamic lecture audio files
 **Last Updated**: 2026-01-22 (Evening)
 **Goal**: Complete MVP with sticky audio player and all pages functional
 
-### PHASE 1: STICKY AUDIO PLAYER ⭐ **CRITICAL - START HERE**
-**Priority**: HIGHEST | **Est. Time**: 2-3 days | **Status**: Not Started
+### PHASE 1: STICKY AUDIO PLAYER ✅ **COMPLETE**
+**Priority**: HIGHEST | **Status**: ✅ COMPLETE (2026-01-25)
 
 #### Deliverables:
-1. ✅ Create `/views/partials/audioPlayer.ejs` - Global player component
-2. ✅ Create `/public/js/audioPlayer.js` - Player logic (play, seek, volume, speed)
-3. ✅ Create `/public/css/audioPlayer.css` - Brown/gold styling
-4. ✅ Modify `/views/layout.ejs` - Include player partial
-5. ✅ Modify `/views/public/index.ejs` - Replace alert() with real player call
+1. ✅ Created `/views/partials/audioPlayer.ejs` - Global player component
+2. ✅ Created `/public/js/audioPlayer.js` - Player logic (367 lines)
+3. ✅ Created `/public/css/audioPlayer.css` - Brown/gold styling (371 lines)
+4. ✅ Modified `/views/layout.ejs` - Included player partial
+5. ✅ Modified `/views/public/index.ejs` - Connected play buttons to player
 
-#### Features Required:
-- Play/pause with live progress bar
-- Seek bar with HTTP Range support
-- Volume control + mute
-- Playback speed (0.5x, 0.75x, 1x, 1.25x, 1.5x, 2x)
-- Skip ±15 seconds
-- Now playing: lecture title + sheikh
-- Download current track button
-- LocalStorage: resume position, volume, speed
-- Fixed bottom position, responsive
-- Brown/gold design matching homepage
+#### Features Implemented:
+- ✅ Play/pause with live progress bar
+- ✅ Seek bar with HTTP Range support
+- ✅ Volume control + mute
+- ✅ Playback speed (0.5x, 0.75x, 1x, 1.25x, 1.5x, 2x)
+- ✅ Skip ±15 seconds with keyboard shortcuts
+- ✅ Now playing: lecture title + sheikh
+- ✅ Download current track button
+- ✅ LocalStorage: resume position, volume, speed
+- ✅ Fixed bottom position, responsive
+- ✅ Brown/gold design matching homepage
 
-**Files to Create/Modify**:
-- NEW: `views/partials/audioPlayer.ejs`
-- NEW: `public/js/audioPlayer.js`
-- NEW: `public/css/audioPlayer.css`
-- MODIFY: `views/layout.ejs` (include player, init script)
-- MODIFY: `views/public/index.ejs` (line 544: replace alert with player.play())
+**Success**: ✅ Click "Play" button → Audio plays in sticky bottom player
 
-**Success Criteria**: Click "Play" button → Audio plays in sticky bottom player
+**Next**: Phase 1A - Data Migration (see below)
+
+---
+
+### PHASE 1A: DATA MIGRATION ⚠️ **BLOCKED - CRITICAL**
+**Priority**: CRITICAL | **Status**: ⚠️ BLOCKED by MongoDB connectivity
+
+#### Problem Identified:
+The original import script (`scripts/import-excel.js`) has critical bugs:
+1. ❌ Uses `Serial` as title instead of `SeriesName` (line 238)
+2. ❌ Only creates series if `Type === 'Series'` (line 171)
+3. ❌ Sets `audioFileName` even though files don't exist (line 242)
+4. ❌ No file existence tracking
+
+**Result**: 162 lectures in MongoDB have incorrect structure:
+- Titles show "Not Available" instead of actual series names
+- `audioFileName` populated but files don't exist on disk
+- Bulk upload thinks files exist when they don't
+
+#### Solutions Created:
+1. ✅ **cleanup-bad-data.js** - Removes all incorrectly imported data
+   - Shows preview of bad data
+   - Requires `CONFIRM_DELETE=yes` to run
+   - Preserves sheikhs, deletes lectures and series
+
+2. ✅ **import-excel-fixed.js** - Correct import logic
+   - Uses `SeriesName` as primary title (not `Serial`)
+   - Only appends serial number for `Type === 'Series'`
+   - Checks file existence before setting `audioFileName`
+   - Adds `metadata` field for Excel data tracking
+   - Supports `TEST_MODE=yes` for testing first 10 records
+
+3. ✅ **DATA_MIGRATION_GUIDE.md** - Complete migration plan
+   - Step-by-step instructions
+   - Data structure reference
+   - Troubleshooting guide
+
+#### Migration Steps (When MongoDB is Accessible):
+1. Run: `node scripts/cleanup-bad-data.js` (preview)
+2. Run: `CONFIRM_DELETE=yes node scripts/cleanup-bad-data.js`
+3. Test: `TEST_MODE=yes node scripts/import-excel-fixed.js`
+4. Verify test data structure
+5. Clean test: `CONFIRM_DELETE=yes node scripts/cleanup-bad-data.js`
+6. Full import: `node scripts/import-excel-fixed.js`
+7. Verify bulk upload shows correct counts
+
+**Blocker**: ⚠️ Cannot connect to MongoDB Atlas
+```
+Error: querySrv ECONNREFUSED _mongodb._tcp.cluster0.abhqc.mongodb.net
+```
+
+**Required Action**:
+- Resolve network/DNS connectivity to MongoDB Atlas
+- See troubleshooting in `DATA_MIGRATION_GUIDE.md`
+
+**Files**:
+- `scripts/cleanup-bad-data.js` (new)
+- `scripts/import-excel-fixed.js` (modified with TEST_MODE)
+- `DATA_MIGRATION_GUIDE.md` (new documentation)
 
 ---
 
