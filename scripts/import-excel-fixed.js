@@ -69,21 +69,34 @@ function parseDate(dateStr) {
 function extractLectureNumber(serialText) {
   if (!serialText || serialText === 'Not Available') return null;
 
-  // Arabic numbers mapping
+  // Arabic numbers mapping - IMPORTANT: Longer phrases must come first!
   const arabicNumbers = {
-    'الأول': 1, 'الثاني': 2, 'الثالث': 3, 'الرابع': 4, 'الخامس': 5,
-    'السادس': 6, 'السابع': 7, 'الثامن': 8, 'التاسع': 9, 'العاشر': 10,
+    // 21-40
+    'الحادي والعشرون': 21, 'الثاني والعشرون': 22, 'الثالث والعشرون': 23,
+    'الرابع والعشرون': 24, 'الخامس والعشرون': 25, 'السادس والعشرون': 26,
+    'السابع والعشرون': 27, 'الثامن والعشرون': 28, 'التاسع والعشرون': 29,
+    'الثلاثون': 30, 'واحد و الثلاثون': 31, 'الواحد والثلاثون': 31,
+    'الثاني والثلاثون': 32, 'الثالث والثلاثون': 33, 'الرابع والثلاثون': 34,
+    'الخامس والثلاثون': 35, 'السادس والثلاثون': 36, 'السابع والثلاثون': 37,
+    'الثامن والثلاثون': 38, 'التاسع والثلاثون': 39, 'الأربعون': 40,
+    // 41-50
+    'الحادي والأربعون': 41, 'الثاني والأربعون': 42, 'الثالث والأربعون': 43,
+    'الرابع والأربعون': 44, 'الخامس والأربعون': 45, 'السادس والأربعون': 46,
+    'السابع والأربعون': 47, 'الثامن والأربعون': 48, 'التاسع والأربعون': 49,
+    'الخمسون': 50,
+    // 11-20
     'الحادي عشر': 11, 'الثاني عشر': 12, 'الثالث عشر': 13, 'الرابع عشر': 14,
     'الخامس عشر': 15, 'السادس عشر': 16, 'السابع عشر': 17, 'الثامن عشر': 18,
-    'التاسع عشر': 19, 'العشرون': 20, 'الحادي والعشرون': 21, 'الثاني والعشرون': 22,
-    'الثالث والعشرون': 23, 'الرابع والعشرون': 24, 'الخامس والعشرون': 25,
-    'السادس والعشرون': 26, 'السابع والعشرون': 27, 'الثامن والعشرون': 28,
-    'التاسع والعشرون': 29, 'الثلاثون': 30
+    'التاسع عشر': 19, 'العشرون': 20,
+    // 1-10 (must come last to avoid false matches)
+    'الأول': 1, 'الثاني': 2, 'الثالث': 3, 'الرابع': 4, 'الخامس': 5,
+    'السادس': 6, 'السابع': 7, 'الثامن': 8, 'التاسع': 9, 'العاشر': 10
   };
 
   const text = String(serialText).trim();
 
-  // Check for Arabic ordinal numbers
+  // Check for Arabic ordinal numbers - exact match or contains
+  // Loop through in order (longer phrases checked first due to object key order)
   for (const [word, num] of Object.entries(arabicNumbers)) {
     if (text.includes(word)) {
       return num;
@@ -250,15 +263,17 @@ async function importExcel() {
         // This will be updated when actual audio files are uploaded
         const estimatedFileSize = duration > 0 ? Math.round(duration / 60 * 1024 * 1024) : 1024 * 1024;
 
-        // *** CRITICAL FIX: Title should be SeriesName, not Serial ***
+        // *** CRITICAL FIX: Title should be SeriesName + Serial text (not number) ***
         const titleArabic = row.SeriesName && row.SeriesName !== 'Not Available'
           ? row.SeriesName
           : (row.Serial && row.Serial !== 'Not Available' ? row.Serial : 'محاضرة');
 
-        // Build lecture title with serial number if available
+        // Build lecture title with serial text if available
         let fullTitleArabic = titleArabic;
-        if (lectureNumber && row.Type === 'Series') {
-          fullTitleArabic = `${titleArabic} - الدرس ${lectureNumber}`;
+        if (row.Serial && row.Serial !== 'Not Available' && row.Type === 'Series') {
+          // Use the actual Serial text (e.g., "السابع والعشرون") not the number
+          const serialText = String(row.Serial).trim();
+          fullTitleArabic = `${titleArabic} - ${serialText}`;
         }
 
         // Check if audio file actually exists on disk
