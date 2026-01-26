@@ -107,9 +107,68 @@ const isAdminAPI = async (req, res, next) => {
   }
 };
 
+/**
+ * Middleware to check if user is an editor or admin
+ * Use this for content management routes (lectures, series, sheikhs)
+ */
+const isEditor = async (req, res, next) => {
+  try {
+    if (!req.isAuthenticated()) {
+      return res.redirect('/admin/login');
+    }
+
+    const admin = await Admin.findById(req.user._id);
+
+    if (!admin || !admin.isActive) {
+      req.logout((err) => {
+        if (err) {
+          console.error('Logout error:', err);
+        }
+        res.redirect('/admin/login?error=inactive');
+      });
+      return;
+    }
+
+    // Check role - both admin and editor can access
+    if (admin.role !== 'admin' && admin.role !== 'editor') {
+      return res.status(403).send('Insufficient permissions');
+    }
+
+    next();
+  } catch (error) {
+    console.error('Editor auth middleware error:', error);
+    res.status(500).send('Authentication error');
+  }
+};
+
+/**
+ * Middleware to check if user is a super admin (admin role)
+ * Use this for admin/editor management routes only
+ */
+const isSuperAdmin = async (req, res, next) => {
+  try {
+    if (!req.isAuthenticated()) {
+      return res.redirect('/admin/login');
+    }
+
+    const admin = await Admin.findById(req.user._id);
+
+    if (!admin || !admin.isActive || admin.role !== 'admin') {
+      return res.status(403).send('Only super admins can access this page');
+    }
+
+    next();
+  } catch (error) {
+    console.error('Super admin auth middleware error:', error);
+    res.status(500).send('Authentication error');
+  }
+};
+
 module.exports = {
   isAuthenticated,
   isAdmin,
+  isEditor,
+  isSuperAdmin,
   isAuthenticatedAPI,
   isAdminAPI
 };

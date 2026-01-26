@@ -1,6 +1,6 @@
 const express = require('express');
 const router = express.Router();
-const { isAdmin } = require('../../middleware/auth');
+const { isAdmin, isEditor, isSuperAdmin } = require('../../middleware/auth');
 
 // @route   GET /admin/login
 // @desc    Admin login page
@@ -469,6 +469,97 @@ router.post('/sheikhs/:id/delete', isAdmin, async (req, res) => {
   } catch (error) {
     console.error('Delete sheikh error:', error);
     res.status(500).json({ success: false, message: 'Error deleting sheikh' });
+  }
+});
+
+// ========================================
+// USER MANAGEMENT ROUTES (Super Admin Only)
+// ========================================
+
+// @route   GET /admin/users
+// @desc    Manage admins and editors
+// @access  Private (Super Admin only)
+router.get('/users', isSuperAdmin, async (req, res) => {
+  try {
+    const { Admin } = require('../../models');
+
+    const users = await Admin.find()
+      .sort({ createdAt: -1 })
+      .lean();
+
+    res.render('admin/users', {
+      title: 'Manage Users',
+      user: req.user,
+      users
+    });
+  } catch (error) {
+    console.error('Users page error:', error);
+    res.status(500).send('Error loading users page');
+  }
+});
+
+// @route   POST /admin/users/:id/role
+// @desc    Update user role
+// @access  Private (Super Admin only)
+router.post('/users/:id/role', isSuperAdmin, async (req, res) => {
+  try {
+    const { Admin } = require('../../models');
+    const { role } = req.body;
+
+    // Prevent changing own role
+    if (req.params.id === req.user._id.toString()) {
+      return res.status(400).json({
+        success: false,
+        message: 'Cannot change your own role'
+      });
+    }
+
+    if (role !== 'admin' && role !== 'editor') {
+      return res.status(400).json({
+        success: false,
+        message: 'Invalid role'
+      });
+    }
+
+    await Admin.findByIdAndUpdate(req.params.id, { role });
+
+    res.json({ success: true });
+  } catch (error) {
+    console.error('Update role error:', error);
+    res.status(500).json({ success: false, message: 'Error updating role' });
+  }
+});
+
+// @route   POST /admin/users/:id/toggle-active
+// @desc    Toggle user active status
+// @access  Private (Super Admin only)
+router.post('/users/:id/toggle-active', isSuperAdmin, async (req, res) => {
+  try {
+    const { Admin } = require('../../models');
+
+    // Prevent deactivating own account
+    if (req.params.id === req.user._id.toString()) {
+      return res.status(400).json({
+        success: false,
+        message: 'Cannot deactivate your own account'
+      });
+    }
+
+    const user = await Admin.findById(req.params.id);
+    if (!user) {
+      return res.status(404).json({ success: false, message: 'User not found' });
+    }
+
+    user.isActive = !user.isActive;
+    await user.save();
+
+    res.json({
+      success: true,
+      isActive: user.isActive
+    });
+  } catch (error) {
+    console.error('Toggle active error:', error);
+    res.status(500).json({ success: false, message: 'Error toggling active status' });
   }
 });
 
