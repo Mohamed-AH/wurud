@@ -153,7 +153,18 @@
                 <span>•</span>
               <% } %>
               <% if (s.category) { %>
-                <span class="series-category"><%= s.category %></span>
+                <%
+                  const categoryArabic = {
+                    'Tafsir': 'تفسير',
+                    'Hadith': 'حديث',
+                    'Fiqh': 'فقه',
+                    'Aqeedah': 'عقيدة',
+                    'Seerah': 'سيرة',
+                    'Akhlaq': 'أخلاق',
+                    'Other': 'أخرى'
+                  };
+                %>
+                <span class="series-category"><%= categoryArabic[s.category] || s.category || 'أخرى' %></span>
               <% } %>
             </div>
           </div>

@@ -448,19 +448,6 @@
     </div>
   <% } %>
 
-  <!-- Sheikh Bio -->
-  <% if (series.sheikhId && series.sheikhId.bioArabic) { %>
-    <div class="content-section">
-      <div class="container">
-        <h2 class="section-title">نبذة عن الشيخ</h2>
-        <div class="bio-card">
-          <p class="bio-text"><%= series.sheikhId.bioArabic %></p>
-          <a href="/sheikhs/<%= series.sheikhId._id %>" class="btn-link">المزيد من محاضرات الشيخ ←</a>
-        </div>
-      </div>
-    </div>
-  <% } %>
-
   <!-- Related Khutba Series (for consolidated خطب الجمعة only) -->
   <% if (relatedKhutbaSeries && relatedKhutbaSeries.length > 0) { %>
     <div class="content-section">
