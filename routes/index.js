@@ -8,6 +8,7 @@ const { Lecture, Sheikh, Series } = require('../models');
 router.get('/', async (req, res) => {
   try {
     // Fetch all series with their sheikhs
+    // Note: Series sorted by creation date, but lectures within series will be sorted by dateRecorded
     const series = await Series.find()
       .populate('sheikhId', 'nameArabic nameEnglish honorific')
       .sort({ createdAt: -1 })
@@ -41,12 +42,13 @@ router.get('/', async (req, res) => {
     const filteredSeries = seriesList.filter(s => s.lectureCount > 0);
 
     // Get all standalone lectures (not in any series)
+    // Sort by recording date (most recent first), fallback to creation date
     const standaloneLectures = await Lecture.find({
       seriesId: null,
       published: true
     })
       .populate('sheikhId', 'nameArabic nameEnglish honorific')
-      .sort({ createdAt: -1 })
+      .sort({ dateRecorded: -1, createdAt: -1 })
       .lean();
 
     // Get محاضرات متفرقة series (miscellaneous lectures) and include in Lectures tab
@@ -63,7 +65,7 @@ router.get('/', async (req, res) => {
         published: true
       })
         .populate('sheikhId', 'nameArabic nameEnglish honorific')
-        .sort({ createdAt: -1 })
+        .sort({ dateRecorded: -1, createdAt: -1 })
         .lean();
     }
 
@@ -95,7 +97,7 @@ router.get('/', async (req, res) => {
 // @access  Public
 router.get('/browse', async (req, res) => {
   try {
-    const { search, category, sort = '-createdAt' } = req.query;
+    const { search, category, sort = '-dateRecorded' } = req.query;
 
     // Build query
     const query = { published: true };
