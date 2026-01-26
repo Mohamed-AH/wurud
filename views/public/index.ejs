@@ -675,12 +675,15 @@
                 الشيخ: <%= lecture.sheikhId ? lecture.sheikhId.nameArabic : '' %>
               </div>
             </div>
-            <div class="episode-actions">
+            <div class="series-info">
+              <span><%= Math.floor(lecture.duration / 60) %>:<%= String(lecture.duration % 60).padStart(2, '0') %></span>
+            </div>
+            <div class="episode-actions" style="margin-top: 16px;">
               <% if (lecture.audioFileName) { %>
-                <button class="action-btn play-btn" onclick="playAudio('<%= lecture._id %>', '<%= lecture.titleArabic %>', '<%= lecture.sheikhId ? lecture.sheikhId.nameArabic : '' %>')">
+                <button class="btn-play" onclick="playAudio('<%= lecture._id %>', '<%= lecture.titleArabic.replace(/'/g, "\\'") %>', '<%= lecture.sheikhId ? lecture.sheikhId.nameArabic.replace(/'/g, "\\'") : "" %>')">
                   ▶ تشغيل
                 </button>
-                <a href="/download/<%= lecture._id %>" class="action-btn download-btn">
+                <a href="/download/<%= lecture._id %>" class="btn-download">
                   ⬇ تحميل
                 </a>
               <% } %>
@@ -703,7 +706,7 @@
     <% if (khutbaSeries && khutbaSeries.length > 0) { %>
       <% khutbaSeries.forEach(series => { %>
         <div class="series-card">
-          <div class="series-header" onclick="toggleSeries('<%= series._id %>')">
+          <div class="series-header">
             <h2 class="series-title"><%= series.titleArabic %></h2>
             <div class="series-meta">
               <div class="series-sheikh">
@@ -713,7 +716,7 @@
             <div class="series-info">
               <span><%= series.lectureCount %> خطبة</span>
             </div>
-            <button class="expand-btn" id="btn-<%= series._id %>">
+            <button class="expand-btn" id="btn-<%= series._id %>" onclick="toggleKhutba('<%= series._id %>')">
               عرض الخطب ▼
             </button>
           </div>
@@ -734,10 +737,10 @@
                 </div>
                 <div class="episode-actions">
                   <% if (lecture.audioFileName) { %>
-                    <button class="action-btn play-btn" onclick="playAudio('<%= lecture._id %>', '<%= lecture.titleArabic %>', '<%= series.sheikh ? series.sheikh.nameArabic : '' %>')">
+                    <button class="btn-play" onclick="playAudio('<%= lecture._id %>', '<%= lecture.titleArabic.replace(/'/g, "\\'") %>', '<%= series.sheikh ? series.sheikh.nameArabic.replace(/'/g, "\\'") : "" %>')">
                       ▶ تشغيل
                     </button>
-                    <a href="/download/<%= lecture._id %>" class="action-btn download-btn">
+                    <a href="/download/<%= lecture._id %>" class="btn-download">
                       ⬇ تحميل
                     </a>
                   <% } %>
@@ -807,6 +810,27 @@
     } else {
       console.log('  ✅ Series collapsed');
       btn.textContent = 'عرض الدروس ▼';
+    }
+  }
+
+  // Toggle Khutba expansion
+  function toggleKhutba(seriesId) {
+    console.log('🔄 Toggling khutba:', seriesId);
+    const episodesList = document.getElementById('episodes-' + seriesId);
+    const btn = document.getElementById('btn-' + seriesId);
+
+    if (!episodesList || !btn) {
+      console.error('❌ Could not find elements for khutba:', seriesId);
+      return;
+    }
+
+    episodesList.classList.toggle('show');
+    btn.classList.toggle('expanded');
+
+    if (episodesList.classList.contains('show')) {
+      btn.textContent = 'إخفاء الخطب ▲';
+    } else {
+      btn.textContent = 'عرض الخطب ▼';
     }
   }
 
