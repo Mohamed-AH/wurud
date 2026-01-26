@@ -37,10 +37,17 @@ passport.use(
         }
 
         // Find or create admin user
+        // First try to find by googleId
         let admin = await Admin.findOne({ googleId: profile.id });
+
+        if (!admin) {
+          // If not found by googleId, check by email (for pre-created editors)
+          admin = await Admin.findOne({ email: email });
+        }
 
         if (admin) {
           // Update existing admin
+          admin.googleId = profile.id; // Link Google account if not already linked
           admin.email = email;
           admin.displayName = profile.displayName;
           admin.firstName = profile.name?.givenName || '';
@@ -48,7 +55,7 @@ passport.use(
           admin.profilePhoto = profile.photos?.[0]?.value || '';
           await admin.updateLastLogin();
         } else {
-          // Create new admin
+          // Create new admin (only if email is whitelisted)
           admin = await Admin.create({
             googleId: profile.id,
             email: email,
