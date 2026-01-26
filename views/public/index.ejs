@@ -727,11 +727,11 @@
             <div class="series-info">
               <span><%= series.lectureCount %> خطبة</span>
             </div>
-            <button class="expand-btn" id="btn-<%= series._id %>">
+            <button class="expand-btn" id="khutba-btn-<%= series._id %>">
               عرض الخطب ▼
             </button>
           </div>
-          <div class="episodes-list" id="episodes-<%= series._id %>">
+          <div class="episodes-list" id="khutba-episodes-<%= series._id %>">
             <% if (series.lectures && series.lectures.length > 0) { %>
               <% series.lectures.forEach(lecture => { %>
                 <div class="episode-item">
@@ -833,8 +833,9 @@
   // Toggle Khutba expansion
   function toggleKhutba(seriesId) {
     console.log('🔄 Toggling khutba:', seriesId);
-    const episodesList = document.getElementById('episodes-' + seriesId);
-    const btn = document.getElementById('btn-' + seriesId);
+    // Use prefixed IDs to avoid conflicts with Series tab
+    const episodesList = document.getElementById('khutba-episodes-' + seriesId);
+    const btn = document.getElementById('khutba-btn-' + seriesId);
 
     console.log('  Episodes list found:', episodesList ? 'YES' : 'NO');
     console.log('  Button found:', btn ? 'YES' : 'NO');
