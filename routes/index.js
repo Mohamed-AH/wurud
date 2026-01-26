@@ -72,13 +72,19 @@ router.get('/', async (req, res) => {
     // Combine standalone and miscellaneous lectures for Lectures tab
     const allStandaloneLectures = [...standaloneLectures, ...miscLectures];
 
-    // Get Khutba series (for Khutbas tab)
-    const khutbaSeries = filteredSeries.filter(s =>
-      s.titleArabic && (
+    // Get Khutba series (for Khutbas tab) - use tags for better filtering
+    // Also fallback to title-based detection for backward compatibility
+    const khutbaSeries = filteredSeries.filter(s => {
+      // Check if tags include 'khutba'
+      if (s.tags && s.tags.includes('khutba')) {
+        return true;
+      }
+      // Fallback to title-based detection for content without tags
+      return s.titleArabic && (
         s.titleArabic.includes('خطب') ||
         s.titleArabic.includes('خطبة')
-      )
-    );
+      );
+    });
 
     res.render('public/index', {
       title: 'المكتبة الصوتية',
