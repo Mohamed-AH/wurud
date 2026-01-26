@@ -706,7 +706,7 @@
     <% if (khutbaSeries && khutbaSeries.length > 0) { %>
       <% khutbaSeries.forEach(series => { %>
         <div class="series-card">
-          <div class="series-header">
+          <div class="series-header" onclick="toggleKhutba('<%= series._id %>')">
             <h2 class="series-title"><%= series.titleArabic %></h2>
             <div class="series-meta">
               <div class="series-sheikh">
@@ -716,7 +716,7 @@
             <div class="series-info">
               <span><%= series.lectureCount %> خطبة</span>
             </div>
-            <button class="expand-btn" id="btn-<%= series._id %>" onclick="toggleKhutba('<%= series._id %>')">
+            <button class="expand-btn" id="btn-<%= series._id %>">
               عرض الخطب ▼
             </button>
           </div>
