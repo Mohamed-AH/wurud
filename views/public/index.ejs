@@ -727,10 +727,17 @@
               عرض الخطب ▼
             </button>
           </div>
-          <div class="episodes-list" id="episodes-<%= series._id %>">
+          <div class="episodes-list" id="episodes-<%= series._id %>" style="background: yellow; padding: 10px;">
+            <div style="color: blue; font-weight: bold; padding: 10px;">
+              DEBUG: Episodes list container - should be visible when expanded
+            </div>
             <% if (series.lectures && series.lectures.length > 0) { %>
-              <% series.lectures.forEach(lecture => { %>
-                <div class="episode-item">
+              <div style="color: green; font-weight: bold; padding: 10px;">
+                DEBUG: Found <%= series.lectures.length %> lectures, rendering them now...
+              </div>
+              <% series.lectures.forEach((lecture, index) => { %>
+                <div class="episode-item" style="background: lightblue; border: 2px solid red; margin: 5px;">
+                  <div style="color: red; font-weight: bold;">DEBUG: Episode <%= index + 1 %></div>
                   <div class="episode-header">
                     <% if (lecture.lectureNumber) { %>
                       <div class="episode-number"><%= lecture.lectureNumber %></div>
