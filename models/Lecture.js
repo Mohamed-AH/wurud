@@ -61,6 +61,11 @@ const lectureSchema = new mongoose.Schema({
     default: 'Other',
     index: true
   },
+  tags: {
+    type: [String],
+    default: [],
+    index: true
+  },
   dateRecorded: {
     type: Date,
     index: true

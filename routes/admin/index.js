@@ -205,14 +205,21 @@ router.get('/series/:id/edit', isAdmin, async (req, res) => {
 router.post('/series/:id/edit', isAdmin, async (req, res) => {
   try {
     const { Series } = require('../../models');
-    const { titleArabic, titleEnglish, category, descriptionArabic, descriptionEnglish } = req.body;
+    const { titleArabic, titleEnglish, category, descriptionArabic, descriptionEnglish, tags } = req.body;
+
+    // Handle tags - can be a string (single tag) or array (multiple tags)
+    let tagsArray = [];
+    if (tags) {
+      tagsArray = Array.isArray(tags) ? tags : [tags];
+    }
 
     await Series.findByIdAndUpdate(req.params.id, {
       titleArabic,
       titleEnglish,
       category,
       descriptionArabic,
-      descriptionEnglish
+      descriptionEnglish,
+      tags: tagsArray
     });
 
     res.redirect('/admin/manage?success=series-updated');
@@ -268,8 +275,15 @@ router.post('/lectures/:id/edit', isAdmin, async (req, res) => {
       lectureNumber,
       category,
       seriesId,
-      published
+      published,
+      tags
     } = req.body;
+
+    // Handle tags - can be a string (single tag) or array (multiple tags)
+    let tagsArray = [];
+    if (tags) {
+      tagsArray = Array.isArray(tags) ? tags : [tags];
+    }
 
     await Lecture.findByIdAndUpdate(req.params.id, {
       titleArabic,
@@ -279,7 +293,8 @@ router.post('/lectures/:id/edit', isAdmin, async (req, res) => {
       lectureNumber: lectureNumber ? parseInt(lectureNumber) : null,
       category,
       seriesId: seriesId || null,
-      published: published === 'true'
+      published: published === 'true',
+      tags: tagsArray
     });
 
     res.redirect('/admin/manage?success=lecture-updated');
