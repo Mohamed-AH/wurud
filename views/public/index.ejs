@@ -582,14 +582,35 @@
       </button>
     </div>
   </div>
+
+  <div class="filter-group">
+    <span class="filter-label">الترتيب:</span>
+    <div class="filter-chips">
+      <button class="chip active" data-sort="newest" onclick="sortByDate('newest')">
+        الأحدث أولاً
+      </button>
+      <button class="chip" data-sort="oldest" onclick="sortByDate('oldest')">
+        الأقدم أولاً
+      </button>
+      <button class="chip" data-sort="hijri" onclick="sortByDate('hijri')">
+        ترتيب هجري
+      </button>
+    </div>
+  </div>
 </div>
 
 <!-- Series Tab Content -->
 <div id="content-series" class="tab-content active">
 <div class="series-list">
   <% if (seriesList && seriesList.length > 0) { %>
-    <% seriesList.forEach(series => { %>
-      <div class="series-card" data-category="<%= series.category %>">
+    <% seriesList.forEach(series => {
+      // Get the most recent lecture date for sorting
+      const latestDate = series.lectures.length > 0 && series.lectures[0].dateRecorded
+        ? new Date(series.lectures[0].dateRecorded).getTime()
+        : Date.now();
+      const hijriDate = series.lectures.length > 0 ? series.lectures[0].dateRecordedHijri || '' : '';
+    %>
+      <div class="series-card" data-category="<%= series.category %>" data-date="<%= latestDate %>" data-hijri="<%= hijriDate %>">
         <div class="series-header" onclick="toggleSeries('<%= series._id %>')">
           <h2 class="series-title"><%= series.titleArabic %></h2>
 
@@ -677,8 +698,11 @@
 <div id="content-lectures" class="tab-content">
   <div class="series-list">
     <% if (standaloneLectures && standaloneLectures.length > 0) { %>
-      <% standaloneLectures.forEach(lecture => { %>
-        <div class="series-card">
+      <% standaloneLectures.forEach(lecture => {
+        const lectureDate = lecture.dateRecorded ? new Date(lecture.dateRecorded).getTime() : Date.now();
+        const hijriDate = lecture.dateRecordedHijri || '';
+      %>
+        <div class="series-card" data-date="<%= lectureDate %>" data-hijri="<%= hijriDate %>">
           <div class="series-header">
             <h2 class="series-title"><%= lecture.titleArabic %></h2>
             <div class="series-meta">
@@ -715,8 +739,14 @@
 <div id="content-khutbas" class="tab-content">
   <div class="series-list">
     <% if (khutbaSeries && khutbaSeries.length > 0) { %>
-      <% khutbaSeries.forEach(series => { %>
-        <div class="series-card">
+      <% khutbaSeries.forEach(series => {
+        // Get the most recent lecture date for sorting
+        const latestDate = series.lectures.length > 0 && series.lectures[0].dateRecorded
+          ? new Date(series.lectures[0].dateRecorded).getTime()
+          : Date.now();
+        const hijriDate = series.lectures.length > 0 ? series.lectures[0].dateRecordedHijri || '' : '';
+      %>
+        <div class="series-card" data-category="<%= series.category %>" data-date="<%= latestDate %>" data-hijri="<%= hijriDate %>">
           <div class="series-header" onclick="toggleKhutba('<%= series._id %>')">
             <h2 class="series-title"><%= series.titleArabic %></h2>
             <div class="series-meta">
@@ -934,5 +964,52 @@
       console.error('   3. Audio player partial not included in layout');
       alert('Audio player is loading, please try again in a moment.');
     }
+  }
+
+  // Sort series by date
+  function sortByDate(sortType) {
+    console.log('🔄 Sorting by:', sortType);
+
+    // Update active state for sort buttons
+    document.querySelectorAll('.chip[data-sort]').forEach(btn => btn.classList.remove('active'));
+    document.querySelector(`.chip[data-sort="${sortType}"]`)?.classList.add('active');
+
+    // Get all series cards in the active tab
+    const activeTab = document.querySelector('.tab-content.active');
+    const seriesList = activeTab.querySelector('.series-list');
+    const cards = Array.from(seriesList.querySelectorAll('.series-card'));
+
+    // Sort cards based on type
+    cards.sort((a, b) => {
+      if (sortType === 'newest') {
+        // Sort by date (newest first)
+        const dateA = parseInt(a.dataset.date) || 0;
+        const dateB = parseInt(b.dataset.date) || 0;
+        return dateB - dateA;
+      } else if (sortType === 'oldest') {
+        // Sort by date (oldest first)
+        const dateA = parseInt(a.dataset.date) || 0;
+        const dateB = parseInt(b.dataset.date) || 0;
+        return dateA - dateB;
+      } else if (sortType === 'hijri') {
+        // Sort by Hijri date (newest first)
+        // Hijri dates are in format "1445/12/15"
+        const hijriA = a.dataset.hijri || '';
+        const hijriB = b.dataset.hijri || '';
+
+        if (!hijriA && !hijriB) return 0;
+        if (!hijriA) return 1;
+        if (!hijriB) return -1;
+
+        // Compare hijri dates as strings (format YYYY/MM/DD works for string comparison)
+        return hijriB.localeCompare(hijriA);
+      }
+      return 0;
+    });
+
+    // Re-append cards in sorted order
+    cards.forEach(card => seriesList.appendChild(card));
+
+    console.log('✅ Sorting complete');
   }
 </script>
