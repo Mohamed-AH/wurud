@@ -286,6 +286,10 @@
 
   .episodes-list.show {
     display: block !important;
+    visibility: visible !important;
+    opacity: 1 !important;
+    height: auto !important;
+    overflow: visible !important;
   }
 
   .episode-item {
@@ -778,6 +782,10 @@
     const contentElement = document.getElementById('content-' + tabName);
     if (contentElement) {
       contentElement.classList.add('active');
+      console.log('  ✅ Tab content activated:', contentElement.id);
+      console.log('  Tab content display:', window.getComputedStyle(contentElement).display);
+    } else {
+      console.error('  ❌ Could not find tab content:', 'content-' + tabName);
     }
 
     // Activate selected tab button
@@ -830,9 +838,15 @@
     }
 
     console.log('  Before toggle - episodesList classes:', episodesList.className);
+    console.log('  Before toggle - computed display:', window.getComputedStyle(episodesList).display);
+
     episodesList.classList.toggle('show');
     btn.classList.toggle('expanded');
+
     console.log('  After toggle - episodesList classes:', episodesList.className);
+    console.log('  After toggle - computed display:', window.getComputedStyle(episodesList).display);
+    console.log('  After toggle - computed visibility:', window.getComputedStyle(episodesList).visibility);
+    console.log('  After toggle - computed opacity:', window.getComputedStyle(episodesList).opacity);
 
     if (episodesList.classList.contains('show')) {
       console.log('  ✅ Khutba expanded');
