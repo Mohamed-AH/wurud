@@ -49,6 +49,27 @@ router.get('/', async (req, res) => {
       .sort({ createdAt: -1 })
       .lean();
 
+    // Get محاضرات متفرقة series (miscellaneous lectures) and include in Lectures tab
+    const miscSeries = await Series.findOne({
+      titleArabic: /محاضرات متفرقة/i
+    })
+      .populate('sheikhId', 'nameArabic nameEnglish honorific')
+      .lean();
+
+    let miscLectures = [];
+    if (miscSeries) {
+      miscLectures = await Lecture.find({
+        seriesId: miscSeries._id,
+        published: true
+      })
+        .populate('sheikhId', 'nameArabic nameEnglish honorific')
+        .sort({ createdAt: -1 })
+        .lean();
+    }
+
+    // Combine standalone and miscellaneous lectures for Lectures tab
+    const allStandaloneLectures = [...standaloneLectures, ...miscLectures];
+
     // Get Khutba series (for Khutbas tab)
     const khutbaSeries = filteredSeries.filter(s =>
       s.titleArabic && (
@@ -60,7 +81,7 @@ router.get('/', async (req, res) => {
     res.render('public/index', {
       title: 'المكتبة الصوتية',
       seriesList: filteredSeries,
-      standaloneLectures: standaloneLectures,
+      standaloneLectures: allStandaloneLectures,
       khutbaSeries: khutbaSeries
     });
   } catch (error) {
