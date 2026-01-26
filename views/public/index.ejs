@@ -719,38 +719,47 @@
             </div>
             <div class="series-info">
               <span><%= series.lectureCount %> خطبة</span>
+              <span style="margin-right: 16px; color: red; font-size: 12px;">
+                [DEBUG: <%= series.lectures ? series.lectures.length : 0 %> lectures in array]
+              </span>
             </div>
             <button class="expand-btn" id="btn-<%= series._id %>">
               عرض الخطب ▼
             </button>
           </div>
           <div class="episodes-list" id="episodes-<%= series._id %>">
-            <% series.lectures.forEach(lecture => { %>
-              <div class="episode-item">
-                <div class="episode-header">
-                  <% if (lecture.lectureNumber) { %>
-                    <div class="episode-number"><%= lecture.lectureNumber %></div>
-                  <% } %>
-                  <div class="episode-title"><%= lecture.titleArabic %></div>
+            <% if (series.lectures && series.lectures.length > 0) { %>
+              <% series.lectures.forEach(lecture => { %>
+                <div class="episode-item">
+                  <div class="episode-header">
+                    <% if (lecture.lectureNumber) { %>
+                      <div class="episode-number"><%= lecture.lectureNumber %></div>
+                    <% } %>
+                    <div class="episode-title"><%= lecture.titleArabic %></div>
+                  </div>
+                  <div class="episode-meta">
+                    <span><%= Math.floor(lecture.duration / 60) %>:<%= String(lecture.duration % 60).padStart(2, '0') %></span>
+                    <% if (lecture.location) { %>
+                      <span><%= lecture.location %></span>
+                    <% } %>
+                  </div>
+                  <div class="episode-actions">
+                    <% if (lecture.audioFileName) { %>
+                      <button class="btn-play" onclick="playAudio('<%= lecture._id %>', '<%= lecture.titleArabic.replace(/'/g, "\\'") %>', '<%= series.sheikh ? series.sheikh.nameArabic.replace(/'/g, "\\'") : "" %>')">
+                        ▶ تشغيل
+                      </button>
+                      <a href="/download/<%= lecture._id %>" class="btn-download">
+                        ⬇ تحميل
+                      </a>
+                    <% } %>
+                  </div>
                 </div>
-                <div class="episode-meta">
-                  <span><%= Math.floor(lecture.duration / 60) %>:<%= String(lecture.duration % 60).padStart(2, '0') %></span>
-                  <% if (lecture.location) { %>
-                    <span><%= lecture.location %></span>
-                  <% } %>
-                </div>
-                <div class="episode-actions">
-                  <% if (lecture.audioFileName) { %>
-                    <button class="btn-play" onclick="playAudio('<%= lecture._id %>', '<%= lecture.titleArabic.replace(/'/g, "\\'") %>', '<%= series.sheikh ? series.sheikh.nameArabic.replace(/'/g, "\\'") : "" %>')">
-                      ▶ تشغيل
-                    </button>
-                    <a href="/download/<%= lecture._id %>" class="btn-download">
-                      ⬇ تحميل
-                    </a>
-                  <% } %>
-                </div>
+              <% }) %>
+            <% } else { %>
+              <div class="episode-item" style="text-align: center; color: red;">
+                ❌ DEBUG: No lectures found in series.lectures array
               </div>
-            <% }) %>
+            <% } %>
           </div>
         </div>
       <% }) %>
