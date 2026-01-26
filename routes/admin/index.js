@@ -547,6 +547,64 @@ router.get('/users', isSuperAdmin, async (req, res) => {
   }
 });
 
+// @route   POST /admin/users/add
+// @desc    Add a new editor/admin user
+// @access  Private (Super Admin only)
+router.post('/users/add', isSuperAdmin, async (req, res) => {
+  try {
+    const { Admin } = require('../../models');
+    const { email, displayName, role } = req.body;
+
+    // Validate input
+    if (!email || !displayName) {
+      return res.status(400).json({
+        success: false,
+        message: 'Email and display name are required'
+      });
+    }
+
+    if (role !== 'admin' && role !== 'editor') {
+      return res.status(400).json({
+        success: false,
+        message: 'Invalid role'
+      });
+    }
+
+    // Check if user already exists
+    const existingUser = await Admin.findOne({ email });
+    if (existingUser) {
+      return res.status(400).json({
+        success: false,
+        message: 'A user with this email already exists'
+      });
+    }
+
+    // Create new user
+    const newUser = new Admin({
+      email,
+      displayName,
+      username: email.split('@')[0], // Use email prefix as username
+      role,
+      isActive: true,
+      googleId: null, // Will be set when they login with Google OAuth
+      profilePhoto: null
+    });
+
+    await newUser.save();
+
+    res.json({
+      success: true,
+      message: 'User added successfully'
+    });
+  } catch (error) {
+    console.error('Add user error:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Error adding user: ' + error.message
+    });
+  }
+});
+
 // @route   POST /admin/users/:id/role
 // @desc    Update user role
 // @access  Private (Super Admin only)

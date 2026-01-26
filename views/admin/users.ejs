@@ -153,6 +153,54 @@
 
     <div class="page-header">
       <h2 class="page-title">Admins & Editors (<%= users.length %>)</h2>
+      <button onclick="showAddEditorForm()" class="btn btn-primary">➕ Add Editor</button>
+    </div>
+
+    <!-- Add Editor Form (hidden by default) -->
+    <div id="addEditorForm" class="card" style="display: none; margin-bottom: 24px;">
+      <h3 style="margin-bottom: 16px; color: #2C3E35;">➕ Add New Editor</h3>
+      <form onsubmit="addEditor(event)">
+        <div style="margin-bottom: 16px;">
+          <label style="display: block; margin-bottom: 8px; font-weight: 600; color: #495057;">Email Address *</label>
+          <input
+            type="email"
+            id="newEditorEmail"
+            placeholder="editor@example.com"
+            required
+            style="width: 100%; padding: 10px 12px; border: 1px solid #ddd; border-radius: 6px; font-size: 14px;"
+          >
+          <small style="color: #6c757d; display: block; margin-top: 4px;">
+            The editor will need to login with Google OAuth using this email address
+          </small>
+        </div>
+
+        <div style="margin-bottom: 16px;">
+          <label style="display: block; margin-bottom: 8px; font-weight: 600; color: #495057;">Display Name *</label>
+          <input
+            type="text"
+            id="newEditorName"
+            placeholder="Editor Name"
+            required
+            style="width: 100%; padding: 10px 12px; border: 1px solid #ddd; border-radius: 6px; font-size: 14px;"
+          >
+        </div>
+
+        <div style="margin-bottom: 16px;">
+          <label style="display: block; margin-bottom: 8px; font-weight: 600; color: #495057;">Role *</label>
+          <select
+            id="newEditorRole"
+            style="width: 100%; padding: 10px 12px; border: 1px solid #ddd; border-radius: 6px; font-size: 14px;"
+          >
+            <option value="editor">✏️ Editor (Content management only)</option>
+            <option value="admin">👑 Admin (Full access)</option>
+          </select>
+        </div>
+
+        <div style="display: flex; gap: 12px;">
+          <button type="submit" class="btn btn-primary">✅ Add User</button>
+          <button type="button" onclick="hideAddEditorForm()" class="btn" style="background: #6c757d; color: white;">❌ Cancel</button>
+        </div>
+      </form>
     </div>
 
     <div class="info-box">
@@ -251,6 +299,53 @@
       setTimeout(() => {
         msg.style.display = 'none';
       }, 5000);
+    }
+
+    function showAddEditorForm() {
+      document.getElementById('addEditorForm').style.display = 'block';
+      document.getElementById('newEditorEmail').focus();
+    }
+
+    function hideAddEditorForm() {
+      document.getElementById('addEditorForm').style.display = 'none';
+      document.getElementById('newEditorEmail').value = '';
+      document.getElementById('newEditorName').value = '';
+      document.getElementById('newEditorRole').value = 'editor';
+    }
+
+    function addEditor(event) {
+      event.preventDefault();
+
+      const email = document.getElementById('newEditorEmail').value;
+      const displayName = document.getElementById('newEditorName').value;
+      const role = document.getElementById('newEditorRole').value;
+
+      if (!email || !displayName) {
+        showMessage('❌ Please fill in all required fields', 'error');
+        return;
+      }
+
+      fetch('/admin/users/add', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({ email, displayName, role })
+      })
+      .then(res => res.json())
+      .then(data => {
+        if (data.success) {
+          showMessage('✅ Editor added successfully! They can now login with Google OAuth.', 'success');
+          hideAddEditorForm();
+          setTimeout(() => window.location.reload(), 2000);
+        } else {
+          showMessage(`❌ Error: ${data.message}`, 'error');
+        }
+      })
+      .catch(err => {
+        console.error('Add editor error:', err);
+        showMessage('❌ Error adding editor', 'error');
+      });
     }
 
     function updateRole(userId, newRole) {

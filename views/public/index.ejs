@@ -609,6 +609,12 @@
         ? new Date(series.lectures[0].dateRecorded).getTime()
         : Date.now();
       const hijriDate = series.lectures.length > 0 ? series.lectures[0].dateRecordedHijri || '' : '';
+      console.log(`[SERIES DEBUG] ${series.titleArabic}:`);
+      console.log(`  - Lecture count: ${series.lectures.length}`);
+      console.log(`  - First lecture dateRecorded:`, series.lectures[0]?.dateRecorded);
+      console.log(`  - First lecture dateRecordedHijri:`, series.lectures[0]?.dateRecordedHijri);
+      console.log(`  - Computed latestDate (timestamp): ${latestDate}`);
+      console.log(`  - Computed hijriDate: ${hijriDate}`);
     %>
       <div class="series-card" data-category="<%= series.category %>" data-date="<%= latestDate %>" data-hijri="<%= hijriDate %>">
         <div class="series-header" onclick="toggleSeries('<%= series._id %>')">
@@ -701,6 +707,11 @@
       <% standaloneLectures.forEach(lecture => {
         const lectureDate = lecture.dateRecorded ? new Date(lecture.dateRecorded).getTime() : Date.now();
         const hijriDate = lecture.dateRecordedHijri || '';
+        console.log(`[LECTURE DEBUG] ${lecture.titleArabic}:`);
+        console.log(`  - dateRecorded:`, lecture.dateRecorded);
+        console.log(`  - dateRecordedHijri:`, lecture.dateRecordedHijri);
+        console.log(`  - Computed lectureDate (timestamp): ${lectureDate}`);
+        console.log(`  - Computed hijriDate: ${hijriDate}`);
       %>
         <div class="series-card" data-date="<%= lectureDate %>" data-hijri="<%= hijriDate %>">
           <div class="series-header">
@@ -745,6 +756,12 @@
           ? new Date(series.lectures[0].dateRecorded).getTime()
           : Date.now();
         const hijriDate = series.lectures.length > 0 ? series.lectures[0].dateRecordedHijri || '' : '';
+        console.log(`[KHUTBA DEBUG] ${series.titleArabic}:`);
+        console.log(`  - Lecture count: ${series.lectures.length}`);
+        console.log(`  - First lecture dateRecorded:`, series.lectures[0]?.dateRecorded);
+        console.log(`  - First lecture dateRecordedHijri:`, series.lectures[0]?.dateRecordedHijri);
+        console.log(`  - Computed latestDate (timestamp): ${latestDate}`);
+        console.log(`  - Computed hijriDate: ${hijriDate}`);
       %>
         <div class="series-card" data-category="<%= series.category %>" data-date="<%= latestDate %>" data-hijri="<%= hijriDate %>">
           <div class="series-header" onclick="toggleKhutba('<%= series._id %>')">
@@ -979,17 +996,32 @@
     const seriesList = activeTab.querySelector('.series-list');
     const cards = Array.from(seriesList.querySelectorAll('.series-card'));
 
+    console.log(`  Found ${cards.length} cards to sort`);
+
+    // Log each card's data before sorting
+    console.log('  Card data before sorting:');
+    cards.forEach((card, index) => {
+      const title = card.querySelector('.series-title')?.textContent || 'Unknown';
+      const dateValue = card.dataset.date;
+      const hijriValue = card.dataset.hijri;
+      console.log(`    [${index}] ${title}`);
+      console.log(`        - data-date: ${dateValue}`);
+      console.log(`        - data-hijri: ${hijriValue}`);
+    });
+
     // Sort cards based on type
     cards.sort((a, b) => {
       if (sortType === 'newest') {
         // Sort by date (newest first)
         const dateA = parseInt(a.dataset.date) || 0;
         const dateB = parseInt(b.dataset.date) || 0;
+        console.log(`    Comparing: ${dateA} vs ${dateB} = ${dateB - dateA}`);
         return dateB - dateA;
       } else if (sortType === 'oldest') {
         // Sort by date (oldest first)
         const dateA = parseInt(a.dataset.date) || 0;
         const dateB = parseInt(b.dataset.date) || 0;
+        console.log(`    Comparing: ${dateA} vs ${dateB} = ${dateA - dateB}`);
         return dateA - dateB;
       } else if (sortType === 'hijri') {
         // Sort by Hijri date (newest first)
@@ -997,18 +1029,28 @@
         const hijriA = a.dataset.hijri || '';
         const hijriB = b.dataset.hijri || '';
 
+        console.log(`    Comparing Hijri: "${hijriA}" vs "${hijriB}"`);
+
         if (!hijriA && !hijriB) return 0;
         if (!hijriA) return 1;
         if (!hijriB) return -1;
 
         // Compare hijri dates as strings (format YYYY/MM/DD works for string comparison)
-        return hijriB.localeCompare(hijriA);
+        const result = hijriB.localeCompare(hijriA);
+        console.log(`      Result: ${result}`);
+        return result;
       }
       return 0;
     });
 
     // Re-append cards in sorted order
     cards.forEach(card => seriesList.appendChild(card));
+
+    console.log('  Card order after sorting:');
+    cards.forEach((card, index) => {
+      const title = card.querySelector('.series-title')?.textContent || 'Unknown';
+      console.log(`    [${index}] ${title}`);
+    });
 
     console.log('✅ Sorting complete');
   }
