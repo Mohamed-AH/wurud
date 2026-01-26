@@ -605,14 +605,50 @@
   <% if (seriesList && seriesList.length > 0) { %>
     <% seriesList.forEach(series => {
       // Get the most recent lecture date for sorting
-      const latestDate = series.lectures.length > 0 && series.lectures[0].dateRecorded
-        ? new Date(series.lectures[0].dateRecorded).getTime()
-        : Date.now();
-      const hijriDate = series.lectures.length > 0 ? series.lectures[0].dateRecordedHijri || '' : '';
+      // Find the lecture with the latest dateRecorded
+      let latestLecture = null;
+      let latestDate = 0;
+
+      if (series.lectures.length > 0) {
+        // Find lecture with most recent dateRecorded
+        for (const lecture of series.lectures) {
+          if (lecture.dateRecorded) {
+            const lectureTime = new Date(lecture.dateRecorded).getTime();
+            if (lectureTime > latestDate) {
+              latestDate = lectureTime;
+              latestLecture = lecture;
+            }
+          }
+        }
+
+        // If no lectures have dateRecorded, use createdAt as fallback
+        if (latestDate === 0) {
+          for (const lecture of series.lectures) {
+            if (lecture.createdAt) {
+              const lectureTime = new Date(lecture.createdAt).getTime();
+              if (lectureTime > latestDate) {
+                latestDate = lectureTime;
+                latestLecture = lecture;
+              }
+            }
+          }
+        }
+
+        // Last resort: use Date.now()
+        if (latestDate === 0) {
+          latestDate = Date.now();
+        }
+      } else {
+        latestDate = Date.now();
+      }
+
+      const hijriDate = latestLecture?.dateRecordedHijri || '';
+
       console.log(`[SERIES DEBUG] ${series.titleArabic}:`);
       console.log(`  - Lecture count: ${series.lectures.length}`);
-      console.log(`  - First lecture dateRecorded:`, series.lectures[0]?.dateRecorded);
-      console.log(`  - First lecture dateRecordedHijri:`, series.lectures[0]?.dateRecordedHijri);
+      console.log(`  - Latest lecture:`, latestLecture?.titleArabic || 'None');
+      console.log(`  - Latest dateRecorded:`, latestLecture?.dateRecorded);
+      console.log(`  - Latest dateRecordedHijri:`, latestLecture?.dateRecordedHijri);
       console.log(`  - Computed latestDate (timestamp): ${latestDate}`);
       console.log(`  - Computed hijriDate: ${hijriDate}`);
     %>
@@ -705,12 +741,24 @@
   <div class="series-list">
     <% if (standaloneLectures && standaloneLectures.length > 0) { %>
       <% standaloneLectures.forEach(lecture => {
-        const lectureDate = lecture.dateRecorded ? new Date(lecture.dateRecorded).getTime() : Date.now();
+        // Use dateRecorded if available, otherwise createdAt, otherwise Date.now()
+        let lectureDate;
+        if (lecture.dateRecorded) {
+          lectureDate = new Date(lecture.dateRecorded).getTime();
+        } else if (lecture.createdAt) {
+          lectureDate = new Date(lecture.createdAt).getTime();
+        } else {
+          lectureDate = Date.now();
+        }
+
         const hijriDate = lecture.dateRecordedHijri || '';
+
         console.log(`[LECTURE DEBUG] ${lecture.titleArabic}:`);
         console.log(`  - dateRecorded:`, lecture.dateRecorded);
+        console.log(`  - createdAt:`, lecture.createdAt);
         console.log(`  - dateRecordedHijri:`, lecture.dateRecordedHijri);
         console.log(`  - Computed lectureDate (timestamp): ${lectureDate}`);
+        console.log(`  - Using:`, lecture.dateRecorded ? 'dateRecorded' : (lecture.createdAt ? 'createdAt' : 'Date.now()'));
         console.log(`  - Computed hijriDate: ${hijriDate}`);
       %>
         <div class="series-card" data-date="<%= lectureDate %>" data-hijri="<%= hijriDate %>">
@@ -752,14 +800,50 @@
     <% if (khutbaSeries && khutbaSeries.length > 0) { %>
       <% khutbaSeries.forEach(series => {
         // Get the most recent lecture date for sorting
-        const latestDate = series.lectures.length > 0 && series.lectures[0].dateRecorded
-          ? new Date(series.lectures[0].dateRecorded).getTime()
-          : Date.now();
-        const hijriDate = series.lectures.length > 0 ? series.lectures[0].dateRecordedHijri || '' : '';
+        // Find the lecture with the latest dateRecorded
+        let latestLecture = null;
+        let latestDate = 0;
+
+        if (series.lectures.length > 0) {
+          // Find lecture with most recent dateRecorded
+          for (const lecture of series.lectures) {
+            if (lecture.dateRecorded) {
+              const lectureTime = new Date(lecture.dateRecorded).getTime();
+              if (lectureTime > latestDate) {
+                latestDate = lectureTime;
+                latestLecture = lecture;
+              }
+            }
+          }
+
+          // If no lectures have dateRecorded, use createdAt as fallback
+          if (latestDate === 0) {
+            for (const lecture of series.lectures) {
+              if (lecture.createdAt) {
+                const lectureTime = new Date(lecture.createdAt).getTime();
+                if (lectureTime > latestDate) {
+                  latestDate = lectureTime;
+                  latestLecture = lecture;
+                }
+              }
+            }
+          }
+
+          // Last resort: use Date.now()
+          if (latestDate === 0) {
+            latestDate = Date.now();
+          }
+        } else {
+          latestDate = Date.now();
+        }
+
+        const hijriDate = latestLecture?.dateRecordedHijri || '';
+
         console.log(`[KHUTBA DEBUG] ${series.titleArabic}:`);
         console.log(`  - Lecture count: ${series.lectures.length}`);
-        console.log(`  - First lecture dateRecorded:`, series.lectures[0]?.dateRecorded);
-        console.log(`  - First lecture dateRecordedHijri:`, series.lectures[0]?.dateRecordedHijri);
+        console.log(`  - Latest lecture:`, latestLecture?.titleArabic || 'None');
+        console.log(`  - Latest dateRecorded:`, latestLecture?.dateRecorded);
+        console.log(`  - Latest dateRecordedHijri:`, latestLecture?.dateRecordedHijri);
         console.log(`  - Computed latestDate (timestamp): ${latestDate}`);
         console.log(`  - Computed hijriDate: ${hijriDate}`);
       %>

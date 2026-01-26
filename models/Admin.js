@@ -3,9 +3,14 @@ const mongoose = require('mongoose');
 const adminSchema = new mongoose.Schema({
   googleId: {
     type: String,
-    required: true,
-    unique: true,
+    required: false,
+    sparse: true,  // Only enforce uniqueness when value exists
     index: true
+  },
+  username: {
+    type: String,
+    required: false,
+    trim: true
   },
   email: {
     type: String,
