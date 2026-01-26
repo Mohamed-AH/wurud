@@ -314,4 +314,162 @@ router.post('/lectures/:id/toggle-published', isAdmin, async (req, res) => {
   }
 });
 
+// @route   GET /admin/sheikhs
+// @desc    Manage sheikhs page
+// @access  Private (Admin only)
+router.get('/sheikhs', isAdmin, async (req, res) => {
+  try {
+    const { Sheikh, Lecture } = require('../../models');
+
+    const sheikhs = await Sheikh.find()
+      .sort({ nameArabic: 1 })
+      .lean();
+
+    // Get lecture count for each sheikh
+    for (const sheikh of sheikhs) {
+      sheikh.actualLectureCount = await Lecture.countDocuments({
+        sheikhId: sheikh._id,
+        published: true
+      });
+    }
+
+    res.render('admin/sheikhs', {
+      title: 'Manage Sheikhs',
+      user: req.user,
+      sheikhs
+    });
+  } catch (error) {
+    console.error('Sheikhs page error:', error);
+    res.status(500).send('Error loading sheikhs page');
+  }
+});
+
+// @route   GET /admin/sheikhs/new
+// @desc    Add new sheikh page
+// @access  Private (Admin only)
+router.get('/sheikhs/new', isAdmin, (req, res) => {
+  res.render('admin/sheikh-form', {
+    title: 'Add New Sheikh',
+    user: req.user,
+    sheikh: null,
+    isEdit: false
+  });
+});
+
+// @route   POST /admin/sheikhs
+// @desc    Create new sheikh
+// @access  Private (Admin only)
+router.post('/sheikhs', isAdmin, async (req, res) => {
+  try {
+    const { Sheikh } = require('../../models');
+    const {
+      nameArabic,
+      nameEnglish,
+      honorific,
+      bioArabic,
+      bioEnglish,
+      photoUrl
+    } = req.body;
+
+    const sheikh = new Sheikh({
+      nameArabic,
+      nameEnglish,
+      honorific: honorific || 'حفظه الله',
+      bioArabic,
+      bioEnglish,
+      photoUrl
+    });
+
+    await sheikh.save();
+
+    res.redirect('/admin/sheikhs?success=sheikh-created');
+  } catch (error) {
+    console.error('Create sheikh error:', error);
+    res.status(500).send('Error creating sheikh');
+  }
+});
+
+// @route   GET /admin/sheikhs/:id/edit
+// @desc    Edit sheikh page
+// @access  Private (Admin only)
+router.get('/sheikhs/:id/edit', isAdmin, async (req, res) => {
+  try {
+    const { Sheikh } = require('../../models');
+
+    const sheikh = await Sheikh.findById(req.params.id).lean();
+
+    if (!sheikh) {
+      return res.status(404).send('Sheikh not found');
+    }
+
+    res.render('admin/sheikh-form', {
+      title: 'Edit Sheikh',
+      user: req.user,
+      sheikh,
+      isEdit: true
+    });
+  } catch (error) {
+    console.error('Edit sheikh error:', error);
+    res.status(500).send('Error loading edit sheikh page');
+  }
+});
+
+// @route   POST /admin/sheikhs/:id/edit
+// @desc    Update sheikh
+// @access  Private (Admin only)
+router.post('/sheikhs/:id/edit', isAdmin, async (req, res) => {
+  try {
+    const { Sheikh } = require('../../models');
+    const {
+      nameArabic,
+      nameEnglish,
+      honorific,
+      bioArabic,
+      bioEnglish,
+      photoUrl
+    } = req.body;
+
+    await Sheikh.findByIdAndUpdate(req.params.id, {
+      nameArabic,
+      nameEnglish,
+      honorific: honorific || 'حفظه الله',
+      bioArabic,
+      bioEnglish,
+      photoUrl
+    });
+
+    res.redirect('/admin/sheikhs?success=sheikh-updated');
+  } catch (error) {
+    console.error('Update sheikh error:', error);
+    res.status(500).send('Error updating sheikh');
+  }
+});
+
+// @route   POST /admin/sheikhs/:id/delete
+// @desc    Delete sheikh
+// @access  Private (Admin only)
+router.post('/sheikhs/:id/delete', isAdmin, async (req, res) => {
+  try {
+    const { Sheikh, Lecture, Series } = require('../../models');
+
+    // Check if sheikh has any lectures or series
+    const lectureCount = await Lecture.countDocuments({ sheikhId: req.params.id });
+    const seriesCount = await Series.countDocuments({ sheikhId: req.params.id });
+
+    if (lectureCount > 0 || seriesCount > 0) {
+      return res.status(400).json({
+        success: false,
+        message: `Cannot delete sheikh. ${lectureCount} lectures and ${seriesCount} series are associated with this sheikh.`
+      });
+    }
+
+    await Sheikh.findByIdAndDelete(req.params.id);
+
+    res.json({ success: true });
+  } catch (error) {
+    console.error('Delete sheikh error:', error);
+    res.status(500).json({ success: false, message: 'Error deleting sheikh' });
+  }
+});
+
 module.exports = router;

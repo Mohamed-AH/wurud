@@ -1,0 +1,256 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title><%= title %> - Duroos</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body {
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      background: #f5f5f5;
+      color: #333;
+    }
+    .header {
+      background: #1A5F5A;
+      color: white;
+      padding: 16px 24px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+    }
+    .header h1 { font-size: 24px; font-weight: 600; }
+    .header-nav { display: flex; align-items: center; gap: 16px; }
+    .header-nav a { color: white; text-decoration: none; opacity: 0.9; }
+    .header-nav a:hover { opacity: 1; }
+    .container { max-width: 1200px; margin: 0 auto; padding: 32px 24px; }
+    .card {
+      background: white;
+      border-radius: 12px;
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+      padding: 32px;
+      margin-bottom: 24px;
+    }
+    .page-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 32px;
+    }
+    .page-title { font-size: 28px; color: #2C3E35; }
+    .btn {
+      padding: 12px 24px;
+      border: none;
+      border-radius: 6px;
+      font-size: 14px;
+      font-weight: 600;
+      cursor: pointer;
+      text-decoration: none;
+      display: inline-block;
+      margin-left: 8px;
+    }
+    .btn-primary {
+      background: #1A5F5A;
+      color: white;
+    }
+    .btn-primary:hover {
+      background: #145047;
+    }
+    .btn-small {
+      padding: 8px 16px;
+      font-size: 13px;
+    }
+    .btn-secondary {
+      background: #6c757d;
+      color: white;
+    }
+    .btn-secondary:hover {
+      background: #5a6268;
+    }
+    .btn-danger {
+      background: #dc3545;
+      color: white;
+    }
+    .btn-danger:hover {
+      background: #c82333;
+    }
+    .sheikhs-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+      gap: 24px;
+    }
+    .sheikh-card {
+      background: white;
+      border: 2px solid #e9ecef;
+      border-radius: 12px;
+      padding: 24px;
+      transition: all 0.3s;
+    }
+    .sheikh-card:hover {
+      border-color: #1A5F5A;
+      transform: translateY(-2px);
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+    }
+    .sheikh-header {
+      margin-bottom: 16px;
+    }
+    .sheikh-name {
+      font-size: 20px;
+      font-weight: 600;
+      color: #2C3E35;
+      margin-bottom: 4px;
+    }
+    .sheikh-name-en {
+      font-size: 14px;
+      color: #6c757d;
+      font-style: italic;
+      margin-bottom: 8px;
+    }
+    .sheikh-honorific {
+      font-size: 13px;
+      color: #1A5F5A;
+      font-weight: 600;
+    }
+    .sheikh-bio {
+      font-size: 14px;
+      color: #555;
+      line-height: 1.6;
+      margin-bottom: 16px;
+      max-height: 100px;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+    .sheikh-stats {
+      display: flex;
+      gap: 16px;
+      margin-bottom: 16px;
+      font-size: 13px;
+      color: #6c757d;
+    }
+    .sheikh-actions {
+      display: flex;
+      gap: 8px;
+      padding-top: 16px;
+      border-top: 1px solid #e9ecef;
+    }
+    .success-message {
+      background: #d4edda;
+      color: #155724;
+      padding: 12px 16px;
+      border-radius: 6px;
+      margin-bottom: 24px;
+      border: 1px solid #c3e6cb;
+    }
+    .empty-state {
+      text-align: center;
+      padding: 64px 24px;
+      color: #6c757d;
+    }
+    .empty-icon {
+      font-size: 48px;
+      margin-bottom: 16px;
+      opacity: 0.5;
+    }
+  </style>
+</head>
+<body>
+  <div class="header">
+    <h1>👨‍🏫 إدارة الشيوخ</h1>
+    <div class="header-nav">
+      <a href="/admin/dashboard">لوحة التحكم</a>
+      <a href="/admin/manage">إدارة المحتوى</a>
+      <a href="/auth/logout">خروج</a>
+    </div>
+  </div>
+
+  <div class="container">
+    <% if (typeof success !== 'undefined' && success) { %>
+      <div class="success-message" id="success-message">
+        <% if (success === 'sheikh-created') { %>
+          ✅ تم إضافة الشيخ بنجاح
+        <% } else if (success === 'sheikh-updated') { %>
+          ✅ تم تحديث بيانات الشيخ بنجاح
+        <% } else if (success === 'sheikh-deleted') { %>
+          ✅ تم حذف الشيخ بنجاح
+        <% } %>
+      </div>
+    <% } %>
+
+    <div class="page-header">
+      <h2 class="page-title">جميع الشيوخ (<%= sheikhs.length %>)</h2>
+      <a href="/admin/sheikhs/new" class="btn btn-primary">➕ إضافة شيخ جديد</a>
+    </div>
+
+    <% if (sheikhs && sheikhs.length > 0) { %>
+      <div class="sheikhs-grid">
+        <% sheikhs.forEach(sheikh => { %>
+          <div class="sheikh-card">
+            <div class="sheikh-header">
+              <div class="sheikh-name"><%= sheikh.nameArabic %></div>
+              <% if (sheikh.nameEnglish) { %>
+                <div class="sheikh-name-en"><%= sheikh.nameEnglish %></div>
+              <% } %>
+              <div class="sheikh-honorific"><%= sheikh.honorific || 'حفظه الله' %></div>
+            </div>
+
+            <% if (sheikh.bioArabic) { %>
+              <div class="sheikh-bio"><%= sheikh.bioArabic.substring(0, 150) %><%= sheikh.bioArabic.length > 150 ? '...' : '' %></div>
+            <% } %>
+
+            <div class="sheikh-stats">
+              <span>📚 <%= sheikh.actualLectureCount || 0 %> محاضرة</span>
+            </div>
+
+            <div class="sheikh-actions">
+              <a href="/admin/sheikhs/<%= sheikh._id %>/edit" class="btn btn-secondary btn-small">✏️ تعديل</a>
+              <button onclick="deleteSheikhConfirm('<%= sheikh._id %>', '<%= sheikh.nameArabic %>')" class="btn btn-danger btn-small">🗑️ حذف</button>
+            </div>
+          </div>
+        <% }); %>
+      </div>
+    <% } else { %>
+      <div class="empty-state">
+        <div class="empty-icon">👨‍🏫</div>
+        <h3>لا يوجد شيوخ حالياً</h3>
+        <p>ابدأ بإضافة شيخ جديد</p>
+      </div>
+    <% } %>
+  </div>
+
+  <script>
+    // Auto-hide success message
+    const successMsg = document.getElementById('success-message');
+    if (successMsg) {
+      setTimeout(() => {
+        successMsg.style.opacity = '0';
+        successMsg.style.transition = 'opacity 0.5s';
+        setTimeout(() => successMsg.remove(), 500);
+      }, 3000);
+    }
+
+    function deleteSheikhConfirm(sheikhId, sheikhName) {
+      if (confirm(`هل أنت متأكد من حذف الشيخ "${sheikhName}"؟\n\nلن يتم الحذف إذا كان هناك محاضرات أو سلاسل مرتبطة بهذا الشيخ.`)) {
+        fetch(`/admin/sheikhs/${sheikhId}/delete`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json'
+          }
+        })
+        .then(res => res.json())
+        .then(data => {
+          if (data.success) {
+            window.location.reload();
+          } else {
+            alert(`خطأ: ${data.message}`);
+          }
+        })
+        .catch(err => {
+          console.error('Delete error:', err);
+          alert('حدث خطأ أثناء الحذف');
+        });
+      }
+    }
+  </script>
+</body>
+</html>
