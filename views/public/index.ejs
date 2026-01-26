@@ -517,7 +517,20 @@
 
           <div class="series-info">
             <span><%= series.lectureCount %> درس</span>
-            <span class="category-badge"><%= series.category %></span>
+            <span class="category-badge">
+              <%
+                const categoryArabic = {
+                  'Tafsir': 'تفسير',
+                  'Hadith': 'حديث',
+                  'Fiqh': 'فقه',
+                  'Aqeedah': 'عقيدة',
+                  'Seerah': 'سيرة',
+                  'Akhlaq': 'أخلاق',
+                  'Other': 'أخرى'
+                };
+              %>
+              <%= categoryArabic[series.category] || series.category || 'أخرى' %>
+            </span>
           </div>
 
           <button class="expand-btn" id="btn-<%= series._id %>">
