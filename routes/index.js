@@ -97,7 +97,7 @@ router.get('/', async (req, res) => {
 // @access  Public
 router.get('/browse', async (req, res) => {
   try {
-    const { search, category, sort = '-dateRecorded' } = req.query;
+    const { search, category, sort = '-dateRecorded', fromDate, toDate } = req.query;
 
     // Build query
     const query = { published: true };
@@ -112,6 +112,25 @@ router.get('/browse', async (req, res) => {
       query.$text = { $search: search };
     }
 
+    // Date range filter (Gregorian dates stored in dateRecorded)
+    if (fromDate || toDate) {
+      query.dateRecorded = {};
+
+      if (fromDate) {
+        // Start of day for fromDate
+        const from = new Date(fromDate);
+        from.setHours(0, 0, 0, 0);
+        query.dateRecorded.$gte = from;
+      }
+
+      if (toDate) {
+        // End of day for toDate
+        const to = new Date(toDate);
+        to.setHours(23, 59, 59, 999);
+        query.dateRecorded.$lte = to;
+      }
+    }
+
     // Execute query
     const lectures = await Lecture.find(query)
       .sort(sort)
@@ -124,7 +143,9 @@ router.get('/browse', async (req, res) => {
       lectures,
       search: search || '',
       category: category || '',
-      sort: sort
+      sort: sort,
+      fromDate: fromDate || '',
+      toDate: toDate || ''
     });
   } catch (error) {
     console.error('Browse error:', error);

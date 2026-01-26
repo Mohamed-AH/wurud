@@ -218,6 +218,25 @@
           </select>
         </div>
 
+        <div class="filter-section">
+          <h3 class="filter-title">تاريخ التسجيل</h3>
+          <label style="font-size: 12px; color: var(--text-secondary); margin-bottom: 4px; display: block;">من تاريخ</label>
+          <input
+            type="date"
+            name="fromDate"
+            class="filter-select"
+            value="<%= fromDate %>"
+            style="margin-bottom: 12px;"
+          >
+          <label style="font-size: 12px; color: var(--text-secondary); margin-bottom: 4px; display: block;">إلى تاريخ</label>
+          <input
+            type="date"
+            name="toDate"
+            class="filter-select"
+            value="<%= toDate %>"
+          >
+        </div>
+
         <% if (typeof search !== 'undefined' && search) { %>
           <input type="hidden" name="search" value="<%= search %>">
         <% } %>
