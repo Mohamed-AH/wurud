@@ -3,7 +3,7 @@ const router = express.Router();
 const { Lecture, Sheikh, Series } = require('../models');
 
 // @route   GET /
-// @desc    Homepage - Series-based view
+// @desc    Homepage - Series-based view with tabs
 // @access  Public
 router.get('/', async (req, res) => {
   try {
@@ -40,9 +40,28 @@ router.get('/', async (req, res) => {
     // Filter out series with no published lectures
     const filteredSeries = seriesList.filter(s => s.lectureCount > 0);
 
+    // Get all standalone lectures (not in any series)
+    const standaloneLectures = await Lecture.find({
+      seriesId: null,
+      published: true
+    })
+      .populate('sheikhId', 'nameArabic nameEnglish honorific')
+      .sort({ createdAt: -1 })
+      .lean();
+
+    // Get Khutba series (for Khutbas tab)
+    const khutbaSeries = filteredSeries.filter(s =>
+      s.titleArabic && (
+        s.titleArabic.includes('خطب') ||
+        s.titleArabic.includes('خطبة')
+      )
+    );
+
     res.render('public/index', {
       title: 'المكتبة الصوتية',
-      seriesList: filteredSeries
+      seriesList: filteredSeries,
+      standaloneLectures: standaloneLectures,
+      khutbaSeries: khutbaSeries
     });
   } catch (error) {
     console.error('Homepage error:', error);

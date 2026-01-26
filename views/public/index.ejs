@@ -441,6 +441,70 @@
       justify-content: center;
     }
   }
+
+  /* Navigation Tabs */
+  .nav-tabs {
+    background: white;
+    border-bottom: 2px solid var(--accent-amber);
+    margin-bottom: 24px;
+  }
+
+  .nav-tabs-container {
+    max-width: 1200px;
+    margin: 0 auto;
+    display: flex;
+    gap: 0;
+    padding: 0 16px;
+  }
+
+  .nav-tab {
+    flex: 1;
+    padding: 16px 24px;
+    border: none;
+    background: transparent;
+    color: var(--text-secondary);
+    font-size: 16px;
+    font-weight: 600;
+    cursor: pointer;
+    position: relative;
+    transition: all 0.3s;
+    font-family: var(--font-arabic);
+  }
+
+  .nav-tab:hover {
+    color: var(--primary-brown);
+    background: var(--cream);
+  }
+
+  .nav-tab.active {
+    color: var(--primary-brown);
+    background: var(--cream);
+  }
+
+  .nav-tab.active::after {
+    content: '';
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    height: 3px;
+    background: var(--accent-gold);
+  }
+
+  .tab-content {
+    display: none;
+  }
+
+  .tab-content.active {
+    display: block;
+  }
+
+  @media (max-width: 768px) {
+    .nav-tab {
+      font-size: 14px;
+      padding: 12px 16px;
+    }
+  }
 </style>
 
 <!-- Search Hero -->
@@ -460,6 +524,21 @@
     >
     <button class="search-btn" onclick="performSearch()">
       بحث
+    </button>
+  </div>
+</div>
+
+<!-- Navigation Tabs -->
+<div class="nav-tabs">
+  <div class="nav-tabs-container">
+    <button class="nav-tab active" onclick="switchTab('series')" id="tab-series">
+      📚 السلاسل
+    </button>
+    <button class="nav-tab" onclick="switchTab('lectures')" id="tab-lectures">
+      🎙️ المحاضرات
+    </button>
+    <button class="nav-tab" onclick="switchTab('khutbas')" id="tab-khutbas">
+      🕌 الخطب
     </button>
   </div>
 </div>
@@ -494,7 +573,8 @@
   </div>
 </div>
 
-<!-- Series List -->
+<!-- Series Tab Content -->
+<div id="content-series" class="tab-content active">
 <div class="series-list">
   <% if (seriesList && seriesList.length > 0) { %>
     <% seriesList.forEach(series => { %>
@@ -580,8 +660,130 @@
     </div>
   <% } %>
 </div>
+</div>
+
+<!-- Lectures Tab Content -->
+<div id="content-lectures" class="tab-content">
+  <div class="series-list">
+    <% if (standaloneLectures && standaloneLectures.length > 0) { %>
+      <% standaloneLectures.forEach(lecture => { %>
+        <div class="series-card">
+          <div class="series-header">
+            <h2 class="series-title"><%= lecture.titleArabic %></h2>
+            <div class="series-meta">
+              <div class="series-sheikh">
+                الشيخ: <%= lecture.sheikhId ? lecture.sheikhId.nameArabic : '' %>
+              </div>
+            </div>
+            <div class="episode-actions">
+              <% if (lecture.audioFileName) { %>
+                <button class="action-btn play-btn" onclick="playAudio('<%= lecture._id %>', '<%= lecture.titleArabic %>', '<%= lecture.sheikhId ? lecture.sheikhId.nameArabic : '' %>')">
+                  ▶ تشغيل
+                </button>
+                <a href="/download/<%= lecture._id %>" class="action-btn download-btn">
+                  ⬇ تحميل
+                </a>
+              <% } %>
+            </div>
+          </div>
+        </div>
+      <% }) %>
+    <% } else { %>
+      <div class="empty-state">
+        <div class="empty-icon">🎙️</div>
+        <h3 class="empty-title">لا توجد محاضرات منفصلة</h3>
+      </div>
+    <% } %>
+  </div>
+</div>
+
+<!-- Khutbas Tab Content -->
+<div id="content-khutbas" class="tab-content">
+  <div class="series-list">
+    <% if (khutbaSeries && khutbaSeries.length > 0) { %>
+      <% khutbaSeries.forEach(series => { %>
+        <div class="series-card">
+          <div class="series-header" onclick="toggleSeries('<%= series._id %>')">
+            <h2 class="series-title"><%= series.titleArabic %></h2>
+            <div class="series-meta">
+              <div class="series-sheikh">
+                الشيخ: <%= series.sheikh ? series.sheikh.nameArabic : '' %>
+              </div>
+            </div>
+            <div class="series-info">
+              <span><%= series.lectureCount %> خطبة</span>
+            </div>
+            <button class="expand-btn" id="btn-<%= series._id %>">
+              عرض الخطب ▼
+            </button>
+          </div>
+          <div class="episodes-list" id="episodes-<%= series._id %>">
+            <% series.lectures.forEach(lecture => { %>
+              <div class="episode-item">
+                <div class="episode-header">
+                  <% if (lecture.lectureNumber) { %>
+                    <div class="episode-number"><%= lecture.lectureNumber %></div>
+                  <% } %>
+                  <div class="episode-title"><%= lecture.titleArabic %></div>
+                </div>
+                <div class="episode-meta">
+                  <span><%= Math.floor(lecture.duration / 60) %>:<%= String(lecture.duration % 60).padStart(2, '0') %></span>
+                  <% if (lecture.location) { %>
+                    <span><%= lecture.location %></span>
+                  <% } %>
+                </div>
+                <div class="episode-actions">
+                  <% if (lecture.audioFileName) { %>
+                    <button class="action-btn play-btn" onclick="playAudio('<%= lecture._id %>', '<%= lecture.titleArabic %>', '<%= series.sheikh ? series.sheikh.nameArabic : '' %>')">
+                      ▶ تشغيل
+                    </button>
+                    <a href="/download/<%= lecture._id %>" class="action-btn download-btn">
+                      ⬇ تحميل
+                    </a>
+                  <% } %>
+                </div>
+              </div>
+            <% }) %>
+          </div>
+        </div>
+      <% }) %>
+    <% } else { %>
+      <div class="empty-state">
+        <div class="empty-icon">🕌</div>
+        <h3 class="empty-title">لا توجد خطب</h3>
+      </div>
+    <% } %>
+  </div>
+</div>
 
 <script>
+  // Switch between tabs
+  function switchTab(tabName) {
+    console.log('🔄 Switching to tab:', tabName);
+
+    // Hide all tab contents
+    document.querySelectorAll('.tab-content').forEach(content => {
+      content.classList.remove('active');
+    });
+
+    // Remove active class from all tabs
+    document.querySelectorAll('.nav-tab').forEach(tab => {
+      tab.classList.remove('active');
+    });
+
+    // Show selected tab content
+    const contentElement = document.getElementById('content-' + tabName);
+    if (contentElement) {
+      contentElement.classList.add('active');
+    }
+
+    // Activate selected tab button
+    const tabElement = document.getElementById('tab-' + tabName);
+    if (tabElement) {
+      tabElement.classList.add('active');
+    }
+  }
+
   // Toggle series expansion
   function toggleSeries(seriesId) {
     console.log('🔄 Toggling series:', seriesId);
