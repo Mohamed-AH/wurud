@@ -819,17 +819,26 @@
     const episodesList = document.getElementById('episodes-' + seriesId);
     const btn = document.getElementById('btn-' + seriesId);
 
+    console.log('  Episodes list found:', episodesList ? 'YES' : 'NO');
+    console.log('  Button found:', btn ? 'YES' : 'NO');
+
     if (!episodesList || !btn) {
       console.error('❌ Could not find elements for khutba:', seriesId);
+      console.error('  episodesList:', episodesList);
+      console.error('  btn:', btn);
       return;
     }
 
+    console.log('  Before toggle - episodesList classes:', episodesList.className);
     episodesList.classList.toggle('show');
     btn.classList.toggle('expanded');
+    console.log('  After toggle - episodesList classes:', episodesList.className);
 
     if (episodesList.classList.contains('show')) {
+      console.log('  ✅ Khutba expanded');
       btn.textContent = 'إخفاء الخطب ▲';
     } else {
+      console.log('  ✅ Khutba collapsed');
       btn.textContent = 'عرض الخطب ▼';
     }
   }
