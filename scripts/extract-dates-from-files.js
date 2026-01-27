@@ -45,9 +45,10 @@ function extractDateFromFilename(filename) {
 
   console.log(`  🔍 Analyzing filename: ${filename}`);
 
-  // Pattern 1: Mp3 Editor_YYMMDDHHMMSS format
+  // Pattern 1: Mp3 Editor_YYMMDDHHMMSS format (with various separators)
   // Example: Mp3 Editor_251013152911.mp3 → 2025-10-13
-  const pattern1 = /Mp3\s*Editor_(\d{2})(\d{2})(\d{2})/i;
+  // Also matches: Mp3-Editor-251013152911-extra.mp3
+  const pattern1 = /Mp3[-_\s]*Editor[-_](\d{2})(\d{2})(\d{2})/i;
   const match1 = filename.match(pattern1);
 
   if (match1) {
@@ -235,30 +236,39 @@ async function processLecture(lecture, excelRow) {
   let gregorianDate = null;
   let source = null;
 
-  // Step 1: Try to extract date from filename
+  // Step 1: Try to extract date from audioFileName (current filename in DB)
   if (lecture.audioFileName) {
     gregorianDate = extractDateFromFilename(lecture.audioFileName);
     if (gregorianDate) {
-      source = 'filename';
+      source = 'audioFileName';
     }
   }
 
-  // Step 2: Fallback to Excel DateInGreg column
+  // Step 2: Try to extract date from metadata.excelFilename (original filename)
+  if (!gregorianDate && lecture.metadata && lecture.metadata.excelFilename) {
+    console.log(`  📁 Trying original filename: ${lecture.metadata.excelFilename}`);
+    gregorianDate = extractDateFromFilename(lecture.metadata.excelFilename);
+    if (gregorianDate) {
+      source = 'excelFilename';
+    }
+  }
+
+  // Step 3: Fallback to Excel DateInGreg column
   if (!gregorianDate && excelRow) {
     const excelDate = excelRow.DateInGreg || excelRow.dateInGreg || excelRow.date_in_greg;
     gregorianDate = parseDateFromExcel(excelDate);
     if (gregorianDate) {
-      source = 'excel';
+      source = 'excel CSV';
     }
   }
 
-  // Step 3: Convert to Hijri if we have a date
+  // Step 4: Convert to Hijri if we have a date
   let hijriDate = null;
   if (gregorianDate) {
     hijriDate = convertToHijri(gregorianDate);
   }
 
-  // Step 4: Update lecture if we found dates
+  // Step 5: Update lecture if we found dates
   if (gregorianDate || hijriDate) {
     console.log(`  💾 Updating lecture...`);
     console.log(`    Source: ${source}`);
@@ -328,8 +338,9 @@ async function extractDates() {
 
     const stats = {
       total: lectures.length,
-      fromFilename: 0,
-      fromExcel: 0,
+      fromAudioFileName: 0,
+      fromExcelFilename: 0,
+      fromExcelCSV: 0,
       notFound: 0
     };
 
@@ -339,8 +350,9 @@ async function extractDates() {
       const result = await processLecture(lecture, excelRow);
 
       if (result.updated) {
-        if (result.source === 'filename') stats.fromFilename++;
-        else if (result.source === 'excel') stats.fromExcel++;
+        if (result.source === 'audioFileName') stats.fromAudioFileName++;
+        else if (result.source === 'excelFilename') stats.fromExcelFilename++;
+        else if (result.source === 'excel CSV') stats.fromExcelCSV++;
       } else {
         stats.notFound++;
       }
@@ -350,10 +362,11 @@ async function extractDates() {
     console.log('\n' + '='.repeat(60));
     console.log('📈 EXTRACTION SUMMARY');
     console.log('='.repeat(60));
-    console.log(`Total lectures:           ${stats.total}`);
-    console.log(`Dates from filename:      ${stats.fromFilename}`);
-    console.log(`Dates from Excel:         ${stats.fromExcel}`);
-    console.log(`No dates found:           ${stats.notFound}`);
+    console.log(`Total lectures:                ${stats.total}`);
+    console.log(`From audioFileName:            ${stats.fromAudioFileName}`);
+    console.log(`From metadata.excelFilename:   ${stats.fromExcelFilename}`);
+    console.log(`From Excel CSV:                ${stats.fromExcelCSV}`);
+    console.log(`No dates found:                ${stats.notFound}`);
     console.log('='.repeat(60));
 
     console.log('\n✅ Date extraction completed!\n');
@@ -374,6 +387,7 @@ function testDateExtraction() {
 
   const testFilenames = [
     'Mp3 Editor_251013152911.mp3',
+    'Mp3-Editor-251013152911-1769324610319-341315626.mp3', // Modified filename from DB
     'Mp3 Editor_251013232021.mp3',
     'AUD-20251213-WA0001.m4a',
     'AUD-20251208-WA0007.m4a',
