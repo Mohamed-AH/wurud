@@ -21,7 +21,7 @@ module.exports = {
   ],
 
   // Coverage thresholds (optional - adjust as needed)
-  coverageThresholds: {
+  coverageThreshold: {
     global: {
       branches: 50,
       functions: 50,
@@ -30,10 +30,15 @@ module.exports = {
     }
   },
 
-  // Test match patterns
+  // Test match patterns - exclude E2E tests (run separately with Playwright)
   testMatch: [
-    '**/tests/**/*.test.js',
-    '**/tests/**/*.spec.js'
+    '**/tests/unit/**/*.test.js',
+    '**/tests/integration/**/*.test.js'
+  ],
+
+  // Transform ignore patterns for ESM modules
+  transformIgnorePatterns: [
+    'node_modules/(?!(music-metadata|strtok3|token-types|peek-readable|file-type)/)'
   ],
 
   // Setup files

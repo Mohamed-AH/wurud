@@ -5,6 +5,7 @@
 const mongoose = require('mongoose');
 const { MongoMemoryServer } = require('mongodb-memory-server');
 const Series = require('../../../models/Series');
+const Sheikh = require('../../../models/Sheikh');
 
 let mongoServer;
 
@@ -22,119 +23,165 @@ describe('Series Model', () => {
 
   afterEach(async () => {
     await Series.deleteMany({});
+    await Sheikh.deleteMany({});
   });
 
   describe('Schema Validation', () => {
     it('should create a valid series with required fields', async () => {
-      const series = await Series.create({
-        title: 'شرح كتاب التوحيد',
-        description: 'شرح مفصل لكتاب التوحيد'
+      const sheikh = await Sheikh.create({
+        nameArabic: 'الشيخ محمد'
       });
 
-      expect(series.title).toBe('شرح كتاب التوحيد');
-      expect(series.description).toBe('شرح مفصل لكتاب التوحيد');
+      const series = await Series.create({
+        titleArabic: 'شرح كتاب التوحيد',
+        sheikhId: sheikh._id
+      });
+
+      expect(series.titleArabic).toBe('شرح كتاب التوحيد');
+      expect(series.sheikhId.toString()).toBe(sheikh._id.toString());
+      expect(series.category).toBe('Other'); // Default value
     });
 
-    it('should fail validation without required title', async () => {
+    it('should fail validation without required titleArabic', async () => {
+      const sheikh = await Sheikh.create({
+        nameArabic: 'الشيخ محمد'
+      });
+
       const series = new Series({
-        description: 'Test description'
+        sheikhId: sheikh._id
       });
 
       await expect(series.save()).rejects.toThrow();
     });
 
-    it('should create series without description (optional)', async () => {
-      const series = await Series.create({
-        title: 'Test Series'
+    it('should fail validation without required sheikhId', async () => {
+      const series = new Series({
+        titleArabic: 'Test Series'
       });
 
-      expect(series.title).toBe('Test Series');
-      expect(series.description).toBeUndefined();
+      await expect(series.save()).rejects.toThrow();
     });
   });
 
   describe('Optional Fields', () => {
+    it('should accept optional descriptionArabic', async () => {
+      const sheikh = await Sheikh.create({
+        nameArabic: 'الشيخ محمد'
+      });
+
+      const series = await Series.create({
+        titleArabic: 'شرح كتاب التوحيد',
+        sheikhId: sheikh._id,
+        descriptionArabic: 'شرح مفصل لكتاب التوحيد'
+      });
+
+      expect(series.descriptionArabic).toBe('شرح مفصل لكتاب التوحيد');
+    });
+
     it('should accept optional category', async () => {
-      const series = await Series.create({
-        title: 'Test Series',
-        category: 'عقيدة'
+      const sheikh = await Sheikh.create({
+        nameArabic: 'الشيخ محمد'
       });
 
-      expect(series.category).toBe('عقيدة');
+      const series = await Series.create({
+        titleArabic: 'Test Series',
+        sheikhId: sheikh._id,
+        category: 'Aqeedah'
+      });
+
+      expect(series.category).toBe('Aqeedah');
     });
 
-    it('should accept optional coverImage', async () => {
-      const series = await Series.create({
-        title: 'Test Series',
-        coverImage: '/uploads/series-cover.jpg'
+    it('should accept optional thumbnailUrl', async () => {
+      const sheikh = await Sheikh.create({
+        nameArabic: 'الشيخ محمد'
       });
 
-      expect(series.coverImage).toBe('/uploads/series-cover.jpg');
+      const series = await Series.create({
+        titleArabic: 'Test Series',
+        sheikhId: sheikh._id,
+        thumbnailUrl: '/uploads/series-cover.jpg'
+      });
+
+      expect(series.thumbnailUrl).toBe('/uploads/series-cover.jpg');
     });
 
-    it('should accept optional isKhutba flag', async () => {
-      const series = await Series.create({
-        title: 'Friday Khutbas',
-        isKhutba: true
+    it('should accept optional bookTitle and bookAuthor', async () => {
+      const sheikh = await Sheikh.create({
+        nameArabic: 'الشيخ محمد'
       });
 
-      expect(series.isKhutba).toBe(true);
+      const series = await Series.create({
+        titleArabic: 'شرح كتاب التوحيد',
+        sheikhId: sheikh._id,
+        bookTitle: 'كتاب التوحيد',
+        bookAuthor: 'محمد بن عبد الوهاب'
+      });
+
+      expect(series.bookTitle).toBe('كتاب التوحيد');
+      expect(series.bookAuthor).toBe('محمد بن عبد الوهاب');
     });
 
-    it('should default isKhutba to false', async () => {
-      const series = await Series.create({
-        title: 'Test Series'
+    it('should default lectureCount to 0', async () => {
+      const sheikh = await Sheikh.create({
+        nameArabic: 'الشيخ محمد'
       });
 
-      expect(series.isKhutba).toBe(false);
+      const series = await Series.create({
+        titleArabic: 'Test Series',
+        sheikhId: sheikh._id
+      });
+
+      expect(series.lectureCount).toBe(0);
     });
   });
 
   describe('Timestamps', () => {
     it('should automatically add createdAt and updatedAt', async () => {
+      const sheikh = await Sheikh.create({
+        nameArabic: 'الشيخ محمد'
+      });
+
       const series = await Series.create({
-        title: 'Test Series'
+        titleArabic: 'Test Series',
+        sheikhId: sheikh._id
       });
 
       expect(series.createdAt).toBeInstanceOf(Date);
       expect(series.updatedAt).toBeInstanceOf(Date);
     });
-
-    it('should update updatedAt on modification', async () => {
-      const series = await Series.create({
-        title: 'Test Series'
-      });
-
-      const originalUpdatedAt = series.updatedAt;
-
-      await new Promise(resolve => setTimeout(resolve, 100));
-
-      series.title = 'Updated Series';
-      await series.save();
-
-      expect(series.updatedAt.getTime()).toBeGreaterThan(originalUpdatedAt.getTime());
-    });
   });
 
-  describe('Series Types', () => {
-    it('should create regular series (not khutba)', async () => {
-      const series = await Series.create({
-        title: 'Regular Series',
-        isKhutba: false
+  describe('Category Enum', () => {
+    it('should accept valid category values', async () => {
+      const sheikh = await Sheikh.create({
+        nameArabic: 'الشيخ محمد'
       });
 
-      expect(series.isKhutba).toBe(false);
+      const categories = ['Aqeedah', 'Fiqh', 'Tafsir', 'Hadith', 'Seerah', 'Akhlaq', 'Other'];
+      
+      for (const category of categories) {
+        const series = await Series.create({
+          titleArabic: `Series ${category}`,
+          sheikhId: sheikh._id,
+          category
+        });
+        expect(series.category).toBe(category);
+      }
     });
 
-    it('should create khutba series', async () => {
-      const series = await Series.create({
-        title: 'Khutba Series',
-        isKhutba: true,
-        category: 'خطب'
+    it('should reject invalid category values', async () => {
+      const sheikh = await Sheikh.create({
+        nameArabic: 'الشيخ محمد'
       });
 
-      expect(series.isKhutba).toBe(true);
-      expect(series.category).toBe('خطب');
+      const series = new Series({
+        titleArabic: 'Test Series',
+        sheikhId: sheikh._id,
+        category: 'InvalidCategory'
+      });
+
+      await expect(series.save()).rejects.toThrow();
     });
   });
 });

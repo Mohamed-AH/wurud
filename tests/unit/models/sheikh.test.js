@@ -27,79 +27,68 @@ describe('Sheikh Model', () => {
   describe('Schema Validation', () => {
     it('should create a valid sheikh with required fields', async () => {
       const sheikh = await Sheikh.create({
-        name: 'الشيخ محمد بن عبد الوهاب',
-        bio: 'عالم من نجد'
+        nameArabic: 'الشيخ محمد بن عبد الوهاب'
       });
 
-      expect(sheikh.name).toBe('الشيخ محمد بن عبد الوهاب');
-      expect(sheikh.bio).toBe('عالم من نجد');
+      expect(sheikh.nameArabic).toBe('الشيخ محمد بن عبد الوهاب');
+      expect(sheikh.honorific).toBe('حفظه الله'); // Default value
     });
 
-    it('should fail validation without required name', async () => {
+    it('should fail validation without required nameArabic', async () => {
       const sheikh = new Sheikh({
-        bio: 'Test bio'
+        nameEnglish: 'Test Sheikh'
       });
 
       await expect(sheikh.save()).rejects.toThrow();
     });
 
-    it('should create sheikh without bio (optional)', async () => {
+    it('should create sheikh with English name (optional)', async () => {
       const sheikh = await Sheikh.create({
-        name: 'Test Sheikh'
+        nameArabic: 'الشيخ أحمد',
+        nameEnglish: 'Sheikh Ahmad'
       });
 
-      expect(sheikh.name).toBe('Test Sheikh');
-      expect(sheikh.bio).toBeUndefined();
+      expect(sheikh.nameArabic).toBe('الشيخ أحمد');
+      expect(sheikh.nameEnglish).toBe('Sheikh Ahmad');
     });
   });
 
   describe('Optional Fields', () => {
-    it('should accept optional photo', async () => {
+    it('should accept optional bioArabic', async () => {
       const sheikh = await Sheikh.create({
-        name: 'Test Sheikh',
-        bio: 'Test bio',
-        photo: '/uploads/sheikh.jpg'
+        nameArabic: 'الشيخ محمد',
+        bioArabic: 'عالم جليل من نجد'
       });
 
-      expect(sheikh.photo).toBe('/uploads/sheikh.jpg');
+      expect(sheikh.bioArabic).toBe('عالم جليل من نجد');
     });
 
-    it('should accept optional website', async () => {
+    it('should accept optional photoUrl', async () => {
       const sheikh = await Sheikh.create({
-        name: 'Test Sheikh',
-        bio: 'Test bio',
-        website: 'https://example.com'
+        nameArabic: 'الشيخ محمد',
+        photoUrl: '/uploads/sheikh.jpg'
       });
 
-      expect(sheikh.website).toBe('https://example.com');
+      expect(sheikh.photoUrl).toBe('/uploads/sheikh.jpg');
+    });
+
+    it('should default lectureCount to 0', async () => {
+      const sheikh = await Sheikh.create({
+        nameArabic: 'الشيخ محمد'
+      });
+
+      expect(sheikh.lectureCount).toBe(0);
     });
   });
 
   describe('Timestamps', () => {
     it('should automatically add createdAt and updatedAt', async () => {
       const sheikh = await Sheikh.create({
-        name: 'Test Sheikh',
-        bio: 'Test bio'
+        nameArabic: 'الشيخ محمد'
       });
 
       expect(sheikh.createdAt).toBeInstanceOf(Date);
       expect(sheikh.updatedAt).toBeInstanceOf(Date);
-    });
-  });
-
-  describe('Uniqueness', () => {
-    it('should allow multiple sheikhs with different names', async () => {
-      await Sheikh.create({
-        name: 'Sheikh One',
-        bio: 'Bio One'
-      });
-
-      const sheikh2 = await Sheikh.create({
-        name: 'Sheikh Two',
-        bio: 'Bio Two'
-      });
-
-      expect(sheikh2.name).toBe('Sheikh Two');
     });
   });
 });

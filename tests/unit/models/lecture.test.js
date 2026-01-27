@@ -29,55 +29,33 @@ describe('Lecture Model', () => {
   describe('Schema Validation', () => {
     it('should create a valid lecture with required fields', async () => {
       const sheikh = await Sheikh.create({
-        name: 'Test Sheikh',
-        bio: 'Test bio'
+        nameArabic: 'Test Sheikh'
       });
 
       const lecture = await Lecture.create({
-        title: 'Test Lecture',
-        sheikh: sheikh._id,
-        audioFile: '/uploads/test.mp3',
-        dateRecorded: new Date('2024-01-01')
+        titleArabic: 'Test Lecture',
+        sheikhId: sheikh._id
       });
 
-      expect(lecture.title).toBe('Test Lecture');
-      expect(lecture.sheikh.toString()).toBe(sheikh._id.toString());
-      expect(lecture.audioFile).toBe('/uploads/test.mp3');
-      expect(lecture.dateRecorded).toBeInstanceOf(Date);
+      expect(lecture.titleArabic).toBe('Test Lecture');
+      expect(lecture.sheikhId.toString()).toBe(sheikh._id.toString());
     });
 
-    it('should fail validation without required title', async () => {
+    it('should fail validation without required titleArabic', async () => {
       const sheikh = await Sheikh.create({
-        name: 'Test Sheikh',
-        bio: 'Test bio'
+        nameArabic: 'Test Sheikh'
       });
 
       const lecture = new Lecture({
-        sheikh: sheikh._id,
-        audioFile: '/uploads/test.mp3'
+        sheikhId: sheikh._id
       });
 
       await expect(lecture.save()).rejects.toThrow();
     });
 
-    it('should fail validation without required sheikh', async () => {
+    it('should fail validation without required sheikhId', async () => {
       const lecture = new Lecture({
-        title: 'Test Lecture',
-        audioFile: '/uploads/test.mp3'
-      });
-
-      await expect(lecture.save()).rejects.toThrow();
-    });
-
-    it('should fail validation without required audioFile', async () => {
-      const sheikh = await Sheikh.create({
-        name: 'Test Sheikh',
-        bio: 'Test bio'
-      });
-
-      const lecture = new Lecture({
-        title: 'Test Lecture',
-        sheikh: sheikh._id
+        titleArabic: 'Test Lecture'
       });
 
       await expect(lecture.save()).rejects.toThrow();
@@ -85,118 +63,103 @@ describe('Lecture Model', () => {
   });
 
   describe('Optional Fields', () => {
-    it('should accept optional description', async () => {
+    it('should accept optional audioFileName', async () => {
       const sheikh = await Sheikh.create({
-        name: 'Test Sheikh',
-        bio: 'Test bio'
+        nameArabic: 'Test Sheikh'
       });
 
       const lecture = await Lecture.create({
-        title: 'Test Lecture',
-        sheikh: sheikh._id,
-        audioFile: '/uploads/test.mp3',
-        description: 'Test description'
+        titleArabic: 'Test Lecture',
+        sheikhId: sheikh._id,
+        audioFileName: 'test.mp3'
       });
 
-      expect(lecture.description).toBe('Test description');
+      expect(lecture.audioFileName).toBe('test.mp3');
     });
 
-    it('should accept optional category', async () => {
+    it('should accept optional descriptionArabic', async () => {
       const sheikh = await Sheikh.create({
-        name: 'Test Sheikh',
-        bio: 'Test bio'
+        nameArabic: 'Test Sheikh'
       });
 
       const lecture = await Lecture.create({
-        title: 'Test Lecture',
-        sheikh: sheikh._id,
-        audioFile: '/uploads/test.mp3',
-        category: 'عقيدة'
+        titleArabic: 'Test Lecture',
+        sheikhId: sheikh._id,
+        descriptionArabic: 'Test description'
       });
 
-      expect(lecture.category).toBe('عقيدة');
-    });
-
-    it('should accept optional Hijri date', async () => {
-      const sheikh = await Sheikh.create({
-        name: 'Test Sheikh',
-        bio: 'Test bio'
-      });
-
-      const lecture = await Lecture.create({
-        title: 'Test Lecture',
-        sheikh: sheikh._id,
-        audioFile: '/uploads/test.mp3',
-        hijriDate: '1445/01/15'
-      });
-
-      expect(lecture.hijriDate).toBe('1445/01/15');
+      expect(lecture.descriptionArabic).toBe('Test description');
     });
 
     it('should accept optional duration', async () => {
       const sheikh = await Sheikh.create({
-        name: 'Test Sheikh',
-        bio: 'Test bio'
+        nameArabic: 'Test Sheikh'
       });
 
       const lecture = await Lecture.create({
-        title: 'Test Lecture',
-        sheikh: sheikh._id,
-        audioFile: '/uploads/test.mp3',
+        titleArabic: 'Test Lecture',
+        sheikhId: sheikh._id,
         duration: 3600
       });
 
       expect(lecture.duration).toBe(3600);
     });
+
+    it('should default duration to 0', async () => {
+      const sheikh = await Sheikh.create({
+        nameArabic: 'Test Sheikh'
+      });
+
+      const lecture = await Lecture.create({
+        titleArabic: 'Test Lecture',
+        sheikhId: sheikh._id
+      });
+
+      expect(lecture.duration).toBe(0);
+    });
   });
 
   describe('Series and Lecture Number', () => {
-    it('should accept series reference', async () => {
+    it('should accept seriesId reference', async () => {
       const sheikh = await Sheikh.create({
-        name: 'Test Sheikh',
-        bio: 'Test bio'
+        nameArabic: 'Test Sheikh'
       });
 
       const lecture = await Lecture.create({
-        title: 'Test Lecture',
-        sheikh: sheikh._id,
-        audioFile: '/uploads/test.mp3',
-        series: new mongoose.Types.ObjectId(),
+        titleArabic: 'Test Lecture',
+        sheikhId: sheikh._id,
+        seriesId: new mongoose.Types.ObjectId(),
         lectureNumber: 1
       });
 
-      expect(lecture.series).toBeInstanceOf(mongoose.Types.ObjectId);
+      expect(lecture.seriesId).toBeInstanceOf(mongoose.Types.ObjectId);
       expect(lecture.lectureNumber).toBe(1);
     });
 
-    it('should accept null series for standalone lectures', async () => {
+    it('should accept null seriesId for standalone lectures', async () => {
       const sheikh = await Sheikh.create({
-        name: 'Test Sheikh',
-        bio: 'Test bio'
+        nameArabic: 'Test Sheikh'
       });
 
       const lecture = await Lecture.create({
-        title: 'Test Lecture',
-        sheikh: sheikh._id,
-        audioFile: '/uploads/test.mp3',
-        series: null
+        titleArabic: 'Test Lecture',
+        sheikhId: sheikh._id,
+        seriesId: null
       });
 
-      expect(lecture.series).toBeNull();
+      expect(lecture.seriesId).toBeNull();
     });
   });
 
   describe('Timestamps', () => {
     it('should automatically add createdAt and updatedAt', async () => {
       const sheikh = await Sheikh.create({
-        name: 'Test Sheikh',
-        bio: 'Test bio'
+        nameArabic: 'Test Sheikh'
       });
 
       const lecture = await Lecture.create({
-        title: 'Test Lecture',
-        sheikh: sheikh._id,
-        audioFile: '/uploads/test.mp3'
+        titleArabic: 'Test Lecture',
+        sheikhId: sheikh._id
       });
 
       expect(lecture.createdAt).toBeInstanceOf(Date);
@@ -205,22 +168,19 @@ describe('Lecture Model', () => {
 
     it('should update updatedAt on modification', async () => {
       const sheikh = await Sheikh.create({
-        name: 'Test Sheikh',
-        bio: 'Test bio'
+        nameArabic: 'Test Sheikh'
       });
 
       const lecture = await Lecture.create({
-        title: 'Test Lecture',
-        sheikh: sheikh._id,
-        audioFile: '/uploads/test.mp3'
+        titleArabic: 'Test Lecture',
+        sheikhId: sheikh._id
       });
 
       const originalUpdatedAt = lecture.updatedAt;
 
-      // Wait a bit to ensure timestamp difference
       await new Promise(resolve => setTimeout(resolve, 100));
 
-      lecture.title = 'Updated Lecture';
+      lecture.titleArabic = 'Updated Lecture';
       await lecture.save();
 
       expect(lecture.updatedAt.getTime()).toBeGreaterThan(originalUpdatedAt.getTime());
@@ -230,20 +190,17 @@ describe('Lecture Model', () => {
   describe('Population', () => {
     it('should populate sheikh reference', async () => {
       const sheikh = await Sheikh.create({
-        name: 'Test Sheikh',
-        bio: 'Test bio'
+        nameArabic: 'Test Sheikh'
       });
 
       const lecture = await Lecture.create({
-        title: 'Test Lecture',
-        sheikh: sheikh._id,
-        audioFile: '/uploads/test.mp3'
+        titleArabic: 'Test Lecture',
+        sheikhId: sheikh._id
       });
 
-      const populatedLecture = await Lecture.findById(lecture._id).populate('sheikh');
+      const populatedLecture = await Lecture.findById(lecture._id).populate('sheikhId');
 
-      expect(populatedLecture.sheikh.name).toBe('Test Sheikh');
-      expect(populatedLecture.sheikh.bio).toBe('Test bio');
+      expect(populatedLecture.sheikhId.nameArabic).toBe('Test Sheikh');
     });
   });
 });
