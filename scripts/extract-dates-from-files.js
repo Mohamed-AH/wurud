@@ -32,36 +32,126 @@ moment.updateLocale('en', {
 });
 
 /**
- * Extract date from iPhone recording filename
- * Supports various iPhone audio recording formats
+ * Extract date from various filename formats
  *
- * Examples:
- * - "Recording_20240615_143022.mp3" -> 2024-06-15
- * - "Audio_20240615.m4a" -> 2024-06-15
- * - "20240615_143022.mp3" -> 2024-06-15
- * - "lecture_20240615.mp3" -> 2024-06-15
+ * Supported formats:
+ * 1. Mp3 Editor_YYMMDDHHMMSS.mp3 (e.g., Mp3 Editor_251013152911.mp3)
+ * 2. AUD-YYYYMMDD-WA####.m4a (WhatsApp format: AUD-20251213-WA0001.m4a)
+ * 3. AUDIO-YYYY-MM-DD-HH-MM-SS.m4a (e.g., AUDIO-2025-12-22-17-23-19.m4a)
+ * 4. Standard YYYYMMDD format (e.g., 20240615.mp3)
  */
 function extractDateFromFilename(filename) {
   if (!filename) return null;
 
   console.log(`  🔍 Analyzing filename: ${filename}`);
 
-  // Pattern 1: YYYYMMDD format (most common in iPhone recordings)
-  // Matches: 20240615, 2024-06-15, 2024_06_15
-  const pattern1 = /(\d{4})[-_]?(\d{2})[-_]?(\d{2})/;
+  // Pattern 1: Mp3 Editor_YYMMDDHHMMSS format
+  // Example: Mp3 Editor_251013152911.mp3 → 2025-10-13
+  const pattern1 = /Mp3\s*Editor_(\d{2})(\d{2})(\d{2})/i;
   const match1 = filename.match(pattern1);
 
   if (match1) {
-    const [, year, month, day] = match1;
+    const [, yy, mm, dd] = match1;
+    // YY = 25 means 2025, YY = 24 means 2024
+    const year = 2000 + parseInt(yy);
+    const month = mm;
+    const day = dd;
+    const dateStr = `${year}-${month}-${day}`;
+    const date = new Date(dateStr);
+
+    if (!isNaN(date.getTime())) {
+      console.log(`    ✓ Extracted (Mp3 Editor format): ${dateStr}`);
+      return date;
+    }
+  }
+
+  // Pattern 2: WhatsApp Audio format: AUD-YYYYMMDD-WA####
+  // Example: AUD-20251213-WA0001.m4a → 2025-12-13
+  const pattern2 = /AUD-(\d{4})(\d{2})(\d{2})-WA/i;
+  const match2 = filename.match(pattern2);
+
+  if (match2) {
+    const [, year, month, day] = match2;
+    const dateStr = `${year}-${month}-${day}`;
+    const date = new Date(dateStr);
+
+    if (!isNaN(date.getTime())) {
+      console.log(`    ✓ Extracted (WhatsApp format): ${dateStr}`);
+      return date;
+    }
+  }
+
+  // Pattern 3: AUDIO-YYYY-MM-DD-HH-MM-SS format
+  // Example: AUDIO-2025-12-22-17-23-19.m4a → 2025-12-22
+  const pattern3 = /AUDIO-(\d{4})-(\d{2})-(\d{2})-/i;
+  const match3 = filename.match(pattern3);
+
+  if (match3) {
+    const [, year, month, day] = match3;
+    const dateStr = `${year}-${month}-${day}`;
+    const date = new Date(dateStr);
+
+    if (!isNaN(date.getTime())) {
+      console.log(`    ✓ Extracted (AUDIO format): ${dateStr}`);
+      return date;
+    }
+  }
+
+  // Pattern 4: Ringtone_AUD-YYYYMMDD-WA#### format
+  // Example: Ringtone_AUD-20251029-WA0006.mp3 → 2025-10-29
+  const pattern4 = /Ringtone_AUD-(\d{4})(\d{2})(\d{2})-WA/i;
+  const match4 = filename.match(pattern4);
+
+  if (match4) {
+    const [, year, month, day] = match4;
+    const dateStr = `${year}-${month}-${day}`;
+    const date = new Date(dateStr);
+
+    if (!isNaN(date.getTime())) {
+      console.log(`    ✓ Extracted (Ringtone format): ${dateStr}`);
+      return date;
+    }
+  }
+
+  // Pattern 5: Standard YYYYMMDD format anywhere in filename
+  // Example: Recording_20240615_143022.mp3 → 2024-06-15
+  const pattern5 = /(\d{4})(\d{2})(\d{2})/;
+  const match5 = filename.match(pattern5);
+
+  if (match5) {
+    const [, year, month, day] = match5;
     const dateStr = `${year}-${month}-${day}`;
     const date = new Date(dateStr);
 
     // Validate the date is reasonable (not in future, not too old)
     const now = new Date();
     const minDate = new Date('2000-01-01');
+    const maxDate = new Date();
+    maxDate.setDate(maxDate.getDate() + 7); // Allow dates up to 7 days in future
 
-    if (date >= minDate && date <= now) {
-      console.log(`    ✓ Extracted from filename: ${dateStr}`);
+    if (date >= minDate && date <= maxDate && !isNaN(date.getTime())) {
+      console.log(`    ✓ Extracted (standard YYYYMMDD): ${dateStr}`);
+      return date;
+    }
+  }
+
+  // Pattern 6: Standard YYYY-MM-DD format with dashes
+  // Example: 2024-06-15.mp3 → 2024-06-15
+  const pattern6 = /(\d{4})-(\d{2})-(\d{2})/;
+  const match6 = filename.match(pattern6);
+
+  if (match6) {
+    const [, year, month, day] = match6;
+    const dateStr = `${year}-${month}-${day}`;
+    const date = new Date(dateStr);
+
+    const now = new Date();
+    const minDate = new Date('2000-01-01');
+    const maxDate = new Date();
+    maxDate.setDate(maxDate.getDate() + 7);
+
+    if (date >= minDate && date <= maxDate && !isNaN(date.getTime())) {
+      console.log(`    ✓ Extracted (YYYY-MM-DD format): ${dateStr}`);
       return date;
     }
   }
@@ -276,5 +366,50 @@ async function extractDates() {
   }
 }
 
-// Run extraction
-extractDates();
+/**
+ * Test function - run this to test date extraction without touching database
+ */
+function testDateExtraction() {
+  console.log('🧪 Testing date extraction with sample filenames...\n');
+
+  const testFilenames = [
+    'Mp3 Editor_251013152911.mp3',
+    'Mp3 Editor_251013232021.mp3',
+    'AUD-20251213-WA0001.m4a',
+    'AUD-20251208-WA0007.m4a',
+    'AUDIO-2025-12-22-17-23-19.m4a',
+    'AUDIO-2025-12-22-14-05-29.m4a',
+    'Ringtone_AUD-20251029-WA0006.mp3',
+    '4_5996911497937164203.mp3',
+    'Subulussalam.m4a',
+    'مفاسد المظاهرات.m4a'
+  ];
+
+  testFilenames.forEach(filename => {
+    console.log(`\n📝 Testing: ${filename}`);
+    const date = extractDateFromFilename(filename);
+
+    if (date) {
+      const hijri = convertToHijri(date);
+      console.log(`  ✅ Success!`);
+      console.log(`     Gregorian: ${date.toISOString().split('T')[0]}`);
+      console.log(`     Hijri: ${hijri}`);
+    } else {
+      console.log(`  ⚠️  No date extracted - will use Excel fallback`);
+    }
+  });
+
+  console.log('\n' + '='.repeat(60));
+  console.log('✅ Test complete!\n');
+  console.log('If results look good, run: node scripts/extract-dates-from-files.js');
+  process.exit(0);
+}
+
+// Check command line argument
+const args = process.argv.slice(2);
+if (args.includes('--test') || args.includes('-t')) {
+  testDateExtraction();
+} else {
+  // Run extraction
+  extractDates();
+}
