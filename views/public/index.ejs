@@ -693,8 +693,23 @@
         </div>
 
         <div class="episodes-list" id="episodes-<%= series._id %>">
+          <!-- Sort controls for lectures within this series -->
+          <div style="padding: 12px; background: #f8f9fa; border-bottom: 1px solid #e9ecef; display: flex; gap: 8px; align-items: center;">
+            <span style="font-size: 13px; font-weight: 600; color: #666;">ترتيب الدروس:</span>
+            <button class="chip" onclick="sortSeriesLectures('<%= series._id %>', 'number'); event.stopPropagation();" style="padding: 4px 12px; font-size: 12px;">
+              حسب الرقم
+            </button>
+            <button class="chip" onclick="sortSeriesLectures('<%= series._id %>', 'oldest'); event.stopPropagation();" style="padding: 4px 12px; font-size: 12px;">
+              الأقدم أولاً
+            </button>
+            <button class="chip" onclick="sortSeriesLectures('<%= series._id %>', 'newest'); event.stopPropagation();" style="padding: 4px 12px; font-size: 12px;">
+              الأحدث أولاً
+            </button>
+          </div>
+
+          <div class="episodes-container">
           <% series.lectures.forEach(lecture => { %>
-            <div class="episode-item">
+            <div class="episode-item" data-lecture-number="<%= lecture.lectureNumber || 999 %>" data-date="<%= lecture.dateRecorded ? new Date(lecture.dateRecorded).getTime() : 0 %>">
               <div class="episode-header">
                 <% if (lecture.lectureNumber) { %>
                   <div class="episode-number"><%= lecture.lectureNumber %></div>
@@ -719,6 +734,7 @@
               </div>
             </div>
           <% }); %>
+          </div><!-- Close episodes-container -->
         </div>
       </div>
     <% }); %>
@@ -863,9 +879,24 @@
             </button>
           </div>
           <div class="episodes-list" id="khutba-episodes-<%= series._id %>">
+            <!-- Sort controls for khutbas within this series -->
+            <div style="padding: 12px; background: #f8f9fa; border-bottom: 1px solid #e9ecef; display: flex; gap: 8px; align-items: center;">
+              <span style="font-size: 13px; font-weight: 600; color: #666;">ترتيب الخطب:</span>
+              <button class="chip" onclick="sortSeriesLectures('khutba-<%= series._id %>', 'number'); event.stopPropagation();" style="padding: 4px 12px; font-size: 12px;">
+                حسب الرقم
+              </button>
+              <button class="chip" onclick="sortSeriesLectures('khutba-<%= series._id %>', 'oldest'); event.stopPropagation();" style="padding: 4px 12px; font-size: 12px;">
+                الأقدم أولاً
+              </button>
+              <button class="chip" onclick="sortSeriesLectures('khutba-<%= series._id %>', 'newest'); event.stopPropagation();" style="padding: 4px 12px; font-size: 12px;">
+                الأحدث أولاً
+              </button>
+            </div>
+
+            <div class="episodes-container">
             <% if (series.lectures && series.lectures.length > 0) { %>
               <% series.lectures.forEach(lecture => { %>
-                <div class="episode-item">
+                <div class="episode-item" data-lecture-number="<%= lecture.lectureNumber || 999 %>" data-date="<%= lecture.dateRecorded ? new Date(lecture.dateRecorded).getTime() : 0 %>">
                   <div class="episode-header">
                     <% if (lecture.lectureNumber) { %>
                       <div class="episode-number"><%= lecture.lectureNumber %></div>
@@ -891,6 +922,7 @@
                 </div>
               <% }) %>
             <% } %>
+            </div><!-- Close episodes-container -->
           </div>
         </div>
       <% }) %>
@@ -1161,5 +1193,55 @@
     applyFilter();
 
     console.log('✅ Sorting complete');
+  }
+
+  // Sort lectures within a specific series
+  function sortSeriesLectures(seriesId, sortType) {
+    console.log(`🔄 Sorting lectures in series: ${seriesId}, type: ${sortType}`);
+
+    // Get the episodes container for this series
+    const episodesListId = `episodes-${seriesId}`;
+    const episodesList = document.getElementById(episodesListId);
+
+    if (!episodesList) {
+      console.error(`❌ Could not find episodes list: ${episodesListId}`);
+      return;
+    }
+
+    const container = episodesList.querySelector('.episodes-container');
+    if (!container) {
+      console.error(`❌ Could not find episodes-container in: ${episodesListId}`);
+      return;
+    }
+
+    // Get all episode items
+    const episodes = Array.from(container.querySelectorAll('.episode-item'));
+    console.log(`  Found ${episodes.length} episodes to sort`);
+
+    // Sort episodes based on type
+    episodes.sort((a, b) => {
+      if (sortType === 'number') {
+        // Sort by lecture number
+        const numA = parseInt(a.dataset.lectureNumber) || 999;
+        const numB = parseInt(b.dataset.lectureNumber) || 999;
+        return numA - numB;
+      } else if (sortType === 'oldest') {
+        // Sort by date (oldest first)
+        const dateA = parseInt(a.dataset.date) || 0;
+        const dateB = parseInt(b.dataset.date) || 0;
+        return dateA - dateB;
+      } else if (sortType === 'newest') {
+        // Sort by date (newest first)
+        const dateA = parseInt(a.dataset.date) || 0;
+        const dateB = parseInt(b.dataset.date) || 0;
+        return dateB - dateA;
+      }
+      return 0;
+    });
+
+    // Re-append episodes in sorted order
+    episodes.forEach(episode => container.appendChild(episode));
+
+    console.log(`✅ Sorted ${episodes.length} episodes by ${sortType}`);
   }
 </script>
