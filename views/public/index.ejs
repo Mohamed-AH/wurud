@@ -933,6 +933,9 @@
     if (tabElement) {
       tabElement.classList.add('active');
     }
+
+    // Re-apply current filter to new tab
+    applyFilter();
   }
 
   // Toggle series expansion
@@ -1008,18 +1011,32 @@
       document.querySelectorAll('.chip[data-type="' + filterType + '"]').forEach(c => c.classList.remove('active'));
       this.classList.add('active');
 
-      // Filter series cards
-      document.querySelectorAll('.series-card').forEach(card => {
-        const category = card.dataset.category;
-
-        if (filterValue === 'all' || category === filterValue) {
-          card.style.display = 'block';
-        } else {
-          card.style.display = 'none';
-        }
-      });
+      // Apply filter to cards in active tab only
+      applyFilter();
     });
   });
+
+  // Apply current category filter
+  function applyFilter() {
+    const activeTab = document.querySelector('.tab-content.active');
+    if (!activeTab) return;
+
+    // Get active category filter
+    const activeCategoryFilter = document.querySelector('.chip[data-type="category"].active');
+    const filterValue = activeCategoryFilter ? activeCategoryFilter.dataset.filter : 'all';
+
+    // Filter series cards in active tab only
+    const cards = activeTab.querySelectorAll('.series-card');
+    cards.forEach(card => {
+      const category = card.dataset.category;
+
+      if (filterValue === 'all' || category === filterValue) {
+        card.style.display = 'block';
+      } else {
+        card.style.display = 'none';
+      }
+    });
+  }
 
   // Search functionality
   const searchInput = document.getElementById('searchInput');
@@ -1027,9 +1044,13 @@
 
   function performSearch() {
     const searchTerm = searchInput.value.toLowerCase();
+    const activeTab = document.querySelector('.tab-content.active');
+    if (!activeTab) return;
 
-    document.querySelectorAll('.series-card').forEach(card => {
-      const title = card.querySelector('.series-title').textContent.toLowerCase();
+    // Search in active tab only
+    const cards = activeTab.querySelectorAll('.series-card');
+    cards.forEach(card => {
+      const title = card.querySelector('.series-title')?.textContent.toLowerCase() || '';
       const author = card.querySelector('.series-author')?.textContent.toLowerCase() || '';
       const sheikh = card.querySelector('.series-sheikh')?.textContent.toLowerCase() || '';
 
@@ -1135,6 +1156,9 @@
       const title = card.querySelector('.series-title')?.textContent || 'Unknown';
       console.log(`    [${index}] ${title}`);
     });
+
+    // Re-apply category filter to maintain visibility
+    applyFilter();
 
     console.log('✅ Sorting complete');
   }
