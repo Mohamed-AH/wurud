@@ -1183,7 +1183,13 @@
     console.log(`🔄 Sorting lectures in series: ${seriesId}, type: ${sortType}`);
 
     // Get the episodes container for this series
-    const episodesListId = `episodes-${seriesId}`;
+    // Handle khutba- prefix correctly: khutba-{id} -> khutba-episodes-{id}
+    let episodesListId;
+    if (seriesId.startsWith('khutba-')) {
+      episodesListId = `khutba-episodes-${seriesId.substring(7)}`;
+    } else {
+      episodesListId = `episodes-${seriesId}`;
+    }
     const episodesList = document.getElementById(episodesListId);
 
     if (!episodesList) {
