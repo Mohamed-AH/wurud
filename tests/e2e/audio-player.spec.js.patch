@@ -1,0 +1,132 @@
+// AUDIO-PLAYER.SPEC.JS - PATCH FILE
+// Apply these changes to your tests/e2e/audio-player.spec.js file
+// ================================================================
+
+// ===========================================
+// FIX: Lines 74-95 - "should stop current lecture when playing new one"
+// ===========================================
+// The issue: The locator 'button[class*="play"]' matches ALL play buttons,
+// including those inside collapsed series that are not visible.
+// The test tries to click the first one which may be hidden.
+
+// BEFORE (approximate):
+/*
+test('should stop current lecture when playing new one', async ({ page }) => {
+  await page.goto('/');
+  await page.waitForLoadState('networkidle');
+
+  const playButtons = page.locator('button[class*="play"]');
+  const count = await playButtons.count();
+
+  if (count >= 2) {
+    // Play first lecture
+    await playButtons.nth(0).click();
+    await page.waitForTimeout(500);
+
+    // Play second lecture
+    await playButtons.nth(1).click();
+    await page.waitForTimeout(500);
+
+    // Verify only one audio is playing
+    // ...
+  }
+});
+*/
+
+// AFTER (fixed):
+/*
+test('should stop current lecture when playing new one', async ({ page }) => {
+  await page.goto('/');
+  await page.waitForLoadState('networkidle');
+
+  // IMPORTANT: Only select VISIBLE play buttons to avoid clicking hidden ones
+  // Option 1: Use :visible pseudo-selector
+  const playButtons = page.locator('button.btn-play:visible');
+
+  // Option 2: Filter to only visible buttons in the main content area
+  // const playButtons = page.locator('.lecture-card:visible button.btn-play');
+
+  const count = await playButtons.count();
+
+  if (count >= 2) {
+    // Play first lecture - scroll into view first to ensure visibility
+    const firstButton = playButtons.nth(0);
+    await firstButton.scrollIntoViewIfNeeded();
+    await firstButton.click();
+    await page.waitForTimeout(500);
+
+    // Play second lecture
+    const secondButton = playButtons.nth(1);
+    await secondButton.scrollIntoViewIfNeeded();
+    await secondButton.click();
+    await page.waitForTimeout(500);
+
+    // Verify only one audio is playing
+    // ...
+  }
+});
+*/
+
+
+// ===========================================
+// ALTERNATIVE FIX: Use force click
+// ===========================================
+// If the above doesn't work, you can force the click:
+/*
+  await playButtons.nth(0).click({ force: true });
+*/
+
+
+// ===========================================
+// RECOMMENDED COMPLETE REPLACEMENT:
+// ===========================================
+/*
+test('should stop current lecture when playing new one', async ({ page }) => {
+  await page.goto('/');
+  await page.waitForLoadState('networkidle');
+
+  // Wait for the page to be fully loaded
+  await page.waitForTimeout(1000);
+
+  // Get visible play buttons only - exclude those in collapsed series
+  // Target buttons that are in the main lectures tab content
+  const visiblePlayButtons = page.locator('#lectures-content .btn-play:visible, .lecture-card:visible .btn-play');
+
+  let count = await visiblePlayButtons.count();
+
+  // If no visible buttons, try expanding or switching tabs
+  if (count < 2) {
+    // Click on lectures tab to ensure we're on the right tab
+    await page.click('#tab-lectures');
+    await page.waitForTimeout(500);
+    count = await visiblePlayButtons.count();
+  }
+
+  if (count >= 2) {
+    // Get first two visible buttons
+    const firstButton = visiblePlayButtons.first();
+    const secondButton = visiblePlayButtons.nth(1);
+
+    // Ensure first button is in view and click
+    await firstButton.scrollIntoViewIfNeeded();
+    await firstButton.click();
+    await page.waitForTimeout(500);
+
+    // Ensure second button is in view and click
+    await secondButton.scrollIntoViewIfNeeded();
+    await secondButton.click();
+    await page.waitForTimeout(500);
+
+    // Verify only one audio element is playing (not paused)
+    const playingAudios = await page.evaluate(() => {
+      const audios = document.querySelectorAll('audio');
+      return Array.from(audios).filter(a => !a.paused).length;
+    });
+
+    expect(playingAudios).toBeLessThanOrEqual(1);
+  } else {
+    // Skip test if not enough play buttons
+    test.skip();
+  }
+});
+*/

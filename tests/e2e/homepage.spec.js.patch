@@ -1,0 +1,170 @@
+// HOMEPAGE.SPEC.JS - PATCH FILE
+// Apply these changes to your tests/e2e/homepage.spec.js file
+// ============================================================
+
+// ===========================================
+// FIX 1: Lines 14-17 - "should load homepage successfully"
+// ===========================================
+// BEFORE:
+//     await expect(page.locator('text=محاضرات')).toBeVisible();
+//     await expect(page.locator('text=سلاسل')).toBeVisible();
+//     await expect(page.locator('text=خطب')).toBeVisible();
+
+// AFTER:
+//     await expect(page.locator('#tab-lectures')).toBeVisible();
+//     await expect(page.locator('#tab-series')).toBeVisible();
+//     await expect(page.locator('#tab-khutba')).toBeVisible();
+
+
+// ===========================================
+// FIX 2: Lines 39-41 - "should display sort buttons"
+// ===========================================
+// BEFORE:
+//     await expect(page.locator('text=الأحدث أولاً')).toBeVisible();
+//     await expect(page.locator('text=الأقدم أولاً')).toBeVisible();
+
+// AFTER:
+//     await expect(page.locator('[data-sort="newest"]')).toBeVisible();
+//     await expect(page.locator('[data-sort="oldest"]')).toBeVisible();
+
+
+// ===========================================
+// FIX 3: Line 50 - "should switch to Series tab"
+// ===========================================
+// BEFORE:
+//     await page.click('text=سلاسل');
+
+// AFTER:
+//     await page.click('#tab-series');
+
+
+// ===========================================
+// FIX 4: Line 78 - "should switch back to Lectures tab"
+// ===========================================
+// BEFORE:
+//     await page.click('text=سلاسل');
+//     ...
+//     await page.click('text=محاضرات');
+
+// AFTER:
+//     await page.click('#tab-series');
+//     ...
+//     await page.click('#tab-lectures');
+
+
+// ===========================================
+// FIX 5: Lines 143-148 - "should sort by newest first"
+// ===========================================
+// BEFORE:
+//     await page.click('button:has-text("الأحدث أولاً")');
+//     await page.waitForTimeout(500);
+//     const newestButton = page.locator('button:has-text("الأحدث أولاً")');
+//     await expect(newestButton).toHaveClass(/active/);
+
+// AFTER:
+//     await page.click('[data-sort="newest"]');
+//     await page.waitForTimeout(500);
+//     const newestButton = page.locator('[data-sort="newest"]');
+//     await expect(newestButton).toHaveClass(/active/);
+
+
+// ===========================================
+// FIX 6: Lines 155-160 - "should sort by oldest first"
+// ===========================================
+// BEFORE:
+//     await page.click('button:has-text("الأقدم أولاً")');
+//     await page.waitForTimeout(500);
+//     const oldestButton = page.locator('button:has-text("الأقدم أولاً")');
+//     await expect(oldestButton).toHaveClass(/active/);
+
+// AFTER:
+//     await page.click('[data-sort="oldest"]');
+//     await page.waitForTimeout(500);
+//     const oldestButton = page.locator('[data-sort="oldest"]');
+//     await expect(oldestButton).toHaveClass(/active/);
+
+
+// ===========================================
+// FIX 7: Line 167 - "should maintain cards visibility after sorting on Series tab"
+// ===========================================
+// BEFORE:
+//     await page.click('text=سلاسل');
+
+// AFTER:
+//     await page.click('#tab-series');
+
+
+// ===========================================
+// FIX 8: Line 199 - "should maintain cards visibility after sorting on Khutba tab"
+// ===========================================
+// BEFORE:
+//     await page.click('button:has-text("الأقدم أولاً")');
+
+// AFTER:
+//     await page.click('[data-sort="oldest"]');
+
+
+// ===========================================
+// FIX 9: Lines 252, 272, 294 - Series Expansion tests
+// ===========================================
+// BEFORE:
+//     await page.click('text=سلاسل');
+
+// AFTER:
+//     await page.click('#tab-series');
+
+
+// ===========================================
+// FIX 10: Lines 374-375 - "should work on mobile viewport"
+// ===========================================
+// BEFORE:
+//     await expect(page.locator('text=محاضرات')).toBeVisible();
+
+// AFTER:
+//     await expect(page.locator('#tab-lectures')).toBeVisible();
+
+
+// ===========================================
+// FIX 11: Lines 387-389 - "should work on tablet viewport"
+// ===========================================
+// BEFORE:
+//     await expect(page.locator('text=سلاسل')).toBeVisible();
+//     await expect(page.locator('text=خطب')).toBeVisible();
+
+// AFTER:
+//     await expect(page.locator('#tab-series')).toBeVisible();
+//     await expect(page.locator('#tab-khutba')).toBeVisible();
+
+
+// ===========================================
+// GLOBAL SEARCH & REPLACE SUMMARY:
+// ===========================================
+// Find: page.locator('text=محاضرات')
+// Replace: page.locator('#tab-lectures')
+//
+// Find: page.locator('text=سلاسل')
+// Replace: page.locator('#tab-series')
+//
+// Find: page.locator('text=خطب')
+// Replace: page.locator('#tab-khutba')
+//
+// Find: page.click('text=سلاسل')
+// Replace: page.click('#tab-series')
+//
+// Find: page.click('text=محاضرات')
+// Replace: page.click('#tab-lectures')
+//
+// Find: page.click('text=خطب')
+// Replace: page.click('#tab-khutba')
+//
+// Find: text=الأحدث أولاً
+// Replace: [data-sort="newest"]
+//
+// Find: text=الأقدم أولاً
+// Replace: [data-sort="oldest"]
+//
+// Find: button:has-text("الأحدث أولاً")
+// Replace: [data-sort="newest"]
+//
+// Find: button:has-text("الأقدم أولاً")
+// Replace: [data-sort="oldest"]
