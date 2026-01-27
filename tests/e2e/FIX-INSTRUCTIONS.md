@@ -1,12 +1,76 @@
 # E2E Test Fix Instructions
 
 ## Quick Summary
-- **43 tests failing** due to locator issues
+- **43 tests failing** due to locator issues (now 20 after partial fixes)
 - **Root cause**: Selectors matching multiple elements (strict mode violations)
 
 ---
 
-## Quick Fix: Search & Replace in VS Code
+## Fastest Fix: Run the Auto-Fixer Script
+
+```bash
+cd tests/e2e
+node apply-fixes.js
+```
+
+This will automatically apply all text selector replacements.
+
+---
+
+## Remaining 20 Failures Analysis
+
+After partial fixes, these tests still fail:
+
+| Line | Test Name | Browsers | Issue |
+|------|-----------|----------|-------|
+| 8 | should load homepage successfully | All 6 | `text=محاضرات` not replaced |
+| 382 | should work on tablet viewport | All 6 | `text=سلاسل` not replaced |
+| 46, 74, 115, 139, 151, 163, 186, 248, 268, 290 | Various | Mobile Chrome | Click interception |
+
+### Fix for Lines 8 and 382
+
+These lines still use text selectors. Apply these replacements:
+
+```javascript
+// Line 8 area - in "should load homepage successfully"
+// FIND:
+await expect(page.locator('text=محاضرات')).toBeVisible();
+await expect(page.locator('text=سلاسل')).toBeVisible();
+await expect(page.locator('text=خطب')).toBeVisible();
+
+// REPLACE WITH:
+await expect(page.locator('#tab-lectures')).toBeVisible();
+await expect(page.locator('#tab-series')).toBeVisible();
+await expect(page.locator('#tab-khutba')).toBeVisible();
+```
+
+```javascript
+// Line 382 area - in "should work on tablet viewport"
+// FIND:
+await expect(page.locator('text=سلاسل')).toBeVisible();
+await expect(page.locator('text=خطب')).toBeVisible();
+
+// REPLACE WITH:
+await expect(page.locator('#tab-series')).toBeVisible();
+await expect(page.locator('#tab-khutba')).toBeVisible();
+```
+
+### Fix for Mobile Chrome Click Interception
+
+For Mobile Chrome tests, add `scrollIntoViewIfNeeded()` before clicks:
+
+```javascript
+// Before any click that fails on mobile:
+await element.scrollIntoViewIfNeeded();
+await element.click();
+
+// Or use force click:
+await element.click({ force: true });
+```
+
+---
+
+## Manual Fix: Search & Replace in VS Code
 
 Open your test files and use **Ctrl+H** (Find and Replace) with these patterns:
 
@@ -70,9 +134,48 @@ await playButtons.nth(0).click();
 
 ---
 
+---
+
+## Mobile Chrome Specific Fixes
+
+If Mobile Chrome tests still fail with "click intercepted", apply these fixes:
+
+### Option 1: Force Click (Quick Fix)
+```javascript
+// Change:
+await page.click('#tab-series');
+// To:
+await page.click('#tab-series', { force: true });
+```
+
+### Option 2: Scroll Into View First (Recommended)
+```javascript
+// Change:
+await page.click('#tab-series');
+// To:
+const element = page.locator('#tab-series');
+await element.scrollIntoViewIfNeeded();
+await element.click();
+```
+
+### Option 3: Wait for Element to be Stable
+```javascript
+const element = page.locator('#tab-series');
+await element.waitFor({ state: 'visible' });
+await element.click();
+```
+
+---
+
 ## After Applying Fixes
 
-Run tests again:
+1. Run the auto-fixer script first:
+```bash
+cd tests/e2e
+node apply-fixes.js
+```
+
+2. Run tests again:
 ```bash
 npm run test:e2e
 ```
