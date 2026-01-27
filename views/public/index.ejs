@@ -592,9 +592,6 @@
       <button class="chip" data-sort="oldest" onclick="sortByDate('oldest')">
         الأقدم أولاً
       </button>
-      <button class="chip" data-sort="hijri" onclick="sortByDate('hijri')">
-        ترتيب هجري
-      </button>
     </div>
   </div>
 </div>
@@ -1160,23 +1157,9 @@
         const dateB = parseInt(b.dataset.date) || 0;
         console.log(`    Comparing: ${dateA} vs ${dateB} = ${dateA - dateB}`);
         return dateA - dateB;
-      } else if (sortType === 'hijri') {
-        // Sort by Hijri date (newest first)
-        // Hijri dates are in format "1445/12/15"
-        const hijriA = a.dataset.hijri || '';
-        const hijriB = b.dataset.hijri || '';
-
-        console.log(`    Comparing Hijri: "${hijriA}" vs "${hijriB}"`);
-
-        if (!hijriA && !hijriB) return 0;
-        if (!hijriA) return 1;
-        if (!hijriB) return -1;
-
-        // Compare hijri dates as strings (format YYYY/MM/DD works for string comparison)
-        const result = hijriB.localeCompare(hijriA);
-        console.log(`      Result: ${result}`);
-        return result;
       }
+      // Note: Gregorian and Hijri dates represent the same point in time
+      // So sorting by one is equivalent to sorting by the other
       return 0;
     });
 
