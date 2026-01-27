@@ -137,6 +137,62 @@ npm run test:ci
 npx jest --onlyFailures
 ```
 
+### Save Test Logs to File
+
+Automatically save test output to timestamped log files:
+
+```bash
+# Run tests and save log (shows output + saves to file)
+npm run test:log
+
+# Run tests and save log (only saves to file, no console output)
+npm run test:log:all
+
+# Run unit tests and save log
+npm run test:unit:log
+
+# Run integration tests and save log
+npm run test:integration:log
+
+# Run E2E tests and save log
+npm run test:e2e:log
+```
+
+**Log files are saved to:** `test-logs/`
+
+**File naming format:** `test-YYYYMMDD-HHMMSS.log`
+
+**Example:** `test-logs/test-20240127-143052.log`
+
+**Manual logging:**
+```bash
+# Custom log filename
+npm test 2>&1 | tee test-logs/my-custom-test.log
+
+# Save to file only (no console output)
+npm test > test-logs/my-test.log 2>&1
+
+# Append to existing log
+npm test 2>&1 | tee -a test-logs/existing.log
+```
+
+**View logs:**
+```bash
+# List all logs
+ls -lh test-logs/
+
+# View latest log
+cat test-logs/test-*.log | tail -100
+
+# Search for failures
+grep -r "FAIL" test-logs/
+
+# Clean up old logs (removes logs older than 14 days)
+./scripts/clean-test-logs.sh
+```
+
+📖 **Detailed logging guide:** See `test-logs/README.md`
+
 ---
 
 ## Test Types

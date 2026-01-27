@@ -48,6 +48,7 @@ playwright-report/
 playwright/.cache/
 tests/uploads/
 .env.test.local
+test-logs/
 
 # Test videos and screenshots
 tests/e2e/*.png
