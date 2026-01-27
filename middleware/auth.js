@@ -20,13 +20,21 @@ const isAuthenticated = (req, res, next) => {
 const isAdmin = async (req, res, next) => {
   try {
     if (!req.isAuthenticated()) {
+      console.log('[isAdmin] Not authenticated, redirecting to login');
       return res.redirect('/admin/login');
     }
+
+    console.log('[isAdmin] User ID:', req.user._id);
 
     // Check if user exists and is active
     const admin = await Admin.findById(req.user._id);
 
+    console.log('[isAdmin] Admin found:', admin ? 'YES' : 'NO');
+    console.log('[isAdmin] Admin active:', admin?.isActive);
+    console.log('[isAdmin] Admin role:', admin?.role);
+
     if (!admin || !admin.isActive) {
+      console.log('[isAdmin] ❌ BLOCKED: User not found or inactive');
       req.logout((err) => {
         if (err) {
           console.error('Logout error:', err);
@@ -36,16 +44,10 @@ const isAdmin = async (req, res, next) => {
       return;
     }
 
-    // Check if email is still whitelisted
-    if (!Admin.isEmailWhitelisted(admin.email)) {
-      req.logout((err) => {
-        if (err) {
-          console.error('Logout error:', err);
-        }
-        res.redirect('/admin/login?error=unauthorized');
-      });
-      return;
-    }
+    // NOTE: We don't check whitelist here anymore - database is the source of truth
+    // Whitelist is only checked during initial OAuth login in passport.js
+
+    console.log('[isAdmin] ✅ AUTHORIZED');
 
     // User is authorized admin
     next();
@@ -90,12 +92,8 @@ const isAdminAPI = async (req, res, next) => {
       });
     }
 
-    if (!Admin.isEmailWhitelisted(admin.email)) {
-      return res.status(403).json({
-        success: false,
-        message: 'User is not authorized'
-      });
-    }
+    // NOTE: We don't check whitelist here anymore - database is the source of truth
+    // Whitelist is only checked during initial OAuth login in passport.js
 
     next();
   } catch (error) {
