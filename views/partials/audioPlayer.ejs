@@ -1,0 +1,86 @@
+<!-- Sticky Audio Player -->
+<div id="audioPlayer" class="audio-player hidden">
+  <audio id="audio" preload="metadata"></audio>
+
+  <div class="player-container">
+    <!-- Left: Now Playing Info -->
+    <div class="player-info">
+      <div class="now-playing-label"><%= locale === 'ar' ? 'يتم تشغيل:' : 'Now Playing:' %></div>
+      <div class="lecture-title" id="playerLectureTitle">
+        <%= locale === 'ar' ? 'اختر محاضرة للتشغيل' : 'Select a lecture to play' %>
+      </div>
+      <div class="sheikh-name" id="playerSheikhName"></div>
+    </div>
+
+    <!-- Center: Playback Controls -->
+    <div class="player-controls">
+      <!-- Time Display -->
+      <div class="time-display">
+        <span id="currentTime">0:00</span>
+        <span class="time-separator">/</span>
+        <span id="duration">0:00</span>
+      </div>
+
+      <!-- Progress Bar -->
+      <div class="progress-container" id="progressContainer">
+        <div class="progress-bar" id="progressBar">
+          <div class="progress-handle" id="progressHandle"></div>
+        </div>
+      </div>
+
+      <!-- Control Buttons -->
+      <div class="control-buttons">
+        <!-- Skip Backward -->
+        <button class="control-btn" id="skipBackward" title="<%= locale === 'ar' ? 'رجوع 15 ثانية' : 'Skip backward 15s' %>">
+          <span class="control-icon">⏪</span>
+        </button>
+
+        <!-- Play/Pause -->
+        <button class="control-btn control-btn-primary" id="playPauseBtn">
+          <span class="control-icon" id="playPauseIcon">▶</span>
+        </button>
+
+        <!-- Skip Forward -->
+        <button class="control-btn" id="skipForward" title="<%= locale === 'ar' ? 'تقديم 15 ثانية' : 'Skip forward 15s' %>">
+          <span class="control-icon">⏩</span>
+        </button>
+      </div>
+    </div>
+
+    <!-- Right: Additional Controls -->
+    <div class="player-actions">
+      <!-- Playback Speed -->
+      <div class="speed-control">
+        <button class="control-btn control-btn-small" id="speedBtn" title="<%= locale === 'ar' ? 'سرعة التشغيل' : 'Playback speed' %>">
+          <span id="speedLabel">1x</span>
+        </button>
+        <div class="speed-menu hidden" id="speedMenu">
+          <button class="speed-option" data-speed="0.5">0.5x</button>
+          <button class="speed-option" data-speed="0.75">0.75x</button>
+          <button class="speed-option active" data-speed="1">1x</button>
+          <button class="speed-option" data-speed="1.25">1.25x</button>
+          <button class="speed-option" data-speed="1.5">1.5x</button>
+          <button class="speed-option" data-speed="2">2x</button>
+        </div>
+      </div>
+
+      <!-- Volume Control -->
+      <div class="volume-control">
+        <button class="control-btn control-btn-small" id="muteBtn" title="<%= locale === 'ar' ? 'كتم الصوت' : 'Mute' %>">
+          <span id="volumeIcon">🔊</span>
+        </button>
+        <input type="range" class="volume-slider" id="volumeSlider" min="0" max="100" value="100">
+      </div>
+
+      <!-- Download Button -->
+      <a class="control-btn control-btn-small" id="downloadBtn" title="<%= locale === 'ar' ? 'تحميل' : 'Download' %>" style="display:none;">
+        <span class="control-icon">⬇</span>
+      </a>
+
+      <!-- Close Button -->
+      <button class="control-btn control-btn-small" id="closePlayerBtn" title="<%= locale === 'ar' ? 'إغلاق' : 'Close' %>">
+        <span class="control-icon">✕</span>
+      </button>
+    </div>
+  </div>
+</div>

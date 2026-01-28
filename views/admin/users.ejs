@@ -1,0 +1,406 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title><%= title %> - Duroos</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body {
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      background: #f5f5f5;
+      color: #333;
+    }
+    .header {
+      background: #1A5F5A;
+      color: white;
+      padding: 16px 24px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+    }
+    .header h1 { font-size: 24px; font-weight: 600; }
+    .header-nav { display: flex; align-items: center; gap: 16px; }
+    .header-nav a { color: white; text-decoration: none; opacity: 0.9; }
+    .header-nav a:hover { opacity: 1; }
+    .container { max-width: 1200px; margin: 0 auto; padding: 32px 24px; }
+    .card {
+      background: white;
+      border-radius: 12px;
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+      padding: 32px;
+      margin-bottom: 24px;
+    }
+    .page-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 32px;
+    }
+    .page-title { font-size: 28px; color: #2C3E35; }
+    .info-box {
+      background: #fff3cd;
+      border: 1px solid #ffc107;
+      border-radius: 8px;
+      padding: 16px;
+      margin-bottom: 24px;
+    }
+    .info-box p { font-size: 14px; line-height: 1.6; color: #856404; }
+    table { width: 100%; border-collapse: collapse; }
+    thead { background: #f8f9fa; }
+    th, td { padding: 16px; text-align: left; border-bottom: 1px solid #e9ecef; }
+    th { font-weight: 600; color: #495057; font-size: 14px; }
+    .user-info {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+    .user-avatar {
+      width: 40px;
+      height: 40px;
+      border-radius: 50%;
+      object-fit: cover;
+    }
+    .user-avatar-placeholder {
+      width: 40px;
+      height: 40px;
+      border-radius: 50%;
+      background: #1A5F5A;
+      color: white;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: 600;
+      font-size: 16px;
+    }
+    .user-details { flex: 1; }
+    .user-name { font-weight: 600; color: #2C3E35; margin-bottom: 2px; }
+    .user-email { font-size: 13px; color: #6c757d; }
+    .badge {
+      display: inline-block;
+      padding: 4px 12px;
+      border-radius: 12px;
+      font-size: 12px;
+      font-weight: 600;
+    }
+    .badge-admin { background: #1A5F5A; color: white; }
+    .badge-editor { background: #17a2b8; color: white; }
+    .badge-active { background: #28a745; color: white; }
+    .badge-inactive { background: #dc3545; color: white; }
+    .badge-you { background: #ffc107; color: #000; margin-left: 8px; }
+    select {
+      padding: 6px 12px;
+      border: 1px solid #ddd;
+      border-radius: 6px;
+      font-size: 14px;
+    }
+    .btn {
+      padding: 8px 16px;
+      border: none;
+      border-radius: 6px;
+      font-size: 13px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.3s;
+    }
+    .btn-primary { background: #1A5F5A; color: white; }
+    .btn-primary:hover { background: #145047; }
+    .btn-danger { background: #dc3545; color: white; }
+    .btn-danger:hover { background: #c82333; }
+    .btn-success { background: #28a745; color: white; }
+    .btn-success:hover { background: #218838; }
+    .btn:disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+    }
+    .actions { display: flex; gap: 8px; }
+    .message {
+      padding: 12px 16px;
+      border-radius: 8px;
+      margin-bottom: 24px;
+      display: none;
+    }
+    .message.success {
+      background: #d4edda;
+      color: #155724;
+      border: 1px solid #c3e6cb;
+    }
+    .message.error {
+      background: #f8d7da;
+      color: #721c24;
+      border: 1px solid #f5c6cb;
+    }
+    .empty-state {
+      text-align: center;
+      padding: 64px 24px;
+      color: #6c757d;
+    }
+  </style>
+</head>
+<body>
+  <div class="header">
+    <h1>👥 Manage Users</h1>
+    <div class="header-nav">
+      <a href="/admin/dashboard">Dashboard</a>
+      <a href="/admin/manage">Manage</a>
+      <a href="/auth/logout">Logout</a>
+    </div>
+  </div>
+
+  <div class="container">
+    <div id="message" class="message"></div>
+
+    <div class="page-header">
+      <h2 class="page-title">Admins & Editors (<%= users.length %>)</h2>
+      <button onclick="showAddEditorForm()" class="btn btn-primary">➕ Add Editor</button>
+    </div>
+
+    <!-- Add Editor Form (hidden by default) -->
+    <div id="addEditorForm" class="card" style="display: none; margin-bottom: 24px;">
+      <h3 style="margin-bottom: 16px; color: #2C3E35;">➕ Add New Editor</h3>
+      <form onsubmit="addEditor(event)">
+        <div style="margin-bottom: 16px;">
+          <label style="display: block; margin-bottom: 8px; font-weight: 600; color: #495057;">Email Address *</label>
+          <input
+            type="email"
+            id="newEditorEmail"
+            placeholder="editor@example.com"
+            required
+            style="width: 100%; padding: 10px 12px; border: 1px solid #ddd; border-radius: 6px; font-size: 14px;"
+          >
+          <small style="color: #6c757d; display: block; margin-top: 4px;">
+            The editor will need to login with Google OAuth using this email address
+          </small>
+        </div>
+
+        <div style="margin-bottom: 16px;">
+          <label style="display: block; margin-bottom: 8px; font-weight: 600; color: #495057;">Display Name *</label>
+          <input
+            type="text"
+            id="newEditorName"
+            placeholder="Editor Name"
+            required
+            style="width: 100%; padding: 10px 12px; border: 1px solid #ddd; border-radius: 6px; font-size: 14px;"
+          >
+        </div>
+
+        <div style="margin-bottom: 16px;">
+          <label style="display: block; margin-bottom: 8px; font-weight: 600; color: #495057;">Role *</label>
+          <select
+            id="newEditorRole"
+            style="width: 100%; padding: 10px 12px; border: 1px solid #ddd; border-radius: 6px; font-size: 14px;"
+          >
+            <option value="editor">✏️ Editor (Content management only)</option>
+            <option value="admin">👑 Admin (Full access)</option>
+          </select>
+        </div>
+
+        <div style="display: flex; gap: 12px;">
+          <button type="submit" class="btn btn-primary">✅ Add User</button>
+          <button type="button" onclick="hideAddEditorForm()" class="btn" style="background: #6c757d; color: white;">❌ Cancel</button>
+        </div>
+      </form>
+    </div>
+
+    <div class="info-box">
+      <p><strong>📌 Role Permissions:</strong></p>
+      <p><strong>Admin:</strong> Full access including user management, content management, and system settings</p>
+      <p><strong>Editor:</strong> Content management only (lectures, series, sheikhs) - cannot manage users or settings</p>
+    </div>
+
+    <div class="card">
+      <% if (users && users.length > 0) { %>
+        <table>
+          <thead>
+            <tr>
+              <th>User</th>
+              <th>Role</th>
+              <th>Status</th>
+              <th>Last Login</th>
+              <th>Actions</th>
+            </tr>
+          </thead>
+          <tbody>
+            <% users.forEach(u => { %>
+              <tr>
+                <td>
+                  <div class="user-info">
+                    <% if (u.profilePhoto) { %>
+                      <img src="<%= u.profilePhoto %>" alt="<%= u.displayName %>" class="user-avatar">
+                    <% } else { %>
+                      <div class="user-avatar-placeholder">
+                        <%= u.displayName ? u.displayName.charAt(0).toUpperCase() : 'U' %>
+                      </div>
+                    <% } %>
+                    <div class="user-details">
+                      <div class="user-name">
+                        <%= u.displayName || 'Unknown' %>
+                        <% if (u._id.toString() === user._id.toString()) { %>
+                          <span class="badge badge-you">YOU</span>
+                        <% } %>
+                      </div>
+                      <div class="user-email"><%= u.email %></div>
+                    </div>
+                  </div>
+                </td>
+                <td>
+                  <% if (u._id.toString() === user._id.toString()) { %>
+                    <span class="badge badge-<%= u.role %>"><%= u.role === 'admin' ? '👑 Admin' : '✏️ Editor' %></span>
+                  <% } else { %>
+                    <select
+                      onchange="updateRole('<%= u._id %>', this.value)"
+                      class="role-select"
+                    >
+                      <option value="admin" <%= u.role === 'admin' ? 'selected' : '' %>>👑 Admin</option>
+                      <option value="editor" <%= u.role === 'editor' ? 'selected' : '' %>>✏️ Editor</option>
+                    </select>
+                  <% } %>
+                </td>
+                <td>
+                  <span class="badge badge-<%= u.isActive ? 'active' : 'inactive' %>">
+                    <%= u.isActive ? '✅ Active' : '❌ Inactive' %>
+                  </span>
+                </td>
+                <td style="font-size: 13px; color: #6c757d;">
+                  <%= u.lastLogin ? new Date(u.lastLogin).toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' }) : 'Never' %>
+                </td>
+                <td>
+                  <% if (u._id.toString() !== user._id.toString()) { %>
+                    <button
+                      onclick="toggleActive('<%= u._id %>', <%= u.isActive %>)"
+                      class="btn <%= u.isActive ? 'btn-danger' : 'btn-success' %>"
+                    >
+                      <%= u.isActive ? '🚫 Deactivate' : '✅ Activate' %>
+                    </button>
+                  <% } else { %>
+                    <button class="btn btn-primary" disabled>Current User</button>
+                  <% } %>
+                </td>
+              </tr>
+            <% }); %>
+          </tbody>
+        </table>
+      <% } else { %>
+        <div class="empty-state">
+          <h3>No users found</h3>
+        </div>
+      <% } %>
+    </div>
+  </div>
+
+  <script>
+    function showMessage(text, type) {
+      const msg = document.getElementById('message');
+      msg.textContent = text;
+      msg.className = `message ${type}`;
+      msg.style.display = 'block';
+
+      setTimeout(() => {
+        msg.style.display = 'none';
+      }, 5000);
+    }
+
+    function showAddEditorForm() {
+      document.getElementById('addEditorForm').style.display = 'block';
+      document.getElementById('newEditorEmail').focus();
+    }
+
+    function hideAddEditorForm() {
+      document.getElementById('addEditorForm').style.display = 'none';
+      document.getElementById('newEditorEmail').value = '';
+      document.getElementById('newEditorName').value = '';
+      document.getElementById('newEditorRole').value = 'editor';
+    }
+
+    function addEditor(event) {
+      event.preventDefault();
+
+      const email = document.getElementById('newEditorEmail').value;
+      const displayName = document.getElementById('newEditorName').value;
+      const role = document.getElementById('newEditorRole').value;
+
+      if (!email || !displayName) {
+        showMessage('❌ Please fill in all required fields', 'error');
+        return;
+      }
+
+      fetch('/admin/users/add', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({ email, displayName, role })
+      })
+      .then(res => res.json())
+      .then(data => {
+        if (data.success) {
+          showMessage('✅ Editor added successfully! They can now login with Google OAuth.', 'success');
+          hideAddEditorForm();
+          setTimeout(() => window.location.reload(), 2000);
+        } else {
+          showMessage(`❌ Error: ${data.message}`, 'error');
+        }
+      })
+      .catch(err => {
+        console.error('Add editor error:', err);
+        showMessage('❌ Error adding editor', 'error');
+      });
+    }
+
+    function updateRole(userId, newRole) {
+      if (!confirm(`Are you sure you want to change this user's role to ${newRole}?`)) {
+        window.location.reload();
+        return;
+      }
+
+      fetch(`/admin/users/${userId}/role`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({ role: newRole })
+      })
+      .then(res => res.json())
+      .then(data => {
+        if (data.success) {
+          showMessage(`✅ Role updated to ${newRole}`, 'success');
+          setTimeout(() => window.location.reload(), 1000);
+        } else {
+          showMessage(`❌ Error: ${data.message}`, 'error');
+          window.location.reload();
+        }
+      })
+      .catch(err => {
+        console.error('Update role error:', err);
+        showMessage('❌ Error updating role', 'error');
+        window.location.reload();
+      });
+    }
+
+    function toggleActive(userId, currentlyActive) {
+      const action = currentlyActive ? 'deactivate' : 'activate';
+      if (!confirm(`Are you sure you want to ${action} this user?`)) {
+        return;
+      }
+
+      fetch(`/admin/users/${userId}/toggle-active`, {
+        method: 'POST'
+      })
+      .then(res => res.json())
+      .then(data => {
+        if (data.success) {
+          showMessage(`✅ User ${action}d successfully`, 'success');
+          setTimeout(() => window.location.reload(), 1000);
+        } else {
+          showMessage(`❌ Error: ${data.message}`, 'error');
+        }
+      })
+      .catch(err => {
+        console.error('Toggle active error:', err);
+        showMessage('❌ Error toggling active status', 'error');
+      });
+    }
+  </script>
+</body>
+</html>

@@ -3,42 +3,94 @@ const router = express.Router();
 const { Lecture, Sheikh, Series } = require('../models');
 
 // @route   GET /
-// @desc    Homepage
+// @desc    Homepage - Series-based view with tabs
 // @access  Public
 router.get('/', async (req, res) => {
   try {
-    // Get statistics
-    const stats = {
-      totalLectures: await Lecture.countDocuments({ published: true }),
-      totalSheikhs: await Sheikh.countDocuments(),
-      totalSeries: await Series.countDocuments(),
-      totalPlays: await Lecture.aggregate([
-        { $match: { published: true } },
-        { $group: { _id: null, total: { $sum: '$playCount' } } }
-      ]).then(result => result[0]?.total || 0)
-    };
-
-    // Get featured lectures
-    const featuredLectures = await Lecture.find({ published: true, featured: true })
-      .sort({ createdAt: -1 })
-      .limit(3)
+    // Fetch all series with their sheikhs
+    // Note: Series sorted by creation date, but lectures within series will be sorted by dateRecorded
+    const series = await Series.find()
       .populate('sheikhId', 'nameArabic nameEnglish honorific')
-      .populate('seriesId', 'titleArabic titleEnglish')
+      .sort({ createdAt: -1 })
       .lean();
 
-    // Get recent lectures
-    const recentLectures = await Lecture.find({ published: true })
-      .sort({ createdAt: -1 })
-      .limit(12)
+    // For each series, fetch its lectures
+    const seriesList = await Promise.all(
+      series.map(async (s) => {
+        const lectures = await Lecture.find({
+          seriesId: s._id,
+          published: true
+        })
+          .sort({ lectureNumber: 1, createdAt: 1 })
+          .lean();
+
+        // Get original author from first lecture with description
+        const originalAuthor = lectures.find(l => l.descriptionArabic)?.descriptionArabic
+          ?.replace('من كتاب: ', '') || null;
+
+        return {
+          ...s,
+          sheikh: s.sheikhId,
+          lectures: lectures,
+          lectureCount: lectures.length,
+          originalAuthor: originalAuthor
+        };
+      })
+    );
+
+    // Filter out series with no published lectures
+    const filteredSeries = seriesList.filter(s => s.lectureCount > 0);
+
+    // Get all standalone lectures (not in any series)
+    // Sort by recording date (most recent first), fallback to creation date
+    const standaloneLectures = await Lecture.find({
+      seriesId: null,
+      published: true
+    })
       .populate('sheikhId', 'nameArabic nameEnglish honorific')
-      .populate('seriesId', 'titleArabic titleEnglish')
+      .sort({ dateRecorded: -1, createdAt: -1 })
       .lean();
+
+    // Get محاضرات متفرقة series (miscellaneous lectures) and include in Lectures tab
+    const miscSeries = await Series.findOne({
+      titleArabic: /محاضرات متفرقة/i
+    })
+      .populate('sheikhId', 'nameArabic nameEnglish honorific')
+      .lean();
+
+    let miscLectures = [];
+    if (miscSeries) {
+      miscLectures = await Lecture.find({
+        seriesId: miscSeries._id,
+        published: true
+      })
+        .populate('sheikhId', 'nameArabic nameEnglish honorific')
+        .sort({ dateRecorded: -1, createdAt: -1 })
+        .lean();
+    }
+
+    // Combine standalone and miscellaneous lectures for Lectures tab
+    const allStandaloneLectures = [...standaloneLectures, ...miscLectures];
+
+    // Get Khutba series (for Khutbas tab) - use tags for better filtering
+    // Also fallback to title-based detection for backward compatibility
+    const khutbaSeries = filteredSeries.filter(s => {
+      // Check if tags include 'khutba'
+      if (s.tags && s.tags.includes('khutba')) {
+        return true;
+      }
+      // Fallback to title-based detection for content without tags
+      return s.titleArabic && (
+        s.titleArabic.includes('خطب') ||
+        s.titleArabic.includes('خطبة')
+      );
+    });
 
     res.render('public/index', {
-      title: 'الرئيسية',
-      stats,
-      featuredLectures,
-      recentLectures
+      title: 'المكتبة الصوتية',
+      seriesList: filteredSeries,
+      standaloneLectures: allStandaloneLectures,
+      khutbaSeries: khutbaSeries
     });
   } catch (error) {
     console.error('Homepage error:', error);
@@ -51,7 +103,7 @@ router.get('/', async (req, res) => {
 // @access  Public
 router.get('/browse', async (req, res) => {
   try {
-    const { search, category, sort = '-createdAt' } = req.query;
+    const { search, category, sort = '-dateRecorded', fromDate, toDate } = req.query;
 
     // Build query
     const query = { published: true };
@@ -66,6 +118,25 @@ router.get('/browse', async (req, res) => {
       query.$text = { $search: search };
     }
 
+    // Date range filter (Gregorian dates stored in dateRecorded)
+    if (fromDate || toDate) {
+      query.dateRecorded = {};
+
+      if (fromDate) {
+        // Start of day for fromDate
+        const from = new Date(fromDate);
+        from.setHours(0, 0, 0, 0);
+        query.dateRecorded.$gte = from;
+      }
+
+      if (toDate) {
+        // End of day for toDate
+        const to = new Date(toDate);
+        to.setHours(23, 59, 59, 999);
+        query.dateRecorded.$lte = to;
+      }
+    }
+
     // Execute query
     const lectures = await Lecture.find(query)
       .sort(sort)
@@ -78,7 +149,9 @@ router.get('/browse', async (req, res) => {
       lectures,
       search: search || '',
       category: category || '',
-      sort: sort
+      sort: sort,
+      fromDate: fromDate || '',
+      toDate: toDate || ''
     });
   } catch (error) {
     console.error('Browse error:', error);
@@ -176,6 +249,7 @@ router.get('/sheikhs/:id', async (req, res) => {
       published: true
     })
       .sort({ createdAt: -1 })
+      .populate('sheikhId', 'nameArabic nameEnglish honorific')
       .populate('seriesId', 'titleArabic titleEnglish')
       .lean();
 
@@ -255,11 +329,39 @@ router.get('/series/:id', async (req, res) => {
       completeLectures: lectures.filter(l => l.lectureNumber).length
     };
 
+    // For consolidated Khutba series, also find related multi-lecture Khutba series
+    let relatedKhutbaSeries = [];
+    if (series.titleArabic === 'خطب الجمعة') {
+      // Find multi-lecture Khutba series (with underscores or spaces)
+      // Match patterns like "خطبة_الجمعة - X" or "خطبة الجمعة - X"
+      relatedKhutbaSeries = await Series.find({
+        sheikhId: series.sheikhId._id,
+        titleArabic: {
+          $regex: 'خطبة.*جمعة',
+          $options: 'i'
+        },
+        _id: { $ne: series._id } // Exclude current series
+      }).lean();
+
+      console.log(`[DEBUG] Found ${relatedKhutbaSeries.length} related Khutba series for hierarchical display`);
+
+      // For each related series, get actual lecture count
+      for (const relSeries of relatedKhutbaSeries) {
+        const count = await Lecture.countDocuments({
+          seriesId: relSeries._id,
+          published: true
+        });
+        relSeries.actualLectureCount = count;
+        console.log(`[DEBUG] - ${relSeries.titleArabic}: ${count} lectures`);
+      }
+    }
+
     res.render('public/series-detail', {
       title: series.titleArabic,
       series,
       lectures,
-      stats
+      stats,
+      relatedKhutbaSeries
     });
   } catch (error) {
     console.error('Series profile error:', error);

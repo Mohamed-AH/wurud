@@ -1,0 +1,245 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title><%= title %> - Duroos</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body {
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      background: #f5f5f5;
+      color: #333;
+    }
+    .header {
+      background: #1A5F5A;
+      color: white;
+      padding: 16px 24px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+    }
+    .header h1 { font-size: 24px; font-weight: 600; }
+    .header-nav { display: flex; align-items: center; gap: 16px; }
+    .header-nav a { color: white; text-decoration: none; opacity: 0.9; }
+    .header-nav a:hover { opacity: 1; }
+    .container { max-width: 800px; margin: 0 auto; padding: 32px 24px; }
+    .card {
+      background: white;
+      border-radius: 12px;
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+      padding: 32px;
+    }
+    .form-group {
+      margin-bottom: 24px;
+    }
+    label {
+      display: block;
+      margin-bottom: 8px;
+      font-weight: 600;
+      color: #2C3E35;
+    }
+    input, textarea, select {
+      width: 100%;
+      padding: 12px;
+      border: 1px solid #ddd;
+      border-radius: 6px;
+      font-size: 14px;
+      font-family: inherit;
+    }
+    textarea {
+      min-height: 100px;
+      resize: vertical;
+    }
+    .btn {
+      padding: 12px 24px;
+      border: none;
+      border-radius: 6px;
+      font-size: 14px;
+      font-weight: 600;
+      cursor: pointer;
+      text-decoration: none;
+      display: inline-block;
+      margin-left: 8px;
+    }
+    .btn-primary {
+      background: #1A5F5A;
+      color: white;
+    }
+    .btn-primary:hover {
+      background: #145047;
+    }
+    .btn-secondary {
+      background: #6c757d;
+      color: white;
+    }
+    .btn-secondary:hover {
+      background: #5a6268;
+    }
+    .actions {
+      display: flex;
+      gap: 12px;
+      margin-top: 32px;
+    }
+    .checkbox-group {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .checkbox-group input[type="checkbox"] {
+      width: auto;
+    }
+  </style>
+</head>
+<body>
+  <div class="header">
+    <h1>✏️ تعديل المحاضرة</h1>
+    <div class="header-nav">
+      <a href="/admin/dashboard">لوحة التحكم</a>
+      <a href="/admin/manage">إدارة</a>
+      <a href="/auth/logout">خروج</a>
+    </div>
+  </div>
+
+  <div class="container">
+    <div class="card">
+      <form method="POST" action="/admin/lectures/<%= lecture._id %>/edit">
+        <div class="form-group">
+          <label for="titleArabic">العنوان بالعربية *</label>
+          <input
+            type="text"
+            id="titleArabic"
+            name="titleArabic"
+            value="<%= lecture.titleArabic %>"
+            required
+          >
+        </div>
+
+        <div class="form-group">
+          <label for="titleEnglish">العنوان بالإنجليزية</label>
+          <input
+            type="text"
+            id="titleEnglish"
+            name="titleEnglish"
+            value="<%= lecture.titleEnglish || '' %>"
+          >
+        </div>
+
+        <div class="form-group">
+          <label for="lectureNumber">رقم المحاضرة</label>
+          <input
+            type="number"
+            id="lectureNumber"
+            name="lectureNumber"
+            value="<%= lecture.lectureNumber || '' %>"
+            min="1"
+          >
+        </div>
+
+        <div class="form-group">
+          <label for="seriesId">السلسلة</label>
+          <select id="seriesId" name="seriesId">
+            <option value="">لا يوجد (محاضرة منفصلة)</option>
+            <% series.forEach(s => { %>
+              <option value="<%= s._id %>" <%= lecture.seriesId && lecture.seriesId._id.toString() === s._id.toString() ? 'selected' : '' %>>
+                <%= s.titleArabic %>
+              </option>
+            <% }) %>
+          </select>
+        </div>
+
+        <div class="form-group">
+          <label for="category">التصنيف</label>
+          <select id="category" name="category">
+            <option value="Other" <%= lecture.category === 'Other' ? 'selected' : '' %>>أخرى</option>
+            <option value="Tafsir" <%= lecture.category === 'Tafsir' ? 'selected' : '' %>>تفسير</option>
+            <option value="Hadith" <%= lecture.category === 'Hadith' ? 'selected' : '' %>>حديث</option>
+            <option value="Fiqh" <%= lecture.category === 'Fiqh' ? 'selected' : '' %>>فقه</option>
+            <option value="Aqeedah" <%= lecture.category === 'Aqeedah' ? 'selected' : '' %>>عقيدة</option>
+            <option value="Seerah" <%= lecture.category === 'Seerah' ? 'selected' : '' %>>سيرة</option>
+            <option value="Akhlaq" <%= lecture.category === 'Akhlaq' ? 'selected' : '' %>>أخلاق</option>
+          </select>
+        </div>
+
+        <div class="form-group">
+          <label>الوسوم (Tags)</label>
+          <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 12px; padding: 16px; background: #f8f9fa; border-radius: 8px;">
+            <%
+              const availableTags = ['series', 'lecture', 'khutba', 'fiqh', 'tafsir', 'hadith', 'seerah', 'aqeedah', 'akhlaq'];
+              const tagLabels = {
+                'series': 'سلسلة',
+                'lecture': 'محاضرة',
+                'khutba': 'خطبة',
+                'fiqh': 'فقه',
+                'tafsir': 'تفسير',
+                'hadith': 'حديث',
+                'seerah': 'سيرة',
+                'aqeedah': 'عقيدة',
+                'akhlaq': 'أخلاق'
+              };
+              const lectureTags = lecture.tags || [];
+            %>
+            <% availableTags.forEach(tag => { %>
+              <div class="checkbox-group">
+                <input
+                  type="checkbox"
+                  id="tag-<%= tag %>"
+                  name="tags"
+                  value="<%= tag %>"
+                  <%= lectureTags.includes(tag) ? 'checked' : '' %>
+                >
+                <label for="tag-<%= tag %>" style="margin-bottom: 0; margin-right: 8px;"><%= tagLabels[tag] %></label>
+              </div>
+            <% }) %>
+          </div>
+          <p style="font-size: 12px; color: #666; margin-top: 8px;">
+            💡 يمكنك اختيار عدة وسوم. مثلاً: خطبة + سيرة للخطب التي تتحدث عن السيرة
+          </p>
+        </div>
+
+        <div class="form-group">
+          <label for="descriptionArabic">الوصف بالعربية</label>
+          <textarea
+            id="descriptionArabic"
+            name="descriptionArabic"
+          ><%= lecture.descriptionArabic || '' %></textarea>
+        </div>
+
+        <div class="form-group">
+          <label for="descriptionEnglish">الوصف بالإنجليزية</label>
+          <textarea
+            id="descriptionEnglish"
+            name="descriptionEnglish"
+          ><%= lecture.descriptionEnglish || '' %></textarea>
+        </div>
+
+        <div class="form-group">
+          <div class="checkbox-group">
+            <input
+              type="checkbox"
+              id="published"
+              name="published"
+              value="true"
+              <%= lecture.published ? 'checked' : '' %>
+            >
+            <label for="published" style="margin-bottom: 0;">منشورة</label>
+          </div>
+        </div>
+
+        <% if (lecture.audioFileName) { %>
+          <div class="form-group">
+            <label>ملف الصوت</label>
+            <p style="color: #666;">📁 <%= lecture.audioFileName %></p>
+          </div>
+        <% } %>
+
+        <div class="actions">
+          <button type="submit" class="btn btn-primary">💾 حفظ التغييرات</button>
+          <a href="/admin/manage" class="btn btn-secondary">↩️ إلغاء</a>
+        </div>
+      </form>
+    </div>
+  </div>
+</body>
+</html>

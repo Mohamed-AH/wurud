@@ -1,21 +1,24 @@
 
 <style>
   .page-header {
-    background: white;
-    padding: 32px 0;
+    background: linear-gradient(135deg, var(--primary-brown) 0%, var(--sage) 100%);
+    padding: 48px 0;
     margin-bottom: 40px;
-    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+    border-bottom: 3px solid var(--accent-gold);
   }
 
   .page-title {
     font-size: 36px;
-    color: var(--text-primary);
+    font-family: var(--font-arabic-display);
+    color: var(--cream);
     margin-bottom: 8px;
+    text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.3);
   }
 
   .page-subtitle {
-    color: var(--text-secondary);
+    color: var(--cream);
     font-size: 16px;
+    opacity: 0.9;
   }
 
   .content-wrapper {
@@ -26,13 +29,14 @@
   }
 
   .filters-sidebar {
-    background: white;
+    background: var(--cream);
     border-radius: 12px;
     padding: 24px;
     height: fit-content;
     position: sticky;
-    top: 20px;
-    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+    top: 88px;
+    box-shadow: 0 4px 12px var(--shadow-warm);
+    border: 2px solid var(--accent-amber);
   }
 
   .filter-section {
@@ -63,30 +67,33 @@
   .filter-btn {
     width: 100%;
     padding: 12px;
-    background: var(--primary);
-    color: white;
+    background: var(--accent-gold);
+    color: var(--primary-dark);
     border: none;
     border-radius: 8px;
-    font-family: 'Noto Naskh Arabic', serif;
+    font-family: var(--font-arabic-body);
     font-size: 15px;
     font-weight: 600;
     cursor: pointer;
     transition: all 0.3s;
     margin-top: 16px;
+    box-shadow: 0 2px 8px var(--shadow-warm);
   }
 
   .filter-btn:hover {
-    background: #154A46;
+    background: var(--accent-amber);
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px var(--shadow-warm);
   }
 
   .clear-filters {
     width: 100%;
     padding: 10px;
-    background: white;
+    background: transparent;
     color: var(--text-secondary);
-    border: 1px solid #ddd;
+    border: 2px solid var(--accent-amber);
     border-radius: 6px;
-    font-family: 'Noto Naskh Arabic', serif;
+    font-family: var(--font-arabic-body);
     font-size: 14px;
     cursor: pointer;
     transition: all 0.3s;
@@ -94,8 +101,9 @@
   }
 
   .clear-filters:hover {
-    border-color: var(--primary);
-    color: var(--primary);
+    border-color: var(--accent-gold);
+    color: var(--primary-dark);
+    background: var(--cream);
   }
 
   .lectures-content {
@@ -210,6 +218,25 @@
           </select>
         </div>
 
+        <div class="filter-section">
+          <h3 class="filter-title">تاريخ التسجيل</h3>
+          <label style="font-size: 12px; color: var(--text-secondary); margin-bottom: 4px; display: block;">من تاريخ</label>
+          <input
+            type="date"
+            name="fromDate"
+            class="filter-select"
+            value="<%= fromDate %>"
+            style="margin-bottom: 12px;"
+          >
+          <label style="font-size: 12px; color: var(--text-secondary); margin-bottom: 4px; display: block;">إلى تاريخ</label>
+          <input
+            type="date"
+            name="toDate"
+            class="filter-select"
+            value="<%= toDate %>"
+          >
+        </div>
+
         <% if (typeof search !== 'undefined' && search) { %>
           <input type="hidden" name="search" value="<%= search %>">
         <% } %>
@@ -246,4 +273,26 @@
     </main>
   </div>
 </div>
+
+<script>
+  // Play audio using sticky player
+  function playAudio(lectureId, title, sheikh) {
+    console.log('▶️ Play button clicked from browse page');
+    console.log('  Lecture ID:', lectureId);
+    console.log('  Title:', title);
+    console.log('  Sheikh:', sheikh);
+
+    if (window.audioPlayer) {
+      console.log('✅ Calling audioPlayer.play()...');
+      window.audioPlayer.play(lectureId, {
+        title: title,
+        titleArabic: title,
+        sheikh: sheikh || ''
+      });
+    } else {
+      console.error('❌ Audio player not initialized');
+      alert('مشغل الصوت يتم تحميله، يرجى المحاولة مرة أخرى');
+    }
+  }
+</script>
 

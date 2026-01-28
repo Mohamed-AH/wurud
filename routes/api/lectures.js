@@ -4,7 +4,8 @@ const { upload } = require('../../config/storage');
 const { validateUploadedFile, handleMulterError } = require('../../middleware/fileValidation');
 const { isAdminAPI } = require('../../middleware/auth');
 const { extractAudioMetadata, isValidAudioFile } = require('../../utils/audioMetadata');
-const { deleteFile } = require('../../utils/fileManager');
+const fileManager = require('../../utils/fileManager');
+const path = require('path');
 const { Lecture, Sheikh, Series } = require('../../models');
 
 // @route   POST /api/lectures
@@ -22,7 +23,7 @@ router.post('/',
       // Validate audio file content
       const isValid = await isValidAudioFile(file.path);
       if (!isValid) {
-        deleteFile(file.filename);
+        fileManager.deleteFile(file.filename);
         return res.status(400).json({
           success: false,
           message: 'Invalid audio file. File may be corrupted or not a valid audio format.'
@@ -51,7 +52,7 @@ router.post('/',
 
       // Validate required fields
       if (!titleArabic) {
-        deleteFile(file.filename);
+        fileManager.deleteFile(file.filename);
         return res.status(400).json({
           success: false,
           message: 'Arabic title is required'
@@ -59,7 +60,7 @@ router.post('/',
       }
 
       if (!sheikhId) {
-        deleteFile(file.filename);
+        fileManager.deleteFile(file.filename);
         return res.status(400).json({
           success: false,
           message: 'Sheikh is required'
@@ -69,7 +70,7 @@ router.post('/',
       // Verify sheikh exists
       const sheikh = await Sheikh.findById(sheikhId);
       if (!sheikh) {
-        deleteFile(file.filename);
+        fileManager.deleteFile(file.filename);
         return res.status(400).json({
           success: false,
           message: 'Sheikh not found'
@@ -80,7 +81,7 @@ router.post('/',
       if (seriesId) {
         const series = await Series.findById(seriesId);
         if (!series) {
-          deleteFile(file.filename);
+          fileManager.deleteFile(file.filename);
           return res.status(400).json({
             success: false,
             message: 'Series not found'
@@ -141,7 +142,7 @@ router.post('/',
 
       // Clean up uploaded file on error
       if (req.file) {
-        deleteFile(req.file.filename);
+        fileManager.deleteFile(req.file.filename);
       }
 
       res.status(500).json({
@@ -249,6 +250,86 @@ router.get('/:id', async (req, res) => {
   }
 });
 
+// @route   POST /api/lectures/bulk-upload-audio
+// @desc    Upload audio file for existing lecture (bulk upload)
+// @access  Private (Admin only)
+router.post('/bulk-upload-audio', [isAdminAPI, upload.single('audioFile')], async (req, res) => {
+  try {
+    const { lectureId } = req.body;
+
+    console.log('📤 Bulk upload request:');
+    console.log('   Lecture ID:', lectureId);
+    if (req.file) {
+      console.log('   ✅ File:', req.file.filename);
+      console.log('   📁 Path:', req.file.path);
+      console.log('   📦 Size:', (req.file.size / 1024 / 1024).toFixed(2), 'MB');
+    }
+
+    if (!lectureId) {
+      return res.status(400).json({
+        success: false,
+        message: 'Lecture ID is required'
+      });
+    }
+
+    if (!req.file) {
+      return res.status(400).json({
+        success: false,
+        message: 'Audio file is required'
+      });
+    }
+
+    // Find the lecture
+    const lecture = await Lecture.findById(lectureId);
+
+    if (!lecture) {
+      // Clean up uploaded file
+      await fileManager.fileManager.deleteFile(req.file.filename);
+      return res.status(404).json({
+        success: false,
+        message: 'Lecture not found'
+      });
+    }
+
+    // If lecture already has audio, delete the old file
+    if (lecture.audioFileName) {
+      await fileManager.fileManager.deleteFile(lecture.audioFileName);
+    }
+
+    // Extract audio metadata
+    const metadata = await extractAudioMetadata(req.file.path);
+
+    // Update lecture with audio file info
+    lecture.audioFileName = req.file.filename;
+    lecture.duration = Math.floor(metadata.duration || 0);
+    lecture.fileSize = req.file.size;
+    lecture.bitrate = metadata.bitrate || null;
+    lecture.format = metadata.format || path.extname(req.file.filename).substring(1);
+
+    await lecture.save();
+
+    res.json({
+      success: true,
+      message: 'Audio file uploaded successfully',
+      lecture: lecture
+    });
+
+  } catch (error) {
+    console.error('Bulk upload audio error:', error);
+
+    // Clean up uploaded file on error
+    if (req.file) {
+      await fileManager.fileManager.deleteFile(req.file.filename);
+    }
+
+    res.status(500).json({
+      success: false,
+      message: 'Failed to upload audio file',
+      error: error.message
+    });
+  }
+});
+
 // @route   PUT /api/lectures/:id
 // @desc    Update lecture
 // @access  Private (Admin only)
@@ -314,7 +395,7 @@ router.delete('/:id', isAdminAPI, async (req, res) => {
     }
 
     // Delete the audio file
-    deleteFile(lecture.audioFileName);
+    fileManager.deleteFile(lecture.audioFileName);
 
     // Decrement sheikh lecture count
     await Sheikh.findByIdAndUpdate(lecture.sheikhId, {

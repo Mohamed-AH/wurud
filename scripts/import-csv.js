@@ -65,29 +65,42 @@ function formatDuration(seconds) {
 }
 
 /**
- * Convert Hijri date to Gregorian (if needed)
- * Falls back to parsing as Gregorian if Hijri conversion fails
+ * Convert date string to both Gregorian and Hijri dates
+ * Returns { gregorian: Date, hijri: String }
  */
 function parseDate(dateStr) {
-  if (!dateStr || dateStr.trim() === '') return null;
+  if (!dateStr || dateStr.trim() === '') return { gregorian: null, hijri: null };
 
   try {
-    // Try parsing as Hijri first (format: DD/MM/YYYY or similar)
-    const hijriDate = moment(dateStr, 'DD/MM/YYYY', true);
-    if (hijriDate.isValid()) {
-      return hijriDate.toDate();
+    let gregorianDate = null;
+
+    // Try parsing as DD/MM/YYYY first
+    const parsedDate = moment(dateStr, 'DD/MM/YYYY', true);
+    if (parsedDate.isValid()) {
+      gregorianDate = parsedDate.toDate();
+    } else {
+      // Try standard date parsing
+      gregorianDate = new Date(dateStr);
+      if (isNaN(gregorianDate.getTime())) {
+        gregorianDate = null;
+      }
     }
 
-    // Try standard date parsing
-    const gregorianDate = new Date(dateStr);
-    if (!isNaN(gregorianDate.getTime())) {
-      return gregorianDate;
+    if (!gregorianDate) {
+      return { gregorian: null, hijri: null };
     }
 
-    return null;
+    // Convert Gregorian to Hijri using moment-hijri
+    const hijriMoment = moment(gregorianDate);
+    const hijriDate = hijriMoment.format('iYYYY/iMM/iDD'); // Format: 1445/06/15
+
+    return {
+      gregorian: gregorianDate,
+      hijri: hijriDate
+    };
   } catch (error) {
     console.warn(`Could not parse date: ${dateStr}`);
-    return null;
+    return { gregorian: null, hijri: null };
   }
 }
 
@@ -196,7 +209,7 @@ async function processRow(row, rowNumber) {
 
     // Parse data
     const duration = parseDuration(durationStr);
-    const recordDate = parseDate(postDate);
+    const parsedDate = parseDate(postDate);
     const lectureNumber = seriesPart ? parseInt(seriesPart, 10) : null;
 
     // Determine category
@@ -236,8 +249,8 @@ async function processRow(row, rowNumber) {
       fileSize: 0, // Will be set when audio file is uploaded
       location: location.trim(),
       category: category,
-      dateRecorded: recordDate,
-      dateRecordedHijri: null, // Can be added later if needed
+      dateRecorded: parsedDate.gregorian,
+      dateRecordedHijri: parsedDate.hijri,
       published: false, // Don't publish until audio file is uploaded
       featured: false,
       playCount: 0,

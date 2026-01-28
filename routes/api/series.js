@@ -3,6 +3,51 @@ const router = express.Router();
 const { Series } = require('../../models');
 const { isAdminAPI } = require('../../middleware/auth');
 
+// @route   GET /api/series/export
+// @desc    Export all series to CSV
+// @access  Public (can be restricted to admin if needed)
+router.get('/export', async (req, res) => {
+  try {
+    const series = await Series.find()
+      .sort({ titleArabic: 1 })
+      .populate('sheikhId', 'nameArabic nameEnglish')
+      .lean();
+
+    // Create CSV content
+    const headers = ['ID', 'Title (Arabic)', 'Title (English)', 'Description (Arabic)', 'Description (English)', 'Sheikh (Arabic)', 'Sheikh (English)', 'Category', 'Book Title', 'Book Author', 'Created At'];
+    const rows = series.map(s => [
+      s._id.toString(),
+      `"${(s.titleArabic || '').replace(/"/g, '""')}"`,
+      `"${(s.titleEnglish || '').replace(/"/g, '""')}"`,
+      `"${(s.descriptionArabic || '').replace(/"/g, '""')}"`,
+      `"${(s.descriptionEnglish || '').replace(/"/g, '""')}"`,
+      `"${(s.sheikhId?.nameArabic || '').replace(/"/g, '""')}"`,
+      `"${(s.sheikhId?.nameEnglish || '').replace(/"/g, '""')}"`,
+      `"${(s.category || '').replace(/"/g, '""')}"`,
+      `"${(s.bookTitle || '').replace(/"/g, '""')}"`,
+      `"${(s.bookAuthor || '').replace(/"/g, '""')}"`,
+      new Date(s.createdAt).toISOString()
+    ]);
+
+    const csv = [headers.join(','), ...rows.map(row => row.join(','))].join('\n');
+
+    // Set headers for CSV download
+    res.setHeader('Content-Type', 'text/csv; charset=utf-8');
+    res.setHeader('Content-Disposition', `attachment; filename=series-export-${new Date().toISOString().split('T')[0]}.csv`);
+
+    // Add BOM for proper UTF-8 encoding in Excel
+    res.write('\uFEFF');
+    res.end(csv);
+  } catch (error) {
+    console.error('Export series error:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Failed to export series',
+      error: error.message
+    });
+  }
+});
+
 // @route   GET /api/series
 // @desc    Get all series
 // @access  Public

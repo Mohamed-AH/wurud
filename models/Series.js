@@ -32,6 +32,11 @@ const seriesSchema = new mongoose.Schema({
     default: 'Other',
     index: true
   },
+  tags: {
+    type: [String],
+    default: [],
+    index: true
+  },
   bookTitle: {
     type: String,
     trim: true

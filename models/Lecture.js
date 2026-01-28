@@ -3,9 +3,9 @@ const mongoose = require('mongoose');
 const lectureSchema = new mongoose.Schema({
   audioFileName: {
     type: String,
-    required: true,
-    trim: true,
-    unique: true
+    trim: true
+    // Note: Uniqueness enforced by application logic during upload
+    // Multiple null values allowed for lectures without audio files
   },
   titleArabic: {
     type: String,
@@ -44,11 +44,11 @@ const lectureSchema = new mongoose.Schema({
   },
   duration: {
     type: Number, // in seconds
-    required: true
+    default: 0
   },
   fileSize: {
     type: Number, // in bytes
-    required: true
+    default: 0
   },
   location: {
     type: String,
@@ -59,6 +59,11 @@ const lectureSchema = new mongoose.Schema({
     type: String,
     enum: ['Aqeedah', 'Fiqh', 'Tafsir', 'Hadith', 'Seerah', 'Akhlaq', 'Other'],
     default: 'Other',
+    index: true
+  },
+  tags: {
+    type: [String],
+    default: [],
     index: true
   },
   dateRecorded: {
@@ -88,6 +93,12 @@ const lectureSchema = new mongoose.Schema({
     type: Number,
     default: 0,
     min: 0
+  },
+  metadata: {
+    type: Object,
+    default: {}
+    // Stores Excel import data for matching files later:
+    // { excelFilename: String, type: String, serial: String }
   }
 }, {
   timestamps: true

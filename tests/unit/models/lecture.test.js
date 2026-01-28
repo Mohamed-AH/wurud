@@ -1,0 +1,206 @@
+/**
+ * Unit Tests for Lecture Model
+ */
+
+const mongoose = require('mongoose');
+const { MongoMemoryServer } = require('mongodb-memory-server');
+const Lecture = require('../../../models/Lecture');
+const Sheikh = require('../../../models/Sheikh');
+
+let mongoServer;
+
+describe('Lecture Model', () => {
+  beforeAll(async () => {
+    mongoServer = await MongoMemoryServer.create();
+    const mongoUri = mongoServer.getUri();
+    await mongoose.connect(mongoUri);
+  });
+
+  afterAll(async () => {
+    await mongoose.disconnect();
+    await mongoServer.stop();
+  });
+
+  afterEach(async () => {
+    await Lecture.deleteMany({});
+    await Sheikh.deleteMany({});
+  });
+
+  describe('Schema Validation', () => {
+    it('should create a valid lecture with required fields', async () => {
+      const sheikh = await Sheikh.create({
+        nameArabic: 'Test Sheikh'
+      });
+
+      const lecture = await Lecture.create({
+        titleArabic: 'Test Lecture',
+        sheikhId: sheikh._id
+      });
+
+      expect(lecture.titleArabic).toBe('Test Lecture');
+      expect(lecture.sheikhId.toString()).toBe(sheikh._id.toString());
+    });
+
+    it('should fail validation without required titleArabic', async () => {
+      const sheikh = await Sheikh.create({
+        nameArabic: 'Test Sheikh'
+      });
+
+      const lecture = new Lecture({
+        sheikhId: sheikh._id
+      });
+
+      await expect(lecture.save()).rejects.toThrow();
+    });
+
+    it('should fail validation without required sheikhId', async () => {
+      const lecture = new Lecture({
+        titleArabic: 'Test Lecture'
+      });
+
+      await expect(lecture.save()).rejects.toThrow();
+    });
+  });
+
+  describe('Optional Fields', () => {
+    it('should accept optional audioFileName', async () => {
+      const sheikh = await Sheikh.create({
+        nameArabic: 'Test Sheikh'
+      });
+
+      const lecture = await Lecture.create({
+        titleArabic: 'Test Lecture',
+        sheikhId: sheikh._id,
+        audioFileName: 'test.mp3'
+      });
+
+      expect(lecture.audioFileName).toBe('test.mp3');
+    });
+
+    it('should accept optional descriptionArabic', async () => {
+      const sheikh = await Sheikh.create({
+        nameArabic: 'Test Sheikh'
+      });
+
+      const lecture = await Lecture.create({
+        titleArabic: 'Test Lecture',
+        sheikhId: sheikh._id,
+        descriptionArabic: 'Test description'
+      });
+
+      expect(lecture.descriptionArabic).toBe('Test description');
+    });
+
+    it('should accept optional duration', async () => {
+      const sheikh = await Sheikh.create({
+        nameArabic: 'Test Sheikh'
+      });
+
+      const lecture = await Lecture.create({
+        titleArabic: 'Test Lecture',
+        sheikhId: sheikh._id,
+        duration: 3600
+      });
+
+      expect(lecture.duration).toBe(3600);
+    });
+
+    it('should default duration to 0', async () => {
+      const sheikh = await Sheikh.create({
+        nameArabic: 'Test Sheikh'
+      });
+
+      const lecture = await Lecture.create({
+        titleArabic: 'Test Lecture',
+        sheikhId: sheikh._id
+      });
+
+      expect(lecture.duration).toBe(0);
+    });
+  });
+
+  describe('Series and Lecture Number', () => {
+    it('should accept seriesId reference', async () => {
+      const sheikh = await Sheikh.create({
+        nameArabic: 'Test Sheikh'
+      });
+
+      const lecture = await Lecture.create({
+        titleArabic: 'Test Lecture',
+        sheikhId: sheikh._id,
+        seriesId: new mongoose.Types.ObjectId(),
+        lectureNumber: 1
+      });
+
+      expect(lecture.seriesId).toBeInstanceOf(mongoose.Types.ObjectId);
+      expect(lecture.lectureNumber).toBe(1);
+    });
+
+    it('should accept null seriesId for standalone lectures', async () => {
+      const sheikh = await Sheikh.create({
+        nameArabic: 'Test Sheikh'
+      });
+
+      const lecture = await Lecture.create({
+        titleArabic: 'Test Lecture',
+        sheikhId: sheikh._id,
+        seriesId: null
+      });
+
+      expect(lecture.seriesId).toBeNull();
+    });
+  });
+
+  describe('Timestamps', () => {
+    it('should automatically add createdAt and updatedAt', async () => {
+      const sheikh = await Sheikh.create({
+        nameArabic: 'Test Sheikh'
+      });
+
+      const lecture = await Lecture.create({
+        titleArabic: 'Test Lecture',
+        sheikhId: sheikh._id
+      });
+
+      expect(lecture.createdAt).toBeInstanceOf(Date);
+      expect(lecture.updatedAt).toBeInstanceOf(Date);
+    });
+
+    it('should update updatedAt on modification', async () => {
+      const sheikh = await Sheikh.create({
+        nameArabic: 'Test Sheikh'
+      });
+
+      const lecture = await Lecture.create({
+        titleArabic: 'Test Lecture',
+        sheikhId: sheikh._id
+      });
+
+      const originalUpdatedAt = lecture.updatedAt;
+
+      await new Promise(resolve => setTimeout(resolve, 100));
+
+      lecture.titleArabic = 'Updated Lecture';
+      await lecture.save();
+
+      expect(lecture.updatedAt.getTime()).toBeGreaterThan(originalUpdatedAt.getTime());
+    });
+  });
+
+  describe('Population', () => {
+    it('should populate sheikh reference', async () => {
+      const sheikh = await Sheikh.create({
+        nameArabic: 'Test Sheikh'
+      });
+
+      const lecture = await Lecture.create({
+        titleArabic: 'Test Lecture',
+        sheikhId: sheikh._id
+      });
+
+      const populatedLecture = await Lecture.findById(lecture._id).populate('sheikhId');
+
+      expect(populatedLecture.sheikhId.nameArabic).toBe('Test Sheikh');
+    });
+  });
+});

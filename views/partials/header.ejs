@@ -1,47 +1,13 @@
 <header class="header">
-  <div class="header-top">
-    <div class="container">
-      <div class="header-content">
-        <a href="/" class="logo">
-          <span class="logo-icon">🎙️</span>
-          <div class="logo-text">
-            <h1><%= locale === 'ar' ? 'دروس' : 'Duroos' %></h1>
-            <p><%= locale === 'ar' ? 'محاضرات إسلامية صوتية' : 'Islamic Audio Lectures' %></p>
-          </div>
-        </a>
+  <div class="header-content">
+    <a href="/" class="logo">
+      <%= locale === 'ar' ? 'المكتبة الصوتية' : 'Audio Library' %>
+    </a>
 
-        <nav class="header-nav">
-          <a href="/"><%= t('nav_home') %></a>
-          <a href="/browse"><%= t('nav_lectures') %></a>
-          <a href="/sheikhs"><%= t('nav_sheikhs') %></a>
-          <a href="/series"><%= t('nav_series') %></a>
-
-          <!-- Language Toggle -->
-          <button id="langToggle" class="lang-toggle" aria-label="Toggle language">
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-              <circle cx="12" cy="12" r="10"></circle>
-              <path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"></path>
-              <path d="M2 12h20"></path>
-            </svg>
-            <span id="langText"><%= locale === 'ar' ? 'EN' : 'عربي' %></span>
-          </button>
-        </nav>
-      </div>
-    </div>
-  </div>
-
-  <div class="search-section">
-    <div class="container">
-      <form action="/browse" method="GET" class="search-container">
-        <input
-          type="text"
-          name="search"
-          class="search-input"
-          placeholder="<%= t('nav_search') %>"
-          value="<%= typeof search !== 'undefined' ? search : '' %>"
-        >
-        <button type="submit" class="search-btn"><%= locale === 'ar' ? 'بحث' : 'Search' %></button>
-      </form>
+    <div class="header-actions">
+      <button id="langToggle" class="btn-secondary" aria-label="Toggle language">
+        <span id="langText"><%= locale === 'ar' ? 'EN' : 'عربي' %></span>
+      </button>
     </div>
   </div>
 </header>

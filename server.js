@@ -21,8 +21,8 @@ app.set('view engine', 'ejs');
 app.set('views', path.join(__dirname, 'views'));
 app.use(expressLayouts);
 app.set('layout', 'layout');
-app.set('layout extractScripts', true);
-app.set('layout extractStyles', true);
+//app.set('layout extractScripts', true);
+//app.set('layout extractStyles', true);
 
 // Security middleware
 app.use(helmet({
@@ -102,6 +102,11 @@ app.use((err, req, res, next) => {
 
 // Start server
 app.listen(PORT, () => {
+  const { uploadDir } = require('./config/storage');
+  const absoluteUploadPath = path.resolve(uploadDir);
+
   console.log(`🚀 Duroos server running on http://localhost:${PORT}`);
   console.log(`📝 Environment: ${process.env.NODE_ENV || 'development'}`);
+  console.log(`📁 Upload directory: ${absoluteUploadPath}`);
+  console.log(`   (${uploadDir})`);
 });

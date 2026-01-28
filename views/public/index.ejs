@@ -1,193 +1,1236 @@
 <style>
-  .hero {
-    background: linear-gradient(135deg, var(--primary) 0%, #2C3E35 100%);
-    color: white;
-    padding: 60px 0;
+  /* Search Hero Section */
+  .search-hero {
+    background: linear-gradient(180deg, #5C4033 0%, #8B9D83 100%);
+    padding: var(--space-2xl) var(--space-lg);
     text-align: center;
-    margin-bottom: 60px;
+    margin-bottom: var(--space-2xl);
+    border-bottom: 4px solid var(--accent-gold);
+    position: relative;
+    min-height: 280px;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
   }
 
-  .hero h1 {
-    font-size: 48px;
+  /* Calligraphy watermark background */
+  .search-hero::before {
+    content: '﷽';
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    font-size: 200px;
+    color: rgba(255, 255, 255, 0.03);
+    font-family: var(--font-arabic-display);
+    pointer-events: none;
+    z-index: 0;
+  }
+
+  .search-hero > * {
+    position: relative;
+    z-index: 1;
+  }
+
+  .search-hero-quote {
+    font-family: var(--font-arabic-display);
+    font-size: 36px;
+    font-weight: 700;
+    color: #FAF7F2;
+    margin-bottom: 32px;
+    line-height: 1.8;
+    text-shadow: 2px 2px 6px rgba(0, 0, 0, 0.3);
+  }
+
+  .search-container {
+    max-width: 600px;
+    margin: 0 auto;
+    display: flex;
+    gap: var(--space-md);
+  }
+
+  .search-input {
+    flex: 1;
+    padding: 16px 20px;
+    border: 3px solid #C19A6B;
+    border-radius: 12px;
+    font-family: var(--font-arabic-body);
+    font-size: 18px;
+    background: #F5EBE0;
+    color: var(--text-primary);
+    max-width: 700px;
+    box-shadow: 0 8px 24px rgba(92, 64, 51, 0.15);
+  }
+
+  .search-input::placeholder {
+    color: #8B7355;
+  }
+
+  .search-input:focus {
+    outline: none;
+    box-shadow: 0 0 0 3px rgba(193, 154, 107, 0.3), 0 8px 24px rgba(92, 64, 51, 0.15);
+  }
+
+  .search-btn {
+    padding: 16px 32px;
+    background: var(--accent-gold);
+    color: var(--primary-dark);
+    border: none;
+    border-radius: 8px;
+    font-family: var(--font-arabic-body);
+    font-size: 16px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.3s ease;
+  }
+
+  .search-btn:hover {
+    background: var(--accent-amber);
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px var(--shadow-warm);
+  }
+
+  /* Filter Chips */
+  .filters-section {
+    max-width: 1200px;
+    margin: 0 auto var(--space-xl);
+    padding: var(--space-lg);
+    background: #F5EBE0;
+    border-bottom: 2px solid #E8DCC8;
+  }
+
+  .filter-group {
     margin-bottom: 16px;
   }
 
-  .hero p {
-    font-size: 20px;
-    opacity: 0.9;
-    max-width: 600px;
-    margin: 0 auto;
+  .filter-group:last-child {
+    margin-bottom: 0;
   }
 
-  .section-title {
-    font-size: 32px;
-    margin-bottom: 32px;
-    color: var(--text-primary);
-    display: flex;
-    align-items: center;
-    gap: 12px;
-  }
-
-  .section-title::after {
-    content: '';
-    flex: 1;
-    height: 2px;
-    background: linear-gradient(to left, transparent, var(--accent-gold));
-  }
-
-  .lectures-grid {
-    display: grid;
-    gap: 20px;
-    margin-bottom: 60px;
-  }
-
-  .featured-section {
-    margin-bottom: 80px;
-  }
-
-  .recent-section {
-    margin-bottom: 80px;
-  }
-
-  .view-all-btn {
-    display: inline-block;
-    padding: 14px 32px;
-    background: var(--primary);
-    color: white;
-    text-decoration: none;
-    border-radius: 8px;
+  .filter-label {
+    font-family: var(--font-arabic-display);
     font-size: 16px;
     font-weight: 600;
-    transition: all 0.3s;
-    text-align: center;
+    color: #5C4033;
+    margin-bottom: 12px;
+    display: block;
   }
 
-  .view-all-btn:hover {
-    background: #154A46;
-    transform: translateY(-2px);
+  .filter-chips {
+    display: flex;
+    gap: 8px;
+    flex-wrap: wrap;
   }
 
-  .stats-section {
-    background: white;
+  .chip {
+    padding: 8px 20px;
+    border: 2px solid #C19A6B;
+    border-radius: 25px;
+    background: transparent;
+    color: #5C4033;
+    font-family: var(--font-arabic-body);
+    font-size: 15px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.3s ease;
+  }
+
+  .chip:hover {
+    background: rgba(193, 154, 107, 0.1);
+  }
+
+  .chip.active {
+    background: #C19A6B;
+    color: #2C1810;
+    font-weight: 600;
+    box-shadow: 0 4px 8px rgba(92, 64, 51, 0.15);
+  }
+
+  /* Series Cards */
+  .series-list {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 0 var(--space-lg) var(--space-3xl);
+  }
+
+  .series-card {
+    background: #F5EBE0;
+    border: 3px solid #D4A574;
     border-radius: 16px;
-    padding: 40px;
-    margin-bottom: 60px;
-    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.05);
+    margin-bottom: 24px;
+    overflow: hidden;
+    box-shadow: 0 6px 16px rgba(92, 64, 51, 0.15);
+    transition: all 0.4s ease;
+    position: relative;
   }
 
-  .stats-grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-    gap: 32px;
-    text-align: center;
+  /* Vertical gold accent bar */
+  .series-card::before {
+    content: '';
+    position: absolute;
+    right: 0;
+    top: 0;
+    bottom: 0;
+    width: 6px;
+    background: linear-gradient(180deg, #C19A6B 0%, #D4A574 100%);
+    box-shadow: -2px 0 8px rgba(92, 64, 51, 0.15);
   }
 
-  .stat-item h3 {
-    font-size: 42px;
-    color: var(--primary);
+  .series-card:hover {
+    border-color: #C19A6B;
+    box-shadow: 0 12px 32px rgba(92, 64, 51, 0.25);
+    transform: translateY(-4px);
+  }
+
+  .series-header {
+    padding: 24px;
+    padding-right: calc(24px + 12px);
+    background: linear-gradient(135deg, rgba(193, 154, 107, 0.1) 0%, rgba(212, 165, 116, 0.05) 100%);
+    border-bottom: 2px solid #E8DCC8;
+    cursor: pointer;
+  }
+
+  .series-title {
+    font-family: var(--font-arabic-display);
+    font-size: 24px;
+    font-weight: 700;
+    color: #2C1810;
+    margin-bottom: 8px;
+    line-height: 1.5;
+  }
+
+  .series-meta {
+    margin-bottom: 16px;
+  }
+
+  /* Prominent author display - CRITICAL FIX */
+  .series-author {
+    font-family: var(--font-arabic-display);
+    font-size: 18px;
+    color: #C19A6B;
+    font-weight: 600;
+    line-height: 1.6;
     margin-bottom: 8px;
   }
 
-  .stat-item p {
-    font-size: 16px;
-    color: var(--text-secondary);
+  .series-author-label {
+    color: #5C4033;
+    font-weight: 500;
   }
 
+  .series-sheikh {
+    font-size: 15px;
+    color: #5C4033;
+    margin-bottom: 8px;
+  }
+
+  .series-info {
+    display: flex;
+    gap: 16px;
+    font-size: 14px;
+    color: #8B7355;
+    align-items: center;
+    padding-top: 8px;
+    border-top: 1px solid #E8DCC8;
+  }
+
+  .series-info span:not(:last-child)::after {
+    content: '•';
+    margin-left: 16px;
+  }
+
+  .category-badge {
+    display: inline-block;
+    padding: 6px 14px;
+    border-radius: 20px;
+    font-size: 13px;
+    font-weight: 600;
+    background: #FAF7F2;
+    color: #5C6B54;
+    border: 2px solid #8B9D83;
+  }
+
+  .expand-btn {
+    margin-top: 16px;
+    padding: 16px;
+    background: transparent;
+    border: none;
+    border-top: 2px solid #E8DCC8;
+    border-radius: 0;
+    color: #C19A6B;
+    font-family: var(--font-arabic-display);
+    font-size: 16px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    width: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+  }
+
+  .expand-btn:hover {
+    background: rgba(193, 154, 107, 0.1);
+  }
+
+  .expand-btn.expanded {
+    background: rgba(193, 154, 107, 0.1);
+  }
+
+  /* Episodes List */
+  .episodes-list {
+    display: none;
+    background: #F5EBE0;
+  }
+
+  .episodes-list.show {
+    display: block !important;
+    visibility: visible !important;
+    opacity: 1 !important;
+    height: auto !important;
+    overflow: visible !important;
+  }
+
+  /* More specific selector for Khutba tab to ensure proper display */
+  #content-khutbas .episodes-list.show {
+    display: block !important;
+    visibility: visible !important;
+    opacity: 1 !important;
+  }
+
+  .episode-item {
+    padding: 24px;
+    padding-right: calc(24px + 12px);
+    border-bottom: 2px solid #E8DCC8;
+    transition: background 0.3s ease;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+  }
+
+  .episode-item:last-child {
+    border-bottom: none;
+  }
+
+  .episode-item:hover {
+    background: rgba(193, 154, 107, 0.05);
+  }
+
+  .episode-header {
+    display: flex;
+    gap: 16px;
+    align-items: flex-start;
+  }
+
+  .episode-number {
+    width: 32px;
+    height: 32px;
+    background: #C19A6B;
+    color: #2C1810;
+    border-radius: 8px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 700;
+    font-size: 14px;
+    flex-shrink: 0;
+  }
+
+  .episode-title {
+    font-family: var(--font-arabic-body);
+    font-size: 18px;
+    font-weight: 600;
+    color: #2C1810;
+    flex: 1;
+    line-height: 1.5;
+  }
+
+  .episode-meta {
+    font-size: 14px;
+    color: #8B7355;
+    display: flex;
+    gap: 16px;
+    align-items: center;
+  }
+
+  .episode-meta span:not(:last-child)::after {
+    content: '•';
+    margin-left: 16px;
+  }
+
+  .episode-actions {
+    display: flex;
+    gap: 12px;
+  }
+
+  .btn-play, .btn-download {
+    padding: 10px 24px;
+    border-radius: 6px;
+    font-size: 15px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    text-decoration: none;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+  }
+
+  .btn-play {
+    background: #C19A6B;
+    color: #2C1810;
+    border: none;
+    flex: 1;
+    box-shadow: 0 4px 12px rgba(92, 64, 51, 0.15);
+  }
+
+  .btn-play:hover {
+    background: #D4A574;
+    transform: translateY(-2px);
+    box-shadow: 0 6px 16px rgba(92, 64, 51, 0.25);
+  }
+
+  .btn-download {
+    background: transparent;
+    border: 2px solid #C19A6B;
+    color: #C19A6B;
+    min-width: 120px;
+  }
+
+  .btn-download:hover {
+    background: #C19A6B;
+    color: #2C1810;
+  }
+
+  /* Empty State */
   .empty-state {
     text-align: center;
-    padding: 60px 20px;
+    padding: var(--space-3xl);
+    color: var(--text-muted);
+  }
+
+  .empty-icon {
+    font-size: 64px;
+    margin-bottom: var(--space-md);
+  }
+
+  .empty-title {
+    font-family: var(--font-arabic-display);
+    font-size: 24px;
+    font-weight: 600;
+    margin-bottom: var(--space-sm);
     color: var(--text-secondary);
   }
 
-  .empty-state-icon {
-    font-size: 64px;
-    margin-bottom: 16px;
+  .empty-text {
+    font-size: 16px;
+  }
+
+  /* Responsive */
+  @media (max-width: 768px) {
+    .search-hero-quote {
+      font-size: 18px;
+    }
+
+    .search-container {
+      flex-direction: column;
+    }
+
+    .series-meta {
+      flex-direction: column;
+      align-items: flex-start;
+    }
+
+    .episode-actions {
+      flex-direction: column;
+    }
+
+    .btn-play, .btn-download {
+      width: 100%;
+      justify-content: center;
+    }
+  }
+
+  /* Navigation Tabs */
+  .nav-tabs {
+    background: white;
+    border-bottom: 2px solid var(--accent-amber);
+    margin-bottom: 24px;
+  }
+
+  .nav-tabs-container {
+    max-width: 1200px;
+    margin: 0 auto;
+    display: flex;
+    gap: 0;
+    padding: 0 16px;
+  }
+
+  .nav-tab {
+    flex: 1;
+    padding: 16px 24px;
+    border: none;
+    background: transparent;
+    color: var(--text-secondary);
+    font-size: 16px;
+    font-weight: 600;
+    cursor: pointer;
+    position: relative;
+    transition: all 0.3s;
+    font-family: var(--font-arabic);
+  }
+
+  .nav-tab:hover {
+    color: var(--primary-brown);
+    background: var(--cream);
+  }
+
+  .nav-tab.active {
+    color: var(--primary-brown);
+    background: var(--cream);
+  }
+
+  .nav-tab.active::after {
+    content: '';
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    height: 3px;
+    background: var(--accent-gold);
+  }
+
+  .tab-content {
+    display: none;
+  }
+
+  .tab-content.active {
+    display: block;
   }
 
   @media (max-width: 768px) {
-    .hero h1 {
-      font-size: 32px;
-    }
-
-    .hero p {
-      font-size: 16px;
-    }
-
-    .section-title {
-      font-size: 24px;
-    }
-
-    .stats-grid {
-      grid-template-columns: 1fr 1fr;
-      gap: 24px;
-    }
-
-    .stat-item h3 {
-      font-size: 32px;
+    .nav-tab {
+      font-size: 14px;
+      padding: 12px 16px;
     }
   }
 </style>
 
-<div class="hero">
-  <div class="container">
-    <h1>مرحباً بكم في دروس</h1>
-    <p>منصة لنشر المحاضرات الإسلامية الصوتية من مشايخ وطلبة علم موثوقين</p>
+<!-- Search Hero -->
+<div class="search-hero">
+  <div class="search-hero-quote">
+    <%= locale === 'ar'
+      ? '"طَلَبُ الْعِلْمِ فَرِيضَةٌ عَلَى كُلِّ مُسْلِمٍ"'
+      : '"Seeking knowledge is obligatory upon every Muslim"'
+    %>
+  </div>
+  <div class="search-container">
+    <input
+      type="text"
+      class="search-input"
+      id="searchInput"
+      placeholder="ابحث عن سلسلة..."
+    >
+    <button class="search-btn" onclick="performSearch()">
+      بحث
+    </button>
   </div>
 </div>
 
-<div class="container">
-  <!-- Statistics Section -->
-  <div class="stats-section">
-    <div class="stats-grid">
-      <div class="stat-item">
-        <h3><%= stats.totalLectures %></h3>
-        <p>محاضرة</p>
-      </div>
-      <div class="stat-item">
-        <h3><%= stats.totalSheikhs %></h3>
-        <p>شيخ</p>
-      </div>
-      <div class="stat-item">
-        <h3><%= stats.totalSeries %></h3>
-        <p>سلسلة</p>
-      </div>
-      <div class="stat-item">
-        <h3><%= (stats.totalPlays / 1000).toFixed(1) %>k</h3>
-        <p>استماع</p>
-      </div>
+<!-- Navigation Tabs -->
+<div class="nav-tabs">
+  <div class="nav-tabs-container">
+    <button class="nav-tab active" onclick="switchTab('series')" id="tab-series">
+      📚 السلاسل
+    </button>
+    <button class="nav-tab" onclick="switchTab('lectures')" id="tab-lectures">
+      🎙️ المحاضرات
+    </button>
+    <button class="nav-tab" onclick="switchTab('khutbas')" id="tab-khutbas">
+      🕌 الخطب
+    </button>
+  </div>
+</div>
+
+<!-- Filters -->
+<div class="filters-section">
+  <div class="filter-group">
+    <span class="filter-label">التصنيف:</span>
+    <div class="filter-chips">
+      <button class="chip active" data-filter="all" data-type="category">
+        الكل
+      </button>
+      <button class="chip" data-filter="Fiqh" data-type="category">
+        الفقه
+      </button>
+      <button class="chip" data-filter="Aqeedah" data-type="category">
+        العقيدة
+      </button>
+      <button class="chip" data-filter="Tafsir" data-type="category">
+        التفسير
+      </button>
+      <button class="chip" data-filter="Hadith" data-type="category">
+        الحديث
+      </button>
+      <button class="chip" data-filter="Seerah" data-type="category">
+        السيرة
+      </button>
+      <button class="chip" data-filter="Other" data-type="category">
+        أخرى
+      </button>
     </div>
   </div>
 
-  <!-- Featured Lectures -->
-  <% if (featuredLectures && featuredLectures.length > 0) { %>
-    <div class="featured-section">
-      <h2 class="section-title">⭐ محاضرات مميزة</h2>
-      <div class="lectures-grid">
-        <% featuredLectures.forEach(lecture => { %>
-          <%- include('../partials/lectureCard', { lecture }) %>
-        <% }) %>
-      </div>
+  <div class="filter-group">
+    <span class="filter-label">الترتيب:</span>
+    <div class="filter-chips">
+      <button class="chip active" data-sort="newest" onclick="sortByDate('newest')">
+        الأحدث أولاً
+      </button>
+      <button class="chip" data-sort="oldest" onclick="sortByDate('oldest')">
+        الأقدم أولاً
+      </button>
     </div>
-  <% } %>
+  </div>
+</div>
 
-  <!-- Recent Lectures -->
-  <% if (recentLectures && recentLectures.length > 0) { %>
-    <div class="recent-section">
-      <h2 class="section-title">🕒 أحدث المحاضرات</h2>
-      <div class="lectures-grid">
-        <% recentLectures.forEach(lecture => { %>
-          <%- include('../partials/lectureCard', { lecture }) %>
-        <% }) %>
+<!-- Series Tab Content -->
+<div id="content-series" class="tab-content active">
+<div class="series-list">
+  <% if (seriesList && seriesList.length > 0) { %>
+    <% seriesList.forEach(series => {
+      // Get the most recent lecture date for sorting
+      // Find the lecture with the latest dateRecorded
+      let latestLecture = null;
+      let latestDate = 0;
+
+      if (series.lectures.length > 0) {
+        // Find lecture with most recent dateRecorded
+        for (const lecture of series.lectures) {
+          if (lecture.dateRecorded) {
+            const lectureTime = new Date(lecture.dateRecorded).getTime();
+            if (lectureTime > latestDate) {
+              latestDate = lectureTime;
+              latestLecture = lecture;
+            }
+          }
+        }
+
+        // If no lectures have dateRecorded, use createdAt as fallback
+        if (latestDate === 0) {
+          for (const lecture of series.lectures) {
+            if (lecture.createdAt) {
+              const lectureTime = new Date(lecture.createdAt).getTime();
+              if (lectureTime > latestDate) {
+                latestDate = lectureTime;
+                latestLecture = lecture;
+              }
+            }
+          }
+        }
+
+        // Last resort: use Date.now()
+        if (latestDate === 0) {
+          latestDate = Date.now();
+        }
+      } else {
+        latestDate = Date.now();
+      }
+
+      const hijriDate = latestLecture?.dateRecordedHijri || '';
+
+      console.log(`[SERIES DEBUG] ${series.titleArabic}:`);
+      console.log(`  - Lecture count: ${series.lectures.length}`);
+      console.log(`  - Latest lecture:`, latestLecture?.titleArabic || 'None');
+      console.log(`  - Latest dateRecorded:`, latestLecture?.dateRecorded);
+      console.log(`  - Latest dateRecordedHijri:`, latestLecture?.dateRecordedHijri);
+      console.log(`  - Computed latestDate (timestamp): ${latestDate}`);
+      console.log(`  - Computed hijriDate: ${hijriDate}`);
+    %>
+      <div class="series-card" data-category="<%= series.category %>" data-date="<%= latestDate %>" data-hijri="<%= hijriDate %>">
+        <div class="series-header" onclick="toggleSeries('<%= series._id %>')">
+          <h2 class="series-title"><%= series.titleArabic %></h2>
+
+          <div class="series-meta">
+            <% if (series.originalAuthor) { %>
+              <div class="series-author">
+                <span class="series-author-label">المؤلف:</span>
+                <%= series.originalAuthor %>
+              </div>
+            <% } %>
+            <div class="series-sheikh">
+              الشيخ:
+              <%= series.sheikh ? series.sheikh.nameArabic : '' %>
+            </div>
+          </div>
+
+          <div class="series-info">
+            <span><%= series.lectureCount %> درس</span>
+            <span class="category-badge">
+              <%
+                const categoryArabic = {
+                  'Tafsir': 'تفسير',
+                  'Hadith': 'حديث',
+                  'Fiqh': 'فقه',
+                  'Aqeedah': 'عقيدة',
+                  'Seerah': 'سيرة',
+                  'Akhlaq': 'أخلاق',
+                  'Other': 'أخرى'
+                };
+              %>
+              <%= categoryArabic[series.category] || series.category || 'أخرى' %>
+            </span>
+          </div>
+
+          <button class="expand-btn" id="btn-<%= series._id %>">
+            عرض الدروس ▼
+          </button>
+        </div>
+
+        <div class="episodes-list" id="episodes-<%= series._id %>">
+          <!-- Sort controls for lectures within this series -->
+          <div style="padding: 12px; background: #f8f9fa; border-bottom: 1px solid #e9ecef; display: flex; gap: 8px; align-items: center;">
+            <span style="font-size: 13px; font-weight: 600; color: #666;">ترتيب الدروس:</span>
+            <button class="chip" onclick="sortSeriesLectures('<%= series._id %>', 'number'); event.stopPropagation();" style="padding: 4px 12px; font-size: 12px;">
+              حسب الرقم
+            </button>
+            <button class="chip" onclick="sortSeriesLectures('<%= series._id %>', 'oldest'); event.stopPropagation();" style="padding: 4px 12px; font-size: 12px;">
+              الأقدم أولاً
+            </button>
+            <button class="chip" onclick="sortSeriesLectures('<%= series._id %>', 'newest'); event.stopPropagation();" style="padding: 4px 12px; font-size: 12px;">
+              الأحدث أولاً
+            </button>
+          </div>
+
+          <div class="episodes-container">
+          <% series.lectures.forEach(lecture => { %>
+            <div class="episode-item" data-lecture-number="<%= lecture.lectureNumber || 999 %>" data-date="<%= lecture.dateRecorded ? new Date(lecture.dateRecorded).getTime() : 0 %>">
+              <div class="episode-header">
+                <% if (lecture.lectureNumber) { %>
+                  <div class="episode-number"><%= lecture.lectureNumber %></div>
+                <% } %>
+                <div class="episode-title">
+                  <%= lecture.titleArabic %>
+                </div>
+              </div>
+              <div class="episode-meta">
+                <span><%= Math.floor(lecture.duration / 60) %>:<%= String(lecture.duration % 60).padStart(2, '0') %></span>
+                <% if (lecture.location) { %>
+                  <span><%= lecture.location %></span>
+                <% } %>
+              </div>
+              <div class="episode-actions">
+                <button class="btn-play" onclick="playAudio('<%= lecture._id %>', '<%= lecture.titleArabic.replace(/'/g, "\\'") %>', '<%= series.sheikh ? series.sheikh.nameArabic.replace(/'/g, "\\'") : "" %>')">
+                  ▶ تشغيل
+                </button>
+                <a href="/download/<%= lecture._id %>" class="btn-download">
+                  ⬇ تحميل
+                </a>
+              </div>
+            </div>
+          <% }); %>
+          </div><!-- Close episodes-container -->
+        </div>
       </div>
-      <div style="text-align: center; margin-top: 32px;">
-        <a href="/browse" class="view-all-btn">عرض جميع المحاضرات</a>
-      </div>
-    </div>
+    <% }); %>
   <% } else { %>
     <div class="empty-state">
-      <div class="empty-state-icon">📚</div>
-      <h3>لا توجد محاضرات بعد</h3>
-      <p>سيتم إضافة المحاضرات قريباً إن شاء الله</p>
+      <div class="empty-icon">📚</div>
+      <h3 class="empty-title">
+        لا توجد محاضرات
+      </h3>
+      <p class="empty-text">
+        جرب بحثاً آخر
+      </p>
     </div>
   <% } %>
 </div>
+</div>
+
+<!-- Lectures Tab Content -->
+<div id="content-lectures" class="tab-content">
+  <div class="series-list">
+    <% if (standaloneLectures && standaloneLectures.length > 0) { %>
+      <% standaloneLectures.forEach(lecture => {
+        // Use dateRecorded if available, otherwise createdAt, otherwise Date.now()
+        let lectureDate;
+        if (lecture.dateRecorded) {
+          lectureDate = new Date(lecture.dateRecorded).getTime();
+        } else if (lecture.createdAt) {
+          lectureDate = new Date(lecture.createdAt).getTime();
+        } else {
+          lectureDate = Date.now();
+        }
+
+        const hijriDate = lecture.dateRecordedHijri || '';
+
+        console.log(`[LECTURE DEBUG] ${lecture.titleArabic}:`);
+        console.log(`  - dateRecorded:`, lecture.dateRecorded);
+        console.log(`  - createdAt:`, lecture.createdAt);
+        console.log(`  - dateRecordedHijri:`, lecture.dateRecordedHijri);
+        console.log(`  - Computed lectureDate (timestamp): ${lectureDate}`);
+        console.log(`  - Using:`, lecture.dateRecorded ? 'dateRecorded' : (lecture.createdAt ? 'createdAt' : 'Date.now()'));
+        console.log(`  - Computed hijriDate: ${hijriDate}`);
+      %>
+        <div class="series-card" data-date="<%= lectureDate %>" data-hijri="<%= hijriDate %>">
+          <div class="series-header">
+            <h2 class="series-title"><%= lecture.titleArabic %></h2>
+            <div class="series-meta">
+              <div class="series-sheikh">
+                الشيخ: <%= lecture.sheikhId ? lecture.sheikhId.nameArabic : '' %>
+              </div>
+            </div>
+            <div class="series-info">
+              <span><%= Math.floor(lecture.duration / 60) %>:<%= String(lecture.duration % 60).padStart(2, '0') %></span>
+            </div>
+            <div class="episode-actions" style="margin-top: 16px;">
+              <% if (lecture.audioFileName) { %>
+                <button class="btn-play" onclick="playAudio('<%= lecture._id %>', '<%= lecture.titleArabic.replace(/'/g, "\\'") %>', '<%= lecture.sheikhId ? lecture.sheikhId.nameArabic.replace(/'/g, "\\'") : "" %>')">
+                  ▶ تشغيل
+                </button>
+                <a href="/download/<%= lecture._id %>" class="btn-download">
+                  ⬇ تحميل
+                </a>
+              <% } %>
+            </div>
+          </div>
+        </div>
+      <% }) %>
+    <% } else { %>
+      <div class="empty-state">
+        <div class="empty-icon">🎙️</div>
+        <h3 class="empty-title">لا توجد محاضرات منفصلة</h3>
+      </div>
+    <% } %>
+  </div>
+</div>
+
+<!-- Khutbas Tab Content -->
+<div id="content-khutbas" class="tab-content">
+  <div class="series-list">
+    <% if (khutbaSeries && khutbaSeries.length > 0) { %>
+      <% khutbaSeries.forEach(series => {
+        // Get the most recent lecture date for sorting
+        // Find the lecture with the latest dateRecorded
+        let latestLecture = null;
+        let latestDate = 0;
+
+        if (series.lectures.length > 0) {
+          // Find lecture with most recent dateRecorded
+          for (const lecture of series.lectures) {
+            if (lecture.dateRecorded) {
+              const lectureTime = new Date(lecture.dateRecorded).getTime();
+              if (lectureTime > latestDate) {
+                latestDate = lectureTime;
+                latestLecture = lecture;
+              }
+            }
+          }
+
+          // If no lectures have dateRecorded, use createdAt as fallback
+          if (latestDate === 0) {
+            for (const lecture of series.lectures) {
+              if (lecture.createdAt) {
+                const lectureTime = new Date(lecture.createdAt).getTime();
+                if (lectureTime > latestDate) {
+                  latestDate = lectureTime;
+                  latestLecture = lecture;
+                }
+              }
+            }
+          }
+
+          // Last resort: use Date.now()
+          if (latestDate === 0) {
+            latestDate = Date.now();
+          }
+        } else {
+          latestDate = Date.now();
+        }
+
+        const hijriDate = latestLecture?.dateRecordedHijri || '';
+
+        console.log(`[KHUTBA DEBUG] ${series.titleArabic}:`);
+        console.log(`  - Lecture count: ${series.lectures.length}`);
+        console.log(`  - Latest lecture:`, latestLecture?.titleArabic || 'None');
+        console.log(`  - Latest dateRecorded:`, latestLecture?.dateRecorded);
+        console.log(`  - Latest dateRecordedHijri:`, latestLecture?.dateRecordedHijri);
+        console.log(`  - Computed latestDate (timestamp): ${latestDate}`);
+        console.log(`  - Computed hijriDate: ${hijriDate}`);
+      %>
+        <div class="series-card" data-category="<%= series.category %>" data-date="<%= latestDate %>" data-hijri="<%= hijriDate %>">
+          <div class="series-header" onclick="toggleKhutba('<%= series._id %>')">
+            <h2 class="series-title"><%= series.titleArabic %></h2>
+            <div class="series-meta">
+              <div class="series-sheikh">
+                الشيخ: <%= series.sheikh ? series.sheikh.nameArabic : '' %>
+              </div>
+            </div>
+            <div class="series-info">
+              <span><%= series.lectureCount %> خطبة</span>
+            </div>
+            <button class="expand-btn" id="khutba-btn-<%= series._id %>">
+              عرض الخطب ▼
+            </button>
+          </div>
+          <div class="episodes-list" id="khutba-episodes-<%= series._id %>">
+            <!-- Sort controls for khutbas within this series -->
+            <div style="padding: 12px; background: #f8f9fa; border-bottom: 1px solid #e9ecef; display: flex; gap: 8px; align-items: center;">
+              <span style="font-size: 13px; font-weight: 600; color: #666;">ترتيب الخطب:</span>
+              <button class="chip" onclick="sortSeriesLectures('khutba-<%= series._id %>', 'number'); event.stopPropagation();" style="padding: 4px 12px; font-size: 12px;">
+                حسب الرقم
+              </button>
+              <button class="chip" onclick="sortSeriesLectures('khutba-<%= series._id %>', 'oldest'); event.stopPropagation();" style="padding: 4px 12px; font-size: 12px;">
+                الأقدم أولاً
+              </button>
+              <button class="chip" onclick="sortSeriesLectures('khutba-<%= series._id %>', 'newest'); event.stopPropagation();" style="padding: 4px 12px; font-size: 12px;">
+                الأحدث أولاً
+              </button>
+            </div>
+
+            <div class="episodes-container">
+            <% if (series.lectures && series.lectures.length > 0) { %>
+              <% series.lectures.forEach(lecture => { %>
+                <div class="episode-item" data-lecture-number="<%= lecture.lectureNumber || 999 %>" data-date="<%= lecture.dateRecorded ? new Date(lecture.dateRecorded).getTime() : 0 %>">
+                  <div class="episode-header">
+                    <% if (lecture.lectureNumber) { %>
+                      <div class="episode-number"><%= lecture.lectureNumber %></div>
+                    <% } %>
+                    <div class="episode-title"><%= lecture.titleArabic %></div>
+                  </div>
+                  <div class="episode-meta">
+                    <span><%= Math.floor(lecture.duration / 60) %>:<%= String(lecture.duration % 60).padStart(2, '0') %></span>
+                    <% if (lecture.location) { %>
+                      <span><%= lecture.location %></span>
+                    <% } %>
+                  </div>
+                  <div class="episode-actions">
+                    <% if (lecture.audioFileName) { %>
+                      <button class="btn-play" onclick="playAudio('<%= lecture._id %>', '<%= lecture.titleArabic.replace(/'/g, "\\'") %>', '<%= series.sheikh ? series.sheikh.nameArabic.replace(/'/g, "\\'") : "" %>')">
+                        ▶ تشغيل
+                      </button>
+                      <a href="/download/<%= lecture._id %>" class="btn-download">
+                        ⬇ تحميل
+                      </a>
+                    <% } %>
+                  </div>
+                </div>
+              <% }) %>
+            <% } %>
+            </div><!-- Close episodes-container -->
+          </div>
+        </div>
+      <% }) %>
+    <% } else { %>
+      <div class="empty-state">
+        <div class="empty-icon">🕌</div>
+        <h3 class="empty-title">لا توجد خطب</h3>
+      </div>
+    <% } %>
+  </div>
+</div>
+
+<script>
+  // Switch between tabs
+  function switchTab(tabName) {
+    console.log('🔄 Switching to tab:', tabName);
+
+    // Hide all tab contents
+    document.querySelectorAll('.tab-content').forEach(content => {
+      content.classList.remove('active');
+    });
+
+    // Remove active class from all tabs
+    document.querySelectorAll('.nav-tab').forEach(tab => {
+      tab.classList.remove('active');
+    });
+
+    // Show selected tab content
+    const contentElement = document.getElementById('content-' + tabName);
+    if (contentElement) {
+      contentElement.classList.add('active');
+      console.log('  ✅ Tab content activated:', contentElement.id);
+      console.log('  Tab content display:', window.getComputedStyle(contentElement).display);
+    } else {
+      console.error('  ❌ Could not find tab content:', 'content-' + tabName);
+    }
+
+    // Activate selected tab button
+    const tabElement = document.getElementById('tab-' + tabName);
+    if (tabElement) {
+      tabElement.classList.add('active');
+    }
+
+    // Re-apply current filter to new tab
+    applyFilter();
+  }
+
+  // Toggle series expansion
+  function toggleSeries(seriesId) {
+    console.log('🔄 Toggling series:', seriesId);
+    const episodesList = document.getElementById('episodes-' + seriesId);
+    const btn = document.getElementById('btn-' + seriesId);
+
+    console.log('  Episodes list found:', episodesList ? 'YES' : 'NO');
+    console.log('  Button found:', btn ? 'YES' : 'NO');
+
+    if (!episodesList || !btn) {
+      console.error('❌ Could not find elements for series:', seriesId);
+      return;
+    }
+
+    episodesList.classList.toggle('show');
+    btn.classList.toggle('expanded');
+
+    if (episodesList.classList.contains('show')) {
+      console.log('  ✅ Series expanded');
+      btn.textContent = 'إخفاء الدروس ▲';
+    } else {
+      console.log('  ✅ Series collapsed');
+      btn.textContent = 'عرض الدروس ▼';
+    }
+  }
+
+  // Toggle Khutba expansion
+  function toggleKhutba(seriesId) {
+    console.log('🔄 Toggling khutba:', seriesId);
+    // Use prefixed IDs to avoid conflicts with Series tab
+    const episodesList = document.getElementById('khutba-episodes-' + seriesId);
+    const btn = document.getElementById('khutba-btn-' + seriesId);
+
+    console.log('  Episodes list found:', episodesList ? 'YES' : 'NO');
+    console.log('  Button found:', btn ? 'YES' : 'NO');
+
+    if (!episodesList || !btn) {
+      console.error('❌ Could not find elements for khutba:', seriesId);
+      console.error('  episodesList:', episodesList);
+      console.error('  btn:', btn);
+      return;
+    }
+
+    console.log('  Before toggle - episodesList classes:', episodesList.className);
+    console.log('  Before toggle - computed display:', window.getComputedStyle(episodesList).display);
+
+    episodesList.classList.toggle('show');
+    btn.classList.toggle('expanded');
+
+    console.log('  After toggle - episodesList classes:', episodesList.className);
+    console.log('  After toggle - computed display:', window.getComputedStyle(episodesList).display);
+    console.log('  After toggle - computed visibility:', window.getComputedStyle(episodesList).visibility);
+    console.log('  After toggle - computed opacity:', window.getComputedStyle(episodesList).opacity);
+
+    if (episodesList.classList.contains('show')) {
+      console.log('  ✅ Khutba expanded');
+      btn.textContent = 'إخفاء الخطب ▲';
+    } else {
+      console.log('  ✅ Khutba collapsed');
+      btn.textContent = 'عرض الخطب ▼';
+    }
+  }
+
+  // Filter chips
+  document.querySelectorAll('.chip').forEach(chip => {
+    chip.addEventListener('click', function() {
+      const filterType = this.dataset.type;
+      const filterValue = this.dataset.filter;
+
+      // Update active state
+      document.querySelectorAll('.chip[data-type="' + filterType + '"]').forEach(c => c.classList.remove('active'));
+      this.classList.add('active');
+
+      // Apply filter to cards in active tab only
+      applyFilter();
+    });
+  });
+
+  // Apply current category filter
+  function applyFilter() {
+    const activeTab = document.querySelector('.tab-content.active');
+    if (!activeTab) return;
+
+    // Get active category filter
+    const activeCategoryFilter = document.querySelector('.chip[data-type="category"].active');
+    const filterValue = activeCategoryFilter ? activeCategoryFilter.dataset.filter : 'all';
+
+    // Filter series cards in active tab only
+    const cards = activeTab.querySelectorAll('.series-card');
+    cards.forEach(card => {
+      const category = card.dataset.category;
+
+      if (filterValue === 'all' || category === filterValue) {
+        card.style.display = 'block';
+      } else {
+        card.style.display = 'none';
+      }
+    });
+  }
+
+  // Search functionality
+  const searchInput = document.getElementById('searchInput');
+  searchInput.addEventListener('input', performSearch);
+
+  function performSearch() {
+    const searchTerm = searchInput.value.toLowerCase();
+    const activeTab = document.querySelector('.tab-content.active');
+    if (!activeTab) return;
+
+    // Search in active tab only
+    const cards = activeTab.querySelectorAll('.series-card');
+    cards.forEach(card => {
+      const title = card.querySelector('.series-title')?.textContent.toLowerCase() || '';
+      const author = card.querySelector('.series-author')?.textContent.toLowerCase() || '';
+      const sheikh = card.querySelector('.series-sheikh')?.textContent.toLowerCase() || '';
+
+      if (title.includes(searchTerm) || author.includes(searchTerm) || sheikh.includes(searchTerm)) {
+        card.style.display = 'block';
+      } else {
+        card.style.display = 'none';
+      }
+    });
+  }
+
+  // Play audio using sticky audio player
+  function playAudio(lectureId, title, sheikh) {
+    console.log('▶️ Play button clicked');
+    console.log('  Lecture ID:', lectureId);
+    console.log('  Title:', title);
+    console.log('  Sheikh:', sheikh);
+    console.log('  window.audioPlayer exists?', typeof window.audioPlayer);
+
+    // Wait for audio player to be initialized
+    if (window.audioPlayer) {
+      console.log('✅ Calling audioPlayer.play()...');
+      window.audioPlayer.play(lectureId, {
+        title: title,
+        titleArabic: title,
+        sheikh: sheikh || ''
+      });
+    } else {
+      console.error('❌ Audio player not initialized');
+      console.error('   This might be because:');
+      console.error('   1. /js/audioPlayer.js failed to load');
+      console.error('   2. Script has JavaScript errors');
+      console.error('   3. Audio player partial not included in layout');
+      alert('Audio player is loading, please try again in a moment.');
+    }
+  }
+
+  // Sort series by date
+  function sortByDate(sortType) {
+    console.log('🔄 Sorting by:', sortType);
+
+    // Update active state for sort buttons
+    document.querySelectorAll('.chip[data-sort]').forEach(btn => btn.classList.remove('active'));
+    document.querySelector(`.chip[data-sort="${sortType}"]`)?.classList.add('active');
+
+    // Get all series cards in the active tab
+    const activeTab = document.querySelector('.tab-content.active');
+    const seriesList = activeTab.querySelector('.series-list');
+    const cards = Array.from(seriesList.querySelectorAll('.series-card'));
+
+    console.log(`  Found ${cards.length} cards to sort`);
+
+    // Log each card's data before sorting
+    console.log('  Card data before sorting:');
+    cards.forEach((card, index) => {
+      const title = card.querySelector('.series-title')?.textContent || 'Unknown';
+      const dateValue = card.dataset.date;
+      const hijriValue = card.dataset.hijri;
+      console.log(`    [${index}] ${title}`);
+      console.log(`        - data-date: ${dateValue}`);
+      console.log(`        - data-hijri: ${hijriValue}`);
+    });
+
+    // Sort cards based on type
+    cards.sort((a, b) => {
+      if (sortType === 'newest') {
+        // Sort by date (newest first)
+        const dateA = parseInt(a.dataset.date) || 0;
+        const dateB = parseInt(b.dataset.date) || 0;
+        console.log(`    Comparing: ${dateA} vs ${dateB} = ${dateB - dateA}`);
+        return dateB - dateA;
+      } else if (sortType === 'oldest') {
+        // Sort by date (oldest first)
+        const dateA = parseInt(a.dataset.date) || 0;
+        const dateB = parseInt(b.dataset.date) || 0;
+        console.log(`    Comparing: ${dateA} vs ${dateB} = ${dateA - dateB}`);
+        return dateA - dateB;
+      }
+      // Note: Gregorian and Hijri dates represent the same point in time
+      // So sorting by one is equivalent to sorting by the other
+      return 0;
+    });
+
+    // Re-append cards in sorted order
+    cards.forEach(card => seriesList.appendChild(card));
+
+    console.log('  Card order after sorting:');
+    cards.forEach((card, index) => {
+      const title = card.querySelector('.series-title')?.textContent || 'Unknown';
+      console.log(`    [${index}] ${title}`);
+    });
+
+    // Re-apply category filter to maintain visibility
+    applyFilter();
+
+    console.log('✅ Sorting complete');
+  }
+
+  // Sort lectures within a specific series
+  function sortSeriesLectures(seriesId, sortType) {
+    console.log(`🔄 Sorting lectures in series: ${seriesId}, type: ${sortType}`);
+
+    // Get the episodes container for this series
+    // Handle khutba- prefix correctly: khutba-{id} -> khutba-episodes-{id}
+    let episodesListId;
+    if (seriesId.startsWith('khutba-')) {
+      episodesListId = `khutba-episodes-${seriesId.substring(7)}`;
+    } else {
+      episodesListId = `episodes-${seriesId}`;
+    }
+    const episodesList = document.getElementById(episodesListId);
+
+    if (!episodesList) {
+      console.error(`❌ Could not find episodes list: ${episodesListId}`);
+      return;
+    }
+
+    const container = episodesList.querySelector('.episodes-container');
+    if (!container) {
+      console.error(`❌ Could not find episodes-container in: ${episodesListId}`);
+      return;
+    }
+
+    // Get all episode items
+    const episodes = Array.from(container.querySelectorAll('.episode-item'));
+    console.log(`  Found ${episodes.length} episodes to sort`);
+
+    // Sort episodes based on type
+    episodes.sort((a, b) => {
+      if (sortType === 'number') {
+        // Sort by lecture number
+        const numA = parseInt(a.dataset.lectureNumber) || 999;
+        const numB = parseInt(b.dataset.lectureNumber) || 999;
+        return numA - numB;
+      } else if (sortType === 'oldest') {
+        // Sort by date (oldest first)
+        const dateA = parseInt(a.dataset.date) || 0;
+        const dateB = parseInt(b.dataset.date) || 0;
+        return dateA - dateB;
+      } else if (sortType === 'newest') {
+        // Sort by date (newest first)
+        const dateA = parseInt(a.dataset.date) || 0;
+        const dateB = parseInt(b.dataset.date) || 0;
+        return dateB - dateA;
+      }
+      return 0;
+    });
+
+    // Re-append episodes in sorted order
+    episodes.forEach(episode => container.appendChild(episode));
+
+    console.log(`✅ Sorted ${episodes.length} episodes by ${sortType}`);
+  }
+</script>

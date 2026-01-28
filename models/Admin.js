@@ -3,9 +3,14 @@ const mongoose = require('mongoose');
 const adminSchema = new mongoose.Schema({
   googleId: {
     type: String,
-    required: true,
-    unique: true,
+    required: false,
+    sparse: true,  // Only enforce uniqueness when value exists
     index: true
+  },
+  username: {
+    type: String,
+    required: false,
+    trim: true
   },
   email: {
     type: String,
@@ -38,6 +43,12 @@ const adminSchema = new mongoose.Schema({
   isActive: {
     type: Boolean,
     default: true,
+    index: true
+  },
+  role: {
+    type: String,
+    enum: ['admin', 'editor'],
+    default: 'editor',
     index: true
   }
 }, {
