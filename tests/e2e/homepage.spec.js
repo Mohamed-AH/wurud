@@ -46,8 +46,10 @@ test.describe('Homepage - Tab Switching', () => {
   test('should switch to Series tab', async ({ page }) => {
     await page.goto('/');
 
-    // Click on Series tab
-    await page.click('#tab-series');
+    // Scroll to and click on Series tab
+    const seriesTab = page.locator('#tab-series');
+    await seriesTab.scrollIntoViewIfNeeded();
+    await seriesTab.click();
 
     // Wait for content to load
     await page.waitForTimeout(500);
@@ -60,8 +62,10 @@ test.describe('Homepage - Tab Switching', () => {
   test('should switch to Khutba tab', async ({ page }) => {
     await page.goto('/');
 
-    // Click on Khutba tab
-    await page.click('#tab-khutbas');
+    // Scroll to and click on Khutba tab
+    const khutbaTab = page.locator('#tab-khutbas');
+    await khutbaTab.scrollIntoViewIfNeeded();
+    await khutbaTab.click();
 
     // Wait for content to load
     await page.waitForTimeout(500);
@@ -75,11 +79,15 @@ test.describe('Homepage - Tab Switching', () => {
     await page.goto('/');
 
     // Switch to Series
-    await page.click('#tab-series');
+    const seriesTab = page.locator('#tab-series');
+    await seriesTab.scrollIntoViewIfNeeded();
+    await seriesTab.click();
     await page.waitForTimeout(300);
 
     // Switch back to Lectures
-    await page.click('#tab-lectures');
+    const lecturesTab = page.locator('#tab-lectures');
+    await lecturesTab.scrollIntoViewIfNeeded();
+    await lecturesTab.click();
     await page.waitForTimeout(300);
 
     // Verify Lectures tab content is active
@@ -118,6 +126,7 @@ test.describe('Homepage - Category Filtering', () => {
     // Click a specific category first
     const specificCategory = page.locator('.chip[data-filter="Fiqh"]').first();
     if (await specificCategory.isVisible()) {
+      await specificCategory.scrollIntoViewIfNeeded();
       await specificCategory.click();
       await page.waitForTimeout(300);
     }
@@ -125,6 +134,7 @@ test.describe('Homepage - Category Filtering', () => {
     // Click "All" to show everything
     const allChip = page.locator('.chip[data-filter="all"]').first();
     if (await allChip.isVisible()) {
+      await allChip.scrollIntoViewIfNeeded();
       await allChip.click();
       await page.waitForTimeout(300);
 
@@ -140,11 +150,12 @@ test.describe('Homepage - Date Sorting', () => {
     await page.goto('/');
 
     // Click "الأحدث أولاً" (Newest first)
-    await page.click('[data-sort="newest"]');
+    const newestButton = page.locator('[data-sort="newest"]').first();
+    await newestButton.scrollIntoViewIfNeeded();
+    await newestButton.click();
     await page.waitForTimeout(500);
 
     // Verify button is active
-    const newestButton = page.locator('[data-sort="newest"]');
     await expect(newestButton).toHaveClass(/active/);
   });
 
@@ -152,11 +163,12 @@ test.describe('Homepage - Date Sorting', () => {
     await page.goto('/');
 
     // Click "الأقدم أولاً" (Oldest first)
-    await page.click('[data-sort="oldest"]');
+    const oldestButton = page.locator('[data-sort="oldest"]').first();
+    await oldestButton.scrollIntoViewIfNeeded();
+    await oldestButton.click();
     await page.waitForTimeout(500);
 
     // Verify button is active
-    const oldestButton = page.locator('[data-sort="oldest"]');
     await expect(oldestButton).toHaveClass(/active/);
   });
 
@@ -164,7 +176,9 @@ test.describe('Homepage - Date Sorting', () => {
     await page.goto('/');
 
     // Switch to Series tab (already active by default)
-    await page.click('#tab-series');
+    const seriesTab = page.locator('#tab-series');
+    await seriesTab.scrollIntoViewIfNeeded();
+    await seriesTab.click();
     await page.waitForTimeout(300);
 
     // Get initial card count in active tab
@@ -172,7 +186,9 @@ test.describe('Homepage - Date Sorting', () => {
     const countBefore = await cardsBefore.count();
 
     // Sort by newest
-    await page.click('[data-sort="newest"]');
+    const newestButton = page.locator('[data-sort="newest"]').first();
+    await newestButton.scrollIntoViewIfNeeded();
+    await newestButton.click();
     await page.waitForTimeout(500);
 
     // Verify cards are still visible (this was the bug we fixed!)
@@ -187,7 +203,9 @@ test.describe('Homepage - Date Sorting', () => {
     await page.goto('/');
 
     // Switch to Khutba tab
-    await page.click('#tab-khutbas');
+    const khutbaTab = page.locator('#tab-khutbas');
+    await khutbaTab.scrollIntoViewIfNeeded();
+    await khutbaTab.click();
     await page.waitForTimeout(300);
 
     // Get initial card count in khutbas tab
@@ -196,7 +214,9 @@ test.describe('Homepage - Date Sorting', () => {
 
     if (countBefore > 0) {
       // Sort by oldest
-      await page.click('[data-sort="oldest"]');
+      const oldestButton = page.locator('[data-sort="oldest"]').first();
+      await oldestButton.scrollIntoViewIfNeeded();
+      await oldestButton.click();
       await page.waitForTimeout(500);
 
       // Verify cards are still visible
@@ -249,13 +269,16 @@ test.describe('Homepage - Series Expansion', () => {
     await page.goto('/');
 
     // Switch to Series tab (already active by default)
-    await page.click('#tab-series');
+    const seriesTab = page.locator('#tab-series');
+    await seriesTab.scrollIntoViewIfNeeded();
+    await seriesTab.click();
     await page.waitForTimeout(300);
 
     // Find first series card header
     const seriesHeader = page.locator('#content-series .series-header').first();
 
     if (await seriesHeader.isVisible()) {
+      await seriesHeader.scrollIntoViewIfNeeded();
       await seriesHeader.click();
       await page.waitForTimeout(500);
 
@@ -269,13 +292,16 @@ test.describe('Homepage - Series Expansion', () => {
     await page.goto('/');
 
     // Switch to Series tab
-    await page.click('#tab-series');
+    const seriesTab = page.locator('#tab-series');
+    await seriesTab.scrollIntoViewIfNeeded();
+    await seriesTab.click();
     await page.waitForTimeout(300);
 
     // Expand first series
     const seriesHeader = page.locator('#content-series .series-header').first();
 
     if (await seriesHeader.isVisible()) {
+      await seriesHeader.scrollIntoViewIfNeeded();
       await seriesHeader.click();
       await page.waitForTimeout(500);
 
@@ -291,19 +317,23 @@ test.describe('Homepage - Series Expansion', () => {
     await page.goto('/');
 
     // Switch to Series tab
-    await page.click('#tab-series');
+    const seriesTab = page.locator('#tab-series');
+    await seriesTab.scrollIntoViewIfNeeded();
+    await seriesTab.click();
     await page.waitForTimeout(300);
 
     // Expand first series
     const seriesHeader = page.locator('#content-series .series-header').first();
 
     if (await seriesHeader.isVisible()) {
+      await seriesHeader.scrollIntoViewIfNeeded();
       await seriesHeader.click();
       await page.waitForTimeout(500);
 
       // Click "حسب الرقم" (Sort by number)
       const sortByNumber = page.locator('.episodes-list.show button:has-text("حسب الرقم")').first();
       if (await sortByNumber.isVisible()) {
+        await sortByNumber.scrollIntoViewIfNeeded();
         await sortByNumber.click();
         await page.waitForTimeout(500);
 
@@ -320,13 +350,16 @@ test.describe('Homepage - Khutba Expansion', () => {
     await page.goto('/');
 
     // Switch to Khutba tab
-    await page.click('#tab-khutbas');
+    const khutbaTab = page.locator('#tab-khutbas');
+    await khutbaTab.scrollIntoViewIfNeeded();
+    await khutbaTab.click();
     await page.waitForTimeout(300);
 
     // Find first khutba card header
     const khutbaHeader = page.locator('#content-khutbas .series-header').first();
 
     if (await khutbaHeader.isVisible()) {
+      await khutbaHeader.scrollIntoViewIfNeeded();
       await khutbaHeader.click();
       await page.waitForTimeout(500);
 
@@ -340,19 +373,23 @@ test.describe('Homepage - Khutba Expansion', () => {
     await page.goto('/');
 
     // Switch to Khutba tab
-    await page.click('#tab-khutbas');
+    const khutbaTab = page.locator('#tab-khutbas');
+    await khutbaTab.scrollIntoViewIfNeeded();
+    await khutbaTab.click();
     await page.waitForTimeout(300);
 
     // Expand first khutba series
     const khutbaHeader = page.locator('#content-khutbas .series-header').first();
 
     if (await khutbaHeader.isVisible()) {
+      await khutbaHeader.scrollIntoViewIfNeeded();
       await khutbaHeader.click();
       await page.waitForTimeout(500);
 
       // Try clicking sort buttons inside the expanded series
       const sortOldest = page.locator('#content-khutbas .episodes-list.show .chip').first();
       if (await sortOldest.isVisible()) {
+        await sortOldest.scrollIntoViewIfNeeded();
         await sortOldest.click();
         await page.waitForTimeout(500);
 
