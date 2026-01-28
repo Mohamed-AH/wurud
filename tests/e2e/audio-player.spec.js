@@ -74,7 +74,7 @@ test.describe('Audio Player - Playback Controls', () => {
   test('should stop current lecture when playing new one', async ({ page }) => {
     await page.goto('/');
 
-    const playButtons = page.locator('button[class*="play"]');
+    const playButtons = page.locator('.btn-play:visible');
     const count = await playButtons.count();
 
     if (count >= 2) {

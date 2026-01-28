@@ -12,8 +12,8 @@ test.describe('Homepage - Basic Functionality', () => {
     await expect(page).toHaveTitle(/دروس/);
 
     // Check main navigation tabs are present
-    await expect(page.locator('text=محاضرات')).toBeVisible();
-    await expect(page.locator('text=سلاسل')).toBeVisible();
+    await expect(page.locator('#tab-lectures')).toBeVisible();
+    await expect(page.locator('#tab-series')).toBeVisible();
     await expect(page.locator('text=خطب')).toBeVisible();
   });
 
@@ -37,8 +37,8 @@ test.describe('Homepage - Basic Functionality', () => {
     await page.goto('/');
 
     // Check sort buttons
-    await expect(page.locator('text=الأحدث أولاً')).toBeVisible();
-    await expect(page.locator('text=الأقدم أولاً')).toBeVisible();
+    await expect(page.locator('[data-sort="newest"]')).toBeVisible();
+    await expect(page.locator('[data-sort="oldest"]')).toBeVisible();
   });
 });
 
@@ -47,7 +47,7 @@ test.describe('Homepage - Tab Switching', () => {
     await page.goto('/');
 
     // Click on Series tab
-    await page.click('text=سلاسل');
+    await page.click('#tab-series');
 
     // Wait for content to load
     await page.waitForTimeout(500);
@@ -75,7 +75,7 @@ test.describe('Homepage - Tab Switching', () => {
     await page.goto('/');
 
     // Switch to Series
-    await page.click('text=سلاسل');
+    await page.click('#tab-series');
     await page.waitForTimeout(300);
 
     // Switch back to Lectures
@@ -140,11 +140,11 @@ test.describe('Homepage - Date Sorting', () => {
     await page.goto('/');
 
     // Click "الأحدث أولاً" (Newest first)
-    await page.click('button:has-text("الأحدث أولاً")');
+    await page.click('[data-sort="newest"]');
     await page.waitForTimeout(500);
 
     // Verify button is active
-    const newestButton = page.locator('button:has-text("الأحدث أولاً")');
+    const newestButton = page.locator('[data-sort="newest"]');
     await expect(newestButton).toHaveClass(/active/);
   });
 
@@ -152,11 +152,11 @@ test.describe('Homepage - Date Sorting', () => {
     await page.goto('/');
 
     // Click "الأقدم أولاً" (Oldest first)
-    await page.click('button:has-text("الأقدم أولاً")');
+    await page.click('[data-sort="oldest"]');
     await page.waitForTimeout(500);
 
     // Verify button is active
-    const oldestButton = page.locator('button:has-text("الأقدم أولاً")');
+    const oldestButton = page.locator('[data-sort="oldest"]');
     await expect(oldestButton).toHaveClass(/active/);
   });
 
@@ -164,7 +164,7 @@ test.describe('Homepage - Date Sorting', () => {
     await page.goto('/');
 
     // Switch to Series tab
-    await page.click('text=سلاسل');
+    await page.click('#tab-series');
     await page.waitForTimeout(300);
 
     // Get initial card count
@@ -172,7 +172,7 @@ test.describe('Homepage - Date Sorting', () => {
     const countBefore = await cardsBefore.count();
 
     // Sort by newest
-    await page.click('button:has-text("الأحدث أولاً")');
+    await page.click('[data-sort="newest"]');
     await page.waitForTimeout(500);
 
     // Verify cards are still visible (this was the bug we fixed!)
@@ -196,7 +196,7 @@ test.describe('Homepage - Date Sorting', () => {
 
     if (countBefore > 0) {
       // Sort by oldest
-      await page.click('button:has-text("الأقدم أولاً")');
+      await page.click('[data-sort="oldest"]');
       await page.waitForTimeout(500);
 
       // Verify cards are still visible
@@ -249,7 +249,7 @@ test.describe('Homepage - Series Expansion', () => {
     await page.goto('/');
 
     // Switch to Series tab
-    await page.click('text=سلاسل');
+    await page.click('#tab-series');
     await page.waitForTimeout(300);
 
     // Find first series card
@@ -269,7 +269,7 @@ test.describe('Homepage - Series Expansion', () => {
     await page.goto('/');
 
     // Switch to Series tab
-    await page.click('text=سلاسل');
+    await page.click('#tab-series');
     await page.waitForTimeout(300);
 
     // Expand first series
@@ -280,7 +280,7 @@ test.describe('Homepage - Series Expansion', () => {
       await page.waitForTimeout(500);
 
       // Check for sorting buttons inside episodes
-      const sortButtons = page.locator('button:has-text("حسب الرقم"), button:has-text("الأقدم أولاً"), button:has-text("الأحدث أولاً")');
+      const sortButtons = page.locator('button:has-text("حسب الرقم"), [data-sort="oldest"], [data-sort="newest"]');
       const count = await sortButtons.count();
 
       expect(count).toBeGreaterThan(0);
@@ -291,7 +291,7 @@ test.describe('Homepage - Series Expansion', () => {
     await page.goto('/');
 
     // Switch to Series tab
-    await page.click('text=سلاسل');
+    await page.click('#tab-series');
     await page.waitForTimeout(300);
 
     // Expand first series
@@ -351,7 +351,7 @@ test.describe('Homepage - Khutba Expansion', () => {
       await page.waitForTimeout(500);
 
       // Try clicking sort buttons (this was broken before the fix!)
-      const sortOldest = page.locator('button:has-text("الأقدم أولاً")').first();
+      const sortOldest = page.locator('[data-sort="oldest"]').first();
       if (await sortOldest.isVisible()) {
         await sortOldest.click();
         await page.waitForTimeout(500);
@@ -385,7 +385,7 @@ test.describe('Homepage - Responsive Design', () => {
     await page.goto('/');
 
     // Should render properly
-    await expect(page.locator('text=سلاسل')).toBeVisible();
+    await expect(page.locator('#tab-series')).toBeVisible();
     await expect(page.locator('text=خطب')).toBeVisible();
   });
 });
