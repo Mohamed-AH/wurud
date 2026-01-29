@@ -3,9 +3,11 @@ const path = require('path');
 const { Lecture } = require('../models');
 const { getFilePath, fileExists } = require('../utils/fileManager');
 const { getMimeType, handleRangeRequest } = require('../middleware/streamHandler');
+const { getPublicUrl, isConfigured: isOciConfigured } = require('../utils/ociStorage');
 
 /**
  * Stream audio file with Range request support
+ * Supports both local files and OCI Object Storage
  * @route GET /stream/:id
  */
 const streamAudio = async (req, res) => {
@@ -22,7 +24,31 @@ const streamAudio = async (req, res) => {
       });
     }
 
-    // Check if file exists
+    // Check if lecture has an OCI URL (stored in audioUrl field)
+    if (lecture.audioUrl && lecture.audioUrl.includes('objectstorage')) {
+      // Increment play count (async, don't wait)
+      lecture.incrementPlayCount().catch(err => {
+        console.error('Error incrementing play count:', err);
+      });
+
+      // Redirect to OCI Object Storage URL
+      return res.redirect(lecture.audioUrl);
+    }
+
+    // Check if OCI is configured and file exists there
+    if (isOciConfigured() && lecture.audioFileName) {
+      const ociUrl = getPublicUrl(lecture.audioFileName);
+
+      // Increment play count (async, don't wait)
+      lecture.incrementPlayCount().catch(err => {
+        console.error('Error incrementing play count:', err);
+      });
+
+      // Redirect to OCI
+      return res.redirect(ociUrl);
+    }
+
+    // Fallback to local file streaming
     const filePath = getFilePath(lecture.audioFileName);
 
     if (!fileExists(lecture.audioFileName)) {
@@ -70,6 +96,7 @@ const streamAudio = async (req, res) => {
 
 /**
  * Download audio file
+ * Supports both local files and OCI Object Storage
  * @route GET /download/:id
  */
 const downloadAudio = async (req, res) => {
@@ -88,7 +115,23 @@ const downloadAudio = async (req, res) => {
       });
     }
 
-    // Check if file exists
+    // Increment download count (async, don't wait)
+    lecture.incrementDownloadCount().catch(err => {
+      console.error('Error incrementing download count:', err);
+    });
+
+    // Check if lecture has an OCI URL - redirect for download
+    if (lecture.audioUrl && lecture.audioUrl.includes('objectstorage')) {
+      return res.redirect(lecture.audioUrl);
+    }
+
+    // Check if OCI is configured - redirect to OCI
+    if (isOciConfigured() && lecture.audioFileName) {
+      const ociUrl = getPublicUrl(lecture.audioFileName);
+      return res.redirect(ociUrl);
+    }
+
+    // Fallback to local file download
     const filePath = getFilePath(lecture.audioFileName);
 
     if (!fileExists(lecture.audioFileName)) {
@@ -98,11 +141,6 @@ const downloadAudio = async (req, res) => {
         message: 'Audio file not found on server'
       });
     }
-
-    // Increment download count (async, don't wait)
-    lecture.incrementDownloadCount().catch(err => {
-      console.error('Error incrementing download count:', err);
-    });
 
     // Create a meaningful filename for download
     const ext = path.extname(lecture.audioFileName);

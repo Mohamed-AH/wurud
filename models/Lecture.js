@@ -7,6 +7,12 @@ const lectureSchema = new mongoose.Schema({
     // Note: Uniqueness enforced by application logic during upload
     // Multiple null values allowed for lectures without audio files
   },
+  audioUrl: {
+    type: String,
+    trim: true
+    // OCI Object Storage URL for audio file
+    // Set when audio is uploaded to OCI
+  },
   titleArabic: {
     type: String,
     required: true,
