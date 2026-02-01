@@ -71,9 +71,21 @@ class AudioPlayer {
     this.skipForwardBtn.addEventListener('click', () => this.skip(15));
     this.closePlayerBtn.addEventListener('click', () => this.close());
 
-    // Progress bar
+    // Progress bar - mouse events
     this.progressContainer.addEventListener('click', (e) => this.seek(e));
     this.progressHandle.addEventListener('mousedown', (e) => this.startDrag(e));
+
+    // Progress bar - touch events (for mobile)
+    this.progressContainer.addEventListener('touchstart', (e) => this.handleTouchStart(e), { passive: false });
+    this.progressContainer.addEventListener('touchmove', (e) => this.handleTouchMove(e), { passive: false });
+    this.progressContainer.addEventListener('touchend', (e) => this.handleTouchEnd(e), { passive: false });
+
+    // Prevent background scroll when touching the player
+    this.player.addEventListener('touchmove', (e) => {
+      if (e.target.closest('.progress-container')) {
+        e.preventDefault();
+      }
+    }, { passive: false });
 
     // Speed control
     this.speedBtn.addEventListener('click', () => this.toggleSpeedMenu());
@@ -164,6 +176,33 @@ class AudioPlayer {
     };
     document.addEventListener('mousemove', onMouseMove);
     document.addEventListener('mouseup', onMouseUp);
+  }
+
+  // Touch event handlers for mobile
+  handleTouchStart(e) {
+    e.preventDefault();
+    this.isTouchDragging = true;
+    this.seekFromTouch(e);
+  }
+
+  handleTouchMove(e) {
+    if (this.isTouchDragging) {
+      e.preventDefault();
+      this.seekFromTouch(e);
+    }
+  }
+
+  handleTouchEnd(e) {
+    this.isTouchDragging = false;
+  }
+
+  seekFromTouch(e) {
+    const touch = e.touches[0] || e.changedTouches[0];
+    if (!touch) return;
+
+    const rect = this.progressContainer.getBoundingClientRect();
+    const percent = Math.max(0, Math.min(1, (touch.clientX - rect.left) / rect.width));
+    this.audio.currentTime = percent * this.audio.duration;
   }
 
   toggleSpeedMenu() {

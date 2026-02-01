@@ -12,10 +12,39 @@ A web platform for hosting and streaming ~160 Arabic Islamic lecture audio files
 
 ## 📌 Project State
 
-**Current Phase**: Sticky Audio Player Complete ✅ - Data Migration Blocked ⚠️
-**Last Updated**: 2026-01-25
-**Active Branch**: `claude/new-design-usy2P`
-**Status**: Audio player complete, data import issues identified, MongoDB connectivity blocked
+**Current Phase**: Mobile View Refinement 🔧
+**Last Updated**: 2026-02-01
+**Active Branch**: `claude/fix-homepage-tests-ovChk`
+**Status**: Production deployed on Render, fixing mobile UI issues
+
+### 🔧 CURRENT WORK: Mobile View Refinement
+
+**Priority**: HIGH - Most initial users are on mobile
+
+**Issues to fix:**
+1. **Main Page Title** - Cut off/missing on mobile, needs scaling
+2. **Language Selector** - Floating/misaligned, should anchor in header corner
+3. **Player Touch Isolation** - Progress bar touch should NOT scroll background
+4. **Playback Controls** - Fast-forward/reverse icons are confusing
+5. **Download Button** - Arrow icon not centered, needs polish
+
+**Key Files:**
+- `views/public/index.ejs` - Homepage (title, hero)
+- `views/layout.ejs` - Header with language selector
+- `public/css/audioPlayer.css` - Player styling
+- `views/partials/audioPlayer.ejs` - Player HTML
+- `public/js/audioPlayer.js` - Player JavaScript (touch events)
+
+### ✅ Recently Completed:
+- OCI Object Storage integration (audio files in Oracle Cloud)
+- Audio optimization with HE-AAC encoding
+- Silence trimming from audio start
+- Render deployment (Frankfurt region)
+- Fixed debug logging in production
+- Fixed category translations (Arabic)
+- Fixed mobile CSS (sheikhs page, speed menu)
+- Fixed OCI null handling in file listing
+- Created fix-lectures-audio.js for bulk audio assignment
 
 ### ⚠️ CRITICAL BLOCKER: MongoDB Atlas Connectivity
 

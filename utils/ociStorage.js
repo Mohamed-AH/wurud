@@ -172,13 +172,16 @@ async function listObjects(prefix = '', limit = 1000) {
 
   try {
     const response = await client.listObjects(listObjectsRequest);
-    return response.listObjects.objects.map(obj => ({
-      name: obj.name,
-      size: obj.size,
-      etag: obj.etag,
-      timeCreated: obj.timeCreated,
-      url: getPublicUrl(obj.name)
-    }));
+    // Filter out any objects with null/undefined names
+    return response.listObjects.objects
+      .filter(obj => obj && obj.name)
+      .map(obj => ({
+        name: obj.name,
+        size: obj.size,
+        etag: obj.etag,
+        timeCreated: obj.timeCreated,
+        url: getPublicUrl(obj.name)
+      }));
   } catch (error) {
     throw new Error(`Failed to list objects: ${error.message}`);
   }
