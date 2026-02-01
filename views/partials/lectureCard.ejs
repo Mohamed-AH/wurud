@@ -39,7 +39,7 @@
       <% } %>
       <% if (lecture.category && lecture.category !== 'Other') { %>
         <span class="lecture-divider">•</span>
-        <span class="lecture-category"><%= lecture.category %></span>
+        <span class="lecture-category"><%= translateCategory(lecture.category) %></span>
       <% } %>
     </div>
   </div>

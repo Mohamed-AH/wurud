@@ -63,6 +63,8 @@
 
   .sheikh-info {
     flex: 1;
+    min-width: 0;
+    overflow: hidden;
   }
 
   .sheikh-name {
@@ -70,6 +72,8 @@
     font-size: 22px;
     color: var(--primary-dark);
     margin-bottom: 4px;
+    word-wrap: break-word;
+    overflow-wrap: break-word;
   }
 
   .sheikh-honorific {
@@ -97,12 +101,29 @@
   }
 
   @media (max-width: 768px) {
+    .page-header {
+      padding: 32px 0;
+    }
+
     .page-title {
       font-size: 28px;
     }
 
     .sheikhs-grid {
       grid-template-columns: 1fr;
+      padding: 0 8px;
+    }
+
+    .sheikh-card {
+      padding: 16px;
+    }
+
+    .sheikh-name {
+      font-size: 18px;
+    }
+
+    .sheikh-name-en {
+      font-size: 13px;
     }
   }
 </style>

@@ -348,6 +348,21 @@
     justify-content: space-around;
     width: 100%;
   }
+
+  /* Fix speed menu position on mobile to prevent overflow */
+  .speed-control {
+    position: static;
+  }
+
+  .speed-menu {
+    position: fixed;
+    bottom: 120px;
+    left: 50%;
+    transform: translateX(-50%);
+    right: auto;
+    margin-bottom: 0;
+    z-index: 10000;
+  }
 }
 
 /* RTL Support */
@@ -373,4 +388,12 @@ html[dir="rtl"] .progress-handle {
 html[dir="rtl"] .speed-menu {
   right: auto;
   left: 0;
+}
+
+/* RTL Mobile - use same centered positioning */
+@media (max-width: 768px) {
+  html[dir="rtl"] .speed-menu {
+    left: 50%;
+    transform: translateX(-50%);
+  }
 }
