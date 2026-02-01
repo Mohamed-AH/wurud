@@ -29,7 +29,12 @@
     </div>
 
     <div class="footer-bottom">
-      <p><%= t('footer_rights') %> © <%= new Date().getFullYear() %> <%= locale === 'ar' ? 'دروس' : 'Duroos' %></p>
+      <p>
+        <%= locale === 'ar'
+          ? '© ' + new Date().getFullYear() + ' جميع الحقوق محفوظة للشيخ حسن بن محمد الدغريري'
+          : '© ' + new Date().getFullYear() + ' All rights reserved to Sheikh Hasan bin Mohamed Dhaghriri'
+        %>
+      </p>
     </div>
   </div>
 </footer>
