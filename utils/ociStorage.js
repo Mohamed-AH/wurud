@@ -43,11 +43,12 @@ async function uploadToOCI(filePath, objectName, options = {}) {
   const contentTypes = {
     '.mp3': 'audio/mpeg',
     '.m4a': 'audio/mp4',
+    '.aac': 'audio/aac',
     '.wav': 'audio/wav',
     '.ogg': 'audio/ogg',
     '.flac': 'audio/flac'
   };
-  const contentType = options.contentType || contentTypes[ext] || 'audio/mpeg';
+  const contentType = options.contentType || contentTypes[ext] || 'audio/mp4';
 
   const putObjectRequest = {
     namespaceName: namespace,

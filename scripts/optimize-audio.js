@@ -21,12 +21,14 @@ const path = require('path');
 
 // Configuration
 const CONFIG = {
-  // Audio settings optimized for voice/speech
-  codec: 'libmp3lame',
-  bitrate: '64k',
+  // Audio settings optimized for voice/speech (HE-AAC)
+  codec: 'libfdk_aac',
+  profile: 'aac_he',   // HE-AAC for excellent quality at low bitrates
+  bitrate: '48k',      // 48kbps - excellent for speech
   channels: 1,         // Mono
   sampleRate: 22050,   // Good for voice
-  format: 'mp3',
+  format: 'm4a',
+  faststart: true,     // Move moov atom to start for web streaming
 
   // Supported input formats
   inputFormats: ['.wav', '.mp3', '.m4a', '.aac', '.ogg', '.flac', '.wma']
@@ -63,13 +65,19 @@ function convertFile(inputPath, outputPath) {
     const args = [
       '-i', inputPath,
       '-vn',                          // No video
-      '-acodec', CONFIG.codec,
+      '-c:a', CONFIG.codec,
+      '-profile:a', CONFIG.profile,   // HE-AAC profile
       '-ac', CONFIG.channels.toString(),
       '-ar', CONFIG.sampleRate.toString(),
       '-b:a', CONFIG.bitrate,
-      '-y',                           // Overwrite output
-      outputPath
     ];
+
+    // Add faststart for web streaming
+    if (CONFIG.faststart) {
+      args.push('-movflags', '+faststart');
+    }
+
+    args.push('-y', outputPath);      // Overwrite output
 
     const ffmpeg = spawn('ffmpeg', args, { stdio: 'pipe' });
 
@@ -121,10 +129,12 @@ async function processDirectory(inputDir, outputDir) {
 
   console.log(`\n🎵 Found ${files.length} audio files to process\n`);
   console.log('Configuration:');
-  console.log(`  Codec: ${CONFIG.codec}`);
+  console.log(`  Codec: ${CONFIG.codec} (${CONFIG.profile})`);
   console.log(`  Bitrate: ${CONFIG.bitrate}`);
   console.log(`  Channels: ${CONFIG.channels} (Mono)`);
   console.log(`  Sample Rate: ${CONFIG.sampleRate} Hz`);
+  console.log(`  Format: ${CONFIG.format}`);
+  console.log(`  Faststart: ${CONFIG.faststart ? 'Yes (optimized for web)' : 'No'}`);
   console.log('');
 
   let totalOriginalSize = 0;
@@ -135,7 +145,7 @@ async function processDirectory(inputDir, outputDir) {
   for (let i = 0; i < files.length; i++) {
     const file = files[i];
     const inputPath = path.join(inputDir, file);
-    const outputName = path.basename(file, path.extname(file)) + '.mp3';
+    const outputName = path.basename(file, path.extname(file)) + '.' + CONFIG.format;
     const outputPath = path.join(outputDir, outputName);
 
     const originalSize = fs.statSync(inputPath).size;
@@ -203,11 +213,12 @@ async function main() {
     console.log('Example:');
     console.log('  node scripts/optimize-audio.js /mnt/audio /mnt/audio-optimized');
     console.log('');
-    console.log('This will convert all audio files to voice-optimized MP3:');
-    console.log('  - 64kbps bitrate (optimal for speech)');
+    console.log('This will convert all audio files to voice-optimized HE-AAC:');
+    console.log('  - 48kbps HE-AAC (excellent for speech)');
     console.log('  - Mono audio');
     console.log('  - 22050 Hz sample rate');
-    console.log('  - Expected 80-90% size reduction');
+    console.log('  - Faststart enabled for web streaming');
+    console.log('  - Output format: .m4a');
     process.exit(1);
   }
 
