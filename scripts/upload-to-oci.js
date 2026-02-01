@@ -155,13 +155,23 @@ async function updateDatabase(results) {
       continue;
     }
 
-    // Find lecture by audioFileName
-    const lecture = await Lecture.findOne({
+    // Find lecture by audioFileName (match by base name to handle .mp3 -> .m4a conversion)
+    const baseName = path.basename(result.name, path.extname(result.name));
+
+    // First try exact match, then try matching base name with any extension
+    let lecture = await Lecture.findOne({
       $or: [
         { audioFileName: result.name },
-        { audioFileName: path.basename(result.name, path.extname(result.name)) }
+        { audioFileName: baseName }
       ]
     });
+
+    // If not found, try matching base name (DB might have .mp3, file is .m4a)
+    if (!lecture) {
+      lecture = await Lecture.findOne({
+        audioFileName: { $regex: `^${baseName.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}\\.[a-zA-Z0-9]+$` }
+      });
+    }
 
     if (lecture) {
       lecture.audioFileName = result.name;
