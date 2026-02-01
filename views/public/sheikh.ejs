@@ -259,13 +259,34 @@
   }
 
   @media (max-width: 768px) {
+    .sheikh-hero {
+      padding: 32px 0;
+      overflow: hidden;
+    }
+
     .sheikh-hero-content {
       flex-direction: column;
       text-align: center;
     }
 
+    .sheikh-info {
+      max-width: 100%;
+      overflow: hidden;
+      padding: 0 16px;
+    }
+
     .sheikh-name {
-      font-size: 32px;
+      font-size: 26px;
+      word-break: break-word;
+      hyphens: auto;
+    }
+
+    .sheikh-honorific {
+      font-size: 16px;
+    }
+
+    .sheikh-name-en {
+      font-size: 16px;
     }
 
     .stats-grid {
@@ -274,6 +295,21 @@
 
     .series-grid {
       grid-template-columns: 1fr;
+    }
+
+    .series-card {
+      flex-direction: column;
+      text-align: center;
+    }
+
+    .series-content {
+      width: 100%;
+      overflow: hidden;
+    }
+
+    .series-title {
+      font-size: 18px;
+      word-break: break-word;
     }
   }
 </style>
@@ -411,7 +447,7 @@
                 <% } %>
                 <div class="series-meta">
                   <% if (s.category) { %>
-                    <span class="series-category"><%= s.category %></span>
+                    <span class="series-category"><%= translateCategory(s.category) %></span>
                   <% } %>
                   <span class="series-count"><%= s.lectureCount || 0 %> محاضرة</span>
                 </div>

@@ -215,14 +215,43 @@ function i18nMiddleware(req, res, next) {
   // Inject translation function
   res.locals.t = (key) => t(validLocale, key);
 
+  // Inject category translation function
+  res.locals.translateCategory = (category) => translateCategory(category, validLocale);
+
   // Inject all translations for client-side use
   res.locals.translations = translations[validLocale];
 
   next();
 }
 
+/**
+ * Get category translation based on locale
+ * Handles the case where category is stored in English but needs Arabic display
+ */
+const categoryMap = {
+  'Aqeedah': { ar: 'العقيدة', en: 'Aqeedah' },
+  'Fiqh': { ar: 'الفقه', en: 'Fiqh' },
+  'Tafsir': { ar: 'التفسير', en: 'Tafsir' },
+  'Hadith': { ar: 'الحديث', en: 'Hadith' },
+  'Seerah': { ar: 'السيرة', en: 'Seerah' },
+  'General': { ar: 'عام', en: 'General' },
+  'Other': { ar: 'أخرى', en: 'Other' },
+  'Khutbah': { ar: 'خطب', en: 'Khutbah' }
+};
+
+function translateCategory(category, locale) {
+  if (!category) return '';
+  const mapping = categoryMap[category];
+  if (mapping) {
+    return mapping[locale] || mapping['en'] || category;
+  }
+  return category;
+}
+
 module.exports = {
   t,
   i18nMiddleware,
-  translations
+  translations,
+  translateCategory,
+  categoryMap
 };
