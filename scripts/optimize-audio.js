@@ -2,17 +2,22 @@
 /**
  * Audio Optimization Script
  *
- * Converts audio files to voice-optimized MP3 format using FFmpeg.
- * Achieves 80-90% file size reduction while maintaining speech clarity.
+ * Converts audio files to voice-optimized HE-AAC format using FFmpeg.
+ * Achieves significant file size reduction while maintaining speech clarity.
+ *
+ * Features:
+ *   - HE-AAC encoding (libfdk_aac) for excellent quality at low bitrates
+ *   - Trims silence from beginning of audio files
+ *   - Faststart for optimized web streaming
  *
  * Usage:
  *   node scripts/optimize-audio.js <input-dir> <output-dir>
  *
  * Requirements:
- *   - FFmpeg installed and available in PATH
+ *   - FFmpeg installed with libfdk_aac support
  *
  * Output Format:
- *   - MP3, 64kbps, Mono, 22050 Hz (optimal for voice content)
+ *   - M4A (HE-AAC), 48kbps, Mono, 22050 Hz (optimal for voice content)
  */
 
 const { execSync, spawn } = require('child_process');
@@ -29,6 +34,10 @@ const CONFIG = {
   sampleRate: 22050,   // Good for voice
   format: 'm4a',
   faststart: true,     // Move moov atom to start for web streaming
+
+  // Trim silence from beginning
+  trimStartSilence: true,
+  silenceThreshold: '-50dB',  // Audio below this is considered silence
 
   // Supported input formats
   inputFormats: ['.wav', '.mp3', '.m4a', '.aac', '.ogg', '.flac', '.wma']
@@ -65,12 +74,20 @@ function convertFile(inputPath, outputPath) {
     const args = [
       '-i', inputPath,
       '-vn',                          // No video
+    ];
+
+    // Add silence trimming filter for beginning of audio
+    if (CONFIG.trimStartSilence) {
+      args.push('-af', `silenceremove=start_periods=1:start_duration=0:start_threshold=${CONFIG.silenceThreshold}`);
+    }
+
+    args.push(
       '-c:a', CONFIG.codec,
       '-profile:a', CONFIG.profile,   // HE-AAC profile
       '-ac', CONFIG.channels.toString(),
       '-ar', CONFIG.sampleRate.toString(),
       '-b:a', CONFIG.bitrate,
-    ];
+    );
 
     // Add faststart for web streaming
     if (CONFIG.faststart) {
@@ -135,6 +152,7 @@ async function processDirectory(inputDir, outputDir) {
   console.log(`  Sample Rate: ${CONFIG.sampleRate} Hz`);
   console.log(`  Format: ${CONFIG.format}`);
   console.log(`  Faststart: ${CONFIG.faststart ? 'Yes (optimized for web)' : 'No'}`);
+  console.log(`  Trim start silence: ${CONFIG.trimStartSilence ? `Yes (threshold: ${CONFIG.silenceThreshold})` : 'No'}`);
   console.log('');
 
   let totalOriginalSize = 0;
@@ -218,6 +236,7 @@ async function main() {
     console.log('  - Mono audio');
     console.log('  - 22050 Hz sample rate');
     console.log('  - Faststart enabled for web streaming');
+    console.log('  - Trims silence from beginning of audio');
     console.log('  - Output format: .m4a');
     process.exit(1);
   }
