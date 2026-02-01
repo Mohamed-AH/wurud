@@ -430,12 +430,32 @@
 
   /* Responsive */
   @media (max-width: 768px) {
+    .search-hero {
+      min-height: 200px;
+      padding: var(--space-lg) var(--space-md);
+    }
+
     .search-hero-quote {
-      font-size: 18px;
+      font-size: 20px;
+      margin-bottom: 20px;
+      padding: 0 8px;
+      word-wrap: break-word;
+      overflow-wrap: break-word;
+      line-height: 1.6;
+    }
+
+    .search-hero::before {
+      font-size: 100px;
     }
 
     .search-container {
       flex-direction: column;
+      padding: 0 8px;
+    }
+
+    .search-input {
+      font-size: 16px;
+      padding: 14px 16px;
     }
 
     .series-meta {

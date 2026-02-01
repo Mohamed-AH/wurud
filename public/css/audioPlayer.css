@@ -93,6 +93,7 @@
   cursor: pointer;
   position: relative;
   overflow: hidden;
+  touch-action: none; /* Prevent scroll on touch */
 }
 
 .progress-bar {
@@ -174,6 +175,54 @@
 
 .control-icon {
   line-height: 0;
+}
+
+/* Skip buttons with 15s indicator */
+.skip-btn {
+  width: 44px;
+  height: 44px;
+  position: relative;
+}
+
+.skip-icon {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  line-height: 1;
+}
+
+.skip-icon svg {
+  width: 18px;
+  height: 18px;
+}
+
+.skip-seconds {
+  font-size: 9px;
+  font-weight: 700;
+  margin-top: -2px;
+}
+
+/* Download button - polished design */
+.download-btn {
+  text-decoration: none;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(193, 154, 107, 0.15);
+}
+
+.download-btn svg {
+  width: 18px;
+  height: 18px;
+}
+
+.download-btn:hover {
+  background: #C19A6B;
+}
+
+.download-btn:hover svg {
+  stroke: #2C1810;
 }
 
 /* Right: Additional Controls */
@@ -337,6 +386,21 @@
     width: 44px;
     height: 44px;
     font-size: 16px;
+  }
+
+  /* Skip buttons on mobile */
+  .skip-btn {
+    width: 40px;
+    height: 40px;
+  }
+
+  .skip-icon svg {
+    width: 16px;
+    height: 16px;
+  }
+
+  .skip-seconds {
+    font-size: 8px;
   }
 
   .volume-control {
