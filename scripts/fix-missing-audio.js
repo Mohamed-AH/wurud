@@ -62,10 +62,13 @@ async function main() {
       if (lecture.lectureNumber) {
         console.log(`   Lecture #: ${lecture.lectureNumber}`);
       }
+      // Show expected filename from Excel import (key for matching!)
+      if (lecture.metadata && lecture.metadata.excelFilename) {
+        console.log(`   📁 Expected file: ${lecture.metadata.excelFilename}`);
+      }
       if (lecture.dateRecordedHijri) {
         console.log(`   Date: ${lecture.dateRecordedHijri}`);
       }
-      console.log(`   Created: ${lecture.createdAt ? new Date(lecture.createdAt).toLocaleDateString() : 'N/A'}`);
     });
   }
 
@@ -142,31 +145,66 @@ async function main() {
       console.log(`\nAvailable unassigned files: ${availableFiles.length}`);
 
       if (availableFiles.length > 0) {
-        console.log('\nSuggested matches based on naming patterns:');
-        console.log('(You can manually assign these in the admin panel)\n');
+        console.log('\nMatching using metadata.excelFilename (same as bulk-upload page):');
+        console.log('(You can use /admin/bulk-upload to upload matched files)\n');
+
+        let matchedCount = 0;
+        let unmatchedCount = 0;
 
         lecturesWithoutAudio.forEach((lecture, i) => {
           console.log(`${i + 1}. "${lecture.titleArabic}"`);
 
-          // Try to find potential matches based on title keywords or date
-          const titleWords = lecture.titleArabic.split(/[\s\-_]+/).filter(w => w.length > 2);
-
-          // Look for files that might match
-          const potentialMatches = availableFiles.filter(file => {
-            const fileLower = file.toLowerCase();
-            // Check if file contains any significant word from title
-            return titleWords.some(word => fileLower.includes(word.toLowerCase()));
-          }).slice(0, 3);
-
-          if (potentialMatches.length > 0) {
-            console.log('   Potential matches:');
-            potentialMatches.forEach(m => console.log(`     - ${m}`));
-          } else {
-            console.log('   No automatic match found');
-            console.log(`   Available files to choose from: ${availableFiles.slice(0, 3).join(', ')}${availableFiles.length > 3 ? '...' : ''}`);
+          // First: Try exact match with metadata.excelFilename (like bulk-upload page)
+          let match = null;
+          if (lecture.metadata && lecture.metadata.excelFilename) {
+            const excelFilename = lecture.metadata.excelFilename.toLowerCase().replace(/\.(mp3|m4a|wav|ogg|flac)$/i, '');
+            match = availableFiles.find(file => {
+              const cleanFile = file.toLowerCase().replace(/\.(mp3|m4a|wav|ogg|flac)$/i, '');
+              return cleanFile === excelFilename;
+            });
+            if (match) {
+              console.log(`   ✅ EXACT MATCH: ${match}`);
+              console.log(`      (matches metadata.excelFilename: ${lecture.metadata.excelFilename})`);
+              matchedCount++;
+              return;
+            }
           }
-          console.log('');
+
+          // Second: Try fuzzy match against title (like bulk-upload page)
+          const cleanTitle = (lecture.titleArabic || '').toLowerCase().replace(/[^a-z0-9\u0600-\u06FF\s]/gi, '');
+          const titleWords = cleanTitle.split(/\s+/).filter(w => w.length > 3);
+
+          let bestMatch = null;
+          let bestScore = 0;
+
+          availableFiles.forEach(file => {
+            const cleanFile = file.toLowerCase().replace(/[^a-z0-9\u0600-\u06FF\s]/gi, '');
+            let score = 0;
+            titleWords.forEach(word => {
+              if (cleanFile.includes(word)) {
+                score += word.length;
+              }
+            });
+            if (score > bestScore) {
+              bestScore = score;
+              bestMatch = file;
+            }
+          });
+
+          if (bestScore > 10) {
+            console.log(`   🔶 FUZZY MATCH: ${bestMatch} (score: ${bestScore})`);
+            matchedCount++;
+          } else {
+            console.log(`   ❌ No match found`);
+            if (lecture.metadata && lecture.metadata.excelFilename) {
+              console.log(`      Expected file: ${lecture.metadata.excelFilename}`);
+            }
+            unmatchedCount++;
+          }
         });
+
+        console.log('\n' + '-'.repeat(40));
+        console.log(`Summary: ${matchedCount} matched, ${unmatchedCount} unmatched`);
       }
     } catch (error) {
       console.log('\n⚠️  Could not match files:', error.message);
@@ -180,24 +218,26 @@ async function main() {
   console.log(`
 To assign audio files to these lectures:
 
-Option 1: Via Admin Panel
+Option 1: Bulk Upload Page (Recommended)
+  1. Go to /admin/bulk-upload
+  2. Drag & drop audio files
+  3. System auto-matches using metadata.excelFilename
+  4. Click "Upload All Matched Files"
+
+Option 2: Via Admin Panel (Single lecture)
   1. Go to /admin/lectures
-  2. Click "Edit" on each lecture
-  3. Set the "audioFileName" field to the OCI file name
+  2. Click "Edit" on the lecture
+  3. Set the "audioFileName" to the OCI file name
   4. Save
 
-Option 2: Via MongoDB directly
+Option 3: Via MongoDB directly
   db.lectures.updateOne(
     { _id: ObjectId("LECTURE_ID") },
     { $set: {
         audioFileName: "filename.m4a",
-        audioUrl: "https://objectstorage.me-jeddah-1.oraclecloud.com/n/axnhmvvtw4ep/b/wurud-audio/o/filename.m4a"
+        audioUrl: "https://objectstorage.me-jeddah-1.oraclecloud.com/n/NAMESPACE/b/BUCKET/o/filename.m4a"
     }}
   )
-
-Option 3: Run upload script with correct filenames
-  Rename your audio files to match the expected pattern, then run:
-  npm run audio:upload /path/to/files -- --update-db
 `);
 
   await mongoose.disconnect();
