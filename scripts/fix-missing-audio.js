@@ -79,14 +79,20 @@ async function main() {
       const { listObjects } = require('../utils/ociStorage');
       const ociFiles = await listObjects('', 500);
 
-      // Get all assigned audioFileNames
+      // Get all assigned audioFileNames (filter out any null/undefined values)
       const assignedFiles = await Lecture.distinct('audioFileName', {
         audioFileName: { $exists: true, $ne: null, $ne: '' }
       });
-      const assignedSet = new Set(assignedFiles.map(f => f.toLowerCase()));
+      const assignedSet = new Set(
+        assignedFiles
+          .filter(f => f != null && typeof f === 'string')
+          .map(f => f.toLowerCase())
+      );
 
-      // Find unassigned OCI files
-      const unassignedOci = ociFiles.filter(f => !assignedSet.has(f.name.toLowerCase()));
+      // Find unassigned OCI files (filter out any with null names)
+      const unassignedOci = ociFiles.filter(f =>
+        f && f.name && typeof f.name === 'string' && !assignedSet.has(f.name.toLowerCase())
+      );
 
       console.log(`\nTotal files in OCI: ${ociFiles.length}`);
       console.log(`Assigned to lectures: ${assignedFiles.length}`);
@@ -115,13 +121,20 @@ async function main() {
     try {
       const { listObjects } = require('../utils/ociStorage');
       const ociFiles = await listObjects('', 500);
-      const ociFileNames = ociFiles.map(f => f.name);
+      // Filter out any files with null/undefined names
+      const ociFileNames = ociFiles
+        .filter(f => f && f.name && typeof f.name === 'string')
+        .map(f => f.name);
 
-      // Get assigned files to exclude them
+      // Get assigned files to exclude them (filter out null values)
       const assignedFiles = await Lecture.distinct('audioFileName', {
         audioFileName: { $exists: true, $ne: null, $ne: '' }
       });
-      const assignedSet = new Set(assignedFiles.map(f => f.toLowerCase()));
+      const assignedSet = new Set(
+        assignedFiles
+          .filter(f => f != null && typeof f === 'string')
+          .map(f => f.toLowerCase())
+      );
 
       // Available files (not assigned)
       const availableFiles = ociFileNames.filter(f => !assignedSet.has(f.toLowerCase()));
