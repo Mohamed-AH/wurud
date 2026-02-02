@@ -369,4 +369,118 @@ router.get('/series/:id', async (req, res) => {
   }
 });
 
+// @route   GET /sitemap.xml
+// @desc    XML Sitemap for SEO
+// @access  Public
+router.get('/sitemap.xml', async (req, res) => {
+  try {
+    const baseUrl = 'https://rasmihassan.com';
+
+    // Get all published lectures
+    const lectures = await Lecture.find({ published: true })
+      .select('_id updatedAt')
+      .lean();
+
+    // Get all series
+    const series = await Series.find()
+      .select('_id updatedAt')
+      .lean();
+
+    // Get all sheikhs
+    const sheikhs = await Sheikh.find()
+      .select('_id updatedAt')
+      .lean();
+
+    let xml = `<?xml version="1.0" encoding="UTF-8"?>
+<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
+  <!-- Homepage -->
+  <url>
+    <loc>${baseUrl}/</loc>
+    <changefreq>daily</changefreq>
+    <priority>1.0</priority>
+  </url>
+  <url>
+    <loc>${baseUrl}/browse</loc>
+    <changefreq>daily</changefreq>
+    <priority>0.9</priority>
+  </url>
+  <url>
+    <loc>${baseUrl}/sheikhs</loc>
+    <changefreq>weekly</changefreq>
+    <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>${baseUrl}/series</loc>
+    <changefreq>weekly</changefreq>
+    <priority>0.8</priority>
+  </url>
+`;
+
+    // Add lectures
+    for (const lecture of lectures) {
+      const lastmod = lecture.updatedAt ? new Date(lecture.updatedAt).toISOString().split('T')[0] : '';
+      xml += `  <url>
+    <loc>${baseUrl}/lectures/${lecture._id}</loc>
+    ${lastmod ? `<lastmod>${lastmod}</lastmod>` : ''}
+    <changefreq>monthly</changefreq>
+    <priority>0.7</priority>
+  </url>
+`;
+    }
+
+    // Add series
+    for (const s of series) {
+      const lastmod = s.updatedAt ? new Date(s.updatedAt).toISOString().split('T')[0] : '';
+      xml += `  <url>
+    <loc>${baseUrl}/series/${s._id}</loc>
+    ${lastmod ? `<lastmod>${lastmod}</lastmod>` : ''}
+    <changefreq>weekly</changefreq>
+    <priority>0.8</priority>
+  </url>
+`;
+    }
+
+    // Add sheikhs
+    for (const sheikh of sheikhs) {
+      const lastmod = sheikh.updatedAt ? new Date(sheikh.updatedAt).toISOString().split('T')[0] : '';
+      xml += `  <url>
+    <loc>${baseUrl}/sheikhs/${sheikh._id}</loc>
+    ${lastmod ? `<lastmod>${lastmod}</lastmod>` : ''}
+    <changefreq>monthly</changefreq>
+    <priority>0.8</priority>
+  </url>
+`;
+    }
+
+    xml += `</urlset>`;
+
+    res.set('Content-Type', 'application/xml');
+    res.send(xml);
+  } catch (error) {
+    console.error('Sitemap generation error:', error);
+    res.status(500).send('Error generating sitemap');
+  }
+});
+
+// @route   GET /robots.txt
+// @desc    Robots.txt for SEO
+// @access  Public
+router.get('/robots.txt', (req, res) => {
+  const robotsTxt = `# Robots.txt for rasmihassan.com
+User-agent: *
+Allow: /
+
+# Sitemap
+Sitemap: https://rasmihassan.com/sitemap.xml
+
+# Disallow admin and API routes
+Disallow: /admin/
+Disallow: /api/
+Disallow: /auth/
+`;
+
+  res.set('Content-Type', 'text/plain');
+  res.send(robotsTxt);
+});
+
 module.exports = router;
