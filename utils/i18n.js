@@ -218,6 +218,12 @@ function i18nMiddleware(req, res, next) {
   // Inject category translation function
   res.locals.translateCategory = (category) => translateCategory(category, validLocale);
 
+  // Inject Hijri date formatting function
+  res.locals.formatHijriDate = (dateStr) => formatHijriDate(dateStr, validLocale);
+
+  // Inject Arabic numerals function
+  res.locals.toArabicNumerals = toArabicNumerals;
+
   // Inject all translations for client-side use
   res.locals.translations = translations[validLocale];
 
@@ -248,10 +254,65 @@ function translateCategory(category, locale) {
   return category;
 }
 
+/**
+ * Convert Western numerals to Arabic-Indic numerals
+ * @param {string|number} num - Number to convert
+ * @returns {string} Arabic-Indic numeral string
+ */
+function toArabicNumerals(num) {
+  if (num === null || num === undefined) return '';
+  const arabicNumerals = ['٠', '١', '٢', '٣', '٤', '٥', '٦', '٧', '٨', '٩'];
+  return String(num).replace(/[0-9]/g, (d) => arabicNumerals[parseInt(d)]);
+}
+
+/**
+ * Format Hijri date for display
+ * @param {string} dateStr - Date string in format "DD/MM/YYYY" or similar
+ * @param {string} locale - 'ar' or 'en'
+ * @returns {string} Formatted date string
+ */
+function formatHijriDate(dateStr, locale) {
+  if (!dateStr) return '';
+
+  // Try to parse different date formats
+  let day, month, year;
+
+  // Handle "DD/MM/YYYY" format
+  const slashMatch = dateStr.match(/(\d{1,2})\/(\d{1,2})\/(\d{4})/);
+  if (slashMatch) {
+    day = slashMatch[1];
+    month = slashMatch[2];
+    year = slashMatch[3];
+  }
+
+  // Handle "YYYY-MM-DD" format
+  const dashMatch = dateStr.match(/(\d{4})-(\d{1,2})-(\d{1,2})/);
+  if (dashMatch) {
+    year = dashMatch[1];
+    month = dashMatch[2];
+    day = dashMatch[3];
+  }
+
+  if (!day || !month || !year) {
+    // Return original if can't parse
+    return locale === 'ar' ? toArabicNumerals(dateStr) : dateStr;
+  }
+
+  if (locale === 'ar') {
+    // Arabic format: ٢٨ / ٧ / ١٤٤٧
+    return `${toArabicNumerals(day)} / ${toArabicNumerals(month)} / ${toArabicNumerals(year)}`;
+  } else {
+    // English format: 28/7/1447
+    return `${day}/${month}/${year}`;
+  }
+}
+
 module.exports = {
   t,
   i18nMiddleware,
   translations,
   translateCategory,
-  categoryMap
+  categoryMap,
+  toArabicNumerals,
+  formatHijriDate
 };
