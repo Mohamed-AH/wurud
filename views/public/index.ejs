@@ -350,13 +350,19 @@
     font-size: 14px;
     color: #8B7355;
     display: flex;
-    gap: 16px;
+    flex-wrap: wrap;
+    gap: 8px 16px;
     align-items: center;
   }
 
   .episode-meta span:not(:last-child)::after {
     content: '•';
     margin-left: 16px;
+  }
+
+  .hijri-date {
+    color: #5C4033;
+    font-weight: 500;
   }
 
   .episode-actions {
@@ -461,6 +467,19 @@
     .series-meta {
       flex-direction: column;
       align-items: flex-start;
+    }
+
+    .episode-meta {
+      font-size: 13px;
+      gap: 6px 12px;
+    }
+
+    .episode-meta span:not(:last-child)::after {
+      margin-left: 12px;
+    }
+
+    .hijri-date {
+      font-size: 12px;
     }
 
     .episode-actions {
@@ -740,13 +759,16 @@
                 <% if (lecture.location) { %>
                   <span><%= lecture.location %></span>
                 <% } %>
+                <% if (lecture.dateRecordedHijri) { %>
+                  <span class="hijri-date">📅 <%= formatHijriDate(lecture.dateRecordedHijri) %></span>
+                <% } %>
               </div>
               <div class="episode-actions">
                 <button class="btn-play" onclick="playAudio('<%= lecture._id %>', '<%= lecture.titleArabic.replace(/'/g, "\\'") %>', '<%= series.sheikh ? series.sheikh.nameArabic.replace(/'/g, "\\'") : "" %>')">
-                  ▶ تشغيل
+                  ▶ <%= locale === 'ar' ? 'تشغيل' : 'Play' %>
                 </button>
                 <a href="/download/<%= lecture._id %>" class="btn-download">
-                  ⬇ تحميل
+                  ⬇ <%= locale === 'ar' ? 'تحميل' : 'Download' %>
                 </a>
               </div>
             </div>
@@ -925,14 +947,17 @@
                     <% if (lecture.location) { %>
                       <span><%= lecture.location %></span>
                     <% } %>
+                    <% if (lecture.dateRecordedHijri) { %>
+                      <span class="hijri-date">📅 <%= formatHijriDate(lecture.dateRecordedHijri) %></span>
+                    <% } %>
                   </div>
                   <div class="episode-actions">
                     <% if (lecture.audioFileName) { %>
                       <button class="btn-play" onclick="playAudio('<%= lecture._id %>', '<%= lecture.titleArabic.replace(/'/g, "\\'") %>', '<%= series.sheikh ? series.sheikh.nameArabic.replace(/'/g, "\\'") : "" %>')">
-                        ▶ تشغيل
+                        ▶ <%= locale === 'ar' ? 'تشغيل' : 'Play' %>
                       </button>
                       <a href="/download/<%= lecture._id %>" class="btn-download">
-                        ⬇ تحميل
+                        ⬇ <%= locale === 'ar' ? 'تحميل' : 'Download' %>
                       </a>
                     <% } %>
                   </div>
@@ -946,7 +971,7 @@
     <% } else { %>
       <div class="empty-state">
         <div class="empty-icon">🕌</div>
-        <h3 class="empty-title">لا توجد خطب</h3>
+        <h3 class="empty-title"><%= locale === 'ar' ? 'لا توجد خطب' : 'No Khutbahs' %></h3>
       </div>
     <% } %>
   </div>
