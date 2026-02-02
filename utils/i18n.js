@@ -212,6 +212,9 @@ function i18nMiddleware(req, res, next) {
   res.locals.locale = validLocale;
   res.locals.isRTL = validLocale === 'ar';
 
+  // Set current path for canonical URLs (without query params)
+  res.locals.currentPath = req.path;
+
   // Inject translation function
   res.locals.t = (key) => t(validLocale, key);
 

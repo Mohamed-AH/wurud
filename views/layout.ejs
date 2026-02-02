@@ -4,6 +4,69 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title><%= title %> - <%= locale === 'ar' ? 'موقع الشيخ حسن الدغريري' : 'Sheikh Hasan Dhaghriri' %></title>
+
+  <!-- SEO Meta Tags -->
+  <meta name="description" content="<%= locale === 'ar' ? 'الموقع الرسمي للشيخ حسن بن محمد الدغريري - تلميذ الشيخ أحمد النجمي والشيخ زيد المدخلي. دروس ومحاضرات في العقيدة والفقه والتفسير من جامع الورود بجدة. أكثر من 30 عاماً من الأرشفة والتعليم.' : 'Official site of Sheikh Hasan bin Mohammed Dhaghriri - student of Sheikh Ahmad al-Najmi and Sheikh Zaid al-Madkhali. Islamic lectures on Aqeedah, Fiqh, and Tafsir from Masjid al-Wurud in Jeddah.' %>">
+  <meta name="keywords" content="<%= locale === 'ar' ? 'الشيخ حسن الدغريري, حسن بن محمد الدغريري, تلميذ الشيخ أحمد النجمي, جامع الورود جدة, المنهج السلفي, علماء جازان, صامطة, الدغارير, شرح كتاب التوحيد, شرح عمدة الأحكام, دروس العقيدة, محاضرات إسلامية' : 'Sheikh Hasan Dhaghriri, Islamic lectures, Salafi scholars, Jeddah, Saudi Arabia, Aqeedah, Fiqh, Tafsir' %>">
+  <meta name="author" content="<%= locale === 'ar' ? 'الشيخ حسن بن محمد الدغريري' : 'Sheikh Hasan bin Mohammed Dhaghriri' %>">
+  <meta name="robots" content="index, follow">
+  <link rel="canonical" href="https://rasmihassan.com<%= typeof currentPath !== 'undefined' ? currentPath : '' %>">
+
+  <!-- Open Graph / Facebook -->
+  <meta property="og:type" content="website">
+  <meta property="og:url" content="https://rasmihassan.com<%= typeof currentPath !== 'undefined' ? currentPath : '' %>">
+  <meta property="og:title" content="<%= title %> - <%= locale === 'ar' ? 'موقع الشيخ حسن الدغريري' : 'Sheikh Hasan Dhaghriri' %>">
+  <meta property="og:description" content="<%= locale === 'ar' ? 'الموقع الرسمي للشيخ حسن بن محمد الدغريري - دروس ومحاضرات في العقيدة والفقه من جامع الورود بجدة' : 'Official site of Sheikh Hasan Dhaghriri - Islamic lectures from Jeddah' %>">
+  <meta property="og:locale" content="<%= locale === 'ar' ? 'ar_SA' : 'en_US' %>">
+  <meta property="og:site_name" content="<%= locale === 'ar' ? 'موقع الشيخ حسن الدغريري' : 'Sheikh Hasan Dhaghriri' %>">
+
+  <!-- Twitter -->
+  <meta name="twitter:card" content="summary">
+  <meta name="twitter:title" content="<%= title %> - <%= locale === 'ar' ? 'موقع الشيخ حسن الدغريري' : 'Sheikh Hasan Dhaghriri' %>">
+  <meta name="twitter:description" content="<%= locale === 'ar' ? 'الموقع الرسمي للشيخ حسن بن محمد الدغريري - دروس ومحاضرات إسلامية' : 'Official site of Sheikh Hasan Dhaghriri - Islamic lectures' %>">
+
+  <!-- JSON-LD Structured Data -->
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@graph": [
+      {
+        "@type": "WebSite",
+        "@id": "https://rasmihassan.com/#website",
+        "url": "https://rasmihassan.com",
+        "name": "<%= locale === 'ar' ? 'موقع الشيخ حسن الدغريري' : 'Sheikh Hasan Dhaghriri' %>",
+        "description": "<%= locale === 'ar' ? 'الموقع الرسمي للشيخ حسن بن محمد الدغريري' : 'Official website of Sheikh Hasan Dhaghriri' %>",
+        "inLanguage": ["ar", "en"],
+        "publisher": {
+          "@id": "https://rasmihassan.com/#person"
+        }
+      },
+      {
+        "@type": "Person",
+        "@id": "https://rasmihassan.com/#person",
+        "name": "<%= locale === 'ar' ? 'الشيخ حسن بن محمد الدغريري' : 'Sheikh Hasan bin Mohammed Dhaghriri' %>",
+        "alternateName": ["حسن الدغريري", "الشيخ حسن الدغيري", "Hasan Dhaghriri"],
+        "description": "<%= locale === 'ar' ? 'عالم وداعية سلفي، تلميذ الشيخ أحمد النجمي والشيخ زيد المدخلي، يلقي دروسه في جامع الورود بجدة' : 'Islamic scholar and preacher, student of Sheikh Ahmad al-Najmi and Sheikh Zaid al-Madkhali' %>",
+        "url": "https://rasmihassan.com",
+        "sameAs": [
+          "https://t.me/daririhasan"
+        ],
+        "jobTitle": "<%= locale === 'ar' ? 'عالم وداعية' : 'Islamic Scholar' %>",
+        "worksFor": {
+          "@type": "Mosque",
+          "name": "<%= locale === 'ar' ? 'جامع الورود' : 'Masjid Al-Wurud' %>",
+          "address": {
+            "@type": "PostalAddress",
+            "addressLocality": "<%= locale === 'ar' ? 'جدة' : 'Jeddah' %>",
+            "addressCountry": "SA"
+          }
+        },
+        "knowsAbout": ["العقيدة", "الفقه", "التفسير", "الحديث", "Aqeedah", "Fiqh", "Tafsir", "Hadith"]
+      }
+    ]
+  }
+  </script>
+
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Scheherazade+New:wght@400;500;600;700&family=Noto+Naskh+Arabic:wght@400;500;600;700&display=swap" rel="stylesheet">
