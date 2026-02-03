@@ -1,9 +1,67 @@
 const fs = require('fs');
 const path = require('path');
+const https = require('https');
 const { Lecture } = require('../models');
 const { getFilePath, fileExists } = require('../utils/fileManager');
 const { getMimeType, handleRangeRequest } = require('../middleware/streamHandler');
 const { getPublicUrl, isConfigured: isOciConfigured } = require('../utils/ociStorage');
+
+/**
+ * Generate a clean download filename from lecture metadata
+ */
+const generateDownloadFilename = (lecture, ext) => {
+  let filename = '';
+
+  if (lecture.seriesId && lecture.lectureNumber) {
+    // Series lecture: "SeriesTitle - Part X - LectureTitle"
+    const seriesTitle = lecture.seriesId.titleArabic || lecture.seriesId.titleEnglish;
+    const lectureTitle = lecture.titleArabic || lecture.titleEnglish;
+    filename = `${seriesTitle} - الدرس ${lecture.lectureNumber} - ${lectureTitle}`;
+  } else {
+    // Standalone lecture: "SheikhName - LectureTitle"
+    const sheikhName = lecture.sheikhId?.nameArabic || lecture.sheikhId?.nameEnglish || 'Unknown';
+    const lectureTitle = lecture.titleArabic || lecture.titleEnglish;
+    filename = `${sheikhName} - ${lectureTitle}`;
+  }
+
+  // Sanitize filename
+  return filename
+    .replace(/[<>:"/\\|?*]/g, '-')
+    .replace(/\s+/g, ' ')
+    .trim() + ext;
+};
+
+/**
+ * Proxy download from OCI with proper Content-Disposition header
+ */
+const proxyOciDownload = (ociUrl, res, filename, mimeType) => {
+  return new Promise((resolve, reject) => {
+    https.get(ociUrl, (ociResponse) => {
+      if (ociResponse.statusCode === 200) {
+        res.set({
+          'Content-Type': mimeType || 'audio/mp4',
+          'Content-Disposition': `attachment; filename*=UTF-8''${encodeURIComponent(filename)}`,
+          'Content-Length': ociResponse.headers['content-length'],
+          'Cache-Control': 'public, max-age=31536000'
+        });
+
+        ociResponse.pipe(res);
+        ociResponse.on('end', resolve);
+        ociResponse.on('error', reject);
+      } else if (ociResponse.statusCode >= 300 && ociResponse.statusCode < 400) {
+        // Handle redirect
+        const redirectUrl = ociResponse.headers.location;
+        if (redirectUrl) {
+          proxyOciDownload(redirectUrl, res, filename, mimeType).then(resolve).catch(reject);
+        } else {
+          reject(new Error('Redirect without location header'));
+        }
+      } else {
+        reject(new Error(`OCI returned status ${ociResponse.statusCode}`));
+      }
+    }).on('error', reject);
+  });
+};
 
 /**
  * Stream audio file with Range request support
@@ -95,8 +153,8 @@ const streamAudio = async (req, res) => {
 };
 
 /**
- * Download audio file
- * Supports both local files and OCI Object Storage
+ * Download audio file with forced "Save As" dialog
+ * Proxies OCI files to set Content-Disposition: attachment header
  * @route GET /download/:id
  */
 const downloadAudio = async (req, res) => {
@@ -120,15 +178,40 @@ const downloadAudio = async (req, res) => {
       console.error('Error incrementing download count:', err);
     });
 
-    // Check if lecture has an OCI URL - redirect for download
+    // Determine file extension and generate filename
+    const ext = lecture.audioFileName
+      ? path.extname(lecture.audioFileName)
+      : (lecture.audioUrl?.includes('.m4a') ? '.m4a' : '.mp3');
+    const downloadFilename = generateDownloadFilename(lecture, ext);
+    const mimeType = getMimeType(lecture.audioFileName || 'audio.m4a');
+
+    // Check if lecture has an OCI URL - proxy the download
     if (lecture.audioUrl && lecture.audioUrl.includes('objectstorage')) {
-      return res.redirect(lecture.audioUrl);
+      try {
+        await proxyOciDownload(lecture.audioUrl, res, downloadFilename, mimeType);
+        return;
+      } catch (err) {
+        console.error('OCI proxy download error:', err);
+        return res.status(500).json({
+          success: false,
+          message: 'Download failed from cloud storage'
+        });
+      }
     }
 
-    // Check if OCI is configured - redirect to OCI
+    // Check if OCI is configured - proxy the download
     if (isOciConfigured() && lecture.audioFileName) {
       const ociUrl = getPublicUrl(lecture.audioFileName);
-      return res.redirect(ociUrl);
+      try {
+        await proxyOciDownload(ociUrl, res, downloadFilename, mimeType);
+        return;
+      } catch (err) {
+        console.error('OCI proxy download error:', err);
+        return res.status(500).json({
+          success: false,
+          message: 'Download failed from cloud storage'
+        });
+      }
     }
 
     // Fallback to local file download
@@ -142,35 +225,10 @@ const downloadAudio = async (req, res) => {
       });
     }
 
-    // Create a meaningful filename for download
-    const ext = path.extname(lecture.audioFileName);
-    let downloadFilename = '';
-
-    if (lecture.seriesId && lecture.lectureNumber) {
-      // Series lecture: "SeriesTitle - Part X - LectureTitle.mp3"
-      const seriesTitle = lecture.seriesId.titleEnglish || lecture.seriesId.titleArabic;
-      const lectureTitle = lecture.titleEnglish || lecture.titleArabic;
-      downloadFilename = `${seriesTitle} - Part ${lecture.lectureNumber} - ${lectureTitle}${ext}`;
-    } else {
-      // Standalone lecture: "SheikhName - LectureTitle.mp3"
-      const sheikhName = lecture.sheikhId?.nameEnglish || lecture.sheikhId?.nameArabic || 'Unknown';
-      const lectureTitle = lecture.titleEnglish || lecture.titleArabic;
-      downloadFilename = `${sheikhName} - ${lectureTitle}${ext}`;
-    }
-
-    // Sanitize filename for download
-    downloadFilename = downloadFilename
-      .replace(/[<>:"/\\|?*]/g, '-') // Remove invalid chars
-      .replace(/\s+/g, ' ') // Normalize spaces
-      .trim();
-
-    // Get MIME type
-    const mimeType = getMimeType(lecture.audioFileName);
-
     // Set headers for download
     res.set({
       'Content-Type': mimeType,
-      'Content-Disposition': `attachment; filename="${encodeURIComponent(downloadFilename)}"`,
+      'Content-Disposition': `attachment; filename*=UTF-8''${encodeURIComponent(downloadFilename)}`,
       'Content-Length': lecture.fileSize,
       'Cache-Control': 'public, max-age=31536000'
     });
