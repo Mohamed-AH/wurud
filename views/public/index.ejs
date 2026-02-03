@@ -679,14 +679,6 @@
       }
 
       const hijriDate = latestLecture?.dateRecordedHijri || '';
-
-      console.log(`[SERIES DEBUG] ${series.titleArabic}:`);
-      console.log(`  - Lecture count: ${series.lectures.length}`);
-      console.log(`  - Latest lecture:`, latestLecture?.titleArabic || 'None');
-      console.log(`  - Latest dateRecorded:`, latestLecture?.dateRecorded);
-      console.log(`  - Latest dateRecordedHijri:`, latestLecture?.dateRecordedHijri);
-      console.log(`  - Computed latestDate (timestamp): ${latestDate}`);
-      console.log(`  - Computed hijriDate: ${hijriDate}`);
     %>
       <div class="series-card" data-category="<%= series.category %>" data-date="<%= latestDate %>" data-hijri="<%= hijriDate %>">
         <div class="series-header" onclick="toggleSeries('<%= series._id %>')">
@@ -807,14 +799,6 @@
         }
 
         const hijriDate = lecture.dateRecordedHijri || '';
-
-        console.log(`[LECTURE DEBUG] ${lecture.titleArabic}:`);
-        console.log(`  - dateRecorded:`, lecture.dateRecorded);
-        console.log(`  - createdAt:`, lecture.createdAt);
-        console.log(`  - dateRecordedHijri:`, lecture.dateRecordedHijri);
-        console.log(`  - Computed lectureDate (timestamp): ${lectureDate}`);
-        console.log(`  - Using:`, lecture.dateRecorded ? 'dateRecorded' : (lecture.createdAt ? 'createdAt' : 'Date.now()'));
-        console.log(`  - Computed hijriDate: ${hijriDate}`);
       %>
         <div class="series-card" data-date="<%= lectureDate %>" data-hijri="<%= hijriDate %>">
           <div class="series-header">
@@ -893,14 +877,6 @@
         }
 
         const hijriDate = latestLecture?.dateRecordedHijri || '';
-
-        console.log(`[KHUTBA DEBUG] ${series.titleArabic}:`);
-        console.log(`  - Lecture count: ${series.lectures.length}`);
-        console.log(`  - Latest lecture:`, latestLecture?.titleArabic || 'None');
-        console.log(`  - Latest dateRecorded:`, latestLecture?.dateRecorded);
-        console.log(`  - Latest dateRecordedHijri:`, latestLecture?.dateRecordedHijri);
-        console.log(`  - Computed latestDate (timestamp): ${latestDate}`);
-        console.log(`  - Computed hijriDate: ${hijriDate}`);
       %>
         <div class="series-card" data-category="<%= series.category %>" data-date="<%= latestDate %>" data-hijri="<%= hijriDate %>">
           <div class="series-header" onclick="toggleKhutba('<%= series._id %>')">
@@ -980,8 +956,6 @@
 <script>
   // Switch between tabs
   function switchTab(tabName) {
-    console.log('🔄 Switching to tab:', tabName);
-
     // Hide all tab contents
     document.querySelectorAll('.tab-content').forEach(content => {
       content.classList.remove('active');
@@ -996,10 +970,6 @@
     const contentElement = document.getElementById('content-' + tabName);
     if (contentElement) {
       contentElement.classList.add('active');
-      console.log('  ✅ Tab content activated:', contentElement.id);
-      console.log('  Tab content display:', window.getComputedStyle(contentElement).display);
-    } else {
-      console.error('  ❌ Could not find tab content:', 'content-' + tabName);
     }
 
     // Activate selected tab button
@@ -1014,63 +984,34 @@
 
   // Toggle series expansion
   function toggleSeries(seriesId) {
-    console.log('🔄 Toggling series:', seriesId);
     const episodesList = document.getElementById('episodes-' + seriesId);
     const btn = document.getElementById('btn-' + seriesId);
 
-    console.log('  Episodes list found:', episodesList ? 'YES' : 'NO');
-    console.log('  Button found:', btn ? 'YES' : 'NO');
-
-    if (!episodesList || !btn) {
-      console.error('❌ Could not find elements for series:', seriesId);
-      return;
-    }
+    if (!episodesList || !btn) return;
 
     episodesList.classList.toggle('show');
     btn.classList.toggle('expanded');
 
     if (episodesList.classList.contains('show')) {
-      console.log('  ✅ Series expanded');
       btn.textContent = 'إخفاء الدروس ▲';
     } else {
-      console.log('  ✅ Series collapsed');
       btn.textContent = 'عرض الدروس ▼';
     }
   }
 
   // Toggle Khutba expansion
   function toggleKhutba(seriesId) {
-    console.log('🔄 Toggling khutba:', seriesId);
-    // Use prefixed IDs to avoid conflicts with Series tab
     const episodesList = document.getElementById('khutba-episodes-' + seriesId);
     const btn = document.getElementById('khutba-btn-' + seriesId);
 
-    console.log('  Episodes list found:', episodesList ? 'YES' : 'NO');
-    console.log('  Button found:', btn ? 'YES' : 'NO');
-
-    if (!episodesList || !btn) {
-      console.error('❌ Could not find elements for khutba:', seriesId);
-      console.error('  episodesList:', episodesList);
-      console.error('  btn:', btn);
-      return;
-    }
-
-    console.log('  Before toggle - episodesList classes:', episodesList.className);
-    console.log('  Before toggle - computed display:', window.getComputedStyle(episodesList).display);
+    if (!episodesList || !btn) return;
 
     episodesList.classList.toggle('show');
     btn.classList.toggle('expanded');
 
-    console.log('  After toggle - episodesList classes:', episodesList.className);
-    console.log('  After toggle - computed display:', window.getComputedStyle(episodesList).display);
-    console.log('  After toggle - computed visibility:', window.getComputedStyle(episodesList).visibility);
-    console.log('  After toggle - computed opacity:', window.getComputedStyle(episodesList).opacity);
-
     if (episodesList.classList.contains('show')) {
-      console.log('  ✅ Khutba expanded');
       btn.textContent = 'إخفاء الخطب ▲';
     } else {
-      console.log('  ✅ Khutba collapsed');
       btn.textContent = 'عرض الخطب ▼';
     }
   }
