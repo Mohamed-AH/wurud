@@ -12,11 +12,11 @@ A web platform for hosting and streaming ~160 Arabic Islamic lecture audio files
 
 ## 📌 Project State
 
-**Current Phase**: LIVE - SEO & Final Polish ✅
+**Current Phase**: LIVE - Security & Content Updates
 **Last Updated**: 2026-02-03
 **Active Branch**: `claude/fix-homepage-tests-ovChk`
 **Live URL**: https://rasmihassan.com
-**Status**: 🚀 **PRODUCTION LIVE** - Site deployed and accessible
+**Status**: 🚀 **PRODUCTION LIVE** - Google Search Console verified, indexing in progress
 
 ### ✅ SITE IS NOW LIVE
 
@@ -84,12 +84,127 @@ All mobile issues have been fixed:
 - **Render Deployment** - Production on Frankfurt region
 - **Bulk Audio Scripts** - fix-lectures-audio.js, update-two-lectures.js
 
-### 📋 Next Steps
+---
 
-1. **Google Search Console** - Complete verification with HTML tag method
-2. **Monitor Analytics** - Track search impressions and clicks
-3. **Content Updates** - Add new lectures as they become available
-4. **Arabic Slugs** - Future enhancement for SEO-friendly Arabic URLs
+## 📋 ROADMAP (Prioritized To-Do List)
+
+### Priority 1: CRITICAL
+
+#### 1.1 Security Audit ⬜ NOT STARTED
+**Priority**: HIGHEST | **Status**: Pending
+
+- [ ] Review authentication (Google OAuth, session handling)
+- [ ] Check for XSS vulnerabilities in user inputs
+- [ ] Audit file upload validation
+- [ ] Review MongoDB injection prevention
+- [ ] Check admin route protection
+- [ ] Review OCI access controls
+- [ ] Add rate limiting to API endpoints
+- [ ] Implement CSRF protection
+- [ ] Audit environment variable handling
+
+#### 1.2 Content: October to Present ⬜ NOT STARTED
+**Priority**: HIGH | **Status**: Pending
+
+- [ ] Identify all lectures from October 2025 to present
+- [ ] Process audio files (HE-AAC encoding, silence trimming)
+- [ ] Upload to OCI bucket
+- [ ] Add metadata to MongoDB
+- [ ] Verify streaming works
+
+#### 1.3 Content: Online Classes ⬜ NOT STARTED
+**Priority**: HIGH | **Status**: Pending
+
+- [ ] Identify online class recordings
+- [ ] Determine format differences from in-person lectures
+- [ ] Process and upload audio files
+- [ ] Add appropriate metadata/category tagging
+
+---
+
+### Priority 2: HIGH
+
+#### 2.1 Content: Pre-October Archive ⬜ NOT STARTED
+**Priority**: MEDIUM-HIGH | **Status**: Pending
+
+- [ ] Inventory all pre-October lectures
+- [ ] Batch process audio files
+- [ ] Upload to OCI
+- [ ] Import metadata to MongoDB
+
+#### 2.2 Arabic Slugs (SEO URLs) ⬜ NOT STARTED
+**Priority**: MEDIUM-HIGH | **Status**: Pending
+
+- [ ] Add `slug` field to Lecture, Series, Sheikh models
+- [ ] Generate Arabic slugs from titles
+- [ ] Update routes to support both ID and slug lookup
+- [ ] Add redirects from old URLs to new slugs
+- [ ] Update sitemap to use slugs
+- [ ] Update internal links
+
+**Example**: `/lectures/6975bc...` → `/lectures/شرح-كتاب-التوحيد-الدرس-١`
+
+---
+
+### Priority 3: MEDIUM
+
+#### 3.1 Performance Optimizations ⬜ NOT STARTED
+**Priority**: MEDIUM | **Status**: Pending
+
+- [ ] Implement server-side caching
+- [ ] Add lazy loading for lecture cards
+- [ ] Optimize database queries (indexes, projections)
+- [ ] Implement CDN for static assets
+- [ ] Add service worker for offline support
+- [ ] Bundle/minify CSS and JS
+
+#### 3.2 Admin Panel - Arabic Version ⬜ NOT STARTED
+**Priority**: MEDIUM | **Status**: Pending
+
+- [ ] Add RTL layout support to admin pages
+- [ ] Translate admin UI strings
+- [ ] Add language toggle to admin panel
+- [ ] Ensure form inputs work with Arabic text
+
+---
+
+### Priority 4: FUTURE (Major Features)
+
+#### 4.1 Transcript Search with Timestamps ⬜ NOT STARTED
+**Priority**: LOWER | **Status**: Future
+
+**Phase A - Transcription:**
+- [ ] Choose transcription service (Whisper API, etc.)
+- [ ] Process all audio files
+- [ ] Store transcripts with timestamps
+
+**Phase B - Search:**
+- [ ] Implement full-text search
+- [ ] Build search UI with timestamp results
+- [ ] Add "jump to timestamp" in player
+
+**Phase C - Display:**
+- [ ] Show transcript alongside player
+- [ ] Highlight current spoken text
+
+#### 4.2 English Version of Site ⬜ NOT STARTED
+**Priority**: LOWER | **Status**: Future
+
+- [ ] Add English translations for lecture metadata
+- [ ] Consider separate English landing page
+- [ ] Update SEO for English keywords
+
+---
+
+### ✅ COMPLETED
+
+- [x] **Google Search Console** - Verified, indexing in progress
+- [x] **SEO Implementation** - Meta tags, JSON-LD, sitemap, robots.txt
+- [x] **Branding** - Sheikh Hasan Dhaghriri across site
+- [x] **Hijri Date Display** - Arabic numerals
+- [x] **Mobile UI Polish** - All issues fixed
+- [x] **OCI Integration** - Audio streaming working
+- [x] **Production Deployment** - Live at rasmihassan.com
 
 ### 🎨 Active Branch: `claude/new-design-usy2P` (Brown/Gold Scholarly Design)
 
