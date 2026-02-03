@@ -6,12 +6,20 @@ const compression = require('compression');
 const session = require('express-session');
 const cookieParser = require('cookie-parser');
 const expressLayouts = require('express-ejs-layouts');
+const rateLimit = require('express-rate-limit');
 const connectDB = require('./config/database');
 const passport = require('./config/passport');
 const { i18nMiddleware } = require('./utils/i18n');
 
 const app = express();
 const PORT = process.env.PORT || 3000;
+const isProduction = process.env.NODE_ENV === 'production';
+
+// Fail fast if SESSION_SECRET is missing in production
+if (isProduction && !process.env.SESSION_SECRET) {
+  console.error('FATAL: SESSION_SECRET environment variable is required in production');
+  process.exit(1);
+}
 
 // Connect to MongoDB
 connectDB();
@@ -26,8 +34,51 @@ app.set('layout', 'layout');
 
 // Security middleware
 app.use(helmet({
-  contentSecurityPolicy: false, // Will configure properly later
+  contentSecurityPolicy: {
+    directives: {
+      defaultSrc: ["'self'"],
+      scriptSrc: ["'self'", "'unsafe-inline'", "https://accounts.google.com", "https://apis.google.com"],
+      styleSrc: ["'self'", "'unsafe-inline'", "https://fonts.googleapis.com"],
+      fontSrc: ["'self'", "https://fonts.gstatic.com"],
+      imgSrc: ["'self'", "data:", "https:", "blob:"],
+      mediaSrc: ["'self'", "https://objectstorage.me-jeddah-1.oraclecloud.com"],
+      connectSrc: ["'self'", "https://objectstorage.me-jeddah-1.oraclecloud.com"],
+      frameSrc: ["https://accounts.google.com"],
+      objectSrc: ["'none'"],
+      upgradeInsecureRequests: isProduction ? [] : null,
+    },
+  },
+  crossOriginEmbedderPolicy: false, // Required for audio streaming
 }));
+
+// Rate limiting
+const generalLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000, // 15 minutes
+  max: 100, // 100 requests per window per IP
+  message: { error: 'Too many requests, please try again later' },
+  standardHeaders: true,
+  legacyHeaders: false,
+});
+
+const apiLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000, // 15 minutes
+  max: 200, // 200 requests per window for API
+  message: { error: 'Too many API requests, please try again later' },
+  standardHeaders: true,
+  legacyHeaders: false,
+});
+
+const authLimiter = rateLimit({
+  windowMs: 60 * 60 * 1000, // 1 hour
+  max: 10, // 10 login attempts per hour
+  message: { error: 'Too many login attempts, please try again later' },
+  standardHeaders: true,
+  legacyHeaders: false,
+});
+
+// Apply rate limiting
+app.use('/api/', apiLimiter);
+app.use('/auth/', authLimiter);
 
 // Compression middleware
 app.use(compression());
@@ -38,13 +89,15 @@ app.use(express.urlencoded({ extended: true }));
 
 // Session middleware
 app.use(session({
-  secret: process.env.SESSION_SECRET || 'dev-secret-change-in-production',
+  secret: process.env.SESSION_SECRET || (isProduction ? undefined : 'dev-secret-local-only'),
   resave: false,
   saveUninitialized: false,
+  name: 'wurud.sid', // Custom session name (avoid default 'connect.sid')
   cookie: {
     maxAge: 1000 * 60 * 60 * 24 * 7, // 1 week
     httpOnly: true,
-    secure: process.env.NODE_ENV === 'production',
+    secure: isProduction,
+    sameSite: 'lax', // CSRF protection for cookies
   }
 }));
 
