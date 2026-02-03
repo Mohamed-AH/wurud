@@ -5,60 +5,217 @@ A web platform for hosting and streaming ~160 Arabic Islamic lecture audio files
 
 **Core Mission**: Make Islamic knowledge accessible through high-quality audio lectures with an Arabic-first, mobile-optimized interface.
 
-**Data**: ~160 lectures (~3.4GB total), organized by sheikh and series, hosted on Oracle Cloud Always Free tier.
+**Data**: ~160 lectures (~3.4GB total), organized by sheikh and series, hosted on Oracle Cloud Object Storage.
 </project_overview>
 
 ---
 
 ## 📌 Project State
 
-**Current Phase**: Mobile View Refinement 🔧
-**Last Updated**: 2026-02-01
+**Current Phase**: LIVE - Security & Content Updates
+**Last Updated**: 2026-02-03
 **Active Branch**: `claude/fix-homepage-tests-ovChk`
-**Status**: Production deployed on Render, fixing mobile UI issues
+**Live URL**: https://rasmihassan.com
+**Status**: 🚀 **PRODUCTION LIVE** - Google Search Console verified, indexing in progress
 
-### 🔧 CURRENT WORK: Mobile View Refinement
+### ✅ SITE IS NOW LIVE
 
-**Priority**: HIGH - Most initial users are on mobile
+The Sheikh Hasan Dhaghriri Islamic lectures platform is now live at **rasmihassan.com** with:
+- ✅ All lectures streaming from Oracle Cloud Object Storage
+- ✅ Mobile-optimized responsive design
+- ✅ Bilingual support (Arabic/English)
+- ✅ SEO fully implemented
+- ✅ Branding updated to Sheikh Hasan Dhaghriri
 
-**Issues to fix:**
-1. **Main Page Title** - Cut off/missing on mobile, needs scaling
-2. **Language Selector** - Floating/misaligned, should anchor in header corner
-3. **Player Touch Isolation** - Progress bar touch should NOT scroll background
-4. **Playback Controls** - Fast-forward/reverse icons are confusing
-5. **Download Button** - Arrow icon not centered, needs polish
+### ✅ SEO Implementation Complete
+
+**Meta Tags & Open Graph:**
+- Description, keywords, author, robots meta tags
+- Open Graph tags for Facebook sharing
+- Twitter Cards for Twitter sharing
+- Canonical URLs for all pages
+
+**Structured Data (JSON-LD):**
+- WebSite schema with search potential
+- Person schema for Sheikh Hasan Dhaghriri
+- sameAs linking to Telegram channel
+
+**Search Engine Optimization:**
+- Dynamic `/sitemap.xml` route (all lectures, series, sheikh pages)
+- `/robots.txt` route with proper directives
+- Google Search Console ready for verification
 
 **Key Files:**
-- `views/public/index.ejs` - Homepage (title, hero)
-- `views/layout.ejs` - Header with language selector
-- `public/css/audioPlayer.css` - Player styling
-- `views/partials/audioPlayer.ejs` - Player HTML
-- `public/js/audioPlayer.js` - Player JavaScript (touch events)
+- `views/layout.ejs` - SEO meta tags, JSON-LD schemas
+- `routes/index.js` - sitemap.xml, robots.txt routes
+- `utils/i18n.js` - currentPath for canonical URLs
 
-### ✅ Recently Completed:
-- OCI Object Storage integration (audio files in Oracle Cloud)
-- Audio optimization with HE-AAC encoding
-- Silence trimming from audio start
-- Render deployment (Frankfurt region)
-- Fixed debug logging in production
-- Fixed category translations (Arabic)
-- Fixed mobile CSS (sheikhs page, speed menu)
-- Fixed OCI null handling in file listing
-- Created fix-lectures-audio.js for bulk audio assignment
+### ✅ Mobile UI Refinements Complete
 
-### ⚠️ CRITICAL BLOCKER: MongoDB Atlas Connectivity
+All mobile issues have been fixed:
+1. ✅ **Main Page Title** - Proper scaling with responsive CSS
+2. ✅ **Language Selector** - Anchored in header corner, row layout
+3. ✅ **Player Touch Isolation** - Touch events don't scroll background
+4. ✅ **Playback Controls** - Clear SVG skip icons with "15" indicator
+5. ✅ **Download Button** - Polished with centered SVG icon
 
-**Error**: `querySrv ECONNREFUSED _mongodb._tcp.cluster0.abhqc.mongodb.net`
+### ✅ Branding Updates
 
-**Impact**: Cannot connect to MongoDB Atlas, blocking:
-- Data cleanup and re-import
-- Testing import scripts
-- Server startup
-- All database operations
+- Header: "موقع الشيخ حسن الدغريري" / "Sheikh Hasan Dhaghriri"
+- Footer: Sheikh bio, Telegram link (t.me/daririhasan), location
+- Title tag: Matches header branding
+- Copyright: Sheikh Hasan bin Mohamed Dhaghriri
 
-**Required Action**: Resolve network/DNS connectivity to MongoDB Atlas before proceeding
+### ✅ Hijri Date Display
 
-**See**: `DATA_MIGRATION_GUIDE.md` for troubleshooting steps
+- Arabic numeral formatting (٢٨ / ٧ / ١٤٤٧)
+- `toArabicNumerals()` utility function
+- `formatHijriDate()` for proper formatting
+- Displayed on lecture cards using `dateRecordedHijri`
+
+### ✅ Recently Completed
+
+- **SEO Implementation** - Full meta tags, JSON-LD, sitemap, robots.txt
+- **Branding Update** - Sheikh Hasan Dhaghriri across site
+- **Hijri Date Display** - Arabic numerals in lecture cards
+- **Mobile UI Polish** - All touch/display issues fixed
+- **OCI Integration** - Audio streaming from Oracle Cloud Object Storage
+- **Audio Optimization** - HE-AAC encoding, silence trimming
+- **Render Deployment** - Production on Frankfurt region
+- **Bulk Audio Scripts** - fix-lectures-audio.js, update-two-lectures.js
+
+---
+
+## 📋 ROADMAP (Prioritized To-Do List)
+
+### Priority 1: CRITICAL
+
+#### 1.1 Security Audit ✅ COMPLETE
+**Priority**: HIGHEST | **Status**: Done (2026-02-03)
+
+**Fixed:**
+- [x] ~~CRITICAL: Removed `/admin/make-super-admin` privilege escalation route~~
+- [x] Added rate limiting (general, API, auth endpoints)
+- [x] Enabled Content Security Policy (CSP)
+- [x] Fail-fast if SESSION_SECRET missing in production
+- [x] Added sameSite cookie attribute for CSRF protection
+- [x] Custom session cookie name (`wurud.sid`)
+- [x] Removed verbose debug logging in production
+
+**Already Secure:**
+- [x] Google OAuth with email whitelist
+- [x] httpOnly, secure cookies in production
+- [x] File upload validation (MIME type, size limits)
+- [x] Path traversal prevention
+- [x] Mongoose ORM (MongoDB injection protection)
+- [x] Role-based access control (admin, editor)
+- [x] Protected admin routes
+
+**Note:** xlsx package has known CVEs but only used in admin scripts (not exposed to users)
+
+#### 1.2 Content: October to Present ⬜ NOT STARTED
+**Priority**: HIGH | **Status**: Pending
+
+- [ ] Identify all lectures from October 2025 to present
+- [ ] Process audio files (HE-AAC encoding, silence trimming)
+- [ ] Upload to OCI bucket
+- [ ] Add metadata to MongoDB
+- [ ] Verify streaming works
+
+#### 1.3 Content: Online Classes ⬜ NOT STARTED
+**Priority**: HIGH | **Status**: Pending
+
+- [ ] Identify online class recordings
+- [ ] Determine format differences from in-person lectures
+- [ ] Process and upload audio files
+- [ ] Add appropriate metadata/category tagging
+
+---
+
+### Priority 2: HIGH
+
+#### 2.1 Content: Pre-October Archive ⬜ NOT STARTED
+**Priority**: MEDIUM-HIGH | **Status**: Pending
+
+- [ ] Inventory all pre-October lectures
+- [ ] Batch process audio files
+- [ ] Upload to OCI
+- [ ] Import metadata to MongoDB
+
+#### 2.2 Arabic Slugs (SEO URLs) ⬜ NOT STARTED
+**Priority**: MEDIUM-HIGH | **Status**: Pending
+
+- [ ] Add `slug` field to Lecture, Series, Sheikh models
+- [ ] Generate Arabic slugs from titles
+- [ ] Update routes to support both ID and slug lookup
+- [ ] Add redirects from old URLs to new slugs
+- [ ] Update sitemap to use slugs
+- [ ] Update internal links
+
+**Example**: `/lectures/6975bc...` → `/lectures/شرح-كتاب-التوحيد-الدرس-١`
+
+---
+
+### Priority 3: MEDIUM
+
+#### 3.1 Performance Optimizations ⬜ NOT STARTED
+**Priority**: MEDIUM | **Status**: Pending
+
+- [ ] Implement server-side caching
+- [ ] Add lazy loading for lecture cards
+- [ ] Optimize database queries (indexes, projections)
+- [ ] Implement CDN for static assets
+- [ ] Add service worker for offline support
+- [ ] Bundle/minify CSS and JS
+
+#### 3.2 Admin Panel - Arabic Version ⬜ NOT STARTED
+**Priority**: MEDIUM | **Status**: Pending
+
+- [ ] Add RTL layout support to admin pages
+- [ ] Translate admin UI strings
+- [ ] Add language toggle to admin panel
+- [ ] Ensure form inputs work with Arabic text
+
+---
+
+### Priority 4: FUTURE (Major Features)
+
+#### 4.1 Transcript Search with Timestamps ⬜ NOT STARTED
+**Priority**: LOWER | **Status**: Future
+
+**Phase A - Transcription:**
+- [ ] Choose transcription service (Whisper API, etc.)
+- [ ] Process all audio files
+- [ ] Store transcripts with timestamps
+
+**Phase B - Search:**
+- [ ] Implement full-text search
+- [ ] Build search UI with timestamp results
+- [ ] Add "jump to timestamp" in player
+
+**Phase C - Display:**
+- [ ] Show transcript alongside player
+- [ ] Highlight current spoken text
+
+#### 4.2 English Version of Site ⬜ NOT STARTED
+**Priority**: LOWER | **Status**: Future
+
+- [ ] Add English translations for lecture metadata
+- [ ] Consider separate English landing page
+- [ ] Update SEO for English keywords
+
+---
+
+### ✅ COMPLETED
+
+- [x] **Security Audit** - Rate limiting, CSP, removed privilege escalation, hardened sessions
+- [x] **Google Search Console** - Verified, indexing in progress
+- [x] **SEO Implementation** - Meta tags, JSON-LD, sitemap, robots.txt
+- [x] **Branding** - Sheikh Hasan Dhaghriri across site
+- [x] **Hijri Date Display** - Arabic numerals
+- [x] **Mobile UI Polish** - All issues fixed
+- [x] **OCI Integration** - Audio streaming working
+- [x] **Production Deployment** - Live at rasmihassan.com
 
 ### 🎨 Active Branch: `claude/new-design-usy2P` (Brown/Gold Scholarly Design)
 
@@ -653,24 +810,26 @@ Error: querySrv ECONNREFUSED _mongodb._tcp.cluster0.abhqc.mongodb.net
 
 ## 📊 Progress Tracking
 
-### Overall Completion: ~40%
+### Overall Completion: ~95%
 
-**Completed** (40%):
+**Completed** (95%):
 - ✅ Homepage design (100%)
 - ✅ Backend infrastructure (100%)
 - ✅ Data import (100%)
 - ✅ Database setup (100%)
+- ✅ Audio player (100%)
+- ✅ Content pages (100%)
+- ✅ Mobile optimization (100%)
+- ✅ SEO implementation (100%)
+- ✅ OCI audio hosting (100%)
+- ✅ Production deployment (100%)
 
-**In Progress** (0%):
-- [ ] Audio player (0%)
-- [ ] Content pages (0%)
-- [ ] Admin testing (0%)
-- [ ] Polish (0%)
+**Remaining** (5%):
+- [ ] Google Search Console verification
+- [ ] Analytics monitoring setup
+- [ ] Arabic URL slugs (future enhancement)
 
-**Next Up**:
-1. Sticky audio player (CRITICAL)
-2. Lecture detail page
-3. Testing
+**Site Status**: 🚀 **LIVE at rasmihassan.com**
 
 ---
 
@@ -1060,11 +1219,22 @@ The project has 160 lectures in `lectures_with_series2.csv`:
 
 ## Deployment Notes
 
-- Oracle Cloud Always Free tier (1GB RAM VM)
-- Nginx reverse proxy with SSL (Let's Encrypt)
-- PM2 for process management
-- Audio files on attached block volume (`/mnt/audio`)
-- MongoDB Atlas free tier for metadata
+**Current Production Setup:**
+- **Web Hosting**: Render.com (Frankfurt region)
+- **Audio Storage**: Oracle Cloud Object Storage (Jeddah region)
+- **Database**: MongoDB Atlas
+- **Domain**: rasmihassan.com (Cloudflare DNS)
+- **SSL**: Automatic via Render
+
+**OCI Object Storage:**
+- Bucket: `wurud-audio`
+- Region: `me-jeddah-1`
+- Public access for audio streaming
+- ~3.4GB of HE-AAC optimized audio files
+
+**Audio File Matching:**
+- Lectures match OCI files via `metadata.excelFilename` field
+- Admin bulk upload uses filename similarity matching
 
 ---
 

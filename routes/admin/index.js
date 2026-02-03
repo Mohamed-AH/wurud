@@ -26,40 +26,6 @@ router.get('/login', (req, res) => {
   });
 });
 
-// @route   GET /admin/make-super-admin
-// @desc    Temporary route to upgrade current user to super admin
-// @access  Private (Any authenticated admin)
-// TODO: Remove this route after initial setup
-router.get('/make-super-admin', isAdmin, async (req, res) => {
-  try {
-    const { Admin } = require('../../models');
-
-    // Get current user and update their role to 'admin' (super admin)
-    const user = await Admin.findById(req.user._id);
-
-    if (!user) {
-      return res.status(404).send('User not found');
-    }
-
-    const oldRole = user.role;
-    user.role = 'admin';
-    await user.save();
-
-    res.send(`
-      <h2>✅ Success!</h2>
-      <p>Your role has been upgraded from <strong>${oldRole}</strong> to <strong>admin</strong> (Super Admin)</p>
-      <p>You now have full access to all admin features including user management.</p>
-      <p><a href="/admin/users">Go to User Management</a></p>
-      <p><a href="/admin/dashboard">Back to Dashboard</a></p>
-      <hr>
-      <p style="color: #666; font-size: 12px;">Note: This is a temporary route. It should be removed after initial setup for security.</p>
-    `);
-  } catch (error) {
-    console.error('Error upgrading admin:', error);
-    res.status(500).send('Error upgrading role: ' + error.message);
-  }
-});
-
 // @route   GET /admin/dashboard
 // @desc    Admin dashboard
 // @access  Private (Admin only)
