@@ -59,13 +59,13 @@ describe('Authentication Integration Tests', () => {
     it('should create admin user with Google ID', async () => {
       const admin = await Admin.create({
         email: 'admin@test.com',
-        name: 'Test Admin',
+        displayName: 'Test Admin',
         googleId: '123456789',
         role: 'admin'
       });
 
       expect(admin.email).toBe('admin@test.com');
-      expect(admin.name).toBe('Test Admin');
+      expect(admin.displayName).toBe('Test Admin');
       expect(admin.googleId).toBe('123456789');
       expect(admin.role).toBe('admin');
     });
@@ -73,7 +73,7 @@ describe('Authentication Integration Tests', () => {
     it('should create editor user', async () => {
       const editor = await Admin.create({
         email: 'editor@test.com',
-        name: 'Test Editor',
+        displayName: 'Test Editor',
         googleId: '987654321',
         role: 'editor'
       });
@@ -84,7 +84,7 @@ describe('Authentication Integration Tests', () => {
     it('should default role to editor', async () => {
       const user = await Admin.create({
         email: 'user@test.com',
-        name: 'Test User',
+        displayName: 'Test User',
         googleId: '111111111'
       });
 
@@ -93,7 +93,7 @@ describe('Authentication Integration Tests', () => {
 
     it('should require email', async () => {
       const user = new Admin({
-        name: 'Test User',
+        displayName: 'Test User',
         googleId: '222222222'
       });
 
@@ -103,13 +103,13 @@ describe('Authentication Integration Tests', () => {
     it('should require unique email', async () => {
       await Admin.create({
         email: 'duplicate@test.com',
-        name: 'User 1',
+        displayName: 'User 1',
         googleId: '333333333'
       });
 
       const duplicateUser = new Admin({
         email: 'duplicate@test.com',
-        name: 'User 2',
+        displayName: 'User 2',
         googleId: '444444444'
       });
 
@@ -119,7 +119,7 @@ describe('Authentication Integration Tests', () => {
     it('should allow optional googleId', async () => {
       const user = await Admin.create({
         email: 'nogoogle@test.com',
-        name: 'No Google User',
+        displayName: 'No Google User',
         role: 'editor'
       });
 
@@ -137,18 +137,20 @@ describe('Authentication Integration Tests', () => {
     it('should allow authenticated admin users', async () => {
       const admin = await Admin.create({
         email: 'admin@test.com',
-        name: 'Admin User',
-        role: 'admin'
+        displayName: 'Admin User',
+        role: 'admin',
+        isActive: true
       });
 
       const req = {
         isAuthenticated: () => true,
-        user: admin
+        user: { _id: admin._id },
+        logout: jest.fn((cb) => cb && cb())
       };
       const res = testUtils.mockResponse();
       const next = jest.fn();
 
-      authMiddleware.requireAuth(req, res, next);
+      await authMiddleware.isAdmin(req, res, next);
 
       expect(next).toHaveBeenCalled();
       expect(res.redirect).not.toHaveBeenCalled();
@@ -162,27 +164,29 @@ describe('Authentication Integration Tests', () => {
       const res = testUtils.mockResponse();
       const next = jest.fn();
 
-      authMiddleware.requireAuth(req, res, next);
+      authMiddleware.isAuthenticated(req, res, next);
 
       expect(next).not.toHaveBeenCalled();
-      expect(res.redirect).toHaveBeenCalledWith('/');
+      expect(res.redirect).toHaveBeenCalledWith('/admin/login');
     });
 
     it('should allow only admin role for admin-only routes', async () => {
       const admin = await Admin.create({
         email: 'admin@test.com',
-        name: 'Admin User',
-        role: 'admin'
+        displayName: 'Admin User',
+        role: 'admin',
+        isActive: true
       });
 
       const req = {
         isAuthenticated: () => true,
-        user: admin
+        user: { _id: admin._id },
+        logout: jest.fn((cb) => cb && cb())
       };
       const res = testUtils.mockResponse();
       const next = jest.fn();
 
-      authMiddleware.requireAdmin(req, res, next);
+      await authMiddleware.isSuperAdmin(req, res, next);
 
       expect(next).toHaveBeenCalled();
       expect(res.status).not.toHaveBeenCalled();
@@ -191,18 +195,20 @@ describe('Authentication Integration Tests', () => {
     it('should deny editor role for admin-only routes', async () => {
       const editor = await Admin.create({
         email: 'editor@test.com',
-        name: 'Editor User',
-        role: 'editor'
+        displayName: 'Editor User',
+        role: 'editor',
+        isActive: true
       });
 
       const req = {
         isAuthenticated: () => true,
-        user: editor
+        user: { _id: editor._id },
+        logout: jest.fn((cb) => cb && cb())
       };
       const res = testUtils.mockResponse();
       const next = jest.fn();
 
-      authMiddleware.requireAdmin(req, res, next);
+      await authMiddleware.isSuperAdmin(req, res, next);
 
       expect(next).not.toHaveBeenCalled();
       expect(res.status).toHaveBeenCalledWith(403);
@@ -211,10 +217,11 @@ describe('Authentication Integration Tests', () => {
 
   describe('Admin Whitelist', () => {
     it('should identify admin emails from whitelist', () => {
-      const adminEmails = process.env.ADMIN_EMAILS?.split(',') || [];
+      // Set test env var for this test
+      process.env.ADMIN_EMAILS = 'admin@test.com,superadmin@test.com';
 
-      // Test environment should have admin emails configured
-      expect(adminEmails.length).toBeGreaterThan(0);
+      const result = Admin.isEmailWhitelisted('admin@test.com');
+      expect(result).toBe(true);
     });
 
     it('should handle comma-separated admin emails', () => {
@@ -232,7 +239,7 @@ describe('Authentication Integration Tests', () => {
     it('should create session for authenticated user', async () => {
       const admin = await Admin.create({
         email: 'admin@test.com',
-        name: 'Test Admin',
+        displayName: 'Test Admin',
         googleId: '123456789',
         role: 'admin'
       });
@@ -244,14 +251,14 @@ describe('Authentication Integration Tests', () => {
     it('should maintain user data in session', async () => {
       const admin = await Admin.create({
         email: 'admin@test.com',
-        name: 'Test Admin',
+        displayName: 'Test Admin',
         role: 'admin'
       });
 
       const foundAdmin = await Admin.findById(admin._id);
 
       expect(foundAdmin.email).toBe(admin.email);
-      expect(foundAdmin.name).toBe(admin.name);
+      expect(foundAdmin.displayName).toBe(admin.displayName);
       expect(foundAdmin.role).toBe(admin.role);
     });
   });
@@ -260,7 +267,7 @@ describe('Authentication Integration Tests', () => {
     it('should store Google OAuth profile data', async () => {
       const admin = await Admin.create({
         email: 'oauth@test.com',
-        name: 'OAuth User',
+        displayName: 'OAuth User',
         googleId: 'google-oauth-id-12345',
         role: 'editor'
       });
@@ -271,7 +278,7 @@ describe('Authentication Integration Tests', () => {
     it('should find user by Google ID', async () => {
       await Admin.create({
         email: 'findme@test.com',
-        name: 'Find Me',
+        displayName: 'Find Me',
         googleId: 'unique-google-id',
         role: 'editor'
       });
@@ -285,16 +292,16 @@ describe('Authentication Integration Tests', () => {
     it('should update existing user on OAuth login', async () => {
       const admin = await Admin.create({
         email: 'update@test.com',
-        name: 'Old Name',
+        displayName: 'Old Name',
         googleId: 'update-google-id',
         role: 'editor'
       });
 
-      admin.name = 'Updated Name';
+      admin.displayName = 'Updated Name';
       await admin.save();
 
       const updated = await Admin.findById(admin._id);
-      expect(updated.name).toBe('Updated Name');
+      expect(updated.displayName).toBe('Updated Name');
     });
   });
 });
