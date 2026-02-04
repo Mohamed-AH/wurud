@@ -1,14 +1,9 @@
 /**
- * Jest Test Setup
+ * Jest Test Setup (setupFilesAfterEnv)
  *
- * This file runs before each test suite
+ * This file runs after Jest is loaded but before each test suite.
+ * Environment variables are configured earlier in envSetup.js (setupFiles).
  */
-
-// Load environment variables for testing
-require('dotenv').config({ path: '.env.test' });
-
-// Set test environment
-process.env.NODE_ENV = 'test';
 
 // Increase timeout for MongoDB operations
 jest.setTimeout(30000);

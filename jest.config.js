@@ -41,7 +41,10 @@ module.exports = {
     'node_modules/(?!(music-metadata|strtok3|token-types|peek-readable|file-type)/)'
   ],
 
-  // Setup files
+  // Setup files (runs before test files are imported - for env config)
+  setupFiles: ['<rootDir>/tests/envSetup.js'],
+
+  // Setup files after env (runs after Jest is loaded - for Jest-specific config)
   setupFilesAfterEnv: ['<rootDir>/tests/setup.js'],
 
   // Timeout for tests (30 seconds)
@@ -71,7 +74,7 @@ module.exports = {
   // Module paths
   moduleDirectories: ['node_modules', '<rootDir>'],
 
-  // Global setup/teardown
+  // Global setup/teardown (runs in separate process - not used for env vars)
   // globalSetup: '<rootDir>/tests/globalSetup.js',
   // globalTeardown: '<rootDir>/tests/globalTeardown.js',
 };

@@ -2,22 +2,16 @@
  * Unit Tests for Sheikh Model
  */
 
-const mongoose = require('mongoose');
-const { MongoMemoryServer } = require('mongodb-memory-server');
 const Sheikh = require('../../../models/Sheikh');
-
-let mongoServer;
+const testDb = require('../../helpers/testDb');
 
 describe('Sheikh Model', () => {
   beforeAll(async () => {
-    mongoServer = await MongoMemoryServer.create();
-    const mongoUri = mongoServer.getUri();
-    await mongoose.connect(mongoUri);
+    await testDb.connect();
   });
 
   afterAll(async () => {
-    await mongoose.disconnect();
-    await mongoServer.stop();
+    await testDb.disconnect();
   });
 
   afterEach(async () => {
