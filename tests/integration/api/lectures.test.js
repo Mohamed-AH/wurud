@@ -2,6 +2,9 @@
  * Integration Tests for Lecture API Endpoints
  */
 
+// Mock music-metadata before any imports
+jest.mock('music-metadata');
+
 const request = require('supertest');
 const mongoose = require('mongoose');
 const express = require('express');
@@ -25,6 +28,14 @@ describe('Lecture API Integration Tests', () => {
     // Mount API routes
     const apiRoutes = require('../../../routes/api/lectures');
     app.use('/api/lectures', apiRoutes);
+
+    // Error handler
+    app.use((err, req, res, next) => {
+      res.status(err.status || 500).json({
+        success: false,
+        message: err.message || 'Internal Server Error'
+      });
+    });
   });
 
   afterAll(async () => {
@@ -48,20 +59,19 @@ describe('Lecture API Integration Tests', () => {
 
     it('should return all lectures', async () => {
       const sheikh = await Sheikh.create({
-        name: 'Test Sheikh',
-        bio: 'Test bio'
+        nameArabic: 'الشيخ محمد'
       });
 
       await Lecture.create({
-        title: 'Lecture 1',
-        sheikh: sheikh._id,
-        audioFile: '/uploads/test1.mp3'
+        titleArabic: 'المحاضرة الأولى',
+        sheikhId: sheikh._id,
+        published: true
       });
 
       await Lecture.create({
-        title: 'Lecture 2',
-        sheikh: sheikh._id,
-        audioFile: '/uploads/test2.mp3'
+        titleArabic: 'المحاضرة الثانية',
+        sheikhId: sheikh._id,
+        published: true
       });
 
       const response = await request(app)
@@ -69,73 +79,70 @@ describe('Lecture API Integration Tests', () => {
         .expect(200);
 
       expect(response.body).toHaveLength(2);
-      expect(response.body[0]).toHaveProperty('title');
-      expect(response.body[0]).toHaveProperty('sheikh');
-      expect(response.body[0]).toHaveProperty('audioFile');
+      expect(response.body[0]).toHaveProperty('titleArabic');
+      expect(response.body[0]).toHaveProperty('sheikhId');
     });
 
     it('should populate sheikh information', async () => {
       const sheikh = await Sheikh.create({
-        name: 'الشيخ محمد',
-        bio: 'عالم جليل'
+        nameArabic: 'الشيخ محمد',
+        bioArabic: 'عالم جليل'
       });
 
       await Lecture.create({
-        title: 'Test Lecture',
-        sheikh: sheikh._id,
-        audioFile: '/uploads/test.mp3'
+        titleArabic: 'محاضرة تجريبية',
+        sheikhId: sheikh._id,
+        published: true
       });
 
       const response = await request(app)
         .get('/api/lectures')
         .expect(200);
 
-      expect(response.body[0].sheikh).toHaveProperty('name', 'الشيخ محمد');
-      expect(response.body[0].sheikh).toHaveProperty('bio', 'عالم جليل');
+      expect(response.body[0].sheikhId).toHaveProperty('nameArabic', 'الشيخ محمد');
     });
 
     it('should filter by category if provided', async () => {
       const sheikh = await Sheikh.create({
-        name: 'Test Sheikh',
-        bio: 'Test bio'
+        nameArabic: 'الشيخ أحمد'
       });
 
       await Lecture.create({
-        title: 'Aqeedah Lecture',
-        sheikh: sheikh._id,
-        audioFile: '/uploads/test1.mp3',
-        category: 'عقيدة'
+        titleArabic: 'محاضرة عقيدة',
+        sheikhId: sheikh._id,
+        category: 'Aqeedah',
+        published: true
       });
 
       await Lecture.create({
-        title: 'Fiqh Lecture',
-        sheikh: sheikh._id,
-        audioFile: '/uploads/test2.mp3',
-        category: 'فقه'
+        titleArabic: 'محاضرة فقه',
+        sheikhId: sheikh._id,
+        category: 'Fiqh',
+        published: true
       });
 
       const response = await request(app)
-        .get('/api/lectures?category=عقيدة')
+        .get('/api/lectures?category=Aqeedah')
         .expect(200);
 
       expect(response.body).toHaveLength(1);
-      expect(response.body[0].title).toBe('Aqeedah Lecture');
+      expect(response.body[0].titleArabic).toBe('محاضرة عقيدة');
     });
 
     it('should filter by sheikh if provided', async () => {
-      const sheikh1 = await Sheikh.create({ name: 'Sheikh 1', bio: 'Bio 1' });
-      const sheikh2 = await Sheikh.create({ name: 'Sheikh 2', bio: 'Bio 2' });
+      const sheikh1 = await Sheikh.create({ nameArabic: 'الشيخ الأول' });
+      const sheikh2 = await Sheikh.create({ nameArabic: 'الشيخ الثاني' });
 
       await Lecture.create({
-        title: 'Lecture from Sheikh 1',
-        sheikh: sheikh1._id,
-        audioFile: '/uploads/test1.mp3'
+        titleArabic: 'محاضرة من الشيخ الأول',
+        sheikhId: sheikh1._id,
+        published: true
       });
 
       await Lecture.create({
-        title: 'Lecture from Sheikh 2',
-        sheikh: sheikh2._id,
-        audioFile: '/uploads/test2.mp3'
+        titleArabic: 'محاضرة من الشيخ الثاني',
+        sheikhId: sheikh2._id,
+        published: true
       });
 
       const response = await request(app)
@@ -143,31 +150,29 @@ describe('Lecture API Integration Tests', () => {
         .expect(200);
 
       expect(response.body).toHaveLength(1);
-      expect(response.body[0].title).toBe('Lecture from Sheikh 1');
+      expect(response.body[0].titleArabic).toBe('محاضرة من الشيخ الأول');
     });
   });
 
   describe('GET /api/lectures/:id', () => {
     it('should return a specific lecture by ID', async () => {
       const sheikh = await Sheikh.create({
-        name: 'Test Sheikh',
-        bio: 'Test bio'
+        nameArabic: 'الشيخ خالد'
       });
 
       const lecture = await Lecture.create({
-        title: 'Specific Lecture',
-        sheikh: sheikh._id,
-        audioFile: '/uploads/test.mp3',
-        description: 'Test description'
+        titleArabic: 'محاضرة محددة',
+        sheikhId: sheikh._id,
+        descriptionArabic: 'وصف المحاضرة',
+        published: true
       });
 
       const response = await request(app)
         .get(`/api/lectures/${lecture._id}`)
         .expect(200);
 
-      expect(response.body).toHaveProperty('title', 'Specific Lecture');
-      expect(response.body).toHaveProperty('description', 'Test description');
-      expect(response.body.sheikh).toHaveProperty('name', 'Test Sheikh');
+      expect(response.body).toHaveProperty('titleArabic', 'محاضرة محددة');
+      expect(response.body).toHaveProperty('descriptionArabic', 'وصف المحاضرة');
     });
 
     it('should return 404 for non-existent lecture', async () => {
@@ -188,28 +193,28 @@ describe('Lecture API Integration Tests', () => {
   describe('Series Integration', () => {
     it('should include series information if lecture is part of series', async () => {
       const sheikh = await Sheikh.create({
-        name: 'Test Sheikh',
-        bio: 'Test bio'
+        nameArabic: 'الشيخ عمر'
       });
 
       const series = await Series.create({
-        title: 'Test Series',
-        description: 'Test series description'
+        titleArabic: 'سلسلة تجريبية',
+        descriptionArabic: 'وصف السلسلة',
+        sheikhId: sheikh._id
       });
 
       await Lecture.create({
-        title: 'Lecture in Series',
-        sheikh: sheikh._id,
-        audioFile: '/uploads/test.mp3',
-        series: series._id,
-        lectureNumber: 1
+        titleArabic: 'محاضرة في السلسلة',
+        sheikhId: sheikh._id,
+        seriesId: series._id,
+        lectureNumber: 1,
+        published: true
       });
 
       const response = await request(app)
         .get('/api/lectures')
         .expect(200);
 
-      expect(response.body[0]).toHaveProperty('series');
+      expect(response.body[0]).toHaveProperty('seriesId');
       expect(response.body[0]).toHaveProperty('lectureNumber', 1);
     });
   });
@@ -217,17 +222,16 @@ describe('Lecture API Integration Tests', () => {
   describe('Date Handling', () => {
     it('should return lectures with dateRecorded', async () => {
       const sheikh = await Sheikh.create({
-        name: 'Test Sheikh',
-        bio: 'Test bio'
+        nameArabic: 'الشيخ فهد'
       });
 
       const testDate = new Date('2024-01-15');
 
       await Lecture.create({
-        title: 'Dated Lecture',
-        sheikh: sheikh._id,
-        audioFile: '/uploads/test.mp3',
-        dateRecorded: testDate
+        titleArabic: 'محاضرة مؤرخة',
+        sheikhId: sheikh._id,
+        dateRecorded: testDate,
+        published: true
       });
 
       const response = await request(app)
@@ -240,22 +244,21 @@ describe('Lecture API Integration Tests', () => {
 
     it('should handle Hijri dates', async () => {
       const sheikh = await Sheikh.create({
-        name: 'Test Sheikh',
-        bio: 'Test bio'
+        nameArabic: 'الشيخ علي'
       });
 
       await Lecture.create({
-        title: 'Lecture with Hijri Date',
-        sheikh: sheikh._id,
-        audioFile: '/uploads/test.mp3',
-        hijriDate: '1445/07/15'
+        titleArabic: 'محاضرة بتاريخ هجري',
+        sheikhId: sheikh._id,
+        dateRecordedHijri: '1445/07/15',
+        published: true
       });
 
       const response = await request(app)
         .get('/api/lectures')
         .expect(200);
 
-      expect(response.body[0]).toHaveProperty('hijriDate', '1445/07/15');
+      expect(response.body[0]).toHaveProperty('dateRecordedHijri', '1445/07/15');
     });
   });
 });
