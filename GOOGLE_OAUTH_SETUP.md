@@ -92,3 +92,5 @@ Once authenticated:
 - Delete lectures
 - Manage sheikhs and series
 - View statistics
+
+all done
