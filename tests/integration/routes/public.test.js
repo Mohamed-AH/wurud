@@ -3,23 +3,19 @@
  */
 
 const request = require('supertest');
-const mongoose = require('mongoose');
-const { MongoMemoryServer } = require('mongodb-memory-server');
 const express = require('express');
 const path = require('path');
 const Lecture = require('../../../models/Lecture');
 const Sheikh = require('../../../models/Sheikh');
 const Series = require('../../../models/Series');
+const testDb = require('../../helpers/testDb');
 
 let app;
-let mongoServer;
 
 describe('Public Routes Integration Tests', () => {
   beforeAll(async () => {
-    // Start in-memory MongoDB
-    mongoServer = await MongoMemoryServer.create();
-    const mongoUri = mongoServer.getUri();
-    await mongoose.connect(mongoUri);
+    // Connect to test database
+    await testDb.connect();
 
     // Create Express app with full configuration
     app = express();
@@ -41,8 +37,7 @@ describe('Public Routes Integration Tests', () => {
   });
 
   afterAll(async () => {
-    await mongoose.disconnect();
-    await mongoServer.stop();
+    await testDb.disconnect();
   });
 
   afterEach(async () => {

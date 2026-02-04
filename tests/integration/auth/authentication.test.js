@@ -3,22 +3,18 @@
  */
 
 const request = require('supertest');
-const mongoose = require('mongoose');
-const { MongoMemoryServer } = require('mongodb-memory-server');
 const express = require('express');
 const session = require('express-session');
 const passport = require('passport');
 const Admin = require('../../../models/Admin');
+const testDb = require('../../helpers/testDb');
 
 let app;
-let mongoServer;
 
 describe('Authentication Integration Tests', () => {
   beforeAll(async () => {
-    // Start in-memory MongoDB
-    mongoServer = await MongoMemoryServer.create();
-    const mongoUri = mongoServer.getUri();
-    await mongoose.connect(mongoUri);
+    // Connect to test database
+    await testDb.connect();
 
     // Create Express app
     app = express();
@@ -52,8 +48,7 @@ describe('Authentication Integration Tests', () => {
   });
 
   afterAll(async () => {
-    await mongoose.disconnect();
-    await mongoServer.stop();
+    await testDb.disconnect();
   });
 
   afterEach(async () => {

@@ -4,21 +4,18 @@
 
 const request = require('supertest');
 const mongoose = require('mongoose');
-const { MongoMemoryServer } = require('mongodb-memory-server');
 const express = require('express');
 const Lecture = require('../../../models/Lecture');
 const Sheikh = require('../../../models/Sheikh');
 const Series = require('../../../models/Series');
+const testDb = require('../../helpers/testDb');
 
 let app;
-let mongoServer;
 
 describe('Lecture API Integration Tests', () => {
   beforeAll(async () => {
-    // Start in-memory MongoDB
-    mongoServer = await MongoMemoryServer.create();
-    const mongoUri = mongoServer.getUri();
-    await mongoose.connect(mongoUri);
+    // Connect to test database
+    await testDb.connect();
 
     // Create Express app with minimal configuration
     app = express();
@@ -31,8 +28,7 @@ describe('Lecture API Integration Tests', () => {
   });
 
   afterAll(async () => {
-    await mongoose.disconnect();
-    await mongoServer.stop();
+    await testDb.disconnect();
   });
 
   afterEach(async () => {
