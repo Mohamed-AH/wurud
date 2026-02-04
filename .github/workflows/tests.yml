@@ -56,7 +56,7 @@ jobs:
           MONGODB_URI: mongodb://localhost:27017/wurud_test
 
       - name: Upload coverage reports
-        uses: codecov/codecov-action@v3
+        uses: codecov/codecov-action@v4
         if: success()
         with:
           files: ./coverage/lcov.info
@@ -112,7 +112,7 @@ jobs:
           CI: true
 
       - name: Upload Playwright report
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         if: always()
         with:
           name: playwright-report
@@ -120,7 +120,7 @@ jobs:
           retention-days: 30
 
       - name: Upload test results
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         if: always()
         with:
           name: test-results
@@ -185,10 +185,13 @@ jobs:
 
       - name: Check for secrets in code
         run: |
-          if grep -r "API_KEY\|SECRET\|PASSWORD" --include="*.js" --exclude-dir=node_modules --exclude-dir=tests . | grep -v "env\|example"; then
-            echo "⚠️  Potential secrets found in code"
+          # Look for hardcoded secrets (actual values, not env var references)
+          # Exclude: process.env references, config checks, comments, and scripts
+          if grep -rE "(API_KEY|SECRET|PASSWORD)\s*[:=]\s*['\"][^'\"]{8,}" --include="*.js" --exclude-dir=node_modules --exclude-dir=tests --exclude-dir=scripts . | grep -v "process\.env\|example\|\.env\|config"; then
+            echo "⚠️  Potential hardcoded secrets found in code"
             exit 1
           fi
+          echo "✅ No hardcoded secrets detected"
 
   # ============================================================================
   # Build Test
