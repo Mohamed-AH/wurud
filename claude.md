@@ -158,17 +158,31 @@ All mobile issues have been fixed:
 
 ### Priority 3: MEDIUM
 
-#### 3.1 Performance Optimizations ⬜ NOT STARTED
+#### 3.1 Scalability: Server-Side Filtering & Pagination ⬜ NOT STARTED
+**Priority**: MEDIUM | **Status**: Pending (Required before 300+ lectures)
+
+- [ ] Move filtering from client-side to server-side
+- [ ] Implement pagination or infinite scroll
+- [ ] API endpoints for filtered/paginated results
+- [ ] Update frontend to call API instead of client-side filter
+
+#### 3.2 Mobile UX Enhancements ⬜ NOT STARTED
 **Priority**: MEDIUM | **Status**: Pending
 
-- [ ] Implement server-side caching
-- [ ] Add lazy loading for lecture cards
-- [ ] Optimize database queries (indexes, projections)
-- [ ] Implement CDN for static assets
-- [ ] Add service worker for offline support
-- [ ] Bundle/minify CSS and JS
+- [ ] Add hamburger menu for mobile navigation
+- [x] ~~Better search placeholders ("ابحث بالموضوع، الكلمة، أو العنوان...")~~ ✅ Done
+- [x] ~~"Clear All Filters" button~~ ✅ Done
 
-#### 3.2 Admin Panel - Arabic Version ⬜ NOT STARTED
+#### 3.3 Performance Optimizations ⬜ NOT STARTED
+**Priority**: MEDIUM | **Status**: Pending
+
+- [ ] Implement server-side caching (Redis or in-memory)
+- [ ] Bundle/minify CSS and JS
+- [ ] Optimize images (WebP format)
+- [ ] Implement CDN for static assets
+- [ ] Optimize database queries (indexes, projections)
+
+#### 3.4 Admin Panel - Arabic Version ⬜ NOT STARTED
 **Priority**: MEDIUM | **Status**: Pending
 
 - [ ] Add RTL layout support to admin pages
@@ -180,7 +194,28 @@ All mobile issues have been fixed:
 
 ### Priority 4: FUTURE (Major Features)
 
-#### 4.1 Transcript Search with Timestamps ⬜ NOT STARTED
+#### 4.1 Advanced Filters ⬜ NOT STARTED
+**Priority**: LOWER | **Status**: Future
+
+- [ ] Filter by date range
+- [ ] Filter by duration (short/medium/long)
+- [ ] Filter by speaker dropdown
+
+#### 4.2 Favorites/Bookmarking System ⬜ NOT STARTED
+**Priority**: LOWER | **Status**: Future
+
+- [ ] LocalStorage-based favorites (no auth needed)
+- [ ] Favorites tab/page
+- [ ] Optional: User accounts for cloud sync
+
+#### 4.3 Social Sharing ⬜ NOT STARTED
+**Priority**: LOWER | **Status**: Future
+
+- [ ] Add share buttons to individual lectures
+- [ ] WhatsApp, Telegram, Twitter, Facebook
+- [ ] Copy link button
+
+#### 4.4 Transcript Search with Timestamps ⬜ NOT STARTED
 **Priority**: LOWER | **Status**: Future
 
 **Phase A - Transcription:**
@@ -197,7 +232,7 @@ All mobile issues have been fixed:
 - [ ] Show transcript alongside player
 - [ ] Highlight current spoken text
 
-#### 4.2 English Version of Site ⬜ NOT STARTED
+#### 4.5 English Version of Site ⬜ NOT STARTED
 **Priority**: LOWER | **Status**: Future
 
 - [ ] Add English translations for lecture metadata
@@ -216,6 +251,8 @@ All mobile issues have been fixed:
 - [x] **Mobile UI Polish** - All issues fixed
 - [x] **OCI Integration** - Audio streaming working
 - [x] **Production Deployment** - Live at rasmihassan.com
+- [x] **UX: Search Placeholder** - Better placeholder text
+- [x] **UX: Clear All Filters** - Button to reset filters
 
 ### 🎨 Active Branch: `claude/new-design-usy2P` (Brown/Gold Scholarly Design)
 
