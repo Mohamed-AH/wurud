@@ -51,7 +51,8 @@ describe('Authentication Integration Tests', () => {
     await testDb.disconnect();
   });
 
-  afterEach(async () => {
+  // Clear database before each test for proper isolation
+  beforeEach(async () => {
     await Admin.deleteMany({});
   });
 
