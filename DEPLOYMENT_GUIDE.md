@@ -594,4 +594,4 @@ Common issues and solutions are in the Troubleshooting section above. For VPS ma
 - Linode: https://www.linode.com/docs/
 - AWS: https://docs.aws.amazon.com
 
-Good luck with your deployment! 🚀
+Good luck with your deployment! 
