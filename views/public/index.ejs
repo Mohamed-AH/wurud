@@ -146,6 +146,25 @@
     box-shadow: 0 4px 8px rgba(92, 64, 51, 0.15);
   }
 
+  .clear-filters-btn {
+    padding: 8px 16px;
+    border: 2px solid #dc3545;
+    border-radius: 25px;
+    background: transparent;
+    color: #dc3545;
+    font-family: var(--font-arabic-body);
+    font-size: 14px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    margin-right: auto;
+  }
+
+  .clear-filters-btn:hover {
+    background: #dc3545;
+    color: white;
+  }
+
   /* Series Cards */
   .series-list {
     max-width: 1200px;
@@ -570,7 +589,7 @@
       type="text"
       class="search-input"
       id="searchInput"
-      placeholder="ابحث عن سلسلة..."
+      placeholder="ابحث بالموضوع، الكلمة، أو العنوان..."
     >
     <button class="search-btn" onclick="performSearch()">
       بحث
@@ -633,6 +652,10 @@
       </button>
     </div>
   </div>
+
+  <button class="clear-filters-btn" onclick="clearAllFilters()" id="clearFiltersBtn" style="display: none;">
+    مسح الفلاتر ✕
+  </button>
 </div>
 
 <!-- Series Tab Content -->
@@ -679,14 +702,6 @@
       }
 
       const hijriDate = latestLecture?.dateRecordedHijri || '';
-
-      console.log(`[SERIES DEBUG] ${series.titleArabic}:`);
-      console.log(`  - Lecture count: ${series.lectures.length}`);
-      console.log(`  - Latest lecture:`, latestLecture?.titleArabic || 'None');
-      console.log(`  - Latest dateRecorded:`, latestLecture?.dateRecorded);
-      console.log(`  - Latest dateRecordedHijri:`, latestLecture?.dateRecordedHijri);
-      console.log(`  - Computed latestDate (timestamp): ${latestDate}`);
-      console.log(`  - Computed hijriDate: ${hijriDate}`);
     %>
       <div class="series-card" data-category="<%= series.category %>" data-date="<%= latestDate %>" data-hijri="<%= hijriDate %>">
         <div class="series-header" onclick="toggleSeries('<%= series._id %>')">
@@ -807,14 +822,6 @@
         }
 
         const hijriDate = lecture.dateRecordedHijri || '';
-
-        console.log(`[LECTURE DEBUG] ${lecture.titleArabic}:`);
-        console.log(`  - dateRecorded:`, lecture.dateRecorded);
-        console.log(`  - createdAt:`, lecture.createdAt);
-        console.log(`  - dateRecordedHijri:`, lecture.dateRecordedHijri);
-        console.log(`  - Computed lectureDate (timestamp): ${lectureDate}`);
-        console.log(`  - Using:`, lecture.dateRecorded ? 'dateRecorded' : (lecture.createdAt ? 'createdAt' : 'Date.now()'));
-        console.log(`  - Computed hijriDate: ${hijriDate}`);
       %>
         <div class="series-card" data-date="<%= lectureDate %>" data-hijri="<%= hijriDate %>">
           <div class="series-header">
@@ -893,14 +900,6 @@
         }
 
         const hijriDate = latestLecture?.dateRecordedHijri || '';
-
-        console.log(`[KHUTBA DEBUG] ${series.titleArabic}:`);
-        console.log(`  - Lecture count: ${series.lectures.length}`);
-        console.log(`  - Latest lecture:`, latestLecture?.titleArabic || 'None');
-        console.log(`  - Latest dateRecorded:`, latestLecture?.dateRecorded);
-        console.log(`  - Latest dateRecordedHijri:`, latestLecture?.dateRecordedHijri);
-        console.log(`  - Computed latestDate (timestamp): ${latestDate}`);
-        console.log(`  - Computed hijriDate: ${hijriDate}`);
       %>
         <div class="series-card" data-category="<%= series.category %>" data-date="<%= latestDate %>" data-hijri="<%= hijriDate %>">
           <div class="series-header" onclick="toggleKhutba('<%= series._id %>')">
@@ -980,8 +979,6 @@
 <script>
   // Switch between tabs
   function switchTab(tabName) {
-    console.log('🔄 Switching to tab:', tabName);
-
     // Hide all tab contents
     document.querySelectorAll('.tab-content').forEach(content => {
       content.classList.remove('active');
@@ -996,10 +993,6 @@
     const contentElement = document.getElementById('content-' + tabName);
     if (contentElement) {
       contentElement.classList.add('active');
-      console.log('  ✅ Tab content activated:', contentElement.id);
-      console.log('  Tab content display:', window.getComputedStyle(contentElement).display);
-    } else {
-      console.error('  ❌ Could not find tab content:', 'content-' + tabName);
     }
 
     // Activate selected tab button
@@ -1014,63 +1007,34 @@
 
   // Toggle series expansion
   function toggleSeries(seriesId) {
-    console.log('🔄 Toggling series:', seriesId);
     const episodesList = document.getElementById('episodes-' + seriesId);
     const btn = document.getElementById('btn-' + seriesId);
 
-    console.log('  Episodes list found:', episodesList ? 'YES' : 'NO');
-    console.log('  Button found:', btn ? 'YES' : 'NO');
-
-    if (!episodesList || !btn) {
-      console.error('❌ Could not find elements for series:', seriesId);
-      return;
-    }
+    if (!episodesList || !btn) return;
 
     episodesList.classList.toggle('show');
     btn.classList.toggle('expanded');
 
     if (episodesList.classList.contains('show')) {
-      console.log('  ✅ Series expanded');
       btn.textContent = 'إخفاء الدروس ▲';
     } else {
-      console.log('  ✅ Series collapsed');
       btn.textContent = 'عرض الدروس ▼';
     }
   }
 
   // Toggle Khutba expansion
   function toggleKhutba(seriesId) {
-    console.log('🔄 Toggling khutba:', seriesId);
-    // Use prefixed IDs to avoid conflicts with Series tab
     const episodesList = document.getElementById('khutba-episodes-' + seriesId);
     const btn = document.getElementById('khutba-btn-' + seriesId);
 
-    console.log('  Episodes list found:', episodesList ? 'YES' : 'NO');
-    console.log('  Button found:', btn ? 'YES' : 'NO');
-
-    if (!episodesList || !btn) {
-      console.error('❌ Could not find elements for khutba:', seriesId);
-      console.error('  episodesList:', episodesList);
-      console.error('  btn:', btn);
-      return;
-    }
-
-    console.log('  Before toggle - episodesList classes:', episodesList.className);
-    console.log('  Before toggle - computed display:', window.getComputedStyle(episodesList).display);
+    if (!episodesList || !btn) return;
 
     episodesList.classList.toggle('show');
     btn.classList.toggle('expanded');
 
-    console.log('  After toggle - episodesList classes:', episodesList.className);
-    console.log('  After toggle - computed display:', window.getComputedStyle(episodesList).display);
-    console.log('  After toggle - computed visibility:', window.getComputedStyle(episodesList).visibility);
-    console.log('  After toggle - computed opacity:', window.getComputedStyle(episodesList).opacity);
-
     if (episodesList.classList.contains('show')) {
-      console.log('  ✅ Khutba expanded');
       btn.textContent = 'إخفاء الخطب ▲';
     } else {
-      console.log('  ✅ Khutba collapsed');
       btn.textContent = 'عرض الخطب ▼';
     }
   }
@@ -1087,8 +1051,47 @@
 
       // Apply filter to cards in active tab only
       applyFilter();
+      updateClearButtonVisibility();
     });
   });
+
+  // Clear all filters
+  function clearAllFilters() {
+    // Reset category filter to "all"
+    document.querySelectorAll('.chip[data-type="category"]').forEach(c => c.classList.remove('active'));
+    const allChip = document.querySelector('.chip[data-filter="all"]');
+    if (allChip) allChip.classList.add('active');
+
+    // Reset sort to "newest"
+    document.querySelectorAll('.chip[data-sort]').forEach(c => c.classList.remove('active'));
+    const newestChip = document.querySelector('.chip[data-sort="newest"]');
+    if (newestChip) newestChip.classList.add('active');
+
+    // Clear search input
+    const searchInput = document.getElementById('searchInput');
+    if (searchInput) searchInput.value = '';
+
+    // Apply filter and sort
+    applyFilter();
+    sortByDate('newest');
+    updateClearButtonVisibility();
+  }
+
+  // Show/hide clear button based on active filters
+  function updateClearButtonVisibility() {
+    const clearBtn = document.getElementById('clearFiltersBtn');
+    if (!clearBtn) return;
+
+    const activeCategoryFilter = document.querySelector('.chip[data-type="category"].active');
+    const activeSortFilter = document.querySelector('.chip[data-sort].active');
+    const searchInput = document.getElementById('searchInput');
+
+    const hasActiveFilter = (activeCategoryFilter && activeCategoryFilter.dataset.filter !== 'all') ||
+                           (activeSortFilter && activeSortFilter.dataset.sort !== 'newest') ||
+                           (searchInput && searchInput.value.trim() !== '');
+
+    clearBtn.style.display = hasActiveFilter ? 'inline-block' : 'none';
+  }
 
   // Apply current category filter
   function applyFilter() {
@@ -1134,38 +1137,25 @@
         card.style.display = 'none';
       }
     });
+
+    updateClearButtonVisibility();
   }
 
   // Play audio using sticky audio player
   function playAudio(lectureId, title, sheikh) {
-    console.log('▶️ Play button clicked');
-    console.log('  Lecture ID:', lectureId);
-    console.log('  Title:', title);
-    console.log('  Sheikh:', sheikh);
-    console.log('  window.audioPlayer exists?', typeof window.audioPlayer);
-
-    // Wait for audio player to be initialized
     if (window.audioPlayer) {
-      console.log('✅ Calling audioPlayer.play()...');
       window.audioPlayer.play(lectureId, {
         title: title,
         titleArabic: title,
         sheikh: sheikh || ''
       });
     } else {
-      console.error('❌ Audio player not initialized');
-      console.error('   This might be because:');
-      console.error('   1. /js/audioPlayer.js failed to load');
-      console.error('   2. Script has JavaScript errors');
-      console.error('   3. Audio player partial not included in layout');
-      alert('Audio player is loading, please try again in a moment.');
+      alert('جاري تحميل المشغل، يرجى المحاولة مرة أخرى.');
     }
   }
 
   // Sort series by date
   function sortByDate(sortType) {
-    console.log('🔄 Sorting by:', sortType);
-
     // Update active state for sort buttons
     document.querySelectorAll('.chip[data-sort]').forEach(btn => btn.classList.remove('active'));
     document.querySelector(`.chip[data-sort="${sortType}"]`)?.classList.add('active');
@@ -1175,60 +1165,25 @@
     const seriesList = activeTab.querySelector('.series-list');
     const cards = Array.from(seriesList.querySelectorAll('.series-card'));
 
-    console.log(`  Found ${cards.length} cards to sort`);
-
-    // Log each card's data before sorting
-    console.log('  Card data before sorting:');
-    cards.forEach((card, index) => {
-      const title = card.querySelector('.series-title')?.textContent || 'Unknown';
-      const dateValue = card.dataset.date;
-      const hijriValue = card.dataset.hijri;
-      console.log(`    [${index}] ${title}`);
-      console.log(`        - data-date: ${dateValue}`);
-      console.log(`        - data-hijri: ${hijriValue}`);
-    });
-
     // Sort cards based on type
     cards.sort((a, b) => {
-      if (sortType === 'newest') {
-        // Sort by date (newest first)
-        const dateA = parseInt(a.dataset.date) || 0;
-        const dateB = parseInt(b.dataset.date) || 0;
-        console.log(`    Comparing: ${dateA} vs ${dateB} = ${dateB - dateA}`);
-        return dateB - dateA;
-      } else if (sortType === 'oldest') {
-        // Sort by date (oldest first)
-        const dateA = parseInt(a.dataset.date) || 0;
-        const dateB = parseInt(b.dataset.date) || 0;
-        console.log(`    Comparing: ${dateA} vs ${dateB} = ${dateA - dateB}`);
-        return dateA - dateB;
-      }
-      // Note: Gregorian and Hijri dates represent the same point in time
-      // So sorting by one is equivalent to sorting by the other
-      return 0;
+      const dateA = parseInt(a.dataset.date) || 0;
+      const dateB = parseInt(b.dataset.date) || 0;
+      return sortType === 'newest' ? dateB - dateA : dateA - dateB;
     });
 
     // Re-append cards in sorted order
     cards.forEach(card => seriesList.appendChild(card));
 
-    console.log('  Card order after sorting:');
-    cards.forEach((card, index) => {
-      const title = card.querySelector('.series-title')?.textContent || 'Unknown';
-      console.log(`    [${index}] ${title}`);
-    });
+    updateClearButtonVisibility();
 
     // Re-apply category filter to maintain visibility
     applyFilter();
-
-    console.log('✅ Sorting complete');
   }
 
   // Sort lectures within a specific series
   function sortSeriesLectures(seriesId, sortType) {
-    console.log(`🔄 Sorting lectures in series: ${seriesId}, type: ${sortType}`);
-
     // Get the episodes container for this series
-    // Handle khutba- prefix correctly: khutba-{id} -> khutba-episodes-{id}
     let episodesListId;
     if (seriesId.startsWith('khutba-')) {
       episodesListId = `khutba-episodes-${seriesId.substring(7)}`;
@@ -1236,36 +1191,25 @@
       episodesListId = `episodes-${seriesId}`;
     }
     const episodesList = document.getElementById(episodesListId);
-
-    if (!episodesList) {
-      console.error(`❌ Could not find episodes list: ${episodesListId}`);
-      return;
-    }
+    if (!episodesList) return;
 
     const container = episodesList.querySelector('.episodes-container');
-    if (!container) {
-      console.error(`❌ Could not find episodes-container in: ${episodesListId}`);
-      return;
-    }
+    if (!container) return;
 
     // Get all episode items
     const episodes = Array.from(container.querySelectorAll('.episode-item'));
-    console.log(`  Found ${episodes.length} episodes to sort`);
 
     // Sort episodes based on type
     episodes.sort((a, b) => {
       if (sortType === 'number') {
-        // Sort by lecture number
         const numA = parseInt(a.dataset.lectureNumber) || 999;
         const numB = parseInt(b.dataset.lectureNumber) || 999;
         return numA - numB;
       } else if (sortType === 'oldest') {
-        // Sort by date (oldest first)
         const dateA = parseInt(a.dataset.date) || 0;
         const dateB = parseInt(b.dataset.date) || 0;
         return dateA - dateB;
       } else if (sortType === 'newest') {
-        // Sort by date (newest first)
         const dateA = parseInt(a.dataset.date) || 0;
         const dateB = parseInt(b.dataset.date) || 0;
         return dateB - dateA;
@@ -1275,7 +1219,5 @@
 
     // Re-append episodes in sorted order
     episodes.forEach(episode => container.appendChild(episode));
-
-    console.log(`✅ Sorted ${episodes.length} episodes by ${sortType}`);
   }
 </script>

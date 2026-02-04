@@ -343,8 +343,6 @@ router.get('/series/:id', async (req, res) => {
         _id: { $ne: series._id } // Exclude current series
       }).lean();
 
-      console.log(`[DEBUG] Found ${relatedKhutbaSeries.length} related Khutba series for hierarchical display`);
-
       // For each related series, get actual lecture count
       for (const relSeries of relatedKhutbaSeries) {
         const count = await Lecture.countDocuments({
@@ -352,7 +350,6 @@ router.get('/series/:id', async (req, res) => {
           published: true
         });
         relSeries.actualLectureCount = count;
-        console.log(`[DEBUG] - ${relSeries.titleArabic}: ${count} lectures`);
       }
     }
 
