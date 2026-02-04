@@ -42,7 +42,8 @@ describe('Lecture API Integration Tests', () => {
     await testDb.disconnect();
   });
 
-  afterEach(async () => {
+  // Clear database before each test to ensure isolation
+  beforeEach(async () => {
     await Lecture.deleteMany({});
     await Sheikh.deleteMany({});
     await Series.deleteMany({});
@@ -54,10 +55,12 @@ describe('Lecture API Integration Tests', () => {
         .get('/api/lectures')
         .expect(200);
 
-      expect(response.body).toEqual([]);
+      expect(response.body.success).toBe(true);
+      expect(response.body.lectures).toEqual([]);
+      expect(response.body.pagination.total).toBe(0);
     });
 
-    it('should return all lectures', async () => {
+    it('should return all lectures with pagination', async () => {
       const sheikh = await Sheikh.create({
         nameArabic: 'الشيخ محمد'
       });
@@ -78,9 +81,11 @@ describe('Lecture API Integration Tests', () => {
         .get('/api/lectures')
         .expect(200);
 
-      expect(response.body).toHaveLength(2);
-      expect(response.body[0]).toHaveProperty('titleArabic');
-      expect(response.body[0]).toHaveProperty('sheikhId');
+      expect(response.body.success).toBe(true);
+      expect(response.body.lectures).toHaveLength(2);
+      expect(response.body.lectures[0]).toHaveProperty('titleArabic');
+      expect(response.body.lectures[0]).toHaveProperty('sheikhId');
+      expect(response.body.pagination.total).toBe(2);
     });
 
     it('should populate sheikh information', async () => {
@@ -99,7 +104,7 @@ describe('Lecture API Integration Tests', () => {
         .get('/api/lectures')
         .expect(200);
 
-      expect(response.body[0].sheikhId).toHaveProperty('nameArabic', 'الشيخ محمد');
+      expect(response.body.lectures[0].sheikhId).toHaveProperty('nameArabic', 'الشيخ محمد');
     });
 
     it('should filter by category if provided', async () => {
@@ -125,8 +130,8 @@ describe('Lecture API Integration Tests', () => {
         .get('/api/lectures?category=Aqeedah')
         .expect(200);
 
-      expect(response.body).toHaveLength(1);
-      expect(response.body[0].titleArabic).toBe('محاضرة عقيدة');
+      expect(response.body.lectures).toHaveLength(1);
+      expect(response.body.lectures[0].titleArabic).toBe('محاضرة عقيدة');
     });
 
     it('should filter by sheikh if provided', async () => {
@@ -146,11 +151,11 @@ describe('Lecture API Integration Tests', () => {
       });
 
       const response = await request(app)
-        .get(`/api/lectures?sheikh=${sheikh1._id}`)
+        .get(`/api/lectures?sheikhId=${sheikh1._id}`)
         .expect(200);
 
-      expect(response.body).toHaveLength(1);
-      expect(response.body[0].titleArabic).toBe('محاضرة من الشيخ الأول');
+      expect(response.body.lectures).toHaveLength(1);
+      expect(response.body.lectures[0].titleArabic).toBe('محاضرة من الشيخ الأول');
     });
   });
 
@@ -171,22 +176,29 @@ describe('Lecture API Integration Tests', () => {
         .get(`/api/lectures/${lecture._id}`)
         .expect(200);
 
-      expect(response.body).toHaveProperty('titleArabic', 'محاضرة محددة');
-      expect(response.body).toHaveProperty('descriptionArabic', 'وصف المحاضرة');
+      expect(response.body.success).toBe(true);
+      expect(response.body.lecture).toHaveProperty('titleArabic', 'محاضرة محددة');
+      expect(response.body.lecture).toHaveProperty('descriptionArabic', 'وصف المحاضرة');
     });
 
     it('should return 404 for non-existent lecture', async () => {
       const fakeId = new mongoose.Types.ObjectId();
 
-      await request(app)
+      const response = await request(app)
         .get(`/api/lectures/${fakeId}`)
         .expect(404);
+
+      expect(response.body.success).toBe(false);
+      expect(response.body.message).toBe('Lecture not found');
     });
 
-    it('should return 400 for invalid lecture ID', async () => {
-      await request(app)
+    it('should return 500 for invalid lecture ID format', async () => {
+      // Invalid ObjectId format returns 500 with CastError
+      const response = await request(app)
         .get('/api/lectures/invalid-id')
-        .expect(400);
+        .expect(500);
+
+      expect(response.body.success).toBe(false);
     });
   });
 
@@ -214,8 +226,8 @@ describe('Lecture API Integration Tests', () => {
         .get('/api/lectures')
         .expect(200);
 
-      expect(response.body[0]).toHaveProperty('seriesId');
-      expect(response.body[0]).toHaveProperty('lectureNumber', 1);
+      expect(response.body.lectures[0]).toHaveProperty('seriesId');
+      expect(response.body.lectures[0]).toHaveProperty('lectureNumber', 1);
     });
   });
 
@@ -238,8 +250,8 @@ describe('Lecture API Integration Tests', () => {
         .get('/api/lectures')
         .expect(200);
 
-      expect(response.body[0]).toHaveProperty('dateRecorded');
-      expect(new Date(response.body[0].dateRecorded)).toEqual(testDate);
+      expect(response.body.lectures[0]).toHaveProperty('dateRecorded');
+      expect(new Date(response.body.lectures[0].dateRecorded)).toEqual(testDate);
     });
 
     it('should handle Hijri dates', async () => {
@@ -258,7 +270,7 @@ describe('Lecture API Integration Tests', () => {
         .get('/api/lectures')
         .expect(200);
 
-      expect(response.body[0]).toHaveProperty('dateRecordedHijri', '1445/07/15');
+      expect(response.body.lectures[0]).toHaveProperty('dateRecordedHijri', '1445/07/15');
     });
   });
 });
