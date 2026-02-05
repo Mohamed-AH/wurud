@@ -193,12 +193,15 @@ describe('Lecture API Integration Tests', () => {
     });
 
     it('should return 500 for invalid lecture ID format', async () => {
-      // Invalid ObjectId format returns 500 with CastError
+      // Silence expected CastError logged by the error handler
+      const spy = jest.spyOn(console, 'error').mockImplementation(() => {});
+
       const response = await request(app)
         .get('/api/lectures/invalid-id')
         .expect(500);
 
       expect(response.body.success).toBe(false);
+      spy.mockRestore();
     });
   });
 
