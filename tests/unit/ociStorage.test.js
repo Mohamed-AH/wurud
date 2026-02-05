@@ -125,7 +125,7 @@ describe('OCI Storage Utility', () => {
       expect(putArg.contentType).toBe('audio/mpeg');
       expect(putArg.cacheControl).toBe('public, max-age=31536000');
 
-      try { fs.unlinkSync(tmpFile); } catch (e) { /* ignore */ }
+      // Note: temp file left for OS cleanup to avoid race with lazy ReadStream open
       Object.defineProperty(oci, 'client', { value: null, writable: true });
     });
 
@@ -143,7 +143,7 @@ describe('OCI Storage Utility', () => {
       const result = await uploadToOCI(tmpFile, 'test.m4a');
       expect(result.contentType).toBe('audio/mp4');
 
-      try { fs.unlinkSync(tmpFile); } catch (e) { /* ignore */ }
+      // Note: temp file left for OS cleanup to avoid race with lazy ReadStream open
       Object.defineProperty(oci, 'client', { value: null, writable: true });
     });
 
@@ -161,7 +161,7 @@ describe('OCI Storage Utility', () => {
       await expect(uploadToOCI(tmpFile, 'test.mp3'))
         .rejects.toThrow('Failed to upload test.mp3: network down');
 
-      try { fs.unlinkSync(tmpFile); } catch (e) { /* ignore */ }
+      // Note: temp file left for OS cleanup to avoid race with lazy ReadStream open
       Object.defineProperty(oci, 'client', { value: null, writable: true });
     });
   });
