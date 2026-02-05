@@ -8,8 +8,8 @@ test.describe('Homepage - Basic Functionality', () => {
   test('should load homepage successfully', async ({ page }) => {
     await page.goto('/');
 
-    // Check page title (matches both Arabic دروس and English Duroos)
-    await expect(page).toHaveTitle(/دروس|Duroos/);
+    // Check page title contains المكتبة الصوتية (The Audio Library)
+    await expect(page).toHaveTitle(/المكتبة الصوتية|Audio Library/);
 
     // Check main navigation tabs are present
     await expect(page.locator('#tab-lectures')).toBeVisible();
@@ -138,9 +138,8 @@ test.describe('Homepage - Category Filtering', () => {
       await allChip.click();
       await page.waitForTimeout(300);
 
-      // Verify cards are visible
-      const cards = page.locator('.series-card');
-      expect(await cards.count()).toBeGreaterThan(0);
+      // Verify at least one card is visible
+      await expect(page.locator('.series-card').first()).toBeVisible();
     }
   });
 });
@@ -175,15 +174,18 @@ test.describe('Homepage - Date Sorting', () => {
   test('should maintain cards visibility after sorting on Series tab', async ({ page }) => {
     await page.goto('/');
 
-    // Switch to Series tab (already active by default)
+    // Switch to Series tab
     const seriesTab = page.locator('#tab-series');
     await seriesTab.scrollIntoViewIfNeeded();
     await seriesTab.click();
     await page.waitForTimeout(300);
 
+    // Wait for at least one card to appear
+    const firstCard = page.locator('#content-series .series-card').first();
+    await expect(firstCard).toBeVisible({ timeout: 5000 });
+
     // Get initial card count in active tab
-    const cardsBefore = page.locator('#content-series .series-card');
-    const countBefore = await cardsBefore.count();
+    const countBefore = await page.locator('#content-series .series-card').count();
 
     // Sort by newest
     const newestButton = page.locator('[data-sort="newest"]').first();
@@ -191,12 +193,10 @@ test.describe('Homepage - Date Sorting', () => {
     await newestButton.click();
     await page.waitForTimeout(500);
 
-    // Verify cards are still visible (this was the bug we fixed!)
-    const cardsAfter = page.locator('#content-series .series-card');
-    const countAfter = await cardsAfter.count();
-
+    // Verify cards are still visible after sorting
+    await expect(firstCard).toBeVisible();
+    const countAfter = await page.locator('#content-series .series-card').count();
     expect(countAfter).toBe(countBefore);
-    expect(countAfter).toBeGreaterThan(0);
   });
 
   test('should maintain cards visibility after sorting on Khutba tab', async ({ page }) => {
@@ -258,8 +258,7 @@ test.describe('Homepage - Search Functionality', () => {
       await page.waitForTimeout(300);
 
       // All cards should be visible again
-      const cards = page.locator('.series-card');
-      expect(await cards.count()).toBeGreaterThan(0);
+      await expect(page.locator('.series-card').first()).toBeVisible({ timeout: 5000 });
     }
   });
 });

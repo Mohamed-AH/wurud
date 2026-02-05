@@ -13,6 +13,10 @@ module.exports = defineConfig({
   // Test directory
   testDir: './tests/e2e',
 
+  // Seed and clean up the test database
+  globalSetup: './tests/e2e/global-setup.js',
+  globalTeardown: './tests/e2e/global-teardown.js',
+
   // Maximum time one test can run for
   timeout: 30 * 1000,
 
@@ -96,6 +100,7 @@ module.exports = defineConfig({
     env: isCI ? {
       NODE_ENV: 'test',
       SESSION_SECRET: 'test-session-secret-for-e2e',
+      MONGODB_URI: process.env.MONGODB_URI || 'mongodb://localhost:27017/wurud_test',
       PORT: '3000',
     } : undefined,
   },
