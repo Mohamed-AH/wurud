@@ -64,12 +64,28 @@ jobs:
           name: codecov-umbrella
 
   # ============================================================================
-  # E2E Tests (Playwright)
+  # E2E Tests (Playwright) - Optimized with caching and sharding
   # ============================================================================
   e2e-tests:
-    name: E2E Tests
+    name: E2E Tests (${{ matrix.shard }})
     runs-on: ubuntu-latest
     timeout-minutes: 15
+
+    services:
+      mongodb:
+        image: mongo:7
+        ports:
+          - 27017:27017
+        options: >-
+          --health-cmd "mongosh --eval 'db.adminCommand({ping:1})'"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+
+    strategy:
+      fail-fast: false
+      matrix:
+        shard: [1/2, 2/2]
 
     steps:
       - name: Checkout code
@@ -84,52 +100,44 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
+      - name: Cache Playwright browsers
+        id: playwright-cache
+        uses: actions/cache@v4
+        with:
+          path: ~/.cache/ms-playwright
+          key: ${{ runner.os }}-playwright-${{ hashFiles('package-lock.json') }}
+
       - name: Install Playwright browsers
+        if: steps.playwright-cache.outputs.cache-hit != 'true'
         run: npx playwright install --with-deps chromium
 
-      - name: Create test environment file
-        run: |
-          cp .env.test .env
-
-      - name: Start MongoDB (Docker)
-        run: |
-          docker run -d \
-            --name mongodb-test \
-            -p 27017:27017 \
-            -e MONGO_INITDB_ROOT_USERNAME=test \
-            -e MONGO_INITDB_ROOT_PASSWORD=test \
-            mongo:7
-
-      - name: Wait for MongoDB
-        run: |
-          timeout 30 sh -c 'until docker exec mongodb-test mongosh --eval "db.adminCommand({ping:1})" --quiet; do sleep 1; done'
+      - name: Install Playwright deps (if cached)
+        if: steps.playwright-cache.outputs.cache-hit == 'true'
+        run: npx playwright install-deps chromium
 
       - name: Run Playwright tests
-        run: npm run test:e2e
+        run: npx playwright test --shard=${{ matrix.shard }}
         env:
           NODE_ENV: test
-          MONGODB_URI: mongodb://test:test@localhost:27017/test?authSource=admin
+          MONGODB_URI: mongodb://localhost:27017/wurud_test
+          SESSION_SECRET: test-session-secret-for-e2e
           CI: true
 
       - name: Upload Playwright report
         uses: actions/upload-artifact@v4
         if: always()
         with:
-          name: playwright-report
+          name: playwright-report-${{ strategy.job-index }}
           path: playwright-report/
-          retention-days: 30
+          retention-days: 7
 
       - name: Upload test results
         uses: actions/upload-artifact@v4
         if: always()
         with:
-          name: test-results
+          name: test-results-${{ strategy.job-index }}
           path: test-results/
-          retention-days: 30
-
-      - name: Stop MongoDB
-        if: always()
-        run: docker stop mongodb-test && docker rm mongodb-test
+          retention-days: 7
 
   # ============================================================================
   # Code Quality Checks
