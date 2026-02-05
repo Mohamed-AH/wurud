@@ -13,7 +13,7 @@ This guide explains how to run and maintain automated tests for the Duroos Islam
 7. [Continuous Integration](#continuous-integration)
 8. [Troubleshooting](#troubleshooting)
 
----
+----
 
 ## Overview
 
