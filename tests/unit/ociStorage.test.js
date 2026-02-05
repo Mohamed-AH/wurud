@@ -3,6 +3,7 @@
  */
 
 const fs = require('fs');
+const os = require('os');
 const path = require('path');
 
 // Mock the OCI config module before requiring ociStorage
@@ -99,7 +100,7 @@ describe('OCI Storage Utility', () => {
     });
 
     it('should upload file successfully', async () => {
-      const tmpFile = path.join('/tmp', `oci-test-upload-${Date.now()}.mp3`);
+      const tmpFile = path.join(os.tmpdir(), `oci-test-upload-${Date.now()}.mp3`);
       fs.writeFileSync(tmpFile, 'fake audio data');
 
       const mockClient = {
@@ -124,12 +125,12 @@ describe('OCI Storage Utility', () => {
       expect(putArg.contentType).toBe('audio/mpeg');
       expect(putArg.cacheControl).toBe('public, max-age=31536000');
 
-      try { fs.unlinkSync(tmpFile); } catch (e) { /* ignore */ }
+      // Note: temp file left for OS cleanup to avoid race with lazy ReadStream open
       Object.defineProperty(oci, 'client', { value: null, writable: true });
     });
 
     it('should detect content type from extension', async () => {
-      const tmpFile = path.join('/tmp', `oci-test-m4a-${Date.now()}.m4a`);
+      const tmpFile = path.join(os.tmpdir(), `oci-test-m4a-${Date.now()}.m4a`);
       fs.writeFileSync(tmpFile, 'fake audio');
 
       const mockClient = {
@@ -142,12 +143,12 @@ describe('OCI Storage Utility', () => {
       const result = await uploadToOCI(tmpFile, 'test.m4a');
       expect(result.contentType).toBe('audio/mp4');
 
-      try { fs.unlinkSync(tmpFile); } catch (e) { /* ignore */ }
+      // Note: temp file left for OS cleanup to avoid race with lazy ReadStream open
       Object.defineProperty(oci, 'client', { value: null, writable: true });
     });
 
     it('should wrap client errors', async () => {
-      const tmpFile = path.join('/tmp', `oci-test-err-${Date.now()}.mp3`);
+      const tmpFile = path.join(os.tmpdir(), `oci-test-err-${Date.now()}.mp3`);
       fs.writeFileSync(tmpFile, 'data');
 
       const mockClient = {
@@ -160,7 +161,7 @@ describe('OCI Storage Utility', () => {
       await expect(uploadToOCI(tmpFile, 'test.mp3'))
         .rejects.toThrow('Failed to upload test.mp3: network down');
 
-      try { fs.unlinkSync(tmpFile); } catch (e) { /* ignore */ }
+      // Note: temp file left for OS cleanup to avoid race with lazy ReadStream open
       Object.defineProperty(oci, 'client', { value: null, writable: true });
     });
   });
