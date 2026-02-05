@@ -3,6 +3,7 @@
  */
 
 const fs = require('fs');
+const os = require('os');
 const path = require('path');
 
 // Mock the OCI config module before requiring ociStorage
@@ -99,7 +100,7 @@ describe('OCI Storage Utility', () => {
     });
 
     it('should upload file successfully', async () => {
-      const tmpFile = path.join('/tmp', `oci-test-upload-${Date.now()}.mp3`);
+      const tmpFile = path.join(os.tmpdir(), `oci-test-upload-${Date.now()}.mp3`);
       fs.writeFileSync(tmpFile, 'fake audio data');
 
       const mockClient = {
@@ -129,7 +130,7 @@ describe('OCI Storage Utility', () => {
     });
 
     it('should detect content type from extension', async () => {
-      const tmpFile = path.join('/tmp', `oci-test-m4a-${Date.now()}.m4a`);
+      const tmpFile = path.join(os.tmpdir(), `oci-test-m4a-${Date.now()}.m4a`);
       fs.writeFileSync(tmpFile, 'fake audio');
 
       const mockClient = {
@@ -147,7 +148,7 @@ describe('OCI Storage Utility', () => {
     });
 
     it('should wrap client errors', async () => {
-      const tmpFile = path.join('/tmp', `oci-test-err-${Date.now()}.mp3`);
+      const tmpFile = path.join(os.tmpdir(), `oci-test-err-${Date.now()}.mp3`);
       fs.writeFileSync(tmpFile, 'data');
 
       const mockClient = {
