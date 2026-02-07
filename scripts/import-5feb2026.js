@@ -570,12 +570,10 @@ async function runImport() {
     process.exit(1);
   }
 
-  // Connect to MongoDB
-  if (!DRY_RUN) {
-    console.log('\nConnecting to MongoDB...');
-    await mongoose.connect(process.env.MONGODB_URI);
-    console.log('Connected to MongoDB');
-  }
+  // Connect to MongoDB (needed even for dry-run to verify existing data)
+  console.log('\nConnecting to MongoDB...');
+  await mongoose.connect(process.env.MONGODB_URI);
+  console.log('Connected to MongoDB');
 
   const stats = {
     sheikhCreated: false,
@@ -654,7 +652,7 @@ async function runImport() {
   }
 
   // Disconnect
-  if (!DRY_RUN && mongoose.connection.readyState === 1) {
+  if (mongoose.connection.readyState === 1) {
     await mongoose.disconnect();
     console.log('\nDatabase connection closed');
   }
