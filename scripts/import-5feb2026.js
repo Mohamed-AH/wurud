@@ -236,7 +236,18 @@ function getTags(row) {
 // ============================================================================
 
 async function findOrCreateSheikh(nameArabic) {
+  // Try exact match first
   let sheikh = await Sheikh.findOne({ nameArabic });
+
+  // If not found, try with "الشيخ " prefix (common in existing data)
+  if (!sheikh) {
+    sheikh = await Sheikh.findOne({ nameArabic: `الشيخ ${nameArabic}` });
+  }
+
+  // If still not found, try without "الشيخ " prefix (in case Excel has it but DB doesn't)
+  if (!sheikh && nameArabic.startsWith('الشيخ ')) {
+    sheikh = await Sheikh.findOne({ nameArabic: nameArabic.replace(/^الشيخ /, '') });
+  }
 
   if (!sheikh) {
     if (DRY_RUN) {
