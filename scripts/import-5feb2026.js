@@ -31,7 +31,8 @@ const { Lecture, Sheikh, Series } = require('../models');
 // ============================================================================
 
 const SERIES_SUFFIX_ONLINE = ' - عن بعد';
-const SERIES_SUFFIX_ARCHIVE = ' - أرشيف رمضان';
+const SERIES_SUFFIX_ARCHIVE_RAMADAN = ' - أرشيف رمضان';
+const SERIES_SUFFIX_ARCHIVE = ' - أرشيف';
 const KHUTBA_SERIES_TITLE = 'خطب الجمعة';
 
 // Parse command line arguments
@@ -394,14 +395,22 @@ async function importOnlineClasses(data, sheikh, stats) {
   return seriesMap;
 }
 
-async function importRamadanArchive(data, sheikh, stats) {
-  console.log('\n=== Phase 2: Ramadan Archive (S.No 34-99) ===\n');
+async function importArchive(data, sheikh, stats) {
+  console.log('\n=== Phase 2: Archive (S.No 34-99) ===\n');
 
   const archiveRows = data.filter(r => r['S.No'] >= 34 && r['S.No'] <= 99);
   const seriesMap = new Map();
 
   for (const row of archiveRows) {
-    const seriesTitle = String(row.SeriesName || '').trim() + SERIES_SUFFIX_ARCHIVE;
+    // Use different suffix based on category
+    const isRamadan = row.Category === 'Ramadhan';
+    const suffix = isRamadan ? SERIES_SUFFIX_ARCHIVE_RAMADAN : SERIES_SUFFIX_ARCHIVE;
+    const seriesTitle = String(row.SeriesName || '').trim() + suffix;
+
+    // Tags based on content type
+    const tags = isRamadan
+      ? ['archive', 'ramadan', 'أرشيف', 'رمضان']
+      : ['archive', 'أرشيف'];
 
     if (!seriesMap.has(seriesTitle)) {
       const series = await findOrCreateSeries(
@@ -409,7 +418,7 @@ async function importRamadanArchive(data, sheikh, stats) {
         sheikh._id,
         mapCategory(row.Category),
         row.OriginalAuthor || '',
-        ['archive', 'ramadan', 'أرشيف', 'رمضان']
+        tags
       );
       seriesMap.set(seriesTitle, series);
       if (series.isNew) stats.seriesCreated++;
@@ -436,7 +445,7 @@ async function importRamadanArchive(data, sheikh, stats) {
         originalFilename: row.TelegramFileName,
         serialNo: row['S.No'],
         importBatch: '5feb2026',
-        group: 'archive'
+        group: isRamadan ? 'archive-ramadan' : 'archive'
       }
     }, stats);
   }
@@ -604,8 +613,8 @@ async function runImport() {
     // Phase 1: Online Classes (100-151) - Create online series first
     const onlineSeriesMap = await importOnlineClasses(data, sheikh, stats);
 
-    // Phase 2: Ramadan Archive (34-99)
-    await importRamadanArchive(data, sheikh, stats);
+    // Phase 2: Archive (34-99) - Ramadan and non-Ramadan archive
+    await importArchive(data, sheikh, stats);
 
     // Phase 3: Current Continuations (1-33)
     await importCurrentContinuations(data, sheikh, onlineSeriesMap, stats);
