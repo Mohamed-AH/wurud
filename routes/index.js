@@ -313,13 +313,53 @@ router.get('/series/:id', async (req, res) => {
     }
 
     // Get all lectures in this series (ordered by sortOrder, then lecture number)
-    const lectures = await Lecture.find({
-      seriesId: req.params.id,
-      published: true
-    })
-      .sort({ sortOrder: 1, lectureNumber: 1, createdAt: 1 })
-      .populate('sheikhId', 'nameArabic nameEnglish honorific')
-      .lean();
+    // Use aggregation to handle null/undefined sortOrder values consistently
+    const mongoose = require('mongoose');
+    const lectures = await Lecture.aggregate([
+      {
+        $match: {
+          seriesId: new mongoose.Types.ObjectId(req.params.id),
+          published: true
+        }
+      },
+      {
+        $addFields: {
+          // Treat null/undefined sortOrder as very high number so they appear last
+          effectiveSortOrder: { $ifNull: ['$sortOrder', 999999] }
+        }
+      },
+      {
+        $sort: {
+          effectiveSortOrder: 1,
+          lectureNumber: 1,
+          createdAt: 1
+        }
+      },
+      {
+        $lookup: {
+          from: 'sheikhs',
+          localField: 'sheikhId',
+          foreignField: '_id',
+          as: 'sheikhData'
+        }
+      },
+      {
+        $addFields: {
+          sheikhId: { $arrayElemAt: ['$sheikhData', 0] }
+        }
+      },
+      {
+        $project: {
+          sheikhData: 0,
+          effectiveSortOrder: 0,
+          'sheikhId.bioArabic': 0,
+          'sheikhId.bioEnglish': 0,
+          'sheikhId.createdAt': 0,
+          'sheikhId.updatedAt': 0,
+          'sheikhId.__v': 0
+        }
+      }
+    ]);
 
     // Calculate statistics
     const stats = {

@@ -590,7 +590,7 @@
 
         <div class="lectures-list" id="lecturesList">
           <% lectures.forEach((lecture, index) => { %>
-            <div class="lecture-item" data-sort-order="<%= lecture.sortOrder || index %>" data-lecture-number="<%= lecture.lectureNumber || 999 %>" data-date="<%= lecture.dateRecorded ? new Date(lecture.dateRecorded).getTime() : 0 %>" data-index="<%= index %>">
+            <div class="lecture-item" data-sort-order="<%= lecture.sortOrder != null ? lecture.sortOrder : index %>" data-lecture-number="<%= lecture.lectureNumber || 999 %>" data-date="<%= lecture.dateRecorded ? new Date(lecture.dateRecorded).getTime() : 0 %>" data-index="<%= index %>">
               <% if (lecture.lectureNumber) { %>
                 <div class="lecture-number-badge">
                   <%= lecture.lectureNumber %>

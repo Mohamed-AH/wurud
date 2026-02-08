@@ -188,10 +188,35 @@ router.get('/series/:id/edit', isAdmin, async (req, res) => {
     const sheikhs = await Sheikh.find().sort({ nameArabic: 1 }).lean();
 
     // Get lectures in this series, ordered by sortOrder
-    const lectures = await Lecture.find({ seriesId: req.params.id })
-      .sort({ sortOrder: 1, lectureNumber: 1, createdAt: 1 })
-      .select('titleArabic lectureNumber sortOrder dateRecorded published')
-      .lean();
+    // Use aggregation to handle null/undefined sortOrder values consistently
+    const mongoose = require('mongoose');
+    const lectures = await Lecture.aggregate([
+      {
+        $match: { seriesId: new mongoose.Types.ObjectId(req.params.id) }
+      },
+      {
+        $addFields: {
+          effectiveSortOrder: { $ifNull: ['$sortOrder', 999999] }
+        }
+      },
+      {
+        $sort: {
+          effectiveSortOrder: 1,
+          lectureNumber: 1,
+          createdAt: 1
+        }
+      },
+      {
+        $project: {
+          titleArabic: 1,
+          lectureNumber: 1,
+          sortOrder: 1,
+          dateRecorded: 1,
+          published: 1,
+          effectiveSortOrder: 0
+        }
+      }
+    ]);
 
     res.render('admin/edit-series', {
       title: 'Edit Series',
