@@ -570,7 +570,10 @@
         <div class="sort-controls">
           <span class="sort-label">ترتيب:</span>
           <div class="sort-chips">
-            <button class="sort-chip active" data-sort="number" onclick="sortLectures('number')">
+            <button class="sort-chip active" data-sort="order" onclick="sortLectures('order')">
+              الترتيب الأصلي
+            </button>
+            <button class="sort-chip" data-sort="number" onclick="sortLectures('number')">
               حسب الرقم
             </button>
             <button class="sort-chip" data-sort="oldest" onclick="sortLectures('oldest')">
@@ -587,7 +590,7 @@
 
         <div class="lectures-list" id="lecturesList">
           <% lectures.forEach((lecture, index) => { %>
-            <div class="lecture-item" data-lecture-number="<%= lecture.lectureNumber || 999 %>" data-date="<%= lecture.dateRecorded ? new Date(lecture.dateRecorded).getTime() : 0 %>" data-index="<%= index %>">
+            <div class="lecture-item" data-sort-order="<%= lecture.sortOrder || index %>" data-lecture-number="<%= lecture.lectureNumber || 999 %>" data-date="<%= lecture.dateRecorded ? new Date(lecture.dateRecorded).getTime() : 0 %>" data-index="<%= index %>">
               <% if (lecture.lectureNumber) { %>
                 <div class="lecture-number-badge">
                   <%= lecture.lectureNumber %>
@@ -631,7 +634,7 @@
   }
 
   // Sort lectures
-  let currentSort = 'number';
+  let currentSort = 'order';
 
   function sortLectures(sortType) {
     const lecturesList = document.getElementById('lecturesList');
@@ -641,28 +644,34 @@
 
     // Sort lectures based on type
     lectures.sort((a, b) => {
-      if (sortType === 'number') {
+      if (sortType === 'order') {
+        // Original order from Excel/import (uses sortOrder field)
+        const orderA = parseInt(a.dataset.sortOrder) || 0;
+        const orderB = parseInt(b.dataset.sortOrder) || 0;
+        return orderA - orderB;
+      } else if (sortType === 'number') {
+        // By lecture number (extracted from title)
         const numA = parseInt(a.dataset.lectureNumber) || 999;
         const numB = parseInt(b.dataset.lectureNumber) || 999;
         return numA - numB;
       } else if (sortType === 'oldest') {
         const dateA = parseInt(a.dataset.date) || 0;
         const dateB = parseInt(b.dataset.date) || 0;
-        // If dates are equal or both 0, fall back to lecture number
+        // If dates are equal or both 0, fall back to sort order
         if (dateA === dateB) {
-          const numA = parseInt(a.dataset.lectureNumber) || 999;
-          const numB = parseInt(b.dataset.lectureNumber) || 999;
-          return numA - numB;
+          const orderA = parseInt(a.dataset.sortOrder) || 0;
+          const orderB = parseInt(b.dataset.sortOrder) || 0;
+          return orderA - orderB;
         }
         return dateA - dateB;
       } else if (sortType === 'newest') {
         const dateA = parseInt(a.dataset.date) || 0;
         const dateB = parseInt(b.dataset.date) || 0;
-        // If dates are equal or both 0, fall back to lecture number (descending)
+        // If dates are equal or both 0, fall back to sort order (descending)
         if (dateA === dateB) {
-          const numA = parseInt(a.dataset.lectureNumber) || 999;
-          const numB = parseInt(b.dataset.lectureNumber) || 999;
-          return numB - numA;
+          const orderA = parseInt(a.dataset.sortOrder) || 0;
+          const orderB = parseInt(b.dataset.sortOrder) || 0;
+          return orderB - orderA;
         }
         return dateB - dateA;
       }
@@ -680,13 +689,13 @@
     // Show clear button if not default sort
     const clearBtn = document.getElementById('clearSortBtn');
     if (clearBtn) {
-      clearBtn.style.display = sortType !== 'number' ? 'block' : 'none';
+      clearBtn.style.display = sortType !== 'order' ? 'block' : 'none';
     }
 
     currentSort = sortType;
   }
 
   function clearSort() {
-    sortLectures('number');
+    sortLectures('order');
   }
 </script>

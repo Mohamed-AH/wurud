@@ -312,12 +312,12 @@ router.get('/series/:id', async (req, res) => {
       return res.status(404).send('Series not found');
     }
 
-    // Get all lectures in this series (ordered by lecture number)
+    // Get all lectures in this series (ordered by sortOrder, then lecture number)
     const lectures = await Lecture.find({
       seriesId: req.params.id,
       published: true
     })
-      .sort({ lectureNumber: 1, createdAt: 1 })
+      .sort({ sortOrder: 1, lectureNumber: 1, createdAt: 1 })
       .populate('sheikhId', 'nameArabic nameEnglish honorific')
       .lean();
 
