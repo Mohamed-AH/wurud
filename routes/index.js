@@ -14,15 +14,32 @@ router.get('/', async (req, res) => {
       .sort({ createdAt: -1 })
       .lean();
 
-    // For each series, fetch its lectures
+    // For each series, fetch its lectures (sorted by sortOrder for correct display order)
     const seriesList = await Promise.all(
       series.map(async (s) => {
-        const lectures = await Lecture.find({
-          seriesId: s._id,
-          published: true
-        })
-          .sort({ lectureNumber: 1, createdAt: 1 })
-          .lean();
+        const lectures = await Lecture.aggregate([
+          {
+            $match: {
+              seriesId: s._id,
+              published: true
+            }
+          },
+          {
+            $addFields: {
+              effectiveSortOrder: { $ifNull: ['$sortOrder', 999999] }
+            }
+          },
+          {
+            $sort: {
+              effectiveSortOrder: 1,
+              lectureNumber: 1,
+              createdAt: 1
+            }
+          },
+          {
+            $unset: ['effectiveSortOrder']
+          }
+        ]);
 
         // Get original author from first lecture with description
         const originalAuthor = lectures.find(l => l.descriptionArabic)?.descriptionArabic
@@ -302,7 +319,6 @@ router.get('/series', async (req, res) => {
 // @desc    Single series profile page
 // @access  Public
 router.get('/series/:id', async (req, res) => {
-  console.log('=== PUBLIC SERIES ROUTE HIT ===', req.params.id);
   try {
     // Get series by ID
     const series = await Series.findById(req.params.id)
@@ -353,12 +369,6 @@ router.get('/series/:id', async (req, res) => {
         $unset: ['sheikhData', 'effectiveSortOrder']
       }
     ]);
-
-    // Debug: Log first 5 lectures with sortOrder
-    console.log('Series detail - first 5 lectures sortOrder:');
-    lectures.slice(0, 5).forEach((l, i) => {
-      console.log(`  ${i+1}. sortOrder=${l.sortOrder} lectureNum=${l.lectureNumber} title=${l.titleArabic?.substring(0, 40)}`);
-    });
 
     // Calculate statistics
     const stats = {

@@ -796,12 +796,10 @@
           </div>
 
           <div class="episodes-container">
-          <% series.lectures.forEach(lecture => { %>
-            <div class="episode-item" data-lecture-number="<%= lecture.lectureNumber || 999 %>" data-date="<%= lecture.dateRecorded ? new Date(lecture.dateRecorded).getTime() : 0 %>">
+          <% series.lectures.forEach((lecture, index) => { %>
+            <div class="episode-item" data-lecture-number="<%= index + 1 %>" data-date="<%= lecture.dateRecorded ? new Date(lecture.dateRecorded).getTime() : 0 %>">
               <div class="episode-header">
-                <% if (lecture.lectureNumber) { %>
-                  <div class="episode-number"><%= lecture.lectureNumber %></div>
-                <% } %>
+                <div class="episode-number"><%= index + 1 %></div>
                 <div class="episode-title">
                   <%= lecture.titleArabic %>
                 </div>
@@ -970,12 +968,10 @@
 
             <div class="episodes-container">
             <% if (series.lectures && series.lectures.length > 0) { %>
-              <% series.lectures.forEach(lecture => { %>
-                <div class="episode-item" data-lecture-number="<%= lecture.lectureNumber || 999 %>" data-date="<%= lecture.dateRecorded ? new Date(lecture.dateRecorded).getTime() : 0 %>">
+              <% series.lectures.forEach((lecture, index) => { %>
+                <div class="episode-item" data-lecture-number="<%= index + 1 %>" data-date="<%= lecture.dateRecorded ? new Date(lecture.dateRecorded).getTime() : 0 %>">
                   <div class="episode-header">
-                    <% if (lecture.lectureNumber) { %>
-                      <div class="episode-number"><%= lecture.lectureNumber %></div>
-                    <% } %>
+                    <div class="episode-number"><%= index + 1 %></div>
                     <div class="episode-title"><%= lecture.titleArabic %></div>
                   </div>
                   <div class="episode-meta">
