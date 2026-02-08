@@ -302,6 +302,7 @@ router.get('/series', async (req, res) => {
 // @desc    Single series profile page
 // @access  Public
 router.get('/series/:id', async (req, res) => {
+  console.log('=== PUBLIC SERIES ROUTE HIT ===', req.params.id);
   try {
     // Get series by ID
     const series = await Series.findById(req.params.id)
