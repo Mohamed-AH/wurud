@@ -349,15 +349,7 @@ router.get('/series/:id', async (req, res) => {
         }
       },
       {
-        $project: {
-          sheikhData: 0,
-          effectiveSortOrder: 0,
-          'sheikhId.bioArabic': 0,
-          'sheikhId.bioEnglish': 0,
-          'sheikhId.createdAt': 0,
-          'sheikhId.updatedAt': 0,
-          'sheikhId.__v': 0
-        }
+        $unset: ['sheikhData', 'effectiveSortOrder']
       }
     ]);
 
