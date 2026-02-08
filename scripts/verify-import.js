@@ -378,9 +378,19 @@ async function runVerification() {
   const allResults = {};
 
   try {
-    // Find the sheikh
+    // Find the sheikh (with fallback for "الشيخ" prefix mismatch)
     const sheikhName = String(data[0].Sheikh).trim();
-    const sheikh = await Sheikh.findOne({ nameArabic: sheikhName });
+    let sheikh = await Sheikh.findOne({ nameArabic: sheikhName });
+
+    // If not found, try with "الشيخ " prefix
+    if (!sheikh) {
+      sheikh = await Sheikh.findOne({ nameArabic: `الشيخ ${sheikhName}` });
+    }
+
+    // If still not found, try without "الشيخ " prefix
+    if (!sheikh && sheikhName.startsWith('الشيخ ')) {
+      sheikh = await Sheikh.findOne({ nameArabic: sheikhName.replace(/^الشيخ /, '') });
+    }
 
     if (!sheikh) {
       console.error(`\nSheikh not found: ${sheikhName}`);
