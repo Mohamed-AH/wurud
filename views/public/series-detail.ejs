@@ -309,6 +309,71 @@
     opacity: 0.5;
   }
 
+  /* Sort Controls */
+  .sort-controls {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 16px 20px;
+    background: var(--cream);
+    border-radius: 12px;
+    margin-bottom: 24px;
+    border: 2px solid var(--accent-amber);
+    flex-wrap: wrap;
+  }
+
+  .sort-label {
+    font-size: 14px;
+    font-weight: 600;
+    color: var(--text-secondary);
+  }
+
+  .sort-chips {
+    display: flex;
+    gap: 8px;
+    flex-wrap: wrap;
+  }
+
+  .sort-chip {
+    padding: 8px 16px;
+    border-radius: 20px;
+    font-size: 14px;
+    font-weight: 500;
+    border: 2px solid var(--accent-amber);
+    background: white;
+    color: var(--text-secondary);
+    cursor: pointer;
+    transition: all 0.3s;
+  }
+
+  .sort-chip:hover {
+    background: var(--accent-amber);
+    color: var(--primary-dark);
+  }
+
+  .sort-chip.active {
+    background: var(--accent-gold);
+    color: var(--primary-dark);
+    border-color: var(--accent-gold);
+  }
+
+  .clear-sort-btn {
+    padding: 8px 16px;
+    border-radius: 20px;
+    font-size: 13px;
+    font-weight: 500;
+    border: none;
+    background: #dc3545;
+    color: white;
+    cursor: pointer;
+    transition: all 0.3s;
+    margin-right: auto;
+  }
+
+  .clear-sort-btn:hover {
+    background: #c82333;
+  }
+
   @media (max-width: 768px) {
     .series-title {
       font-size: 32px;
@@ -326,6 +391,20 @@
       width: 40px;
       height: 40px;
       font-size: 18px;
+    }
+
+    .sort-controls {
+      flex-direction: column;
+      align-items: flex-start;
+    }
+
+    .sort-chips {
+      width: 100%;
+    }
+
+    .clear-sort-btn {
+      margin-right: 0;
+      margin-top: 8px;
     }
   }
 </style>
@@ -487,9 +566,31 @@
       <h2 class="section-title"><%= relatedKhutbaSeries && relatedKhutbaSeries.length > 0 ? 'خطب متفرقة' : 'محاضرات السلسلة' %> (<%= lectures.length %>)</h2>
 
       <% if (lectures && lectures.length > 0) { %>
-        <div class="lectures-list">
+        <!-- Sort Controls -->
+        <div class="sort-controls">
+          <span class="sort-label">ترتيب:</span>
+          <div class="sort-chips">
+            <button class="sort-chip active" data-sort="order" onclick="sortLectures('order')">
+              الترتيب الأصلي
+            </button>
+            <button class="sort-chip" data-sort="number" onclick="sortLectures('number')">
+              حسب الرقم
+            </button>
+            <button class="sort-chip" data-sort="oldest" onclick="sortLectures('oldest')">
+              الأقدم أولاً
+            </button>
+            <button class="sort-chip" data-sort="newest" onclick="sortLectures('newest')">
+              الأحدث أولاً
+            </button>
+          </div>
+          <button class="clear-sort-btn" onclick="clearSort()" id="clearSortBtn" style="display: none;">
+            مسح ✕
+          </button>
+        </div>
+
+        <div class="lectures-list" id="lecturesList">
           <% lectures.forEach((lecture, index) => { %>
-            <div class="lecture-item">
+            <div class="lecture-item" data-sort-order="<%= lecture.sortOrder != null ? lecture.sortOrder : index %>" data-lecture-number="<%= lecture.lectureNumber || 999 %>" data-date="<%= lecture.dateRecorded ? new Date(lecture.dateRecorded).getTime() : 0 %>" data-index="<%= index %>">
               <% if (lecture.lectureNumber) { %>
                 <div class="lecture-number-badge">
                   <%= lecture.lectureNumber %>
@@ -530,5 +631,71 @@
       console.error('❌ Audio player not initialized');
       alert('مشغل الصوت يتم تحميله، يرجى المحاولة مرة أخرى');
     }
+  }
+
+  // Sort lectures
+  let currentSort = 'order';
+
+  function sortLectures(sortType) {
+    const lecturesList = document.getElementById('lecturesList');
+    if (!lecturesList) return;
+
+    const lectures = Array.from(lecturesList.querySelectorAll('.lecture-item'));
+
+    // Sort lectures based on type
+    lectures.sort((a, b) => {
+      if (sortType === 'order') {
+        // Original order from Excel/import (uses sortOrder field)
+        const orderA = parseInt(a.dataset.sortOrder) || 0;
+        const orderB = parseInt(b.dataset.sortOrder) || 0;
+        return orderA - orderB;
+      } else if (sortType === 'number') {
+        // By lecture number (extracted from title)
+        const numA = parseInt(a.dataset.lectureNumber) || 999;
+        const numB = parseInt(b.dataset.lectureNumber) || 999;
+        return numA - numB;
+      } else if (sortType === 'oldest') {
+        const dateA = parseInt(a.dataset.date) || 0;
+        const dateB = parseInt(b.dataset.date) || 0;
+        // If dates are equal or both 0, fall back to sort order
+        if (dateA === dateB) {
+          const orderA = parseInt(a.dataset.sortOrder) || 0;
+          const orderB = parseInt(b.dataset.sortOrder) || 0;
+          return orderA - orderB;
+        }
+        return dateA - dateB;
+      } else if (sortType === 'newest') {
+        const dateA = parseInt(a.dataset.date) || 0;
+        const dateB = parseInt(b.dataset.date) || 0;
+        // If dates are equal or both 0, fall back to sort order (descending)
+        if (dateA === dateB) {
+          const orderA = parseInt(a.dataset.sortOrder) || 0;
+          const orderB = parseInt(b.dataset.sortOrder) || 0;
+          return orderB - orderA;
+        }
+        return dateB - dateA;
+      }
+      return 0;
+    });
+
+    // Re-append lectures in sorted order
+    lectures.forEach(lecture => lecturesList.appendChild(lecture));
+
+    // Update active chip
+    document.querySelectorAll('.sort-chip').forEach(chip => {
+      chip.classList.toggle('active', chip.dataset.sort === sortType);
+    });
+
+    // Show clear button if not default sort
+    const clearBtn = document.getElementById('clearSortBtn');
+    if (clearBtn) {
+      clearBtn.style.display = sortType !== 'order' ? 'block' : 'none';
+    }
+
+    currentSort = sortType;
+  }
+
+  function clearSort() {
+    sortLectures('order');
   }
 </script>

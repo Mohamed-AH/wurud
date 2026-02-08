@@ -54,3 +54,7 @@ tests/e2e/*.png
 tests/e2e/*.mp4
 tests/e2e/videos/
 tests/e2e/screenshots/
+
+# Import/migration reports
+import-report-*.json
+verify-report-*.json

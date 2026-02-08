@@ -48,6 +48,11 @@ const lectureSchema = new mongoose.Schema({
     min: 1,
     index: true
   },
+  sortOrder: {
+    type: Number,
+    default: 0,
+    index: true
+  },
   duration: {
     type: Number, // in seconds
     default: 0

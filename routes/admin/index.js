@@ -175,7 +175,7 @@ router.get('/lectures/no-audio', isAdmin, async (req, res) => {
 // @access  Private (Admin only)
 router.get('/series/:id/edit', isAdmin, async (req, res) => {
   try {
-    const { Series, Sheikh } = require('../../models');
+    const { Series, Sheikh, Lecture } = require('../../models');
 
     const series = await Series.findById(req.params.id)
       .populate('sheikhId', 'nameArabic nameEnglish')
@@ -187,11 +187,42 @@ router.get('/series/:id/edit', isAdmin, async (req, res) => {
 
     const sheikhs = await Sheikh.find().sort({ nameArabic: 1 }).lean();
 
+    // Get lectures in this series, ordered by sortOrder
+    // Use aggregation to handle null/undefined sortOrder values consistently
+    const mongoose = require('mongoose');
+    const lectures = await Lecture.aggregate([
+      {
+        $match: { seriesId: new mongoose.Types.ObjectId(req.params.id) }
+      },
+      {
+        $addFields: {
+          effectiveSortOrder: { $ifNull: ['$sortOrder', 999999] }
+        }
+      },
+      {
+        $sort: {
+          effectiveSortOrder: 1,
+          lectureNumber: 1,
+          createdAt: 1
+        }
+      },
+      {
+        $project: {
+          titleArabic: 1,
+          lectureNumber: 1,
+          sortOrder: 1,
+          dateRecorded: 1,
+          published: 1
+        }
+      }
+    ]);
+
     res.render('admin/edit-series', {
       title: 'Edit Series',
       user: req.user,
       series,
-      sheikhs
+      sheikhs,
+      lectures
     });
   } catch (error) {
     console.error('Edit series error:', error);
@@ -226,6 +257,42 @@ router.post('/series/:id/edit', isAdmin, async (req, res) => {
   } catch (error) {
     console.error('Update series error:', error);
     res.status(500).send('Error updating series');
+  }
+});
+
+// @route   POST /admin/series/:id/reorder-lectures
+// @desc    Reorder lectures in a series
+// @access  Private (Admin only)
+router.post('/series/:id/reorder-lectures', isAdmin, async (req, res) => {
+  try {
+    const { Lecture } = require('../../models');
+    const mongoose = require('mongoose');
+    const { lectureIds } = req.body;
+
+    if (!lectureIds || !Array.isArray(lectureIds)) {
+      return res.status(400).json({ error: 'Invalid lecture order data' });
+    }
+
+    const seriesObjectId = new mongoose.Types.ObjectId(req.params.id);
+
+    // Update sortOrder for each lecture based on new order
+    const updates = lectureIds.map((lectureId, index) =>
+      Lecture.updateOne(
+        { _id: new mongoose.Types.ObjectId(lectureId), seriesId: seriesObjectId },
+        { $set: { sortOrder: index } }
+      )
+    );
+
+    const results = await Promise.all(updates);
+
+    // Log how many were actually updated
+    const updatedCount = results.reduce((sum, r) => sum + r.modifiedCount, 0);
+    console.log(`Reorder: Updated ${updatedCount} of ${lectureIds.length} lectures for series ${req.params.id}`);
+
+    res.json({ success: true, message: 'Lecture order updated successfully', updatedCount });
+  } catch (error) {
+    console.error('Reorder lectures error:', error);
+    res.status(500).json({ error: 'Error reordering lectures' });
   }
 });
 

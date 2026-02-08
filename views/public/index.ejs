@@ -642,6 +642,27 @@
   </div>
 
   <div class="filter-group">
+    <span class="filter-label">النوع:</span>
+    <div class="filter-chips">
+      <button class="chip active" data-filter="all" data-type="seriesType" onclick="filterBySeriesType('all')">
+        الكل
+      </button>
+      <button class="chip" data-filter="online" data-type="seriesType" onclick="filterBySeriesType('online')">
+        عن بعد
+      </button>
+      <button class="chip" data-filter="archive-ramadan" data-type="seriesType" onclick="filterBySeriesType('archive-ramadan')">
+        أرشيف رمضان
+      </button>
+      <button class="chip" data-filter="archive" data-type="seriesType" onclick="filterBySeriesType('archive')">
+        أرشيف
+      </button>
+      <button class="chip" data-filter="masjid" data-type="seriesType" onclick="filterBySeriesType('masjid')">
+        جامع الورود
+      </button>
+    </div>
+  </div>
+
+  <div class="filter-group">
     <span class="filter-label">الترتيب:</span>
     <div class="filter-chips">
       <button class="chip active" data-sort="newest" onclick="sortByDate('newest')">
@@ -702,8 +723,24 @@
       }
 
       const hijriDate = latestLecture?.dateRecordedHijri || '';
+
+      // Determine series type based on tags or title suffix
+      let seriesType = 'masjid'; // default
+      if (series.tags && series.tags.includes('online')) {
+        seriesType = 'online';
+      } else if (series.tags && series.tags.includes('ramadan')) {
+        seriesType = 'archive-ramadan';
+      } else if (series.tags && series.tags.includes('archive')) {
+        seriesType = 'archive';
+      } else if (series.titleArabic && series.titleArabic.includes('عن بعد')) {
+        seriesType = 'online';
+      } else if (series.titleArabic && series.titleArabic.includes('أرشيف رمضان')) {
+        seriesType = 'archive-ramadan';
+      } else if (series.titleArabic && series.titleArabic.includes('أرشيف')) {
+        seriesType = 'archive';
+      }
     %>
-      <div class="series-card" data-category="<%= series.category %>" data-date="<%= latestDate %>" data-hijri="<%= hijriDate %>">
+      <div class="series-card" data-category="<%= series.category %>" data-date="<%= latestDate %>" data-hijri="<%= hijriDate %>" data-series-type="<%= seriesType %>">
         <div class="series-header" onclick="toggleSeries('<%= series._id %>')">
           <h2 class="series-title"><%= series.titleArabic %></h2>
 
@@ -759,12 +796,10 @@
           </div>
 
           <div class="episodes-container">
-          <% series.lectures.forEach(lecture => { %>
-            <div class="episode-item" data-lecture-number="<%= lecture.lectureNumber || 999 %>" data-date="<%= lecture.dateRecorded ? new Date(lecture.dateRecorded).getTime() : 0 %>">
+          <% series.lectures.forEach((lecture, index) => { %>
+            <div class="episode-item" data-lecture-number="<%= index + 1 %>" data-date="<%= lecture.dateRecorded ? new Date(lecture.dateRecorded).getTime() : 0 %>">
               <div class="episode-header">
-                <% if (lecture.lectureNumber) { %>
-                  <div class="episode-number"><%= lecture.lectureNumber %></div>
-                <% } %>
+                <div class="episode-number"><%= index + 1 %></div>
                 <div class="episode-title">
                   <%= lecture.titleArabic %>
                 </div>
@@ -933,12 +968,10 @@
 
             <div class="episodes-container">
             <% if (series.lectures && series.lectures.length > 0) { %>
-              <% series.lectures.forEach(lecture => { %>
-                <div class="episode-item" data-lecture-number="<%= lecture.lectureNumber || 999 %>" data-date="<%= lecture.dateRecorded ? new Date(lecture.dateRecorded).getTime() : 0 %>">
+              <% series.lectures.forEach((lecture, index) => { %>
+                <div class="episode-item" data-lecture-number="<%= index + 1 %>" data-date="<%= lecture.dateRecorded ? new Date(lecture.dateRecorded).getTime() : 0 %>">
                   <div class="episode-header">
-                    <% if (lecture.lectureNumber) { %>
-                      <div class="episode-number"><%= lecture.lectureNumber %></div>
-                    <% } %>
+                    <div class="episode-number"><%= index + 1 %></div>
                     <div class="episode-title"><%= lecture.titleArabic %></div>
                   </div>
                   <div class="episode-meta">
@@ -1059,8 +1092,13 @@
   function clearAllFilters() {
     // Reset category filter to "all"
     document.querySelectorAll('.chip[data-type="category"]').forEach(c => c.classList.remove('active'));
-    const allChip = document.querySelector('.chip[data-filter="all"]');
-    if (allChip) allChip.classList.add('active');
+    const allCategoryChip = document.querySelector('.chip[data-type="category"][data-filter="all"]');
+    if (allCategoryChip) allCategoryChip.classList.add('active');
+
+    // Reset series type filter to "all"
+    document.querySelectorAll('.chip[data-type="seriesType"]').forEach(c => c.classList.remove('active'));
+    const allTypeChip = document.querySelector('.chip[data-type="seriesType"][data-filter="all"]');
+    if (allTypeChip) allTypeChip.classList.add('active');
 
     // Reset sort to "newest"
     document.querySelectorAll('.chip[data-sort]').forEach(c => c.classList.remove('active'));
@@ -1083,10 +1121,12 @@
     if (!clearBtn) return;
 
     const activeCategoryFilter = document.querySelector('.chip[data-type="category"].active');
+    const activeSeriesTypeFilter = document.querySelector('.chip[data-type="seriesType"].active');
     const activeSortFilter = document.querySelector('.chip[data-sort].active');
     const searchInput = document.getElementById('searchInput');
 
     const hasActiveFilter = (activeCategoryFilter && activeCategoryFilter.dataset.filter !== 'all') ||
+                           (activeSeriesTypeFilter && activeSeriesTypeFilter.dataset.filter !== 'all') ||
                            (activeSortFilter && activeSortFilter.dataset.sort !== 'newest') ||
                            (searchInput && searchInput.value.trim() !== '');
 
@@ -1100,19 +1140,38 @@
 
     // Get active category filter
     const activeCategoryFilter = document.querySelector('.chip[data-type="category"].active');
-    const filterValue = activeCategoryFilter ? activeCategoryFilter.dataset.filter : 'all';
+    const categoryValue = activeCategoryFilter ? activeCategoryFilter.dataset.filter : 'all';
+
+    // Get active series type filter
+    const activeSeriesTypeFilter = document.querySelector('.chip[data-type="seriesType"].active');
+    const seriesTypeValue = activeSeriesTypeFilter ? activeSeriesTypeFilter.dataset.filter : 'all';
 
     // Filter series cards in active tab only
     const cards = activeTab.querySelectorAll('.series-card');
     cards.forEach(card => {
       const category = card.dataset.category;
+      const seriesType = card.dataset.seriesType;
 
-      if (filterValue === 'all' || category === filterValue) {
+      const categoryMatch = categoryValue === 'all' || category === categoryValue;
+      const seriesTypeMatch = seriesTypeValue === 'all' || seriesType === seriesTypeValue;
+
+      if (categoryMatch && seriesTypeMatch) {
         card.style.display = 'block';
       } else {
         card.style.display = 'none';
       }
     });
+  }
+
+  // Filter by series type (online, archive, archive-ramadan, masjid)
+  function filterBySeriesType(type) {
+    // Update active chip
+    document.querySelectorAll('.chip[data-type="seriesType"]').forEach(c => c.classList.remove('active'));
+    const activeChip = document.querySelector(`.chip[data-type="seriesType"][data-filter="${type}"]`);
+    if (activeChip) activeChip.classList.add('active');
+
+    applyFilter();
+    updateClearButtonVisibility();
   }
 
   // Search functionality

@@ -14,15 +14,32 @@ router.get('/', async (req, res) => {
       .sort({ createdAt: -1 })
       .lean();
 
-    // For each series, fetch its lectures
+    // For each series, fetch its lectures (sorted by sortOrder for correct display order)
     const seriesList = await Promise.all(
       series.map(async (s) => {
-        const lectures = await Lecture.find({
-          seriesId: s._id,
-          published: true
-        })
-          .sort({ lectureNumber: 1, createdAt: 1 })
-          .lean();
+        const lectures = await Lecture.aggregate([
+          {
+            $match: {
+              seriesId: s._id,
+              published: true
+            }
+          },
+          {
+            $addFields: {
+              effectiveSortOrder: { $ifNull: ['$sortOrder', 999999] }
+            }
+          },
+          {
+            $sort: {
+              effectiveSortOrder: 1,
+              lectureNumber: 1,
+              createdAt: 1
+            }
+          },
+          {
+            $unset: ['effectiveSortOrder']
+          }
+        ]);
 
         // Get original author from first lecture with description
         const originalAuthor = lectures.find(l => l.descriptionArabic)?.descriptionArabic
@@ -312,14 +329,46 @@ router.get('/series/:id', async (req, res) => {
       return res.status(404).send('Series not found');
     }
 
-    // Get all lectures in this series (ordered by lecture number)
-    const lectures = await Lecture.find({
-      seriesId: req.params.id,
-      published: true
-    })
-      .sort({ lectureNumber: 1, createdAt: 1 })
-      .populate('sheikhId', 'nameArabic nameEnglish honorific')
-      .lean();
+    // Get all lectures in this series (ordered by sortOrder, then lecture number)
+    // Use aggregation to handle null/undefined sortOrder values consistently
+    const mongoose = require('mongoose');
+    const lectures = await Lecture.aggregate([
+      {
+        $match: {
+          seriesId: new mongoose.Types.ObjectId(req.params.id),
+          published: true
+        }
+      },
+      {
+        $addFields: {
+          // Treat null/undefined sortOrder as very high number so they appear last
+          effectiveSortOrder: { $ifNull: ['$sortOrder', 999999] }
+        }
+      },
+      {
+        $sort: {
+          effectiveSortOrder: 1,
+          lectureNumber: 1,
+          createdAt: 1
+        }
+      },
+      {
+        $lookup: {
+          from: 'sheikhs',
+          localField: 'sheikhId',
+          foreignField: '_id',
+          as: 'sheikhData'
+        }
+      },
+      {
+        $addFields: {
+          sheikhId: { $arrayElemAt: ['$sheikhData', 0] }
+        }
+      },
+      {
+        $unset: ['sheikhData', 'effectiveSortOrder']
+      }
+    ]);
 
     // Calculate statistics
     const stats = {
