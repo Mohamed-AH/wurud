@@ -50,16 +50,22 @@ async function uploadToOCI(filePath, objectName, options = {}) {
   };
   const contentType = options.contentType || contentTypes[ext] || 'audio/mp4';
 
+  // URL-encode objectName to handle non-ASCII characters (Arabic, etc.)
+  const encodedObjectName = encodeURIComponent(objectName);
+
+  // Base64 encode the original filename for metadata (HTTP headers require ASCII)
+  const originalNameBase64 = Buffer.from(path.basename(filePath)).toString('base64');
+
   const putObjectRequest = {
     namespaceName: namespace,
     bucketName: bucketName,
-    objectName: objectName,
+    objectName: encodedObjectName,
     putObjectBody: fileStream,
     contentLength: stats.size,
     contentType: contentType,
     opcMeta: {
       'uploaded-at': new Date().toISOString(),
-      'original-name': path.basename(filePath)
+      'original-name-b64': originalNameBase64
     }
   };
 
@@ -73,11 +79,12 @@ async function uploadToOCI(filePath, objectName, options = {}) {
 
     return {
       success: true,
-      objectName: objectName,
+      objectName: encodedObjectName,
+      originalName: objectName,
       etag: response.eTag,
       size: stats.size,
       contentType: contentType,
-      url: getPublicUrl(objectName)
+      url: getPublicUrl(encodedObjectName)
     };
   } catch (error) {
     console.error('Upload error:', error);
@@ -100,10 +107,13 @@ async function deleteFromOCI(objectName) {
   const namespace = oci.getNamespace();
   const bucketName = oci.getBucketName();
 
+  // URL-encode objectName to handle non-ASCII characters
+  const encodedObjectName = encodeURIComponent(objectName);
+
   const deleteObjectRequest = {
     namespaceName: namespace,
     bucketName: bucketName,
-    objectName: objectName
+    objectName: encodedObjectName
   };
 
   try {
@@ -132,11 +142,14 @@ async function objectExists(objectName) {
   const namespace = oci.getNamespace();
   const bucketName = oci.getBucketName();
 
+  // URL-encode objectName to handle non-ASCII characters
+  const encodedObjectName = encodeURIComponent(objectName);
+
   try {
     await client.headObject({
       namespaceName: namespace,
       bucketName: bucketName,
-      objectName: objectName
+      objectName: encodedObjectName
     });
     return true;
   } catch (error) {
@@ -190,7 +203,7 @@ async function listObjects(prefix = '', limit = 1000) {
 /**
  * Get the public URL for an object
  *
- * @param {string} objectName - Name of the object
+ * @param {string} objectName - Name of the object (can be pre-encoded or plain)
  * @returns {string} Public URL
  */
 function getPublicUrl(objectName) {
@@ -203,8 +216,12 @@ function getPublicUrl(objectName) {
     return `/stream/${objectName}`;
   }
 
+  // Check if objectName is already URL-encoded (contains %XX patterns)
+  const isEncoded = /%[0-9A-Fa-f]{2}/.test(objectName);
+  const encodedName = isEncoded ? objectName : encodeURIComponent(objectName);
+
   // OCI Object Storage public URL format
-  return `https://objectstorage.${region}.oraclecloud.com/n/${namespace}/b/${bucketName}/o/${encodeURIComponent(objectName)}`;
+  return `https://objectstorage.${region}.oraclecloud.com/n/${namespace}/b/${bucketName}/o/${encodedName}`;
 }
 
 /**
@@ -222,11 +239,14 @@ async function getObjectMetadata(objectName) {
   const namespace = oci.getNamespace();
   const bucketName = oci.getBucketName();
 
+  // URL-encode objectName to handle non-ASCII characters
+  const encodedObjectName = encodeURIComponent(objectName);
+
   try {
     const response = await client.headObject({
       namespaceName: namespace,
       bucketName: bucketName,
-      objectName: objectName
+      objectName: encodedObjectName
     });
 
     return {
@@ -262,12 +282,15 @@ async function createPreAuthenticatedRequest(objectName, expiryHours = 24) {
   const namespace = oci.getNamespace();
   const bucketName = oci.getBucketName();
 
+  // URL-encode objectName to handle non-ASCII characters
+  const encodedObjectName = encodeURIComponent(objectName);
+
   const expiryTime = new Date();
   expiryTime.setHours(expiryTime.getHours() + expiryHours);
 
   const createPreauthenticatedRequestDetails = {
-    name: `par-${objectName}-${Date.now()}`,
-    objectName: objectName,
+    name: `par-${Date.now()}`,  // Simplified name to avoid encoding issues
+    objectName: encodedObjectName,
     accessType: 'ObjectRead',
     timeExpires: expiryTime
   };
