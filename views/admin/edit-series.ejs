@@ -82,6 +82,156 @@
       gap: 12px;
       margin-top: 32px;
     }
+    .lectures-section {
+      margin-top: 48px;
+    }
+    .section-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 16px;
+    }
+    .section-title {
+      font-size: 20px;
+      font-weight: 600;
+      color: #1A5F5A;
+    }
+    .lecture-count {
+      background: #e8f5e9;
+      color: #2e7d32;
+      padding: 4px 12px;
+      border-radius: 16px;
+      font-size: 14px;
+    }
+    .lectures-list {
+      background: white;
+      border-radius: 12px;
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+      overflow: hidden;
+    }
+    .lecture-item {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 12px 16px;
+      border-bottom: 1px solid #eee;
+      background: white;
+      transition: background 0.2s;
+    }
+    .lecture-item:last-child {
+      border-bottom: none;
+    }
+    .lecture-item:hover {
+      background: #f8f9fa;
+    }
+    .lecture-item.dragging {
+      opacity: 0.5;
+      background: #e3f2fd;
+    }
+    .lecture-item.drag-over {
+      border-top: 3px solid #1A5F5A;
+    }
+    .drag-handle {
+      cursor: grab;
+      color: #999;
+      font-size: 18px;
+      padding: 4px;
+    }
+    .drag-handle:active {
+      cursor: grabbing;
+    }
+    .lecture-order {
+      width: 32px;
+      height: 32px;
+      border-radius: 50%;
+      background: #1A5F5A;
+      color: white;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: 600;
+      font-size: 14px;
+      flex-shrink: 0;
+    }
+    .lecture-info {
+      flex: 1;
+      min-width: 0;
+    }
+    .lecture-title {
+      font-weight: 500;
+      color: #333;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+    .lecture-meta {
+      font-size: 12px;
+      color: #666;
+      margin-top: 4px;
+    }
+    .lecture-actions {
+      display: flex;
+      gap: 4px;
+    }
+    .move-btn {
+      width: 28px;
+      height: 28px;
+      border: 1px solid #ddd;
+      background: white;
+      border-radius: 4px;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 14px;
+      transition: all 0.2s;
+    }
+    .move-btn:hover {
+      background: #1A5F5A;
+      color: white;
+      border-color: #1A5F5A;
+    }
+    .move-btn:disabled {
+      opacity: 0.3;
+      cursor: not-allowed;
+    }
+    .save-order-btn {
+      margin-top: 16px;
+      padding: 12px 24px;
+      background: #1A5F5A;
+      color: white;
+      border: none;
+      border-radius: 6px;
+      font-size: 14px;
+      font-weight: 600;
+      cursor: pointer;
+      display: none;
+    }
+    .save-order-btn:hover {
+      background: #145047;
+    }
+    .save-order-btn.visible {
+      display: inline-block;
+    }
+    .status-badge {
+      font-size: 10px;
+      padding: 2px 6px;
+      border-radius: 4px;
+      margin-right: 8px;
+    }
+    .status-published {
+      background: #e8f5e9;
+      color: #2e7d32;
+    }
+    .status-draft {
+      background: #fff3e0;
+      color: #e65100;
+    }
+    .empty-lectures {
+      padding: 32px;
+      text-align: center;
+      color: #666;
+    }
   </style>
 </head>
 <body>
@@ -188,7 +338,194 @@
           <a href="/admin/manage" class="btn btn-secondary">↩️ إلغاء</a>
         </div>
       </form>
+
+      <!-- Lectures Reorder Section -->
+      <div class="lectures-section">
+        <div class="section-header">
+          <h2 class="section-title">📚 ترتيب المحاضرات</h2>
+          <span class="lecture-count"><%= lectures.length %> محاضرة</span>
+        </div>
+
+        <% if (lectures && lectures.length > 0) { %>
+          <div class="lectures-list" id="lecturesList">
+            <% lectures.forEach((lecture, index) => { %>
+              <div class="lecture-item" data-id="<%= lecture._id %>" draggable="true">
+                <span class="drag-handle">⋮⋮</span>
+                <div class="lecture-order"><%= index + 1 %></div>
+                <div class="lecture-info">
+                  <div class="lecture-title">
+                    <span class="status-badge <%= lecture.published ? 'status-published' : 'status-draft' %>">
+                      <%= lecture.published ? 'منشور' : 'مسودة' %>
+                    </span>
+                    <%= lecture.titleArabic %>
+                  </div>
+                  <div class="lecture-meta">
+                    <% if (lecture.lectureNumber) { %>
+                      رقم الدرس: <%= lecture.lectureNumber %> |
+                    <% } %>
+                    <% if (lecture.dateRecorded) { %>
+                      التاريخ: <%= new Date(lecture.dateRecorded).toLocaleDateString('ar-SA') %>
+                    <% } %>
+                  </div>
+                </div>
+                <div class="lecture-actions">
+                  <button class="move-btn" onclick="moveLecture('<%= lecture._id %>', 'up')" title="تحريك لأعلى" <%= index === 0 ? 'disabled' : '' %>>▲</button>
+                  <button class="move-btn" onclick="moveLecture('<%= lecture._id %>', 'down')" title="تحريك لأسفل" <%= index === lectures.length - 1 ? 'disabled' : '' %>>▼</button>
+                </div>
+              </div>
+            <% }); %>
+          </div>
+
+          <button class="save-order-btn" id="saveOrderBtn" onclick="saveOrder()">💾 حفظ الترتيب الجديد</button>
+        <% } else { %>
+          <div class="lectures-list">
+            <div class="empty-lectures">
+              <p>لا توجد محاضرات في هذه السلسلة</p>
+            </div>
+          </div>
+        <% } %>
+      </div>
     </div>
   </div>
+
+  <script>
+    const seriesId = '<%= series._id %>';
+    let orderChanged = false;
+
+    // Drag and drop functionality
+    const lecturesList = document.getElementById('lecturesList');
+    if (lecturesList) {
+      let draggedItem = null;
+
+      lecturesList.addEventListener('dragstart', (e) => {
+        if (e.target.classList.contains('lecture-item')) {
+          draggedItem = e.target;
+          e.target.classList.add('dragging');
+        }
+      });
+
+      lecturesList.addEventListener('dragend', (e) => {
+        if (e.target.classList.contains('lecture-item')) {
+          e.target.classList.remove('dragging');
+          document.querySelectorAll('.lecture-item').forEach(item => {
+            item.classList.remove('drag-over');
+          });
+          updateOrderNumbers();
+        }
+      });
+
+      lecturesList.addEventListener('dragover', (e) => {
+        e.preventDefault();
+        const afterElement = getDragAfterElement(lecturesList, e.clientY);
+        const dragging = document.querySelector('.dragging');
+
+        document.querySelectorAll('.lecture-item').forEach(item => {
+          item.classList.remove('drag-over');
+        });
+
+        if (afterElement) {
+          afterElement.classList.add('drag-over');
+          lecturesList.insertBefore(dragging, afterElement);
+        } else {
+          lecturesList.appendChild(dragging);
+        }
+      });
+    }
+
+    function getDragAfterElement(container, y) {
+      const draggableElements = [...container.querySelectorAll('.lecture-item:not(.dragging)')];
+
+      return draggableElements.reduce((closest, child) => {
+        const box = child.getBoundingClientRect();
+        const offset = y - box.top - box.height / 2;
+        if (offset < 0 && offset > closest.offset) {
+          return { offset: offset, element: child };
+        } else {
+          return closest;
+        }
+      }, { offset: Number.NEGATIVE_INFINITY }).element;
+    }
+
+    function moveLecture(lectureId, direction) {
+      const item = document.querySelector(`.lecture-item[data-id="${lectureId}"]`);
+      if (!item) return;
+
+      const parent = item.parentNode;
+      if (direction === 'up' && item.previousElementSibling) {
+        parent.insertBefore(item, item.previousElementSibling);
+      } else if (direction === 'down' && item.nextElementSibling) {
+        parent.insertBefore(item.nextElementSibling, item);
+      }
+
+      updateOrderNumbers();
+    }
+
+    function updateOrderNumbers() {
+      const items = document.querySelectorAll('.lecture-item');
+      items.forEach((item, index) => {
+        const orderBadge = item.querySelector('.lecture-order');
+        if (orderBadge) {
+          orderBadge.textContent = index + 1;
+        }
+
+        // Update move button states
+        const upBtn = item.querySelector('.move-btn:first-child');
+        const downBtn = item.querySelector('.move-btn:last-child');
+        if (upBtn) upBtn.disabled = index === 0;
+        if (downBtn) downBtn.disabled = index === items.length - 1;
+      });
+
+      orderChanged = true;
+      document.getElementById('saveOrderBtn').classList.add('visible');
+    }
+
+    async function saveOrder() {
+      const items = document.querySelectorAll('.lecture-item');
+      const lectureIds = Array.from(items).map(item => item.dataset.id);
+
+      const saveBtn = document.getElementById('saveOrderBtn');
+      saveBtn.textContent = '⏳ جاري الحفظ...';
+      saveBtn.disabled = true;
+
+      try {
+        const response = await fetch(`/admin/series/${seriesId}/reorder-lectures`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify({ lectureIds })
+        });
+
+        const result = await response.json();
+
+        if (result.success) {
+          saveBtn.textContent = '✅ تم الحفظ';
+          orderChanged = false;
+          setTimeout(() => {
+            saveBtn.textContent = '💾 حفظ الترتيب الجديد';
+            saveBtn.classList.remove('visible');
+            saveBtn.disabled = false;
+          }, 2000);
+        } else {
+          throw new Error(result.error || 'Unknown error');
+        }
+      } catch (error) {
+        console.error('Save order error:', error);
+        saveBtn.textContent = '❌ فشل الحفظ';
+        saveBtn.disabled = false;
+        setTimeout(() => {
+          saveBtn.textContent = '💾 حفظ الترتيب الجديد';
+        }, 2000);
+      }
+    }
+
+    // Warn before leaving if order changed
+    window.addEventListener('beforeunload', (e) => {
+      if (orderChanged) {
+        e.preventDefault();
+        e.returnValue = '';
+      }
+    });
+  </script>
 </body>
 </html>
