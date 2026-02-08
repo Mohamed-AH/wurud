@@ -266,23 +266,30 @@ router.post('/series/:id/edit', isAdmin, async (req, res) => {
 router.post('/series/:id/reorder-lectures', isAdmin, async (req, res) => {
   try {
     const { Lecture } = require('../../models');
+    const mongoose = require('mongoose');
     const { lectureIds } = req.body;
 
     if (!lectureIds || !Array.isArray(lectureIds)) {
       return res.status(400).json({ error: 'Invalid lecture order data' });
     }
 
+    const seriesObjectId = new mongoose.Types.ObjectId(req.params.id);
+
     // Update sortOrder for each lecture based on new order
     const updates = lectureIds.map((lectureId, index) =>
       Lecture.updateOne(
-        { _id: lectureId, seriesId: req.params.id },
+        { _id: new mongoose.Types.ObjectId(lectureId), seriesId: seriesObjectId },
         { $set: { sortOrder: index } }
       )
     );
 
-    await Promise.all(updates);
+    const results = await Promise.all(updates);
 
-    res.json({ success: true, message: 'Lecture order updated successfully' });
+    // Log how many were actually updated
+    const updatedCount = results.reduce((sum, r) => sum + r.modifiedCount, 0);
+    console.log(`Reorder: Updated ${updatedCount} of ${lectureIds.length} lectures for series ${req.params.id}`);
+
+    res.json({ success: true, message: 'Lecture order updated successfully', updatedCount });
   } catch (error) {
     console.error('Reorder lectures error:', error);
     res.status(500).json({ error: 'Error reordering lectures' });

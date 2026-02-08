@@ -353,6 +353,12 @@ router.get('/series/:id', async (req, res) => {
       }
     ]);
 
+    // Debug: Log first 5 lectures with sortOrder
+    console.log('Series detail - first 5 lectures sortOrder:');
+    lectures.slice(0, 5).forEach((l, i) => {
+      console.log(`  ${i+1}. sortOrder=${l.sortOrder} lectureNum=${l.lectureNumber} title=${l.titleArabic?.substring(0, 40)}`);
+    });
+
     // Calculate statistics
     const stats = {
       totalLectures: lectures.length,
