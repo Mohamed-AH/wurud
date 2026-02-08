@@ -212,8 +212,7 @@ router.get('/series/:id/edit', isAdmin, async (req, res) => {
           lectureNumber: 1,
           sortOrder: 1,
           dateRecorded: 1,
-          published: 1,
-          effectiveSortOrder: 0
+          published: 1
         }
       }
     ]);
