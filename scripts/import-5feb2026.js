@@ -367,9 +367,14 @@ async function importOnlineClasses(data, sheikh, stats) {
 
     const series = seriesMap.get(seriesTitle);
 
+    // Build lecture title: "SeriesName - Sequence"
+    const baseTitle = String(row.SeriesName || '').trim();
+    const sequence = String(row.SequenceInSeries || '').trim();
+    const lectureTitle = sequence && baseTitle ? `${baseTitle} - ${sequence}` : (sequence || baseTitle || 'محاضرة');
+
     await createLecture({
       audioFileName: getOptimizedFilename(row.TelegramFileName),
-      titleArabic: row.SequenceInSeries || row.SeriesName || 'محاضرة',
+      titleArabic: lectureTitle,
       sheikhId: sheikh._id,
       seriesId: series._id,
       lectureNumber: extractLectureNumber(row.SequenceInSeries),
@@ -426,9 +431,16 @@ async function importArchive(data, sheikh, stats) {
 
     const series = seriesMap.get(seriesTitle);
 
+    // Build lecture title: "SeriesName - Sequence"
+    const archiveBaseTitle = String(row.SeriesName || '').trim();
+    const archiveSequence = String(row.SequenceInSeries || '').trim();
+    const archiveLectureTitle = archiveSequence && archiveBaseTitle
+      ? `${archiveBaseTitle} - ${archiveSequence}`
+      : (archiveSequence || archiveBaseTitle || 'محاضرة');
+
     await createLecture({
       audioFileName: getOptimizedFilename(row.TelegramFileName),
-      titleArabic: `الدرس ${row.SequenceInSeries}` || row.SeriesName || 'محاضرة',
+      titleArabic: archiveLectureTitle,
       sheikhId: sheikh._id,
       seriesId: series._id,
       lectureNumber: extractLectureNumber(row.SequenceInSeries),
@@ -515,14 +527,15 @@ async function importCurrentContinuations(data, sheikh, onlineSeriesMap, stats) 
       series = seriesMap.get(baseTitle);
     }
 
-    // Build lecture title
+    // Build lecture title: "SeriesName - Sequence"
     let lectureTitle;
     if (isKhutba) {
       // Extract khutba title from SeriesName (e.g., "خطبة_الجمعة  -  تيسير تكاليف الزواج")
       const parts = baseTitle.split('-');
       lectureTitle = parts.length > 1 ? parts.slice(1).join('-').trim() : baseTitle;
     } else {
-      lectureTitle = row.SequenceInSeries || row.SeriesName || 'محاضرة';
+      const sequence = String(row.SequenceInSeries || '').trim();
+      lectureTitle = sequence && baseTitle ? `${baseTitle} - ${sequence}` : (sequence || baseTitle || 'محاضرة');
     }
 
     await createLecture({
