@@ -12,6 +12,9 @@ const trackPageView = (req, res, next) => {
   // - Bot/crawler requests
   const path = req.path;
 
+  // Debug: log all incoming paths
+  console.log(`[Analytics Debug] Path: ${path}`);
+
   if (
     path.startsWith('/api/') ||
     path.startsWith('/admin/') ||
@@ -21,6 +24,7 @@ const trackPageView = (req, res, next) => {
     path.includes('.') || // Static files
     req.method !== 'GET'
   ) {
+    console.log(`[Analytics Debug] Skipped: ${path}`);
     return next();
   }
 
