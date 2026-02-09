@@ -97,6 +97,49 @@ async function fixSlugs() {
 
   log(`📚 Found ${lectures.length} lectures to check\n`);
 
+  // ========== DUPLICATE DETECTION ==========
+  log('🔍 Checking for duplicate titles...\n');
+
+  const titleMap = new Map();
+  for (const lecture of lectures) {
+    const title = lecture.titleArabic;
+    if (!titleMap.has(title)) {
+      titleMap.set(title, []);
+    }
+    titleMap.get(title).push(lecture);
+  }
+
+  const duplicates = [];
+  for (const [title, lectureList] of titleMap.entries()) {
+    if (lectureList.length > 1) {
+      duplicates.push({ title, lectures: lectureList });
+    }
+  }
+
+  if (duplicates.length > 0) {
+    log('⚠️  DUPLICATE TITLES FOUND:');
+    log('='.repeat(50));
+    for (const dup of duplicates) {
+      log(`\n📋 "${dup.title.substring(0, 60)}..."`);
+      log(`   Found ${dup.lectures.length} lectures with this title:`);
+      for (const lec of dup.lectures) {
+        const seriesInfo = lec.seriesId ? `Series: ${lec.seriesId}` : 'No series';
+        const audioInfo = lec.audioFileName ? '✓ Has audio' : '✗ No audio';
+        log(`   - ID: ${lec._id}`);
+        log(`     Slug: ${lec.slug}`);
+        log(`     ${seriesInfo} | ${audioInfo}`);
+      }
+    }
+    log('\n' + '='.repeat(50));
+    log(`⚠️  Total: ${duplicates.length} duplicate title groups found`);
+    log('   Review these before running without --dry-run!\n');
+  } else {
+    log('✓ No duplicate titles found\n');
+  }
+
+  // ========== SLUG FIXING ==========
+  log('🔧 Processing slug fixes...\n');
+
   let fixed = 0;
   let skipped = 0;
   let errors = 0;
