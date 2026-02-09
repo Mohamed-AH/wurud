@@ -108,9 +108,10 @@ All mobile issues have been fixed:
 ### 🎯 Next Steps (Prioritized)
 
 1. **3.1 Server-Side Filtering & Pagination** - Required before 300+ lectures
-2. **3.3 Performance Optimizations** - Caching, bundling, CDN
-3. **3.4 Admin Panel Arabic** - RTL support for admin pages
-4. **Test Coverage Improvements** - Focus on slugify.js, lectures API, middleware
+2. **3.5 Weekly Class Schedule** - Links to recent recordings, boosts SEO
+3. **3.3 Performance Optimizations** - Caching, bundling, CDN
+4. **3.4 Admin Panel Arabic** - RTL support for admin pages
+5. **Test Coverage Improvements** - Focus on slugify.js, lectures API, middleware
 
 ---
 
@@ -218,6 +219,31 @@ All mobile issues have been fixed:
 - [ ] Translate admin UI strings
 - [ ] Add language toggle to admin panel
 - [ ] Ensure form inputs work with Arabic text
+
+#### 3.5 Weekly Class Schedule ⬜ NOT STARTED
+**Priority**: MEDIUM | **Status**: Pending
+
+Display weekly class schedule with direct links to most recent recordings.
+
+**Benefits:**
+- Helps students stay current with ongoing series
+- Boosts SEO through frequent internal link updates
+- Encourages regular site visits
+
+**Implementation:**
+- [ ] Create schedule data structure (day, time, series, location)
+- [ ] Homepage section showing weekly schedule
+- [ ] Auto-link to most recent lecture in each series
+- [ ] Indicate "new" badge for lectures < 7 days old
+- [ ] Admin interface to manage schedule
+- [ ] Optional: "Next class" countdown timer
+
+**Example Schedule:**
+| Day | Time | Series | Location |
+|-----|------|--------|----------|
+| السبت | بعد المغرب | شرح كتاب التوحيد | جامع الورود |
+| الأحد | بعد المغرب | شرح عمدة الأحكام | جامع الورود |
+| ... | ... | ... | ... |
 
 ---
 
