@@ -222,7 +222,9 @@ router.get('/series/:id/edit', isAdmin, async (req, res) => {
       user: req.user,
       series,
       sheikhs,
-      lectures
+      lectures,
+      success: req.query.success,
+      error: req.query.error
     });
   } catch (error) {
     console.error('Edit series error:', error);
@@ -244,17 +246,23 @@ router.post('/series/:id/edit', isAdmin, async (req, res) => {
       tagsArray = Array.isArray(tags) ? tags : [tags];
     }
 
+    // Ensure category is valid, default to 'Other' if not
+    const validCategories = ['Aqeedah', 'Fiqh', 'Tafsir', 'Hadith', 'Seerah', 'Akhlaq', 'Other'];
+    const validCategory = validCategories.includes(category) ? category : 'Other';
+
+    console.log(`[Series Edit] ID: ${req.params.id}, Category: ${category} -> ${validCategory}, Tags: ${JSON.stringify(tagsArray)}`);
+
     await Series.findByIdAndUpdate(req.params.id, {
       titleArabic,
       titleEnglish,
-      category,
+      category: validCategory,
       descriptionArabic,
       descriptionEnglish,
       tags: tagsArray,
       bookAuthor: bookAuthor || null
     });
 
-    res.redirect('/admin/manage?success=series-updated');
+    res.redirect(`/admin/series/${req.params.id}/edit?success=updated`);
   } catch (error) {
     console.error('Update series error:', error);
     res.status(500).send('Error updating series');

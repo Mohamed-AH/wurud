@@ -281,6 +281,9 @@
     <% if (typeof success !== 'undefined' && success === 'lecture_added') { %>
       <div class="success-message">✓ تمت إضافة الدرس بنجاح</div>
     <% } %>
+    <% if (typeof success !== 'undefined' && success === 'updated') { %>
+      <div class="success-message">✓ تم حفظ التغييرات بنجاح</div>
+    <% } %>
     <% if (typeof error !== 'undefined' && error === 'add_failed') { %>
       <div class="error-message">❌ حدث خطأ أثناء إضافة الدرس</div>
     <% } %>
@@ -309,14 +312,18 @@
 
         <div class="form-group">
           <label for="category">التصنيف</label>
+          <%
+            // Default to 'Other' if category is null/undefined
+            const currentCategory = series.category || 'Other';
+          %>
           <select id="category" name="category">
-            <option value="Other" <%= series.category === 'Other' ? 'selected' : '' %>>أخرى</option>
-            <option value="Tafsir" <%= series.category === 'Tafsir' ? 'selected' : '' %>>تفسير</option>
-            <option value="Hadith" <%= series.category === 'Hadith' ? 'selected' : '' %>>حديث</option>
-            <option value="Fiqh" <%= series.category === 'Fiqh' ? 'selected' : '' %>>فقه</option>
-            <option value="Aqeedah" <%= series.category === 'Aqeedah' ? 'selected' : '' %>>عقيدة</option>
-            <option value="Seerah" <%= series.category === 'Seerah' ? 'selected' : '' %>>سيرة</option>
-            <option value="Akhlaq" <%= series.category === 'Akhlaq' ? 'selected' : '' %>>أخلاق</option>
+            <option value="Aqeedah" <%= currentCategory === 'Aqeedah' ? 'selected' : '' %>>عقيدة</option>
+            <option value="Fiqh" <%= currentCategory === 'Fiqh' ? 'selected' : '' %>>فقه</option>
+            <option value="Tafsir" <%= currentCategory === 'Tafsir' ? 'selected' : '' %>>تفسير</option>
+            <option value="Hadith" <%= currentCategory === 'Hadith' ? 'selected' : '' %>>حديث</option>
+            <option value="Seerah" <%= currentCategory === 'Seerah' ? 'selected' : '' %>>سيرة</option>
+            <option value="Akhlaq" <%= currentCategory === 'Akhlaq' ? 'selected' : '' %>>أخلاق</option>
+            <option value="Other" <%= currentCategory === 'Other' ? 'selected' : '' %>>أخرى</option>
           </select>
         </div>
 
