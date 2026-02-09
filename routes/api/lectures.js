@@ -426,6 +426,93 @@ router.delete('/:id', isAdminAPI, async (req, res) => {
   }
 });
 
+// @route   POST /api/lectures/:id/verify-duration
+// @desc    Verify and update lecture duration from client playback
+// @access  Public
+router.post('/:id/verify-duration', async (req, res) => {
+  try {
+    const { duration } = req.body;
+
+    // Validate duration
+    if (!duration || typeof duration !== 'number' || duration <= 0) {
+      return res.status(400).json({
+        success: false,
+        message: 'Valid duration is required'
+      });
+    }
+
+    const lectureId = req.params.id;
+    const roundedDuration = Math.round(duration);
+
+    // Find the lecture
+    const lecture = await Lecture.findById(lectureId);
+
+    if (!lecture) {
+      return res.status(404).json({
+        success: false,
+        message: 'Lecture not found'
+      });
+    }
+
+    // Skip if already verified
+    if (lecture.durationVerified) {
+      return res.json({
+        success: true,
+        message: 'Duration already verified',
+        skipped: true
+      });
+    }
+
+    // Check if duration differs (allow 2 second tolerance)
+    const currentDuration = lecture.duration || 0;
+    const difference = Math.abs(currentDuration - roundedDuration);
+
+    if (difference > 2) {
+      // Duration mismatch - update it
+      console.log(`📊 Duration mismatch for lecture ${lectureId}:`);
+      console.log(`   Stored: ${currentDuration}s, Actual: ${roundedDuration}s (diff: ${difference}s)`);
+
+      await Lecture.updateOne(
+        { _id: lectureId },
+        {
+          $set: {
+            duration: roundedDuration,
+            durationVerified: true
+          }
+        }
+      );
+
+      return res.json({
+        success: true,
+        message: 'Duration updated',
+        updated: true,
+        oldDuration: currentDuration,
+        newDuration: roundedDuration
+      });
+    }
+
+    // Duration matches - just mark as verified
+    await Lecture.updateOne(
+      { _id: lectureId },
+      { $set: { durationVerified: true } }
+    );
+
+    return res.json({
+      success: true,
+      message: 'Duration verified',
+      verified: true
+    });
+
+  } catch (error) {
+    console.error('Verify duration error:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Failed to verify duration',
+      error: error.message
+    });
+  }
+});
+
 // @route   POST /api/lectures/:id/play
 // @desc    Increment play count
 // @access  Public

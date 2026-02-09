@@ -57,6 +57,10 @@ const lectureSchema = new mongoose.Schema({
     type: Number, // in seconds
     default: 0
   },
+  durationVerified: {
+    type: Boolean,
+    default: false
+  },
   fileSize: {
     type: Number, // in bytes
     default: 0
