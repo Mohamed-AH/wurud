@@ -343,7 +343,7 @@ router.get('/series/:id/quick-add-lecture', isAdmin, async (req, res) => {
 router.post('/series/:id/quick-add-lecture', isAdmin, async (req, res) => {
   try {
     const { Series, Lecture } = require('../../models');
-    const slugify = require('../../utils/slugify');
+    const { generateSlug } = require('../../utils/slugify');
 
     const series = await Series.findById(req.params.id)
       .populate('sheikhId')
@@ -362,7 +362,11 @@ router.post('/series/:id/quick-add-lecture', isAdmin, async (req, res) => {
     }
 
     // Generate slug
-    const slug = slugify(titleArabic);
+    const slug = generateSlug(titleArabic);
+
+    // Generate suggested audio filename (series-slug-lesson-N.m4a)
+    const seriesSlug = generateSlug(series.titleArabic);
+    const suggestedFilename = `${seriesSlug}-${lectureNumber}.m4a`;
 
     // Create the lecture
     const lecture = new Lecture({
@@ -376,6 +380,8 @@ router.post('/series/:id/quick-add-lecture', isAdmin, async (req, res) => {
       dateRecorded: dateRecorded ? new Date(dateRecorded) : new Date(),
       notes: notes || '',
       slug,
+      // Store suggested filename in metadata for later audio upload
+      metadata: { suggestedFilename },
       published: false // Default to unpublished until audio is added
     });
 
