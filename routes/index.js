@@ -232,7 +232,8 @@ router.get('/lectures/:idOrSlug', async (req, res) => {
     res.render('public/lecture', {
       title: lecture.titleArabic,
       lecture,
-      relatedLectures
+      relatedLectures,
+      canonicalPath: '/lectures/' + (lecture.slug ? encodeURIComponent(lecture.slug) : lecture._id)
     });
   } catch (error) {
     console.error('Lecture detail error:', error);
@@ -308,7 +309,8 @@ router.get('/sheikhs/:idOrSlug', async (req, res) => {
       sheikh,
       lectures,
       series,
-      stats
+      stats,
+      canonicalPath: '/sheikhs/' + (sheikh.slug ? encodeURIComponent(sheikh.slug) : sheikh._id)
     });
   } catch (error) {
     console.error('Sheikh profile error:', error);
@@ -437,7 +439,8 @@ router.get('/series/:idOrSlug', async (req, res) => {
       series,
       lectures,
       stats,
-      relatedKhutbaSeries
+      relatedKhutbaSeries,
+      canonicalPath: '/series/' + (series.slug ? encodeURIComponent(series.slug) : series._id)
     });
   } catch (error) {
     console.error('Series profile error:', error);
