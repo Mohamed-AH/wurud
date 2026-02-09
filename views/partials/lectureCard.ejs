@@ -23,8 +23,10 @@
     </div>
 
     <div class="lecture-info">
-      <span class="lecture-duration">⏱️ <%= lecture.durationFormatted %></span>
-      <span class="lecture-divider">•</span>
+      <% if (lecture.duration && lecture.duration > 0) { %>
+        <span class="lecture-duration">⏱️ <%= lecture.durationFormatted %></span>
+        <span class="lecture-divider">•</span>
+      <% } %>
       <span class="lecture-plays">▶️ <%= lecture.playCount %> مرة</span>
       <% if (lecture.dateRecorded || lecture.dateRecordedHijri) { %>
         <span class="lecture-divider">•</span>
