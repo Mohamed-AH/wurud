@@ -568,6 +568,177 @@
     display: block;
   }
 
+  /* Weekly Schedule Section */
+  .weekly-schedule-section {
+    max-width: 1200px;
+    margin: 0 auto var(--space-xl);
+    padding: var(--space-lg);
+  }
+
+  .schedule-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: var(--space-lg);
+  }
+
+  .schedule-title {
+    font-family: var(--font-arabic-display);
+    font-size: 28px;
+    font-weight: 700;
+    color: var(--text-primary);
+    display: flex;
+    align-items: center;
+    gap: 12px;
+  }
+
+  .schedule-title-icon {
+    font-size: 32px;
+  }
+
+  .schedule-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+    gap: var(--space-lg);
+  }
+
+  .schedule-card {
+    background: white;
+    border-radius: 16px;
+    border: 2px solid var(--border-light);
+    overflow: hidden;
+    transition: all 0.3s ease;
+    box-shadow: 0 4px 12px var(--shadow-warm);
+  }
+
+  .schedule-card:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 8px 24px var(--shadow-warm);
+    border-color: var(--accent-gold);
+  }
+
+  .schedule-card-header {
+    background: linear-gradient(135deg, var(--primary-dark) 0%, var(--primary-brown) 100%);
+    padding: 16px 20px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+  }
+
+  .schedule-day {
+    font-family: var(--font-arabic-display);
+    font-size: 20px;
+    font-weight: 700;
+    color: var(--cream);
+  }
+
+  .schedule-time {
+    font-size: 14px;
+    color: var(--accent-gold);
+    font-weight: 600;
+  }
+
+  .schedule-card-body {
+    padding: 20px;
+  }
+
+  .schedule-series-title {
+    font-family: var(--font-arabic-display);
+    font-size: 18px;
+    font-weight: 600;
+    color: var(--text-primary);
+    margin-bottom: 8px;
+    line-height: 1.5;
+  }
+
+  .schedule-series-title a {
+    color: inherit;
+    text-decoration: none;
+    transition: color 0.2s;
+  }
+
+  .schedule-series-title a:hover {
+    color: var(--accent-gold);
+  }
+
+  .schedule-location {
+    font-size: 14px;
+    color: var(--text-muted);
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    margin-bottom: 12px;
+  }
+
+  .schedule-latest {
+    background: rgba(193, 154, 107, 0.1);
+    border-radius: 8px;
+    padding: 12px;
+    border-right: 3px solid var(--accent-gold);
+  }
+
+  .schedule-latest-label {
+    font-size: 12px;
+    color: var(--text-muted);
+    margin-bottom: 4px;
+  }
+
+  .schedule-latest-title {
+    font-size: 14px;
+    color: var(--text-primary);
+    font-weight: 500;
+  }
+
+  .schedule-latest-title a {
+    color: inherit;
+    text-decoration: none;
+    transition: color 0.2s;
+  }
+
+  .schedule-latest-title a:hover {
+    color: var(--accent-gold);
+  }
+
+  .new-badge {
+    display: inline-block;
+    background: linear-gradient(135deg, #4CAF50, #45a049);
+    color: white;
+    font-size: 11px;
+    font-weight: 700;
+    padding: 3px 8px;
+    border-radius: 12px;
+    margin-right: 8px;
+    animation: pulse 2s infinite;
+  }
+
+  @keyframes pulse {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.7; }
+  }
+
+  .schedule-empty {
+    text-align: center;
+    padding: var(--space-2xl);
+    color: var(--text-muted);
+    font-size: 16px;
+  }
+
+  @media (max-width: 768px) {
+    .schedule-grid {
+      grid-template-columns: 1fr;
+    }
+
+    .schedule-title {
+      font-size: 22px;
+    }
+
+    .schedule-header {
+      flex-direction: column;
+      align-items: flex-start;
+      gap: 12px;
+    }
+  }
+
   @media (max-width: 768px) {
     .nav-tab {
       font-size: 14px;
@@ -596,6 +767,54 @@
     </button>
   </div>
 </div>
+
+<!-- Weekly Schedule Section -->
+<% if (typeof weeklySchedule !== 'undefined' && weeklySchedule && weeklySchedule.length > 0) { %>
+<section class="weekly-schedule-section">
+  <div class="schedule-header">
+    <h2 class="schedule-title">
+      <span class="schedule-title-icon">📅</span>
+      <%= locale === 'ar' ? 'جدول الدروس الأسبوعي' : 'Weekly Class Schedule' %>
+    </h2>
+  </div>
+
+  <div class="schedule-grid">
+    <% weeklySchedule.forEach(function(item) { %>
+      <div class="schedule-card">
+        <div class="schedule-card-header">
+          <span class="schedule-day"><%= locale === 'ar' ? item.dayOfWeek : (item.dayOfWeekEnglish || item.dayOfWeek) %></span>
+          <span class="schedule-time"><%= locale === 'ar' ? item.time : (item.timeEnglish || item.time) %></span>
+        </div>
+        <div class="schedule-card-body">
+          <h3 class="schedule-series-title">
+            <a href="/series/<%= item.seriesId.slug ? encodeURIComponent(item.seriesId.slug) : item.seriesId._id %>">
+              <%= locale === 'ar' ? item.seriesId.titleArabic : (item.seriesId.titleEnglish || item.seriesId.titleArabic) %>
+            </a>
+          </h3>
+          <div class="schedule-location">
+            📍 <%= locale === 'ar' ? item.location : (item.locationEnglish || item.location) %>
+          </div>
+          <% if (item.latestLecture) { %>
+            <div class="schedule-latest">
+              <div class="schedule-latest-label">
+                <%= locale === 'ar' ? 'آخر درس:' : 'Latest lecture:' %>
+              </div>
+              <div class="schedule-latest-title">
+                <% if (item.isNew) { %>
+                  <span class="new-badge"><%= locale === 'ar' ? 'جديد' : 'NEW' %></span>
+                <% } %>
+                <a href="/lectures/<%= item.latestLecture.slug ? encodeURIComponent(item.latestLecture.slug) : item.latestLecture._id %>">
+                  <%= locale === 'ar' ? item.latestLecture.titleArabic : (item.latestLecture.titleEnglish || item.latestLecture.titleArabic) %>
+                </a>
+              </div>
+            </div>
+          <% } %>
+        </div>
+      </div>
+    <% }); %>
+  </div>
+</section>
+<% } %>
 
 <!-- Navigation Tabs -->
 <div class="nav-tabs">

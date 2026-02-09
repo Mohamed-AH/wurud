@@ -704,4 +704,186 @@ router.post('/users/:id/toggle-active', isSuperAdmin, async (req, res) => {
   }
 });
 
+// ==========================================
+// Schedule Management Routes
+// ==========================================
+
+// @route   GET /admin/schedule
+// @desc    List all schedule items
+// @access  Private (Admin only)
+router.get('/schedule', isAdmin, async (req, res) => {
+  try {
+    const { Schedule, Series } = require('../../models');
+
+    const scheduleItems = await Schedule.find()
+      .populate('seriesId', 'titleArabic titleEnglish')
+      .sort({ sortOrder: 1 })
+      .lean();
+
+    // Sort by day order
+    const dayOrder = ['السبت', 'الأحد', 'الاثنين', 'الثلاثاء', 'الأربعاء', 'الخميس', 'الجمعة'];
+    scheduleItems.sort((a, b) => dayOrder.indexOf(a.dayOfWeek) - dayOrder.indexOf(b.dayOfWeek));
+
+    res.render('admin/schedule', {
+      title: 'Weekly Schedule',
+      user: req.user,
+      scheduleItems
+    });
+  } catch (error) {
+    console.error('Schedule list error:', error);
+    res.status(500).send('Error loading schedule');
+  }
+});
+
+// @route   GET /admin/schedule/add
+// @desc    Add new schedule item form
+// @access  Private (Admin only)
+router.get('/schedule/add', isAdmin, async (req, res) => {
+  try {
+    const { Series } = require('../../models');
+
+    const seriesList = await Series.find()
+      .sort({ titleArabic: 1 })
+      .lean();
+
+    res.render('admin/schedule-edit', {
+      title: 'Add Schedule Item',
+      user: req.user,
+      scheduleItem: null,
+      seriesList,
+      isEdit: false
+    });
+  } catch (error) {
+    console.error('Schedule add form error:', error);
+    res.status(500).send('Error loading form');
+  }
+});
+
+// @route   POST /admin/schedule/add
+// @desc    Create new schedule item
+// @access  Private (Admin only)
+router.post('/schedule/add', isAdmin, async (req, res) => {
+  try {
+    const { Schedule } = require('../../models');
+
+    const {
+      dayOfWeek,
+      dayOfWeekEnglish,
+      time,
+      timeEnglish,
+      seriesId,
+      location,
+      locationEnglish,
+      isActive,
+      sortOrder,
+      notes
+    } = req.body;
+
+    const scheduleItem = new Schedule({
+      dayOfWeek,
+      dayOfWeekEnglish: dayOfWeekEnglish || undefined,
+      time,
+      timeEnglish: timeEnglish || undefined,
+      seriesId,
+      location: location || 'جامع الورود',
+      locationEnglish: locationEnglish || 'Masjid Al-Wurud',
+      isActive: isActive === 'on' || isActive === true,
+      sortOrder: parseInt(sortOrder) || 0,
+      notes: notes || undefined
+    });
+
+    await scheduleItem.save();
+
+    res.redirect('/admin/schedule?success=created');
+  } catch (error) {
+    console.error('Schedule create error:', error);
+    res.redirect('/admin/schedule?error=create_failed');
+  }
+});
+
+// @route   GET /admin/schedule/:id/edit
+// @desc    Edit schedule item form
+// @access  Private (Admin only)
+router.get('/schedule/:id/edit', isAdmin, async (req, res) => {
+  try {
+    const { Schedule, Series } = require('../../models');
+
+    const scheduleItem = await Schedule.findById(req.params.id).lean();
+    if (!scheduleItem) {
+      return res.redirect('/admin/schedule?error=not_found');
+    }
+
+    const seriesList = await Series.find()
+      .sort({ titleArabic: 1 })
+      .lean();
+
+    res.render('admin/schedule-edit', {
+      title: 'Edit Schedule Item',
+      user: req.user,
+      scheduleItem,
+      seriesList,
+      isEdit: true
+    });
+  } catch (error) {
+    console.error('Schedule edit form error:', error);
+    res.status(500).send('Error loading form');
+  }
+});
+
+// @route   POST /admin/schedule/:id/edit
+// @desc    Update schedule item
+// @access  Private (Admin only)
+router.post('/schedule/:id/edit', isAdmin, async (req, res) => {
+  try {
+    const { Schedule } = require('../../models');
+
+    const {
+      dayOfWeek,
+      dayOfWeekEnglish,
+      time,
+      timeEnglish,
+      seriesId,
+      location,
+      locationEnglish,
+      isActive,
+      sortOrder,
+      notes
+    } = req.body;
+
+    await Schedule.findByIdAndUpdate(req.params.id, {
+      dayOfWeek,
+      dayOfWeekEnglish: dayOfWeekEnglish || undefined,
+      time,
+      timeEnglish: timeEnglish || undefined,
+      seriesId,
+      location: location || 'جامع الورود',
+      locationEnglish: locationEnglish || 'Masjid Al-Wurud',
+      isActive: isActive === 'on' || isActive === true,
+      sortOrder: parseInt(sortOrder) || 0,
+      notes: notes || undefined
+    });
+
+    res.redirect('/admin/schedule?success=updated');
+  } catch (error) {
+    console.error('Schedule update error:', error);
+    res.redirect('/admin/schedule?error=update_failed');
+  }
+});
+
+// @route   POST /admin/schedule/:id/delete
+// @desc    Delete schedule item
+// @access  Private (Admin only)
+router.post('/schedule/:id/delete', isAdmin, async (req, res) => {
+  try {
+    const { Schedule } = require('../../models');
+
+    await Schedule.findByIdAndDelete(req.params.id);
+
+    res.redirect('/admin/schedule?success=deleted');
+  } catch (error) {
+    console.error('Schedule delete error:', error);
+    res.redirect('/admin/schedule?error=delete_failed');
+  }
+});
+
 module.exports = router;
