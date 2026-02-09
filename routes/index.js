@@ -1,6 +1,6 @@
 const express = require('express');
 const router = express.Router();
-const { Lecture, Sheikh, Series } = require('../models');
+const { Lecture, Sheikh, Series, Schedule } = require('../models');
 
 // @route   GET /
 // @desc    Homepage - Series-based view with tabs
@@ -103,11 +103,58 @@ router.get('/', async (req, res) => {
       );
     });
 
+    // Fetch weekly schedule with latest lecture for each series
+    const scheduleItems = await Schedule.find({ isActive: true })
+      .populate('seriesId', 'titleArabic titleEnglish slug')
+      .sort({ sortOrder: 1 })
+      .lean();
+
+    // For each schedule item, get the most recent lecture and lecture count
+    const weeklySchedule = await Promise.all(
+      scheduleItems.map(async (item) => {
+        if (!item.seriesId) return null;
+
+        // Get total lecture count for this series
+        const lectureCount = await Lecture.countDocuments({
+          seriesId: item.seriesId._id,
+          published: true
+        });
+
+        // Get the most recent lecture in this series
+        const latestLecture = await Lecture.findOne({
+          seriesId: item.seriesId._id,
+          published: true
+        })
+          .sort({ dateRecorded: -1, createdAt: -1 })
+          .select('titleArabic titleEnglish slug dateRecorded createdAt lectureNumber')
+          .lean();
+
+        // Check if lecture is "new" (< 7 days old)
+        const isNew = latestLecture && (
+          new Date() - new Date(latestLecture.dateRecorded || latestLecture.createdAt) < 7 * 24 * 60 * 60 * 1000
+        );
+
+        return {
+          ...item,
+          latestLecture,
+          lectureCount,
+          isNew
+        };
+      })
+    );
+
+    // Filter out null items and sort by day order
+    const dayOrder = ['السبت', 'الأحد', 'الاثنين', 'الثلاثاء', 'الأربعاء', 'الخميس', 'الجمعة'];
+    const sortedSchedule = weeklySchedule
+      .filter(item => item !== null)
+      .sort((a, b) => dayOrder.indexOf(a.dayOfWeek) - dayOrder.indexOf(b.dayOfWeek));
+
     res.render('public/index', {
       title: 'المكتبة الصوتية',
       seriesList: filteredSeries,
       standaloneLectures: allStandaloneLectures,
-      khutbaSeries: khutbaSeries
+      khutbaSeries: khutbaSeries,
+      weeklySchedule: sortedSchedule
     });
   } catch (error) {
     console.error('Homepage error:', error);

@@ -1,0 +1,259 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title><%= title %> - Duroos Admin</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body {
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      background: #f5f5f5;
+      color: #333;
+    }
+    .header {
+      background: #1A5F5A;
+      color: white;
+      padding: 16px 24px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+    }
+    .header h1 { font-size: 24px; font-weight: 600; }
+    .header-nav { display: flex; align-items: center; gap: 16px; }
+    .header-nav a { color: white; text-decoration: none; opacity: 0.9; }
+    .header-nav a:hover { opacity: 1; }
+    .container { max-width: 800px; margin: 0 auto; padding: 32px 24px; }
+
+    .card {
+      background: white;
+      border-radius: 12px;
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+      padding: 32px;
+    }
+
+    .form-row {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 16px;
+    }
+
+    .form-group {
+      margin-bottom: 24px;
+    }
+    .form-group.full-width {
+      grid-column: 1 / -1;
+    }
+    label {
+      display: block;
+      margin-bottom: 8px;
+      font-weight: 600;
+      color: #2C3E35;
+    }
+    label .hint {
+      font-weight: 400;
+      color: #666;
+      font-size: 12px;
+    }
+    input, textarea, select {
+      width: 100%;
+      padding: 12px;
+      border: 1px solid #ddd;
+      border-radius: 6px;
+      font-size: 14px;
+      font-family: inherit;
+    }
+    input:focus, textarea:focus, select:focus {
+      outline: none;
+      border-color: #1A5F5A;
+      box-shadow: 0 0 0 3px rgba(26, 95, 90, 0.1);
+    }
+    textarea {
+      min-height: 80px;
+      resize: vertical;
+    }
+
+    .checkbox-group {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .checkbox-group input[type="checkbox"] {
+      width: auto;
+      margin: 0;
+    }
+
+    .btn {
+      padding: 12px 24px;
+      border: none;
+      border-radius: 6px;
+      font-size: 14px;
+      font-weight: 600;
+      cursor: pointer;
+      text-decoration: none;
+      display: inline-block;
+    }
+    .btn-primary {
+      background: #1A5F5A;
+      color: white;
+    }
+    .btn-primary:hover {
+      background: #145047;
+    }
+    .btn-secondary {
+      background: #6c757d;
+      color: white;
+    }
+    .btn-secondary:hover {
+      background: #5a6268;
+    }
+
+    .actions {
+      display: flex;
+      gap: 12px;
+      margin-top: 32px;
+      padding-top: 24px;
+      border-top: 1px solid #eee;
+    }
+
+    .section-title {
+      font-size: 18px;
+      font-weight: 600;
+      color: #1A5F5A;
+      margin-bottom: 16px;
+      padding-bottom: 8px;
+      border-bottom: 2px solid #e8f5e9;
+    }
+  </style>
+</head>
+<body>
+  <header class="header">
+    <h1><%= isEdit ? 'Edit Schedule Item' : 'Add Schedule Item' %></h1>
+    <nav class="header-nav">
+      <a href="/admin/schedule">Back to Schedule</a>
+      <a href="/admin/dashboard">Dashboard</a>
+      <a href="/auth/logout">Logout</a>
+    </nav>
+  </header>
+
+  <div class="container">
+    <div class="card">
+      <form action="/admin/schedule/<%= isEdit ? scheduleItem._id + '/edit' : 'add' %>" method="POST">
+
+        <h3 class="section-title">Schedule Details</h3>
+
+        <div class="form-row">
+          <div class="form-group">
+            <label for="dayOfWeek">Day of Week (Arabic) *</label>
+            <select name="dayOfWeek" id="dayOfWeek" required>
+              <option value="">Select Day</option>
+              <option value="السبت" <%= scheduleItem && scheduleItem.dayOfWeek === 'السبت' ? 'selected' : '' %>>السبت (Saturday)</option>
+              <option value="الأحد" <%= scheduleItem && scheduleItem.dayOfWeek === 'الأحد' ? 'selected' : '' %>>الأحد (Sunday)</option>
+              <option value="الاثنين" <%= scheduleItem && scheduleItem.dayOfWeek === 'الاثنين' ? 'selected' : '' %>>الاثنين (Monday)</option>
+              <option value="الثلاثاء" <%= scheduleItem && scheduleItem.dayOfWeek === 'الثلاثاء' ? 'selected' : '' %>>الثلاثاء (Tuesday)</option>
+              <option value="الأربعاء" <%= scheduleItem && scheduleItem.dayOfWeek === 'الأربعاء' ? 'selected' : '' %>>الأربعاء (Wednesday)</option>
+              <option value="الخميس" <%= scheduleItem && scheduleItem.dayOfWeek === 'الخميس' ? 'selected' : '' %>>الخميس (Thursday)</option>
+              <option value="الجمعة" <%= scheduleItem && scheduleItem.dayOfWeek === 'الجمعة' ? 'selected' : '' %>>الجمعة (Friday)</option>
+            </select>
+          </div>
+
+          <div class="form-group">
+            <label for="dayOfWeekEnglish">Day of Week (English)</label>
+            <select name="dayOfWeekEnglish" id="dayOfWeekEnglish">
+              <option value="">Auto-select</option>
+              <option value="Saturday" <%= scheduleItem && scheduleItem.dayOfWeekEnglish === 'Saturday' ? 'selected' : '' %>>Saturday</option>
+              <option value="Sunday" <%= scheduleItem && scheduleItem.dayOfWeekEnglish === 'Sunday' ? 'selected' : '' %>>Sunday</option>
+              <option value="Monday" <%= scheduleItem && scheduleItem.dayOfWeekEnglish === 'Monday' ? 'selected' : '' %>>Monday</option>
+              <option value="Tuesday" <%= scheduleItem && scheduleItem.dayOfWeekEnglish === 'Tuesday' ? 'selected' : '' %>>Tuesday</option>
+              <option value="Wednesday" <%= scheduleItem && scheduleItem.dayOfWeekEnglish === 'Wednesday' ? 'selected' : '' %>>Wednesday</option>
+              <option value="Thursday" <%= scheduleItem && scheduleItem.dayOfWeekEnglish === 'Thursday' ? 'selected' : '' %>>Thursday</option>
+              <option value="Friday" <%= scheduleItem && scheduleItem.dayOfWeekEnglish === 'Friday' ? 'selected' : '' %>>Friday</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="form-row">
+          <div class="form-group">
+            <label for="time">Time (Arabic) * <span class="hint">e.g., بعد المغرب</span></label>
+            <input type="text" name="time" id="time" value="<%= scheduleItem ? scheduleItem.time : '' %>" required placeholder="بعد المغرب">
+          </div>
+
+          <div class="form-group">
+            <label for="timeEnglish">Time (English) <span class="hint">e.g., After Maghrib</span></label>
+            <input type="text" name="timeEnglish" id="timeEnglish" value="<%= scheduleItem ? scheduleItem.timeEnglish || '' : '' %>" placeholder="After Maghrib">
+          </div>
+        </div>
+
+        <div class="form-group full-width">
+          <label for="seriesId">Series *</label>
+          <select name="seriesId" id="seriesId" required>
+            <option value="">Select Series</option>
+            <% seriesList.forEach(function(series) { %>
+              <option value="<%= series._id %>" <%= scheduleItem && scheduleItem.seriesId && scheduleItem.seriesId.toString() === series._id.toString() ? 'selected' : '' %>>
+                <%= series.titleArabic %><%= series.titleEnglish ? ' (' + series.titleEnglish + ')' : '' %>
+              </option>
+            <% }); %>
+          </select>
+        </div>
+
+        <div class="form-row">
+          <div class="form-group">
+            <label for="location">Location (Arabic)</label>
+            <input type="text" name="location" id="location" value="<%= scheduleItem ? scheduleItem.location : 'جامع الورود' %>" placeholder="جامع الورود">
+          </div>
+
+          <div class="form-group">
+            <label for="locationEnglish">Location (English)</label>
+            <input type="text" name="locationEnglish" id="locationEnglish" value="<%= scheduleItem ? scheduleItem.locationEnglish || '' : 'Masjid Al-Wurud' %>" placeholder="Masjid Al-Wurud">
+          </div>
+        </div>
+
+        <div class="form-row">
+          <div class="form-group">
+            <label for="sortOrder">Sort Order <span class="hint">Lower numbers appear first</span></label>
+            <input type="number" name="sortOrder" id="sortOrder" value="<%= scheduleItem ? scheduleItem.sortOrder : 0 %>" min="0">
+          </div>
+
+          <div class="form-group">
+            <label>&nbsp;</label>
+            <div class="checkbox-group">
+              <input type="checkbox" name="isActive" id="isActive" <%= !scheduleItem || scheduleItem.isActive ? 'checked' : '' %>>
+              <label for="isActive" style="margin-bottom: 0;">Active (visible on homepage)</label>
+            </div>
+          </div>
+        </div>
+
+        <div class="form-group full-width">
+          <label for="notes">Notes <span class="hint">Internal notes, not displayed publicly</span></label>
+          <textarea name="notes" id="notes" placeholder="Optional notes..."><%= scheduleItem ? scheduleItem.notes || '' : '' %></textarea>
+        </div>
+
+        <div class="actions">
+          <button type="submit" class="btn btn-primary"><%= isEdit ? 'Update Schedule' : 'Add Schedule' %></button>
+          <a href="/admin/schedule" class="btn btn-secondary">Cancel</a>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <script>
+    // Auto-select English day when Arabic day changes
+    document.getElementById('dayOfWeek').addEventListener('change', function() {
+      const dayMap = {
+        'السبت': 'Saturday',
+        'الأحد': 'Sunday',
+        'الاثنين': 'Monday',
+        'الثلاثاء': 'Tuesday',
+        'الأربعاء': 'Wednesday',
+        'الخميس': 'Thursday',
+        'الجمعة': 'Friday'
+      };
+      const englishSelect = document.getElementById('dayOfWeekEnglish');
+      if (!englishSelect.value) {
+        englishSelect.value = dayMap[this.value] || '';
+      }
+    });
+  </script>
+</body>
+</html>
