@@ -36,7 +36,16 @@ const generateDownloadFilename = (lecture, ext) => {
  */
 const proxyOciDownload = (ociUrl, res, filename, mimeType) => {
   return new Promise((resolve, reject) => {
-    https.get(ociUrl, (ociResponse) => {
+    // Parse URL to handle encoded characters properly
+    const parsedUrl = new URL(ociUrl);
+
+    const options = {
+      hostname: parsedUrl.hostname,
+      path: parsedUrl.pathname + parsedUrl.search,
+      method: 'GET'
+    };
+
+    https.get(options, (ociResponse) => {
       if (ociResponse.statusCode === 200) {
         res.set({
           'Content-Type': mimeType || 'audio/mp4',
