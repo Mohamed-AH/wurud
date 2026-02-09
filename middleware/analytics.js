@@ -53,9 +53,10 @@ const trackPageView = (req, res, next) => {
   setImmediate(async () => {
     try {
       await PageView.recordView(path, pageType, resourceId);
+      console.log(`[Analytics] Recorded view: ${path} (${pageType})`);
     } catch (error) {
-      // Silently fail - analytics shouldn't break the site
-      console.error('Analytics tracking error:', error.message);
+      // Log error but don't break the site
+      console.error('Analytics tracking error:', error.message, error.stack);
     }
   });
 
