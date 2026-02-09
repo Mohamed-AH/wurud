@@ -12,9 +12,6 @@ const trackPageView = (req, res, next) => {
   // - Bot/crawler requests
   const path = req.path;
 
-  // Debug: log all incoming paths
-  console.log(`[Analytics Debug] Path: ${path}`);
-
   if (
     path.startsWith('/api/') ||
     path.startsWith('/admin/') ||
@@ -24,7 +21,6 @@ const trackPageView = (req, res, next) => {
     path.includes('.') || // Static files
     req.method !== 'GET'
   ) {
-    console.log(`[Analytics Debug] Skipped: ${path}`);
     return next();
   }
 
@@ -56,10 +52,9 @@ const trackPageView = (req, res, next) => {
   setImmediate(async () => {
     try {
       await PageView.recordView(path, pageType, resourceId);
-      console.log(`[Analytics] Recorded view: ${path} (${pageType})`);
     } catch (error) {
       // Log error but don't break the site
-      console.error('Analytics tracking error:', error.message, error.stack);
+      console.error('Analytics tracking error:', error.message);
     }
   });
 
