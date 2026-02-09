@@ -65,13 +65,15 @@ const siteSettingsSchema = new mongoose.Schema({
 });
 
 /**
- * Get or create the singleton settings document
+ * Get or create the singleton settings document (atomic operation)
  */
 siteSettingsSchema.statics.getSettings = async function() {
-  let settings = await this.findOne({ key: 'global' });
-  if (!settings) {
-    settings = await this.create({ key: 'global' });
-  }
+  // Use findOneAndUpdate with upsert to avoid race conditions
+  const settings = await this.findOneAndUpdate(
+    { key: 'global' },
+    { $setOnInsert: { key: 'global' } },
+    { upsert: true, new: true, setDefaultsOnInsert: true }
+  );
   return settings;
 };
 
