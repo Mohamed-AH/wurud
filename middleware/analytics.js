@@ -42,12 +42,11 @@ const trackPageView = (req, res, next) => {
 
   if (path === '/' || path === '') {
     pageType = 'homepage';
-  } else if (path.startsWith('/lectures/')) {
+  } else if (path === '/lectures' || path.startsWith('/lectures/')) {
     pageType = 'lecture';
-    // Extract slug or ID from path
-  } else if (path.startsWith('/series/')) {
+  } else if (path === '/series' || path.startsWith('/series/')) {
     pageType = 'series';
-  } else if (path.startsWith('/sheikhs/')) {
+  } else if (path === '/sheikhs' || path.startsWith('/sheikhs/')) {
     pageType = 'sheikh';
   } else if (path === '/browse') {
     pageType = 'browse';
