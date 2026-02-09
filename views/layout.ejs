@@ -368,6 +368,166 @@
       font-family: 'Spectral', serif;
     }
 
+    /* Desktop Navigation */
+    .nav-desktop {
+      display: flex;
+      gap: var(--space-lg);
+      align-items: center;
+    }
+
+    .nav-link {
+      color: var(--cream);
+      text-decoration: none;
+      font-size: 15px;
+      font-weight: 500;
+      padding: 8px 4px;
+      position: relative;
+      transition: color 0.3s ease;
+    }
+
+    .nav-link::after {
+      content: '';
+      position: absolute;
+      bottom: 0;
+      right: 0;
+      width: 0;
+      height: 2px;
+      background: var(--accent-gold);
+      transition: width 0.3s ease;
+    }
+
+    .nav-link:hover {
+      color: var(--accent-gold);
+    }
+
+    .nav-link:hover::after {
+      width: 100%;
+    }
+
+    /* Hamburger Button */
+    .hamburger-btn {
+      display: none;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+      width: 44px;
+      height: 44px;
+      background: rgba(193, 154, 107, 0.15);
+      border: 2px solid var(--accent-gold);
+      border-radius: 8px;
+      cursor: pointer;
+      padding: 10px;
+      gap: 5px;
+      z-index: 1002;
+      transition: all 0.3s ease;
+    }
+
+    .hamburger-btn:hover,
+    .hamburger-btn:focus {
+      background: rgba(193, 154, 107, 0.3);
+    }
+
+    .hamburger-btn:active {
+      transform: scale(0.95);
+    }
+
+    .hamburger-line {
+      display: block;
+      width: 22px;
+      height: 3px;
+      background: var(--accent-gold);
+      border-radius: 2px;
+      transition: all 0.3s ease;
+    }
+
+    .hamburger-btn.active .hamburger-line:nth-child(1) {
+      transform: rotate(45deg) translate(5px, 5px);
+    }
+
+    .hamburger-btn.active .hamburger-line:nth-child(2) {
+      opacity: 0;
+    }
+
+    .hamburger-btn.active .hamburger-line:nth-child(3) {
+      transform: rotate(-45deg) translate(5px, -5px);
+    }
+
+    /* Mobile Navigation Overlay */
+    .mobile-nav {
+      position: fixed;
+      top: 0;
+      right: -100%;
+      width: 280px;
+      height: 100vh;
+      background: linear-gradient(180deg, #2C1810 0%, #3D2419 100%);
+      z-index: 1001;
+      transition: right 0.3s ease;
+      padding-top: 80px;
+      box-shadow: -4px 0 20px rgba(0, 0, 0, 0.3);
+    }
+
+    html[dir="ltr"] .mobile-nav {
+      right: auto;
+      left: -100%;
+    }
+
+    .mobile-nav.active {
+      right: 0;
+    }
+
+    html[dir="ltr"] .mobile-nav.active {
+      right: auto;
+      left: 0;
+    }
+
+    .mobile-nav-content {
+      display: flex;
+      flex-direction: column;
+      padding: var(--space-lg);
+    }
+
+    .mobile-nav-link {
+      color: var(--cream);
+      text-decoration: none;
+      font-size: 18px;
+      font-weight: 500;
+      padding: 16px 20px;
+      border-bottom: 1px solid rgba(193, 154, 107, 0.2);
+      transition: all 0.3s ease;
+    }
+
+    .mobile-nav-link:hover,
+    .mobile-nav-link:focus {
+      background: rgba(193, 154, 107, 0.1);
+      color: var(--accent-gold);
+      padding-right: 28px;
+    }
+
+    html[dir="ltr"] .mobile-nav-link:hover,
+    html[dir="ltr"] .mobile-nav-link:focus {
+      padding-right: 20px;
+      padding-left: 28px;
+    }
+
+    /* Mobile Nav Backdrop */
+    .mobile-nav-backdrop {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100vw;
+      height: 100vh;
+      background: rgba(0, 0, 0, 0.5);
+      z-index: 1000;
+      opacity: 0;
+      visibility: hidden;
+      transition: all 0.3s ease;
+    }
+
+    .mobile-nav-backdrop.active {
+      opacity: 1;
+      visibility: visible;
+    }
+
     /* Responsive */
     @media (max-width: 768px) {
       .header {
@@ -384,11 +544,20 @@
       }
 
       .logo {
-        font-size: 20px;
+        font-size: 18px;
+      }
+
+      .nav-desktop {
+        display: none;
+      }
+
+      .hamburger-btn {
+        display: flex;
       }
 
       .header-actions {
         flex-shrink: 0;
+        gap: var(--space-sm);
       }
 
       #langToggle {
@@ -408,6 +577,13 @@
 
       .logo-text h1 {
         font-size: 24px;
+      }
+    }
+
+    @media (min-width: 769px) {
+      .mobile-nav,
+      .hamburger-btn {
+        display: none !important;
       }
     }
   </style>
@@ -487,6 +663,9 @@
     </style>
   <% } %>
 
+  <!-- Mobile Nav Backdrop -->
+  <div id="mobileNavBackdrop" class="mobile-nav-backdrop"></div>
+
   <script src="/js/audioPlayer.js"></script>
   <script>
     // Language Toggle Functionality
@@ -506,6 +685,54 @@
           const url = new URL(window.location.href);
           url.searchParams.set('lang', newLocale);
           window.location.href = url.toString();
+        });
+      }
+    })();
+
+    // Mobile Navigation Toggle
+    (function() {
+      const menuToggle = document.getElementById('menuToggle');
+      const mobileNav = document.getElementById('mobileNav');
+      const backdrop = document.getElementById('mobileNavBackdrop');
+
+      if (menuToggle && mobileNav && backdrop) {
+        function toggleMenu() {
+          const isOpen = mobileNav.classList.contains('active');
+          menuToggle.classList.toggle('active', !isOpen);
+          mobileNav.classList.toggle('active', !isOpen);
+          backdrop.classList.toggle('active', !isOpen);
+          menuToggle.setAttribute('aria-expanded', !isOpen);
+          document.body.style.overflow = !isOpen ? 'hidden' : '';
+        }
+
+        function closeMenu() {
+          menuToggle.classList.remove('active');
+          mobileNav.classList.remove('active');
+          backdrop.classList.remove('active');
+          menuToggle.setAttribute('aria-expanded', 'false');
+          document.body.style.overflow = '';
+        }
+
+        menuToggle.addEventListener('click', toggleMenu);
+        backdrop.addEventListener('click', closeMenu);
+
+        // Close menu when clicking a link
+        mobileNav.querySelectorAll('.mobile-nav-link').forEach(link => {
+          link.addEventListener('click', closeMenu);
+        });
+
+        // Close menu on escape key
+        document.addEventListener('keydown', function(e) {
+          if (e.key === 'Escape' && mobileNav.classList.contains('active')) {
+            closeMenu();
+          }
+        });
+
+        // Close menu on window resize to desktop
+        window.addEventListener('resize', function() {
+          if (window.innerWidth > 768 && mobileNav.classList.contains('active')) {
+            closeMenu();
+          }
         });
       }
     })();
