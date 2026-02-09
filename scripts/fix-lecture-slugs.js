@@ -5,18 +5,40 @@
  * Regenerates slugs from lecture titles to fix mismatches.
  *
  * Usage:
- *   node scripts/fix-lecture-slugs.js [--dry-run] [--series SERIES_ID] [--env FILE]
+ *   node scripts/fix-lecture-slugs.js [--dry-run] [--series SERIES_ID] [--env FILE] [--output FILE]
  *
  * Options:
  *   --dry-run      Show what would be updated without making changes
  *   --series ID    Only fix lectures in this series
  *   --env FILE     Path to .env file (default: .env)
+ *   --output FILE  Write output to file (works on Windows)
  */
+
+const fs = require('fs');
 
 // Parse --env argument first
 const args = process.argv.slice(2);
 const envIndex = args.indexOf('--env');
 const envPath = envIndex !== -1 ? args[envIndex + 1] : '.env';
+
+// Parse --output argument
+const outputIndex = args.indexOf('--output');
+const outputFile = outputIndex !== -1 ? args[outputIndex + 1] : null;
+
+// Create output stream
+let output = [];
+function log(msg = '') {
+  console.log(msg);
+  output.push(msg);
+}
+
+// Write output to file at the end
+function saveOutput() {
+  if (outputFile) {
+    fs.writeFileSync(outputFile, output.join('\n'), 'utf8');
+    console.log(`\n📄 Output saved to: ${outputFile}`);
+  }
+}
 
 require('dotenv').config({ path: envPath });
 
@@ -36,24 +58,29 @@ const seriesIndex = args.indexOf('--series');
 const SERIES_ID = seriesIndex !== -1 ? args[seriesIndex + 1] : null;
 
 async function fixSlugs() {
-  console.log('\n🔧 Fix Lecture Slugs Script');
-  console.log('='.repeat(50));
+  log('\n🔧 Fix Lecture Slugs Script');
+  log('='.repeat(50));
 
   if (DRY_RUN) {
-    console.log('📋 DRY RUN MODE - No changes will be made\n');
+    log('📋 DRY RUN MODE - No changes will be made\n');
   }
 
   if (SERIES_ID) {
-    console.log(`📚 Filtering by series: ${SERIES_ID}\n`);
+    log(`📚 Filtering by series: ${SERIES_ID}\n`);
+  }
+
+  if (outputFile) {
+    log(`📄 Output will be saved to: ${outputFile}\n`);
   }
 
   // Connect to MongoDB
-  console.log('🔌 Connecting to MongoDB...');
+  log('🔌 Connecting to MongoDB...');
   try {
     await mongoose.connect(process.env.MONGODB_URI);
-    console.log('✓ Connected to MongoDB\n');
+    log('✓ Connected to MongoDB\n');
   } catch (err) {
-    console.error('✗ MongoDB connection failed:', err.message);
+    log('✗ MongoDB connection failed: ' + err.message);
+    saveOutput();
     process.exit(1);
   }
 
@@ -68,7 +95,7 @@ async function fixSlugs() {
     .sort({ seriesId: 1, lectureNumber: 1 })
     .lean();
 
-  console.log(`📚 Found ${lectures.length} lectures to check\n`);
+  log(`📚 Found ${lectures.length} lectures to check\n`);
 
   let fixed = 0;
   let skipped = 0;
@@ -96,9 +123,9 @@ async function fixSlugs() {
     }
     newSlug = uniqueSlug;
 
-    console.log(`📝 ${title.substring(0, 50)}...`);
-    console.log(`   Old: ${currentSlug}`);
-    console.log(`   New: ${newSlug}`);
+    log(`📝 ${title.substring(0, 50)}...`);
+    log(`   Old: ${currentSlug}`);
+    log(`   New: ${newSlug}`);
 
     if (!DRY_RUN) {
       try {
@@ -106,35 +133,39 @@ async function fixSlugs() {
           { _id: lecture._id },
           { $set: { slug: newSlug } }
         );
-        console.log(`   ✓ Updated\n`);
+        log(`   ✓ Updated\n`);
         fixed++;
       } catch (err) {
-        console.log(`   ✗ Error: ${err.message}\n`);
+        log(`   ✗ Error: ${err.message}\n`);
         errors++;
       }
     } else {
-      console.log(`   📋 Would update\n`);
+      log(`   📋 Would update\n`);
       fixed++;
     }
   }
 
   // Summary
-  console.log('='.repeat(50));
-  console.log('📊 Summary:');
-  console.log(`   Total checked: ${lectures.length}`);
-  console.log(`   Fixed: ${fixed}`);
-  console.log(`   Skipped (already correct): ${skipped}`);
-  console.log(`   Errors: ${errors}`);
+  log('='.repeat(50));
+  log('📊 Summary:');
+  log(`   Total checked: ${lectures.length}`);
+  log(`   Fixed: ${fixed}`);
+  log(`   Skipped (already correct): ${skipped}`);
+  log(`   Errors: ${errors}`);
 
   if (DRY_RUN && fixed > 0) {
-    console.log('\n📋 This was a dry run. Run without --dry-run to apply changes.');
+    log('\n📋 This was a dry run. Run without --dry-run to apply changes.');
   }
 
   await mongoose.disconnect();
-  console.log('\n✓ Done!\n');
+  log('\n✓ Done!\n');
+
+  // Save output to file if specified
+  saveOutput();
 }
 
 fixSlugs().catch(err => {
-  console.error('Fatal error:', err);
+  log('Fatal error: ' + err.message);
+  saveOutput();
   process.exit(1);
 });
