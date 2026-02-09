@@ -117,6 +117,105 @@ router.get('/manage', isAdmin, async (req, res) => {
   }
 });
 
+// @route   GET /admin/lectures
+// @desc    Search and list all lectures
+// @access  Private (Admin only)
+router.get('/lectures', isAdmin, async (req, res) => {
+  try {
+    const { Lecture, Series } = require('../../models');
+    const { search, seriesId } = req.query;
+
+    // Build query
+    const query = {};
+
+    if (search) {
+      query.$or = [
+        { titleArabic: { $regex: search, $options: 'i' } },
+        { titleEnglish: { $regex: search, $options: 'i' } },
+        { slug: { $regex: search, $options: 'i' } }
+      ];
+    }
+
+    if (seriesId) {
+      query.seriesId = seriesId;
+    }
+
+    const lectures = await Lecture.find(query)
+      .sort({ createdAt: -1 })
+      .limit(100)
+      .populate('sheikhId', 'nameArabic nameEnglish')
+      .populate('seriesId', 'titleArabic titleEnglish')
+      .lean();
+
+    const allSeries = await Series.find().sort({ titleArabic: 1 }).lean();
+
+    res.render('admin/lectures-list', {
+      title: 'إدارة المحاضرات',
+      user: req.user,
+      lectures,
+      allSeries,
+      search: search || '',
+      selectedSeriesId: seriesId || ''
+    });
+  } catch (error) {
+    console.error('Lectures list error:', error);
+    res.status(500).send('Error loading lectures');
+  }
+});
+
+// @route   POST /admin/lectures/:id/delete
+// @desc    Delete a lecture
+// @access  Private (Admin only)
+router.post('/lectures/:id/delete', isAdmin, async (req, res) => {
+  try {
+    const { Lecture, Series, Sheikh } = require('../../models');
+    const { deleteFromOCI } = require('../../utils/ociStorage');
+
+    const lecture = await Lecture.findById(req.params.id);
+
+    if (!lecture) {
+      return res.status(404).json({ success: false, message: 'Lecture not found' });
+    }
+
+    // Delete audio from OCI if exists
+    if (lecture.audioFileName) {
+      try {
+        await deleteFromOCI(lecture.audioFileName);
+      } catch (ociError) {
+        console.warn('Could not delete OCI file:', ociError.message);
+      }
+    }
+
+    // Decrement series lecture count
+    if (lecture.seriesId) {
+      await Series.findByIdAndUpdate(lecture.seriesId, { $inc: { lectureCount: -1 } });
+    }
+
+    // Decrement sheikh lecture count
+    if (lecture.sheikhId) {
+      await Sheikh.findByIdAndUpdate(lecture.sheikhId, { $inc: { lectureCount: -1 } });
+    }
+
+    // Delete the lecture
+    await Lecture.findByIdAndDelete(req.params.id);
+
+    // Check if request expects JSON (AJAX) or redirect
+    if (req.xhr || req.headers.accept?.includes('application/json')) {
+      return res.json({ success: true, message: 'Lecture deleted' });
+    }
+
+    // Redirect back to referrer or lectures list
+    const returnUrl = req.body.returnUrl || '/admin/lectures';
+    res.redirect(returnUrl);
+  } catch (error) {
+    console.error('Delete lecture error:', error);
+    if (req.xhr || req.headers.accept?.includes('application/json')) {
+      return res.status(500).json({ success: false, message: error.message });
+    }
+    res.status(500).send('Error deleting lecture');
+  }
+});
+
 // @route   GET /admin/lectures/unpublished
 // @desc    List unpublished lectures
 // @access  Private (Admin only)
