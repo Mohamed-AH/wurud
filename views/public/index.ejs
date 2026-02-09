@@ -90,32 +90,52 @@
     box-shadow: 0 4px 12px var(--shadow-warm);
   }
 
-  /* Lecture Count Badge */
+  /* Lecture Count - Archive Header Style */
   .lecture-count-badge {
-    display: inline-flex;
+    display: flex;
     align-items: center;
-    gap: 8px;
-    margin-top: 24px;
-    padding: 12px 24px;
-    background: rgba(193, 154, 107, 0.15);
-    border: 2px solid var(--accent-gold);
-    border-radius: 30px;
-    backdrop-filter: blur(4px);
+    justify-content: center;
+    gap: 12px;
+    margin-top: 32px;
+    padding: 20px 48px;
+    position: relative;
+  }
+
+  /* Elegant horizontal dividers */
+  .lecture-count-badge::before,
+  .lecture-count-badge::after {
+    content: '';
+    position: absolute;
+    top: 50%;
+    width: 60px;
+    height: 1px;
+    background: linear-gradient(90deg, transparent, rgba(180, 150, 110, 0.5), transparent);
+  }
+
+  .lecture-count-badge::before {
+    right: 100%;
+    margin-right: 16px;
+  }
+
+  .lecture-count-badge::after {
+    left: 100%;
+    margin-left: 16px;
   }
 
   .count-number {
     font-family: var(--font-arabic-display);
-    font-size: 28px;
-    font-weight: 700;
-    color: var(--accent-gold);
-    line-height: 1;
+    font-size: 24px;
+    font-weight: 600;
+    color: #B4966E;
+    letter-spacing: 0.5px;
   }
 
   .count-label {
     font-family: var(--font-arabic-body);
-    font-size: 16px;
-    font-weight: 500;
-    color: #FAF7F2;
+    font-size: 15px;
+    font-weight: 400;
+    color: rgba(250, 247, 242, 0.75);
+    letter-spacing: 0.3px;
   }
 
   /* Filter Chips */
@@ -512,16 +532,22 @@
     }
 
     .lecture-count-badge {
-      margin-top: 16px;
-      padding: 8px 16px;
+      margin-top: 20px;
+      padding: 16px 32px;
+      gap: 10px;
+    }
+
+    .lecture-count-badge::before,
+    .lecture-count-badge::after {
+      width: 40px;
     }
 
     .count-number {
-      font-size: 22px;
+      font-size: 20px;
     }
 
     .count-label {
-      font-size: 14px;
+      font-size: 13px;
     }
 
     .series-meta {
