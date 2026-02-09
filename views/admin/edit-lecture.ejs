@@ -163,20 +163,42 @@
         </div>
 
         <div class="form-group">
-          <label>الوسوم (Tags)</label>
-          <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 12px; padding: 16px; background: #f8f9fa; border-radius: 8px;">
+          <label for="location">المكان</label>
+          <select id="location" name="location">
             <%
-              const availableTags = ['series', 'lecture', 'khutba', 'fiqh', 'tafsir', 'hadith', 'seerah', 'aqeedah', 'akhlaq'];
+              const currentLocation = lecture.location || 'غير محدد';
+              const locationOptions = [
+                { value: 'جامع الورود', label: 'جامع الورود' },
+                { value: 'عن بعد', label: 'عن بعد (أونلاين)' },
+                { value: 'غير محدد', label: 'غير محدد' }
+              ];
+            %>
+            <% locationOptions.forEach(opt => { %>
+              <option value="<%= opt.value %>" <%= currentLocation === opt.value ? 'selected' : '' %>><%= opt.label %></option>
+            <% }) %>
+          </select>
+        </div>
+
+        <div class="form-group">
+          <label for="dateRecorded">تاريخ التسجيل</label>
+          <input
+            type="date"
+            id="dateRecorded"
+            name="dateRecorded"
+            value="<%= lecture.dateRecorded ? new Date(lecture.dateRecorded).toISOString().split('T')[0] : '' %>"
+          >
+        </div>
+
+        <div class="form-group">
+          <label>نوع المحتوى</label>
+          <div style="display: flex; gap: 24px; padding: 16px; background: #f8f9fa; border-radius: 8px;">
+            <%
+              // Content TYPE tags only - subject is handled by Category
+              const availableTags = ['series', 'lecture', 'khutba'];
               const tagLabels = {
-                'series': 'سلسلة',
-                'lecture': 'محاضرة',
-                'khutba': 'خطبة',
-                'fiqh': 'فقه',
-                'tafsir': 'تفسير',
-                'hadith': 'حديث',
-                'seerah': 'سيرة',
-                'aqeedah': 'عقيدة',
-                'akhlaq': 'أخلاق'
+                'series': 'سلسلة دروس',
+                'lecture': 'محاضرة منفردة',
+                'khutba': 'خطبة جمعة'
               };
               const lectureTags = lecture.tags || [];
             %>
@@ -193,9 +215,6 @@
               </div>
             <% }) %>
           </div>
-          <p style="font-size: 12px; color: #666; margin-top: 8px;">
-            💡 يمكنك اختيار عدة وسوم. مثلاً: خطبة + سيرة للخطب التي تتحدث عن السيرة
-          </p>
         </div>
 
         <div class="form-group">
@@ -215,15 +234,27 @@
         </div>
 
         <div class="form-group">
-          <div class="checkbox-group">
-            <input
-              type="checkbox"
-              id="published"
-              name="published"
-              value="true"
-              <%= lecture.published ? 'checked' : '' %>
-            >
-            <label for="published" style="margin-bottom: 0;">منشورة</label>
+          <div style="display: flex; gap: 32px;">
+            <div class="checkbox-group">
+              <input
+                type="checkbox"
+                id="published"
+                name="published"
+                value="true"
+                <%= lecture.published ? 'checked' : '' %>
+              >
+              <label for="published" style="margin-bottom: 0;">منشورة</label>
+            </div>
+            <div class="checkbox-group">
+              <input
+                type="checkbox"
+                id="featured"
+                name="featured"
+                value="true"
+                <%= lecture.featured ? 'checked' : '' %>
+              >
+              <label for="featured" style="margin-bottom: 0;">⭐ مميزة</label>
+            </div>
           </div>
         </div>
 

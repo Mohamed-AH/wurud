@@ -453,6 +453,9 @@ router.post('/lectures/:id/edit', isAdmin, async (req, res) => {
       category,
       seriesId,
       published,
+      featured,
+      location,
+      dateRecorded,
       tags
     } = req.body;
 
@@ -471,6 +474,9 @@ router.post('/lectures/:id/edit', isAdmin, async (req, res) => {
       category,
       seriesId: seriesId || null,
       published: published === 'true',
+      featured: featured === 'true',
+      location: location || 'غير محدد',
+      dateRecorded: dateRecorded ? new Date(dateRecorded) : null,
       tags: tagsArray
     });
 
