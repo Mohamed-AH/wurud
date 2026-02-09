@@ -430,7 +430,8 @@ router.get('/lectures/:id/edit', isAdmin, async (req, res) => {
       user: req.user,
       lecture,
       sheikhs,
-      series
+      series,
+      success: req.query.success
     });
   } catch (error) {
     console.error('Edit lecture error:', error);
@@ -485,6 +486,72 @@ router.post('/lectures/:id/edit', isAdmin, async (req, res) => {
     console.error('Update lecture error:', error);
     res.status(500).send('Error updating lecture');
   }
+});
+
+// @route   POST /admin/lectures/:id/upload-audio
+// @desc    Upload audio file to OCI and link to lecture
+// @access  Private (Admin only)
+router.post('/lectures/:id/upload-audio', isAdmin, async (req, res) => {
+  const { upload } = require('../../config/storage');
+  const { uploadToOCI } = require('../../utils/ociStorage');
+  const { Lecture } = require('../../models');
+  const fs = require('fs');
+  const path = require('path');
+
+  // Use multer middleware
+  upload.single('audioFile')(req, res, async (err) => {
+    if (err) {
+      console.error('Upload error:', err);
+      return res.status(400).send(`خطأ في الرفع: ${err.message}`);
+    }
+
+    if (!req.file) {
+      return res.status(400).send('لم يتم اختيار ملف');
+    }
+
+    try {
+      const lecture = await Lecture.findById(req.params.id);
+      if (!lecture) {
+        // Clean up uploaded file
+        fs.unlinkSync(req.file.path);
+        return res.status(404).send('المحاضرة غير موجودة');
+      }
+
+      // Generate OCI object name from lecture slug or title
+      const ext = path.extname(req.file.originalname).toLowerCase();
+      const objectName = lecture.slug
+        ? `${lecture.slug}${ext}`
+        : `lecture-${lecture._id}${ext}`;
+
+      console.log(`[Audio Upload] Uploading ${req.file.originalname} as ${objectName}`);
+
+      // Upload to OCI
+      const result = await uploadToOCI(req.file.path, objectName);
+
+      // Update lecture with audio URL
+      lecture.audioUrl = result.url;
+      lecture.audioFileName = objectName;
+      lecture.fileSize = result.size;
+      await lecture.save();
+
+      console.log(`[Audio Upload] Success: ${objectName} -> ${result.url}`);
+
+      // Clean up local temp file
+      fs.unlinkSync(req.file.path);
+
+      // Redirect back to edit page with success
+      res.redirect(`/admin/lectures/${lecture._id}/edit?success=audio-uploaded`);
+    } catch (error) {
+      console.error('OCI upload error:', error);
+
+      // Clean up local temp file on error
+      if (req.file && fs.existsSync(req.file.path)) {
+        fs.unlinkSync(req.file.path);
+      }
+
+      res.status(500).send(`خطأ في الرفع إلى السحابة: ${error.message}`);
+    }
+  });
 });
 
 // @route   POST /admin/lectures/:id/toggle-published
