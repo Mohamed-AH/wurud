@@ -297,6 +297,101 @@ router.post('/series/:id/reorder-lectures', isAdmin, async (req, res) => {
   }
 });
 
+// @route   GET /admin/series/:id/quick-add-lecture
+// @desc    Quick add lecture form (minimal form)
+// @access  Private (Admin only)
+router.get('/series/:id/quick-add-lecture', isAdmin, async (req, res) => {
+  try {
+    const { Series, Lecture } = require('../../models');
+
+    const series = await Series.findById(req.params.id)
+      .populate('sheikhId', 'nameArabic nameEnglish')
+      .lean();
+
+    if (!series) {
+      return res.status(404).send('Series not found');
+    }
+
+    // Get the highest lecture number in this series
+    const lastLecture = await Lecture.findOne({ seriesId: series._id })
+      .sort({ lectureNumber: -1 })
+      .select('lectureNumber')
+      .lean();
+
+    const nextLectureNumber = (lastLecture?.lectureNumber || 0) + 1;
+
+    // Get total lecture count for sortOrder
+    const lectureCount = await Lecture.countDocuments({ seriesId: series._id });
+
+    res.render('admin/quick-add-lecture', {
+      title: 'إضافة درس سريع',
+      user: req.user,
+      series,
+      nextLectureNumber,
+      nextSortOrder: lectureCount,
+      today: new Date().toISOString().split('T')[0]
+    });
+  } catch (error) {
+    console.error('Quick add lecture page error:', error);
+    res.status(500).send('Error loading quick add page');
+  }
+});
+
+// @route   POST /admin/series/:id/quick-add-lecture
+// @desc    Create lecture with minimal data
+// @access  Private (Admin only)
+router.post('/series/:id/quick-add-lecture', isAdmin, async (req, res) => {
+  try {
+    const { Series, Lecture } = require('../../models');
+    const slugify = require('../../utils/slugify');
+
+    const series = await Series.findById(req.params.id)
+      .populate('sheikhId')
+      .lean();
+
+    if (!series) {
+      return res.status(404).send('Series not found');
+    }
+
+    const { lectureNumber, dateRecorded, titleSuffix, notes } = req.body;
+
+    // Build title: Series Title - الدرس X (or with suffix)
+    let titleArabic = `${series.titleArabic} - الدرس ${lectureNumber}`;
+    if (titleSuffix && titleSuffix.trim()) {
+      titleArabic += ` - ${titleSuffix.trim()}`;
+    }
+
+    // Generate slug
+    const slug = slugify(titleArabic);
+
+    // Create the lecture
+    const lecture = new Lecture({
+      titleArabic,
+      titleEnglish: series.titleEnglish ? `${series.titleEnglish} - Lesson ${lectureNumber}` : '',
+      seriesId: series._id,
+      sheikhId: series.sheikhId._id,
+      category: series.category || 'Other',
+      lectureNumber: parseInt(lectureNumber),
+      sortOrder: parseInt(req.body.sortOrder) || 0,
+      dateRecorded: dateRecorded ? new Date(dateRecorded) : new Date(),
+      notes: notes || '',
+      slug,
+      published: false // Default to unpublished until audio is added
+    });
+
+    await lecture.save();
+
+    // Update series lecture count
+    await Series.findByIdAndUpdate(series._id, { $inc: { lectureCount: 1 } });
+
+    // Redirect back to series edit page with success message
+    res.redirect(`/admin/series/${series._id}/edit?success=lecture_added&lectureId=${lecture._id}`);
+  } catch (error) {
+    console.error('Quick add lecture error:', error);
+    res.redirect(`/admin/series/${req.params.id}/edit?error=add_failed`);
+  }
+});
+
 // @route   GET /admin/lectures/:id/edit
 // @desc    Edit lecture page
 // @access  Private (Admin only)

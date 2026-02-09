@@ -109,7 +109,7 @@ All mobile issues have been fixed:
 
 1. ~~**3.6 Total Lecture Count Display**~~ ✅ Done - Gold badge in hero section
 2. ~~**3.7 Analytics & Tracking System**~~ ✅ Done - /admin/analytics dashboard
-3. **3.8 Quick Add Lecture to Series** - One-click add with minimal input
+3. ~~**3.8 Quick Add Lecture to Series**~~ ✅ Done - "+ إضافة درس" button on series edit
 4. **3.9 Direct OCI Audio Upload** - Upload optimized audio directly to Oracle Cloud
 5. **3.1 Server-Side Filtering & Pagination** - Required before 300+ lectures
 6. ~~**3.5 Weekly Class Schedule**~~ ✅ Done - Add entries at /admin/schedule
@@ -279,23 +279,24 @@ Track page visits, listens, and downloads with admin-controlled visibility.
 
 **Admin Access:** `/admin/analytics`
 
-#### 3.8 Quick Add Lecture to Series ⬜ NOT STARTED
-**Priority**: MEDIUM | **Status**: Pending
+#### 3.8 Quick Add Lecture to Series ✅ COMPLETED
+**Priority**: MEDIUM | **Status**: Done (2026-02-09)
 
 Streamlined workflow to add new lectures to existing series with minimal input.
 
 **Features:**
-- [ ] "+" button on series page in admin to add new lecture
-- [ ] Auto-fill series, sheikh, category from parent series
-- [ ] Auto-increment lecture number (next in sequence)
-- [ ] Minimal form: just date, title suffix (optional), notes
-- [ ] Quick save without full form validation
-- [ ] Option to immediately upload audio after creation
+- [x] ~~"+" button on series page in admin to add new lecture~~ ✅ Gold button in series edit page
+- [x] ~~Auto-fill series, sheikh, category from parent series~~ ✅ Inherited from series
+- [x] ~~Auto-increment lecture number (next in sequence)~~ ✅ Calculates next number
+- [x] ~~Minimal form: just date, title suffix (optional), notes~~ ✅ Streamlined form
+- [x] ~~Quick save without full form validation~~ ✅ Creates unpublished lecture
+- [ ] Option to immediately upload audio after creation (future)
 
-**Benefits:**
-- Faster content addition for ongoing series
-- Reduces repetitive data entry
-- Sheikh can add lectures quickly after recording
+**Files Created:**
+- `views/admin/quick-add-lecture.ejs` - Minimal quick-add form
+- Routes in `routes/admin/index.js` - GET/POST handlers
+
+**Admin Access:** Edit any series → Click "+ إضافة درس" button
 
 #### 3.9 Direct OCI Audio Upload ⬜ NOT STARTED
 **Priority**: MEDIUM | **Status**: Pending
