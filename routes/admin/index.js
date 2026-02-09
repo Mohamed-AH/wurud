@@ -369,8 +369,16 @@ router.post('/series/:id/quick-add-lecture', isAdmin, async (req, res) => {
       titleArabic += ` - ${titleSuffix.trim()}`;
     }
 
-    // Generate slug
-    const slug = generateSlug(titleArabic);
+    // Generate slug and ensure uniqueness
+    let baseSlug = generateSlug(titleArabic);
+    let slug = baseSlug;
+    let suffix = 1;
+
+    // Check for existing slug and append suffix if needed
+    while (await Lecture.exists({ slug })) {
+      suffix++;
+      slug = `${baseSlug}-${suffix}`;
+    }
 
     // Generate suggested audio filename (series-slug-lesson-N.m4a)
     const seriesSlug = generateSlug(series.titleArabic);
