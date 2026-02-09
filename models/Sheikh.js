@@ -32,6 +32,13 @@ const sheikhSchema = new mongoose.Schema({
   lectureCount: {
     type: Number,
     default: 0
+  },
+  slug: {
+    type: String,
+    trim: true,
+    unique: true,
+    sparse: true,
+    index: true
   }
 }, {
   timestamps: true

@@ -438,7 +438,7 @@
             <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
             <circle cx="12" cy="7" r="4"></circle>
           </svg>
-          <a href="/sheikhs/<%= series.sheikhId._id %>">
+          <a href="/sheikhs/<%= series.sheikhId.slug ? encodeURIComponent(series.sheikhId.slug) : series.sheikhId._id %>">
             <%= series.sheikhId.nameArabic %>
             <% if (series.sheikhId.honorific) { %>
               <span class="honorific"><%= series.sheikhId.honorific %></span>
@@ -534,7 +534,7 @@
         <h2 class="section-title">سلاسل الخطب</h2>
         <div class="series-grid">
           <% relatedKhutbaSeries.forEach(relSeries => { %>
-            <a href="/series/<%= relSeries._id %>" class="series-card">
+            <a href="/series/<%= relSeries.slug ? encodeURIComponent(relSeries.slug) : relSeries._id %>" class="series-card">
               <div class="series-icon">
                 <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                   <path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"></path>

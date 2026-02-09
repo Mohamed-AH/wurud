@@ -52,6 +52,13 @@ const seriesSchema = new mongoose.Schema({
   thumbnailUrl: {
     type: String,
     trim: true
+  },
+  slug: {
+    type: String,
+    trim: true,
+    unique: true,
+    sparse: true,
+    index: true
   }
 }, {
   timestamps: true

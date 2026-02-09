@@ -3,7 +3,7 @@
 
   <div class="lecture-content">
     <h3 class="lecture-title">
-      <a href="/lectures/<%= lecture._id %>"><%= lecture.titleArabic %></a>
+      <a href="/lectures/<%= lecture.slug ? encodeURIComponent(lecture.slug) : lecture._id %>"><%= lecture.titleArabic %></a>
     </h3>
 
     <div class="lecture-meta">

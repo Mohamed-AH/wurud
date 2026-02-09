@@ -343,7 +343,7 @@
               <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
               <circle cx="12" cy="7" r="4"></circle>
             </svg>
-            <a href="/sheikhs/<%= lecture.sheikhId._id %>">
+            <a href="/sheikhs/<%= lecture.sheikhId.slug ? encodeURIComponent(lecture.sheikhId.slug) : lecture.sheikhId._id %>">
               <%= lecture.sheikhId.nameArabic %>
               <% if (lecture.sheikhId.honorific) { %>
                 <span class="honorific"><%= lecture.sheikhId.honorific %></span>
@@ -359,7 +359,7 @@
               <path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"></path>
               <path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"></path>
             </svg>
-            <a href="/series/<%= lecture.seriesId._id %>">
+            <a href="/series/<%= lecture.seriesId.slug ? encodeURIComponent(lecture.seriesId.slug) : lecture.seriesId._id %>">
               <%= lecture.seriesId.titleArabic %>
               <% if (lecture.lectureNumber) { %>
                 <span class="lecture-number">(الدرس <%= lecture.lectureNumber %>)</span>
@@ -494,7 +494,7 @@
             <div class="description-section">
               <h3 class="section-title">نبذة عن الشيخ</h3>
               <p class="description-text"><%= lecture.sheikhId.bioArabic.substring(0, 300) %>...</p>
-              <a href="/sheikhs/<%= lecture.sheikhId._id %>" style="color: var(--accent-gold); text-decoration: none; font-weight: 600;">
+              <a href="/sheikhs/<%= lecture.sheikhId.slug ? encodeURIComponent(lecture.sheikhId.slug) : lecture.sheikhId._id %>" style="color: var(--accent-gold); text-decoration: none; font-weight: 600;">
                 المزيد عن الشيخ ←
               </a>
             </div>
@@ -508,7 +508,7 @@
             <div class="sidebar-card">
               <h3 class="sidebar-title">محاضرات ذات صلة</h3>
               <% relatedLectures.forEach(related => { %>
-                <a href="/lectures/<%= related._id %>" style="text-decoration: none;">
+                <a href="/lectures/<%= related.slug ? encodeURIComponent(related.slug) : related._id %>" style="text-decoration: none;">
                   <div class="related-lecture">
                     <div class="related-lecture-title"><%= related.titleArabic %></div>
                     <div class="related-lecture-meta">

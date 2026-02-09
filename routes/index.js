@@ -176,19 +176,30 @@ router.get('/browse', async (req, res) => {
   }
 });
 
-// @route   GET /lectures/:id
-// @desc    Single lecture detail page
+// @route   GET /lectures/:idOrSlug
+// @desc    Single lecture detail page (supports both ObjectId and slug)
 // @access  Public
-router.get('/lectures/:id', async (req, res) => {
+router.get('/lectures/:idOrSlug', async (req, res) => {
   try {
-    // Get lecture by ID
-    const lecture = await Lecture.findById(req.params.id)
-      .populate('sheikhId', 'nameArabic nameEnglish honorific bioArabic bioEnglish')
-      .populate('seriesId', 'titleArabic titleEnglish descriptionArabic descriptionEnglish category')
-      .lean();
+    const { findWithRedirectCheck } = require('../utils/findByIdOrSlug');
+
+    // Get lecture by ID or slug
+    const { doc: lecture, shouldRedirect, canonicalSlug } = await findWithRedirectCheck(
+      Lecture,
+      req.params.idOrSlug,
+      [
+        { path: 'sheikhId', select: 'nameArabic nameEnglish honorific bioArabic bioEnglish slug' },
+        { path: 'seriesId', select: 'titleArabic titleEnglish descriptionArabic descriptionEnglish category slug' }
+      ]
+    );
 
     if (!lecture || !lecture.published) {
       return res.status(404).send('Lecture not found');
+    }
+
+    // 301 redirect to canonical slug URL for SEO
+    if (shouldRedirect && canonicalSlug) {
+      return res.redirect(301, '/lectures/' + encodeURIComponent(canonicalSlug));
     }
 
     // Get related lectures (same series or same sheikh, excluding current)
@@ -248,26 +259,36 @@ router.get('/sheikhs', async (req, res) => {
   }
 });
 
-// @route   GET /sheikhs/:id
-// @desc    Single sheikh profile page
+// @route   GET /sheikhs/:idOrSlug
+// @desc    Single sheikh profile page (supports both ObjectId and slug)
 // @access  Public
-router.get('/sheikhs/:id', async (req, res) => {
+router.get('/sheikhs/:idOrSlug', async (req, res) => {
   try {
-    // Get sheikh by ID
-    const sheikh = await Sheikh.findById(req.params.id).lean();
+    const { findWithRedirectCheck } = require('../utils/findByIdOrSlug');
+
+    // Get sheikh by ID or slug
+    const { doc: sheikh, shouldRedirect, canonicalSlug } = await findWithRedirectCheck(
+      Sheikh,
+      req.params.idOrSlug
+    );
 
     if (!sheikh) {
       return res.status(404).send('Sheikh not found');
     }
 
+    // 301 redirect to canonical slug URL for SEO
+    if (shouldRedirect && canonicalSlug) {
+      return res.redirect(301, '/sheikhs/' + encodeURIComponent(canonicalSlug));
+    }
+
     // Get all lectures by this sheikh
     const lectures = await Lecture.find({
-      sheikhId: req.params.id,
+      sheikhId: sheikh._id,
       published: true
     })
       .sort({ createdAt: -1 })
-      .populate('sheikhId', 'nameArabic nameEnglish honorific')
-      .populate('seriesId', 'titleArabic titleEnglish')
+      .populate('sheikhId', 'nameArabic nameEnglish honorific slug')
+      .populate('seriesId', 'titleArabic titleEnglish slug')
       .lean();
 
     // Calculate statistics
@@ -278,7 +299,7 @@ router.get('/sheikhs/:id', async (req, res) => {
     };
 
     // Get series by this sheikh
-    const series = await Series.find({ sheikhId: req.params.id })
+    const series = await Series.find({ sheikhId: sheikh._id })
       .sort({ titleArabic: 1 })
       .lean();
 
@@ -315,18 +336,27 @@ router.get('/series', async (req, res) => {
   }
 });
 
-// @route   GET /series/:id
-// @desc    Single series profile page
+// @route   GET /series/:idOrSlug
+// @desc    Single series profile page (supports both ObjectId and slug)
 // @access  Public
-router.get('/series/:id', async (req, res) => {
+router.get('/series/:idOrSlug', async (req, res) => {
   try {
-    // Get series by ID
-    const series = await Series.findById(req.params.id)
-      .populate('sheikhId', 'nameArabic nameEnglish honorific bioArabic bioEnglish')
-      .lean();
+    const { findWithRedirectCheck } = require('../utils/findByIdOrSlug');
+
+    // Get series by ID or slug
+    const { doc: series, shouldRedirect, canonicalSlug } = await findWithRedirectCheck(
+      Series,
+      req.params.idOrSlug,
+      { path: 'sheikhId', select: 'nameArabic nameEnglish honorific bioArabic bioEnglish slug' }
+    );
 
     if (!series) {
       return res.status(404).send('Series not found');
+    }
+
+    // 301 redirect to canonical slug URL for SEO
+    if (shouldRedirect && canonicalSlug) {
+      return res.redirect(301, '/series/' + encodeURIComponent(canonicalSlug));
     }
 
     // Get all lectures in this series (ordered by sortOrder, then lecture number)
@@ -335,7 +365,7 @@ router.get('/series/:id', async (req, res) => {
     const lectures = await Lecture.aggregate([
       {
         $match: {
-          seriesId: new mongoose.Types.ObjectId(req.params.id),
+          seriesId: series._id,
           published: true
         }
       },
@@ -416,25 +446,25 @@ router.get('/series/:id', async (req, res) => {
 });
 
 // @route   GET /sitemap.xml
-// @desc    XML Sitemap for SEO
+// @desc    XML Sitemap for SEO (uses slugs when available)
 // @access  Public
 router.get('/sitemap.xml', async (req, res) => {
   try {
     const baseUrl = 'https://rasmihassan.com';
 
-    // Get all published lectures
+    // Get all published lectures (include slug for SEO-friendly URLs)
     const lectures = await Lecture.find({ published: true })
-      .select('_id updatedAt')
+      .select('_id slug updatedAt')
       .lean();
 
     // Get all series
     const series = await Series.find()
-      .select('_id updatedAt')
+      .select('_id slug updatedAt')
       .lean();
 
     // Get all sheikhs
     const sheikhs = await Sheikh.find()
-      .select('_id updatedAt')
+      .select('_id slug updatedAt')
       .lean();
 
     let xml = `<?xml version="1.0" encoding="UTF-8"?>
@@ -462,11 +492,12 @@ router.get('/sitemap.xml', async (req, res) => {
   </url>
 `;
 
-    // Add lectures
+    // Add lectures (use slug if available, otherwise ID)
     for (const lecture of lectures) {
       const lastmod = lecture.updatedAt ? new Date(lecture.updatedAt).toISOString().split('T')[0] : '';
+      const lectureUrl = lecture.slug ? encodeURIComponent(lecture.slug) : lecture._id;
       xml += `  <url>
-    <loc>${baseUrl}/lectures/${lecture._id}</loc>
+    <loc>${baseUrl}/lectures/${lectureUrl}</loc>
     ${lastmod ? `<lastmod>${lastmod}</lastmod>` : ''}
     <changefreq>monthly</changefreq>
     <priority>0.7</priority>
@@ -474,11 +505,12 @@ router.get('/sitemap.xml', async (req, res) => {
 `;
     }
 
-    // Add series
+    // Add series (use slug if available, otherwise ID)
     for (const s of series) {
       const lastmod = s.updatedAt ? new Date(s.updatedAt).toISOString().split('T')[0] : '';
+      const seriesUrl = s.slug ? encodeURIComponent(s.slug) : s._id;
       xml += `  <url>
-    <loc>${baseUrl}/series/${s._id}</loc>
+    <loc>${baseUrl}/series/${seriesUrl}</loc>
     ${lastmod ? `<lastmod>${lastmod}</lastmod>` : ''}
     <changefreq>weekly</changefreq>
     <priority>0.8</priority>
@@ -486,11 +518,12 @@ router.get('/sitemap.xml', async (req, res) => {
 `;
     }
 
-    // Add sheikhs
+    // Add sheikhs (use slug if available, otherwise ID)
     for (const sheikh of sheikhs) {
       const lastmod = sheikh.updatedAt ? new Date(sheikh.updatedAt).toISOString().split('T')[0] : '';
+      const sheikhUrl = sheikh.slug ? encodeURIComponent(sheikh.slug) : sheikh._id;
       xml += `  <url>
-    <loc>${baseUrl}/sheikhs/${sheikh._id}</loc>
+    <loc>${baseUrl}/sheikhs/${sheikhUrl}</loc>
     ${lastmod ? `<lastmod>${lastmod}</lastmod>` : ''}
     <changefreq>monthly</changefreq>
     <priority>0.8</priority>
