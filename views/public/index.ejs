@@ -95,31 +95,21 @@
     display: flex;
     align-items: center;
     justify-content: center;
-    gap: 12px;
+    gap: 16px;
     margin-top: 32px;
-    padding: 20px 48px;
-    position: relative;
+    padding: 20px 0;
   }
 
-  /* Elegant horizontal dividers */
-  .lecture-count-badge::before,
-  .lecture-count-badge::after {
-    content: '';
-    position: absolute;
-    top: 50%;
-    width: 60px;
+  .count-divider {
+    width: 48px;
     height: 1px;
-    background: linear-gradient(90deg, transparent, rgba(180, 150, 110, 0.5), transparent);
+    background: linear-gradient(90deg, transparent, rgba(180, 150, 110, 0.6), transparent);
   }
 
-  .lecture-count-badge::before {
-    right: 100%;
-    margin-right: 16px;
-  }
-
-  .lecture-count-badge::after {
-    left: 100%;
-    margin-left: 16px;
+  .count-text {
+    display: flex;
+    align-items: baseline;
+    gap: 10px;
   }
 
   .count-number {
@@ -134,7 +124,7 @@
     font-family: var(--font-arabic-body);
     font-size: 15px;
     font-weight: 400;
-    color: rgba(250, 247, 242, 0.75);
+    color: rgba(250, 247, 242, 0.7);
     letter-spacing: 0.3px;
   }
 
@@ -533,13 +523,16 @@
 
     .lecture-count-badge {
       margin-top: 20px;
-      padding: 16px 32px;
-      gap: 10px;
+      padding: 16px 0;
+      gap: 12px;
     }
 
-    .lecture-count-badge::before,
-    .lecture-count-badge::after {
-      width: 40px;
+    .count-divider {
+      width: 32px;
+    }
+
+    .count-text {
+      gap: 8px;
     }
 
     .count-number {
@@ -899,8 +892,12 @@
   </div>
   <% if (typeof totalLectureCount !== 'undefined' && totalLectureCount > 0) { %>
   <div class="lecture-count-badge">
-    <span class="count-number"><%= totalLectureCount %>+</span>
-    <span class="count-label"><%= locale === 'ar' ? 'درس صوتي' : 'Audio Lectures' %></span>
+    <span class="count-divider"></span>
+    <span class="count-text">
+      <span class="count-number"><%= totalLectureCount %>+</span>
+      <span class="count-label"><%= locale === 'ar' ? 'درس صوتي' : 'Audio Lectures' %></span>
+    </span>
+    <span class="count-divider"></span>
   </div>
   <% } %>
 </div>
