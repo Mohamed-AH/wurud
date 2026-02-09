@@ -90,6 +90,44 @@
     box-shadow: 0 4px 12px var(--shadow-warm);
   }
 
+  /* Lecture Count - Archive Header Style */
+  .lecture-count-badge {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 16px;
+    margin-top: 32px;
+    padding: 20px 0;
+  }
+
+  .count-divider {
+    width: 48px;
+    height: 1px;
+    background: linear-gradient(90deg, transparent, rgba(180, 150, 110, 0.6), transparent);
+  }
+
+  .count-text {
+    display: flex;
+    align-items: baseline;
+    gap: 10px;
+  }
+
+  .count-number {
+    font-family: var(--font-arabic-display);
+    font-size: 24px;
+    font-weight: 600;
+    color: rgba(250, 247, 242, 0.8);
+    letter-spacing: 0.5px;
+  }
+
+  .count-label {
+    font-family: var(--font-arabic-body);
+    font-size: 15px;
+    font-weight: 400;
+    color: rgba(250, 247, 242, 0.8);
+    letter-spacing: 0.3px;
+  }
+
   /* Filter Chips */
   .filters-section {
     max-width: 1200px;
@@ -483,6 +521,28 @@
       padding: 14px 16px;
     }
 
+    .lecture-count-badge {
+      margin-top: 20px;
+      padding: 16px 0;
+      gap: 12px;
+    }
+
+    .count-divider {
+      width: 32px;
+    }
+
+    .count-text {
+      gap: 8px;
+    }
+
+    .count-number {
+      font-size: 20px;
+    }
+
+    .count-label {
+      font-size: 13px;
+    }
+
     .series-meta {
       flex-direction: column;
       align-items: flex-start;
@@ -830,6 +890,16 @@
       بحث
     </button>
   </div>
+  <% if (typeof totalLectureCount !== 'undefined' && totalLectureCount > 0) { %>
+  <div class="lecture-count-badge">
+    <span class="count-divider"></span>
+    <span class="count-text">
+      <span class="count-number"><%= totalLectureCount %>+</span>
+      <span class="count-label"><%= locale === 'ar' ? 'درس صوتي' : 'Audio Lectures' %></span>
+    </span>
+    <span class="count-divider"></span>
+  </div>
+  <% } %>
 </div>
 
 <!-- Weekly Schedule Section -->
@@ -878,7 +948,7 @@
             <th><%= locale === 'ar' ? 'اليوم' : 'Day' %></th>
             <th><%= locale === 'ar' ? 'الوقت' : 'Time' %></th>
             <th><%= locale === 'ar' ? 'السلسلة' : 'Series' %></th>
-            <th><%= locale === 'ar' ? 'الدرس' : '#' %></th>
+            <th><%= locale === 'ar' ? 'الدرس #' : 'Lesson #' %></th>
           </tr>
         </thead>
         <tbody>
@@ -931,7 +1001,7 @@
             <th><%= locale === 'ar' ? 'اليوم' : 'Day' %></th>
             <th><%= locale === 'ar' ? 'الوقت' : 'Time' %></th>
             <th><%= locale === 'ar' ? 'السلسلة' : 'Series' %></th>
-            <th><%= locale === 'ar' ? 'الدرس' : '#' %></th>
+            <th><%= locale === 'ar' ? 'الدرس #' : 'Lesson #' %></th>
           </tr>
         </thead>
         <tbody>

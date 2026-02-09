@@ -107,7 +107,7 @@ All mobile issues have been fixed:
 
 ### 🎯 Next Steps (Prioritized)
 
-1. **3.6 Total Lecture Count Display** - Show total lectures on homepage
+1. ~~**3.6 Total Lecture Count Display**~~ ✅ Done - Gold badge in hero section
 2. **3.7 Analytics & Tracking System** - Page visits, listens, downloads with visibility toggle
 3. **3.1 Server-Side Filtering & Pagination** - Required before 300+ lectures
 4. ~~**3.5 Weekly Class Schedule**~~ ✅ Done - Add entries at /admin/schedule
@@ -242,16 +242,16 @@ Display weekly class schedule with direct links to most recent recordings.
 
 **Admin Action Required**: Add schedule entries at `/admin/schedule` for the section to appear on homepage.
 
-#### 3.6 Total Lecture Count Display ⬜ NOT STARTED
-**Priority**: MEDIUM | **Status**: Pending
+#### 3.6 Total Lecture Count Display ✅ COMPLETED
+**Priority**: MEDIUM | **Status**: Done (2026-02-09)
 
 Display the total number of lectures prominently on the homepage.
 
 **Implementation:**
-- [ ] Add lecture count stat to homepage hero or stats section
-- [ ] Show "X+ درس" / "X+ Lectures" badge
-- [ ] Update dynamically as content grows
-- [ ] Style to match site aesthetic (gold accent)
+- [x] ~~Add lecture count stat to homepage hero~~ ✅ routes/index.js
+- [x] ~~Show "X+ درس" / "X+ Lectures" badge~~ ✅ Gold accent badge
+- [x] ~~Update dynamically as content grows~~ ✅ Real-time count
+- [x] ~~Style to match site aesthetic~~ ✅ Gold border, translucent bg
 
 #### 3.7 Analytics & Tracking System ⬜ NOT STARTED
 **Priority**: MEDIUM | **Status**: Pending
