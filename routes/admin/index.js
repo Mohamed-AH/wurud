@@ -236,7 +236,7 @@ router.get('/series/:id/edit', isAdmin, async (req, res) => {
 router.post('/series/:id/edit', isAdmin, async (req, res) => {
   try {
     const { Series } = require('../../models');
-    const { titleArabic, titleEnglish, category, descriptionArabic, descriptionEnglish, tags } = req.body;
+    const { titleArabic, titleEnglish, category, descriptionArabic, descriptionEnglish, tags, bookAuthor } = req.body;
 
     // Handle tags - can be a string (single tag) or array (multiple tags)
     let tagsArray = [];
@@ -250,7 +250,8 @@ router.post('/series/:id/edit', isAdmin, async (req, res) => {
       category,
       descriptionArabic,
       descriptionEnglish,
-      tags: tagsArray
+      tags: tagsArray,
+      bookAuthor: bookAuthor || null
     });
 
     res.redirect('/admin/manage?success=series-updated');

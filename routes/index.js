@@ -41,8 +41,8 @@ router.get('/', async (req, res) => {
           }
         ]);
 
-        // Get original author from first lecture with description
-        const originalAuthor = lectures.find(l => l.descriptionArabic)?.descriptionArabic
+        // Get original author - prefer Series.bookAuthor, fallback to lecture description
+        const originalAuthor = s.bookAuthor || lectures.find(l => l.descriptionArabic)?.descriptionArabic
           ?.replace('من كتاب: ', '') || null;
 
         return {
