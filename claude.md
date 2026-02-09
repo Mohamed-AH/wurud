@@ -108,7 +108,7 @@ All mobile issues have been fixed:
 ### 🎯 Next Steps (Prioritized)
 
 1. **3.1 Server-Side Filtering & Pagination** - Required before 300+ lectures
-2. **3.5 Weekly Class Schedule** - Links to recent recordings, boosts SEO
+2. ~~**3.5 Weekly Class Schedule**~~ ✅ Done - Add entries at /admin/schedule
 3. **3.3 Performance Optimizations** - Caching, bundling, CDN
 4. **3.4 Admin Panel Arabic** - RTL support for admin pages
 5. **Test Coverage Improvements** - Focus on slugify.js, lectures API, middleware
@@ -220,8 +220,8 @@ All mobile issues have been fixed:
 - [ ] Add language toggle to admin panel
 - [ ] Ensure form inputs work with Arabic text
 
-#### 3.5 Weekly Class Schedule ⬜ NOT STARTED
-**Priority**: MEDIUM | **Status**: Pending
+#### 3.5 Weekly Class Schedule ✅ COMPLETED
+**Priority**: MEDIUM | **Status**: Done (2026-02-09)
 
 Display weekly class schedule with direct links to most recent recordings.
 
@@ -231,19 +231,14 @@ Display weekly class schedule with direct links to most recent recordings.
 - Encourages regular site visits
 
 **Implementation:**
-- [ ] Create schedule data structure (day, time, series, location)
-- [ ] Homepage section showing weekly schedule
-- [ ] Auto-link to most recent lecture in each series
-- [ ] Indicate "new" badge for lectures < 7 days old
-- [ ] Admin interface to manage schedule
-- [ ] Optional: "Next class" countdown timer
+- [x] ~~Create schedule data structure (day, time, series, location)~~ ✅ models/Schedule.js
+- [x] ~~Homepage section showing weekly schedule~~ ✅ Displays cards on homepage
+- [x] ~~Auto-link to most recent lecture in each series~~ ✅ Done
+- [x] ~~Indicate "new" badge for lectures < 7 days old~~ ✅ Green "جديد" badge
+- [x] ~~Admin interface to manage schedule~~ ✅ /admin/schedule
+- [ ] Optional: "Next class" countdown timer (future)
 
-**Example Schedule:**
-| Day | Time | Series | Location |
-|-----|------|--------|----------|
-| السبت | بعد المغرب | شرح كتاب التوحيد | جامع الورود |
-| الأحد | بعد المغرب | شرح عمدة الأحكام | جامع الورود |
-| ... | ... | ... | ... |
+**Admin Action Required**: Add schedule entries at `/admin/schedule` for the section to appear on homepage.
 
 ---
 
