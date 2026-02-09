@@ -2,7 +2,9 @@
 /**
  * Fix Lecture Slugs Script
  *
- * Regenerates slugs from lecture titles to fix mismatches.
+ * Regenerates slugs using series name + lecture number format.
+ * This prevents duplicate slugs across different series variants
+ * (e.g., "عن بعد", "أرشيف رمضان").
  *
  * Usage:
  *   node scripts/fix-lecture-slugs.js [--dry-run] [--series SERIES_ID] [--env FILE] [--output FILE]
@@ -50,7 +52,8 @@ if (!process.env.MONGODB_URI) {
 
 const mongoose = require('mongoose');
 const Lecture = require('../models/Lecture');
-const { generateSlug } = require('../utils/slugify');
+const Series = require('../models/Series');
+const { generateSlug, generateLectureSlug } = require('../utils/slugify');
 
 // Parse arguments
 const DRY_RUN = args.includes('--dry-run');
@@ -90,8 +93,9 @@ async function fixSlugs() {
     query.seriesId = SERIES_ID;
   }
 
-  // Fetch all lectures
+  // Fetch all lectures with series data
   const lectures = await Lecture.find(query)
+    .populate('seriesId', 'titleArabic')
     .sort({ seriesId: 1, lectureNumber: 1 })
     .lean();
 
@@ -123,7 +127,8 @@ async function fixSlugs() {
       log(`\n📋 "${dup.title.substring(0, 60)}..."`);
       log(`   Found ${dup.lectures.length} lectures with this title:`);
       for (const lec of dup.lectures) {
-        const seriesInfo = lec.seriesId ? `Series: ${lec.seriesId}` : 'No series';
+        const seriesTitle = lec.seriesId?.titleArabic || null;
+        const seriesInfo = seriesTitle ? `Series: ${seriesTitle}` : 'No series';
         const audioInfo = lec.audioFileName ? '✓ Has audio' : '✗ No audio';
         log(`   - ID: ${lec._id}`);
         log(`     Slug: ${lec.slug}`);
@@ -147,9 +152,10 @@ async function fixSlugs() {
   for (const lecture of lectures) {
     const title = lecture.titleArabic;
     const currentSlug = lecture.slug;
+    const series = lecture.seriesId; // Already populated with titleArabic
 
-    // Generate new slug from title
-    let newSlug = generateSlug(title);
+    // Generate new slug including series name to avoid duplicates
+    let newSlug = generateLectureSlug(lecture, series);
 
     // Check if slug matches
     if (currentSlug === newSlug) {
@@ -166,7 +172,8 @@ async function fixSlugs() {
     }
     newSlug = uniqueSlug;
 
-    log(`📝 ${title.substring(0, 50)}...`);
+    const seriesName = series?.titleArabic ? ` [${series.titleArabic.substring(0, 30)}]` : '';
+    log(`📝 ${title.substring(0, 50)}...${seriesName}`);
     log(`   Old: ${currentSlug}`);
     log(`   New: ${newSlug}`);
 
