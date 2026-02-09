@@ -113,46 +113,49 @@ All mobile issues have been fixed:
 
 **Note:** xlsx package has known CVEs but only used in admin scripts (not exposed to users)
 
-#### 1.2 Content: October to Present ⬜ NOT STARTED
-**Priority**: HIGH | **Status**: Pending
+#### 1.2 Content: October to Present ✅ COMPLETE
+**Priority**: HIGH | **Status**: Done (2026-02-09)
 
-- [ ] Identify all lectures from October 2025 to present
-- [ ] Process audio files (HE-AAC encoding, silence trimming)
-- [ ] Upload to OCI bucket
-- [ ] Add metadata to MongoDB
-- [ ] Verify streaming works
+- [x] Identify all lectures from October 2025 to present
+- [x] Process audio files (HE-AAC encoding, silence trimming)
+- [x] Upload to OCI bucket
+- [x] Add metadata to MongoDB
+- [x] Verify streaming works
 
-#### 1.3 Content: Online Classes ⬜ NOT STARTED
-**Priority**: HIGH | **Status**: Pending
+#### 1.3 Content: Online Classes ✅ COMPLETE
+**Priority**: HIGH | **Status**: Done (2026-02-09)
 
-- [ ] Identify online class recordings
-- [ ] Determine format differences from in-person lectures
-- [ ] Process and upload audio files
-- [ ] Add appropriate metadata/category tagging
+- [x] Identify online class recordings
+- [x] Determine format differences from in-person lectures
+- [x] Process and upload audio files
+- [x] Add appropriate metadata/category tagging
 
 ---
 
 ### Priority 2: HIGH
 
-#### 2.1 Content: Pre-October Archive ⬜ NOT STARTED
-**Priority**: MEDIUM-HIGH | **Status**: Pending
+#### 2.1 Content: Pre-October Archive ✅ COMPLETE
+**Priority**: MEDIUM-HIGH | **Status**: Done (2026-02-09)
 
-- [ ] Inventory all pre-October lectures
-- [ ] Batch process audio files
-- [ ] Upload to OCI
-- [ ] Import metadata to MongoDB
+- [x] Inventory all pre-October lectures
+- [x] Batch process audio files
+- [x] Upload to OCI
+- [x] Import metadata to MongoDB
 
-#### 2.2 Arabic Slugs (SEO URLs) ⬜ NOT STARTED
-**Priority**: MEDIUM-HIGH | **Status**: Pending
+#### 2.2 Arabic Slugs (SEO URLs) ✅ COMPLETE
+**Priority**: MEDIUM-HIGH | **Status**: Done (2026-02-09)
 
-- [ ] Add `slug` field to Lecture, Series, Sheikh models
-- [ ] Generate Arabic slugs from titles
-- [ ] Update routes to support both ID and slug lookup
-- [ ] Add redirects from old URLs to new slugs
-- [ ] Update sitemap to use slugs
-- [ ] Update internal links
+- [x] Add `slug` field to Lecture, Series, Sheikh models
+- [x] Generate Arabic slugs from titles
+- [x] Update routes to support both ID and slug lookup
+- [x] Add redirects from old URLs to new slugs (301 redirects)
+- [x] Update sitemap to use slugs
+- [x] Update internal links
+- [x] Fix canonical tags to use slug URLs
 
 **Example**: `/lectures/6975bc...` → `/lectures/شرح-كتاب-التوحيد-الدرس-١`
+
+**Scripts**: Run `node scripts/generate-slugs.js` to generate slugs for existing data.
 
 ---
 
