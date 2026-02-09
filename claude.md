@@ -107,11 +107,13 @@ All mobile issues have been fixed:
 
 ### 🎯 Next Steps (Prioritized)
 
-1. **3.1 Server-Side Filtering & Pagination** - Required before 300+ lectures
-2. ~~**3.5 Weekly Class Schedule**~~ ✅ Done - Add entries at /admin/schedule
-3. **3.3 Performance Optimizations** - Caching, bundling, CDN
-4. **3.4 Admin Panel Arabic** - RTL support for admin pages
-5. **Test Coverage Improvements** - Focus on slugify.js, lectures API, middleware
+1. **3.6 Total Lecture Count Display** - Show total lectures on homepage
+2. **3.7 Analytics & Tracking System** - Page visits, listens, downloads with visibility toggle
+3. **3.1 Server-Side Filtering & Pagination** - Required before 300+ lectures
+4. ~~**3.5 Weekly Class Schedule**~~ ✅ Done - Add entries at /admin/schedule
+5. **3.3 Performance Optimizations** - Caching, bundling, CDN
+6. **3.4 Admin Panel Arabic** - RTL support for admin pages
+7. **Test Coverage Improvements** - Focus on slugify.js, lectures API, middleware
 
 ---
 
@@ -239,6 +241,50 @@ Display weekly class schedule with direct links to most recent recordings.
 - [ ] Optional: "Next class" countdown timer (future)
 
 **Admin Action Required**: Add schedule entries at `/admin/schedule` for the section to appear on homepage.
+
+#### 3.6 Total Lecture Count Display ⬜ NOT STARTED
+**Priority**: MEDIUM | **Status**: Pending
+
+Display the total number of lectures prominently on the homepage.
+
+**Implementation:**
+- [ ] Add lecture count stat to homepage hero or stats section
+- [ ] Show "X+ درس" / "X+ Lectures" badge
+- [ ] Update dynamically as content grows
+- [ ] Style to match site aesthetic (gold accent)
+
+#### 3.7 Analytics & Tracking System ⬜ NOT STARTED
+**Priority**: MEDIUM | **Status**: Pending
+
+Track page visits, listens, and downloads with admin-controlled visibility.
+
+**Features:**
+- [ ] Track page views (homepage, lectures, series, sheikh pages)
+- [ ] Track audio plays (already have playCount in Lecture model)
+- [ ] Track downloads (already have downloadCount in Lecture model)
+- [ ] Admin dashboard showing analytics summary
+- [ ] **Visibility Toggle**: Hide public stats until threshold reached
+  - [ ] Admin setting: `minCountToDisplay` (e.g., 1000 plays)
+  - [ ] Stats hidden on public pages until threshold met
+  - [ ] Admin always sees real numbers
+- [ ] Optional: Daily/weekly/monthly breakdown
+
+**Data Model (SiteStats):**
+```javascript
+{
+  totalPageViews: Number,
+  totalPlays: Number,
+  totalDownloads: Number,
+  displayThreshold: Number,  // Min count before showing publicly
+  showPublicStats: Boolean,  // Manual override
+  lastUpdated: Date
+}
+```
+
+**Admin UI:**
+- Toggle to show/hide stats publicly
+- Set minimum threshold for auto-display
+- View detailed analytics
 
 ---
 
