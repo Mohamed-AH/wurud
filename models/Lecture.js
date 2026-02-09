@@ -110,6 +110,13 @@ const lectureSchema = new mongoose.Schema({
     default: {}
     // Stores Excel import data for matching files later:
     // { excelFilename: String, type: String, serial: String }
+  },
+  slug: {
+    type: String,
+    trim: true,
+    unique: true,
+    sparse: true, // Allow multiple null values
+    index: true
   }
 }, {
   timestamps: true

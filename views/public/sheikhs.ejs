@@ -139,7 +139,7 @@
   <% if (sheikhs && sheikhs.length > 0) { %>
     <div class="sheikhs-grid">
       <% sheikhs.forEach(sheikh => { %>
-        <a href="/sheikhs/<%= sheikh._id %>" class="sheikh-card">
+        <a href="/sheikhs/<%= sheikh.slug ? encodeURIComponent(sheikh.slug) : sheikh._id %>" class="sheikh-card">
           <div class="sheikh-avatar">
             <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
               <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
