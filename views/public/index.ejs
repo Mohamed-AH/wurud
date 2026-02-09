@@ -687,10 +687,18 @@
     white-space: nowrap;
   }
 
+  .schedule-day-cell .day-short {
+    display: none;
+  }
+
   .schedule-time-cell {
     color: var(--text-muted);
     font-size: 13px;
     white-space: nowrap;
+  }
+
+  .schedule-time-cell .time-short {
+    display: none;
   }
 
   .schedule-series-cell a {
@@ -702,6 +710,18 @@
 
   .schedule-series-cell a:hover {
     color: var(--accent-gold);
+  }
+
+  .schedule-lesson-num {
+    display: inline-block;
+    background: var(--accent-gold);
+    color: var(--primary-dark);
+    font-size: 12px;
+    font-weight: 700;
+    padding: 4px 10px;
+    border-radius: 12px;
+    min-width: 45px;
+    text-align: center;
   }
 
   .new-badge {
@@ -756,13 +776,30 @@
 
     .schedule-table th,
     .schedule-table td {
-      padding: 10px 12px;
-      font-size: 13px;
+      padding: 8px 10px;
+      font-size: 12px;
     }
 
-    .schedule-table th:nth-child(3),
-    .schedule-table td:nth-child(3) {
+    .schedule-day-cell .day-full {
       display: none;
+    }
+
+    .schedule-day-cell .day-short {
+      display: inline;
+    }
+
+    .schedule-time-cell .time-full {
+      display: none;
+    }
+
+    .schedule-time-cell .time-short {
+      display: inline;
+    }
+
+    .schedule-lesson-num {
+      font-size: 11px;
+      padding: 3px 8px;
+      min-width: 40px;
     }
   }
 
@@ -801,6 +838,17 @@
   // Split schedule into in-person and online
   const inPersonSchedule = weeklySchedule.filter(item => !item.location.includes('بُعد') && !item.location.includes('بعد'));
   const onlineSchedule = weeklySchedule.filter(item => item.location.includes('بُعد') || item.location.includes('بعد'));
+
+  // Day abbreviations for mobile
+  const dayShort = {
+    'السبت': 'سبت', 'الأحد': 'أحد', 'الاثنين': 'إثن', 'الثلاثاء': 'ثلا',
+    'الأربعاء': 'أرب', 'الخميس': 'خمي', 'الجمعة': 'جمع'
+  };
+
+  // Time abbreviations
+  const timeShort = (time) => {
+    return time.replace('بعد صلاة ', '').replace('الساعة ', '').replace('خطبة ', '');
+  };
 %>
 <section class="weekly-schedule-section">
   <div class="schedule-header">
@@ -830,22 +878,33 @@
             <th><%= locale === 'ar' ? 'اليوم' : 'Day' %></th>
             <th><%= locale === 'ar' ? 'الوقت' : 'Time' %></th>
             <th><%= locale === 'ar' ? 'السلسلة' : 'Series' %></th>
+            <th><%= locale === 'ar' ? 'الدرس' : '#' %></th>
           </tr>
         </thead>
         <tbody>
           <% inPersonSchedule.forEach(function(item) { %>
           <tr>
-            <td class="schedule-day-cell"><%= locale === 'ar' ? item.dayOfWeek : (item.dayOfWeekEnglish || item.dayOfWeek) %></td>
-            <td class="schedule-time-cell"><%= locale === 'ar' ? item.time : (item.timeEnglish || item.time) %></td>
+            <td class="schedule-day-cell">
+              <span class="day-full"><%= item.dayOfWeek %></span>
+              <span class="day-short"><%= dayShort[item.dayOfWeek] || item.dayOfWeek %></span>
+            </td>
+            <td class="schedule-time-cell">
+              <span class="time-full"><%= item.time %></span>
+              <span class="time-short"><%= timeShort(item.time) %></span>
+            </td>
             <td class="schedule-series-cell">
               <% if (item.isNew) { %><span class="new-badge"><%= locale === 'ar' ? 'جديد' : 'NEW' %></span><% } %>
               <a href="/series/<%= item.seriesId.slug ? encodeURIComponent(item.seriesId.slug) : item.seriesId._id %>">
                 <%= locale === 'ar' ? item.seriesId.titleArabic : (item.seriesId.titleEnglish || item.seriesId.titleArabic) %>
               </a>
-              <% if (item.latestLecture) { %>
-              <span class="schedule-latest-link">
-                ← <a href="/lectures/<%= item.latestLecture.slug ? encodeURIComponent(item.latestLecture.slug) : item.latestLecture._id %>"><%= locale === 'ar' ? 'آخر درس' : 'Latest' %></a>
-              </span>
+            </td>
+            <td style="text-align: center;">
+              <% if (item.lectureCount > 0) { %>
+              <a href="/series/<%= item.seriesId.slug ? encodeURIComponent(item.seriesId.slug) : item.seriesId._id %>" style="text-decoration: none;">
+                <span class="schedule-lesson-num"><%= item.lectureCount %></span>
+              </a>
+              <% } else { %>
+              <span style="color: var(--text-muted);">-</span>
               <% } %>
             </td>
           </tr>
@@ -868,22 +927,33 @@
             <th><%= locale === 'ar' ? 'اليوم' : 'Day' %></th>
             <th><%= locale === 'ar' ? 'الوقت' : 'Time' %></th>
             <th><%= locale === 'ar' ? 'السلسلة' : 'Series' %></th>
+            <th><%= locale === 'ar' ? 'الدرس' : '#' %></th>
           </tr>
         </thead>
         <tbody>
           <% onlineSchedule.forEach(function(item) { %>
           <tr>
-            <td class="schedule-day-cell"><%= locale === 'ar' ? item.dayOfWeek : (item.dayOfWeekEnglish || item.dayOfWeek) %></td>
-            <td class="schedule-time-cell"><%= locale === 'ar' ? item.time : (item.timeEnglish || item.time) %></td>
+            <td class="schedule-day-cell">
+              <span class="day-full"><%= item.dayOfWeek %></span>
+              <span class="day-short"><%= dayShort[item.dayOfWeek] || item.dayOfWeek %></span>
+            </td>
+            <td class="schedule-time-cell">
+              <span class="time-full"><%= item.time %></span>
+              <span class="time-short"><%= timeShort(item.time) %></span>
+            </td>
             <td class="schedule-series-cell">
               <% if (item.isNew) { %><span class="new-badge"><%= locale === 'ar' ? 'جديد' : 'NEW' %></span><% } %>
               <a href="/series/<%= item.seriesId.slug ? encodeURIComponent(item.seriesId.slug) : item.seriesId._id %>">
                 <%= locale === 'ar' ? item.seriesId.titleArabic : (item.seriesId.titleEnglish || item.seriesId.titleArabic) %>
               </a>
-              <% if (item.latestLecture) { %>
-              <span class="schedule-latest-link">
-                ← <a href="/lectures/<%= item.latestLecture.slug ? encodeURIComponent(item.latestLecture.slug) : item.latestLecture._id %>"><%= locale === 'ar' ? 'آخر درس' : 'Latest' %></a>
-              </span>
+            </td>
+            <td style="text-align: center;">
+              <% if (item.lectureCount > 0) { %>
+              <a href="/series/<%= item.seriesId.slug ? encodeURIComponent(item.seriesId.slug) : item.seriesId._id %>" style="text-decoration: none;">
+                <span class="schedule-lesson-num"><%= item.lectureCount %></span>
+              </a>
+              <% } else { %>
+              <span style="color: var(--text-muted);">-</span>
               <% } %>
             </td>
           </tr>

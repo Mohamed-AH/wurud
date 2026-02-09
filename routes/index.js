@@ -109,10 +109,16 @@ router.get('/', async (req, res) => {
       .sort({ sortOrder: 1 })
       .lean();
 
-    // For each schedule item, get the most recent lecture
+    // For each schedule item, get the most recent lecture and lecture count
     const weeklySchedule = await Promise.all(
       scheduleItems.map(async (item) => {
         if (!item.seriesId) return null;
+
+        // Get total lecture count for this series
+        const lectureCount = await Lecture.countDocuments({
+          seriesId: item.seriesId._id,
+          published: true
+        });
 
         // Get the most recent lecture in this series
         const latestLecture = await Lecture.findOne({
@@ -120,7 +126,7 @@ router.get('/', async (req, res) => {
           published: true
         })
           .sort({ dateRecorded: -1, createdAt: -1 })
-          .select('titleArabic titleEnglish slug dateRecorded createdAt')
+          .select('titleArabic titleEnglish slug dateRecorded createdAt lectureNumber')
           .lean();
 
         // Check if lecture is "new" (< 7 days old)
@@ -131,6 +137,7 @@ router.get('/', async (req, res) => {
         return {
           ...item,
           latestLecture,
+          lectureCount,
           isNew
         };
       })
