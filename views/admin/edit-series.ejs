@@ -331,20 +331,15 @@
         </div>
 
         <div class="form-group">
-          <label>الوسوم (Tags)</label>
-          <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 12px; padding: 16px; background: #f8f9fa; border-radius: 8px;">
+          <label>نوع المحتوى</label>
+          <div style="display: flex; gap: 24px; padding: 16px; background: #f8f9fa; border-radius: 8px;">
             <%
-              const availableTags = ['series', 'lecture', 'khutba', 'fiqh', 'tafsir', 'hadith', 'seerah', 'aqeedah', 'akhlaq'];
+              // Content TYPE tags only - subject/topic is handled by Category above
+              const availableTags = ['series', 'lecture', 'khutba'];
               const tagLabels = {
-                'series': 'سلسلة',
-                'lecture': 'محاضرة',
-                'khutba': 'خطبة',
-                'fiqh': 'فقه',
-                'tafsir': 'تفسير',
-                'hadith': 'حديث',
-                'seerah': 'سيرة',
-                'aqeedah': 'عقيدة',
-                'akhlaq': 'أخلاق'
+                'series': 'سلسلة دروس',
+                'lecture': 'محاضرة منفردة',
+                'khutba': 'خطبة جمعة'
               };
               const seriesTags = series.tags || [];
             %>
@@ -362,7 +357,7 @@
             <% }) %>
           </div>
           <p style="font-size: 12px; color: #666; margin-top: 8px;">
-            💡 يمكنك اختيار عدة وسوم. مثلاً: سلسلة + خطبة + سيرة لسلسلة خطب عن السيرة
+            💡 نوع المحتوى (التصنيف بالأعلى يحدد الموضوع: عقيدة، فقه، إلخ)
           </p>
         </div>
 
