@@ -109,11 +109,13 @@ All mobile issues have been fixed:
 
 1. ~~**3.6 Total Lecture Count Display**~~ ✅ Done - Gold badge in hero section
 2. ~~**3.7 Analytics & Tracking System**~~ ✅ Done - /admin/analytics dashboard
-3. **3.1 Server-Side Filtering & Pagination** - Required before 300+ lectures
-4. ~~**3.5 Weekly Class Schedule**~~ ✅ Done - Add entries at /admin/schedule
-5. **3.3 Performance Optimizations** - Caching, bundling, CDN
-6. **3.4 Admin Panel Arabic** - RTL support for admin pages
-7. **Test Coverage Improvements** - Focus on slugify.js, lectures API, middleware
+3. **3.8 Quick Add Lecture to Series** - One-click add with minimal input
+4. **3.9 Direct OCI Audio Upload** - Upload optimized audio directly to Oracle Cloud
+5. **3.1 Server-Side Filtering & Pagination** - Required before 300+ lectures
+6. ~~**3.5 Weekly Class Schedule**~~ ✅ Done - Add entries at /admin/schedule
+7. **3.3 Performance Optimizations** - Caching, bundling, CDN
+8. **3.4 Admin Panel Arabic** - RTL support for admin pages
+9. **Test Coverage Improvements** - Focus on slugify.js, lectures API, middleware
 
 ---
 
@@ -276,6 +278,48 @@ Track page visits, listens, and downloads with admin-controlled visibility.
 - `views/admin/analytics.ejs` - Admin analytics dashboard
 
 **Admin Access:** `/admin/analytics`
+
+#### 3.8 Quick Add Lecture to Series ⬜ NOT STARTED
+**Priority**: MEDIUM | **Status**: Pending
+
+Streamlined workflow to add new lectures to existing series with minimal input.
+
+**Features:**
+- [ ] "+" button on series page in admin to add new lecture
+- [ ] Auto-fill series, sheikh, category from parent series
+- [ ] Auto-increment lecture number (next in sequence)
+- [ ] Minimal form: just date, title suffix (optional), notes
+- [ ] Quick save without full form validation
+- [ ] Option to immediately upload audio after creation
+
+**Benefits:**
+- Faster content addition for ongoing series
+- Reduces repetitive data entry
+- Sheikh can add lectures quickly after recording
+
+#### 3.9 Direct OCI Audio Upload ⬜ NOT STARTED
+**Priority**: MEDIUM | **Status**: Pending
+
+Upload locally-optimized audio files directly to Oracle Cloud Infrastructure.
+
+**Features:**
+- [ ] Admin upload interface for OCI direct upload
+- [ ] Support for pre-optimized audio (HE-AAC encoded locally)
+- [ ] Progress indicator during upload
+- [ ] Auto-link uploaded file to lecture record
+- [ ] Verify file exists in OCI after upload
+- [ ] Optional: Basic audio validation (format, duration check)
+
+**Technical:**
+- Use OCI Object Storage SDK or pre-signed URLs
+- Update lecture `audioUrl` field after successful upload
+- Handle large files (up to 100MB+)
+
+**Workflow:**
+1. Optimize audio locally (Audacity/ffmpeg → HE-AAC)
+2. Select lecture in admin
+3. Upload audio file → goes directly to OCI bucket
+4. Lecture record updated with audio URL
 
 ---
 
