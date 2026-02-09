@@ -1,6 +1,6 @@
 const express = require('express');
 const router = express.Router();
-const { Lecture, Sheikh, Series, Schedule } = require('../models');
+const { Lecture, Sheikh, Series, Schedule, SiteSettings } = require('../models');
 
 // @route   GET /
 // @desc    Homepage - Series-based view with tabs
@@ -152,13 +152,24 @@ router.get('/', async (req, res) => {
     // Get total lecture count for the site
     const totalLectureCount = await Lecture.countDocuments({ published: true });
 
+    // Check if public stats should be shown
+    let showPublicStats = false;
+    try {
+      const settings = await SiteSettings.getSettings();
+      showPublicStats = settings.shouldShowPublicStats();
+    } catch (err) {
+      // If settings fail, default to hidden
+      console.error('Failed to get site settings:', err.message);
+    }
+
     res.render('public/index', {
       title: 'المكتبة الصوتية',
       seriesList: filteredSeries,
       standaloneLectures: allStandaloneLectures,
       khutbaSeries: khutbaSeries,
       weeklySchedule: sortedSchedule,
-      totalLectureCount
+      totalLectureCount,
+      showPublicStats
     });
   } catch (error) {
     console.error('Homepage error:', error);

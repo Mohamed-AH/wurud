@@ -886,4 +886,89 @@ router.post('/schedule/:id/delete', isAdmin, async (req, res) => {
   }
 });
 
+// ============================================
+// Analytics Routes
+// ============================================
+
+// @route   GET /admin/analytics
+// @desc    Analytics dashboard
+// @access  Private (Admin only)
+router.get('/analytics', isAdmin, async (req, res) => {
+  try {
+    const { getAnalyticsSummary, getTopLectures, getTopDownloads } = require('../../middleware/analytics');
+    const { PageView, SiteSettings } = require('../../models');
+
+    const [summary, topLectures, topDownloads, topPages, settings] = await Promise.all([
+      getAnalyticsSummary(),
+      getTopLectures(10),
+      getTopDownloads(10),
+      PageView.getTopPages(10),
+      SiteSettings.getSettings()
+    ]);
+
+    // Get last 30 days of page views for chart
+    const thirtyDaysAgo = new Date();
+    thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
+    const dailyViews = await PageView.getViewsInRange(thirtyDaysAgo, new Date());
+
+    res.render('admin/analytics', {
+      title: 'Analytics',
+      user: req.user,
+      summary,
+      topLectures,
+      topDownloads,
+      topPages,
+      dailyViews,
+      settings: settings.analytics,
+      shouldShowPublic: settings.shouldShowPublicStats()
+    });
+  } catch (error) {
+    console.error('Analytics error:', error);
+    res.status(500).send('Error loading analytics');
+  }
+});
+
+// @route   POST /admin/analytics/settings
+// @desc    Update analytics visibility settings
+// @access  Private (Admin only)
+router.post('/analytics/settings', isAdmin, async (req, res) => {
+  try {
+    const { SiteSettings } = require('../../models');
+
+    const settings = await SiteSettings.getSettings();
+
+    // Update settings
+    settings.analytics.showPublicStats = req.body.showPublicStats === 'on';
+    settings.analytics.minPlaysToDisplay = parseInt(req.body.minPlaysToDisplay) || 1000;
+    settings.analytics.minDownloadsToDisplay = parseInt(req.body.minDownloadsToDisplay) || 500;
+    settings.analytics.minPageViewsToDisplay = parseInt(req.body.minPageViewsToDisplay) || 5000;
+
+    await settings.save();
+
+    // Update cached stats
+    await SiteSettings.updateCachedStats();
+
+    res.redirect('/admin/analytics?success=settings_updated');
+  } catch (error) {
+    console.error('Analytics settings error:', error);
+    res.redirect('/admin/analytics?error=settings_failed');
+  }
+});
+
+// @route   POST /admin/analytics/refresh-stats
+// @desc    Manually refresh cached statistics
+// @access  Private (Admin only)
+router.post('/analytics/refresh-stats', isAdmin, async (req, res) => {
+  try {
+    const { SiteSettings } = require('../../models');
+
+    await SiteSettings.updateCachedStats();
+
+    res.redirect('/admin/analytics?success=stats_refreshed');
+  } catch (error) {
+    console.error('Stats refresh error:', error);
+    res.redirect('/admin/analytics?error=refresh_failed');
+  }
+});
+
 module.exports = router;

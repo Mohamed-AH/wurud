@@ -108,7 +108,7 @@ All mobile issues have been fixed:
 ### 🎯 Next Steps (Prioritized)
 
 1. ~~**3.6 Total Lecture Count Display**~~ ✅ Done - Gold badge in hero section
-2. **3.7 Analytics & Tracking System** - Page visits, listens, downloads with visibility toggle
+2. ~~**3.7 Analytics & Tracking System**~~ ✅ Done - /admin/analytics dashboard
 3. **3.1 Server-Side Filtering & Pagination** - Required before 300+ lectures
 4. ~~**3.5 Weekly Class Schedule**~~ ✅ Done - Add entries at /admin/schedule
 5. **3.3 Performance Optimizations** - Caching, bundling, CDN
@@ -253,38 +253,29 @@ Display the total number of lectures prominently on the homepage.
 - [x] ~~Update dynamically as content grows~~ ✅ Real-time count
 - [x] ~~Style to match site aesthetic~~ ✅ Gold border, translucent bg
 
-#### 3.7 Analytics & Tracking System ⬜ NOT STARTED
-**Priority**: MEDIUM | **Status**: Pending
+#### 3.7 Analytics & Tracking System ✅ COMPLETED
+**Priority**: MEDIUM | **Status**: Done (2026-02-09)
 
 Track page visits, listens, and downloads with admin-controlled visibility.
 
-**Features:**
-- [ ] Track page views (homepage, lectures, series, sheikh pages)
-- [ ] Track audio plays (already have playCount in Lecture model)
-- [ ] Track downloads (already have downloadCount in Lecture model)
-- [ ] Admin dashboard showing analytics summary
-- [ ] **Visibility Toggle**: Hide public stats until threshold reached
-  - [ ] Admin setting: `minCountToDisplay` (e.g., 1000 plays)
-  - [ ] Stats hidden on public pages until threshold met
-  - [ ] Admin always sees real numbers
-- [ ] Optional: Daily/weekly/monthly breakdown
+**Implementation:**
+- [x] ~~Track page views~~ ✅ models/PageView.js with daily aggregation
+- [x] ~~Track audio plays~~ ✅ Already in Lecture.playCount
+- [x] ~~Track downloads~~ ✅ Already in Lecture.downloadCount
+- [x] ~~Admin dashboard~~ ✅ /admin/analytics with stats, charts, top content
+- [x] ~~Visibility Toggle~~ ✅ SiteSettings model with thresholds
+  - [x] Admin setting for min plays/downloads/pageviews
+  - [x] Stats hidden on public pages until threshold met
+  - [x] Admin always sees real numbers
+- [x] ~~Daily breakdown~~ ✅ Last 30 days view data
 
-**Data Model (SiteStats):**
-```javascript
-{
-  totalPageViews: Number,
-  totalPlays: Number,
-  totalDownloads: Number,
-  displayThreshold: Number,  // Min count before showing publicly
-  showPublicStats: Boolean,  // Manual override
-  lastUpdated: Date
-}
-```
+**Files Created:**
+- `models/SiteSettings.js` - Visibility settings and cached stats
+- `models/PageView.js` - Page view tracking with daily aggregation
+- `middleware/analytics.js` - Tracking middleware and helpers
+- `views/admin/analytics.ejs` - Admin analytics dashboard
 
-**Admin UI:**
-- Toggle to show/hide stats publicly
-- Set minimum threshold for auto-display
-- View detailed analytics
+**Admin Access:** `/admin/analytics`
 
 ---
 

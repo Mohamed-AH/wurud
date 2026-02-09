@@ -10,6 +10,7 @@ const rateLimit = require('express-rate-limit');
 const connectDB = require('./config/database');
 const passport = require('./config/passport');
 const { i18nMiddleware } = require('./utils/i18n');
+const { trackPageView } = require('./middleware/analytics');
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -114,6 +115,9 @@ app.use(cookieParser());
 
 // i18n middleware (must be before routes)
 app.use(i18nMiddleware);
+
+// Analytics tracking middleware (non-blocking)
+app.use(trackPageView);
 
 // Health check route
 app.get('/health', (req, res) => {
