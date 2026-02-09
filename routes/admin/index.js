@@ -579,6 +579,40 @@ router.post('/lectures/:id/toggle-published', isAdmin, async (req, res) => {
   }
 });
 
+// @route   POST /admin/lectures/:id/remove-from-series
+// @desc    Remove lecture from series (doesn't delete the lecture)
+// @access  Private (Admin only)
+router.post('/lectures/:id/remove-from-series', isAdmin, async (req, res) => {
+  try {
+    const { Lecture, Series } = require('../../models');
+
+    const lecture = await Lecture.findById(req.params.id);
+    if (!lecture) {
+      return res.status(404).json({ success: false, error: 'Lecture not found' });
+    }
+
+    const previousSeriesId = lecture.seriesId;
+
+    // Remove from series
+    lecture.seriesId = null;
+    await lecture.save();
+
+    // Decrement lecture count on the previous series
+    if (previousSeriesId) {
+      await Series.findByIdAndUpdate(previousSeriesId, {
+        $inc: { lectureCount: -1 }
+      });
+    }
+
+    console.log(`[Remove from Series] Lecture ${lecture._id} removed from series ${previousSeriesId}`);
+
+    res.json({ success: true });
+  } catch (error) {
+    console.error('Remove from series error:', error);
+    res.status(500).json({ success: false, error: 'Error removing lecture from series' });
+  }
+});
+
 // @route   GET /admin/sheikhs
 // @desc    Manage sheikhs page
 // @access  Private (Admin only)

@@ -195,6 +195,33 @@
       opacity: 0.3;
       cursor: not-allowed;
     }
+    .action-btn {
+      width: 28px;
+      height: 28px;
+      border: 1px solid #ddd;
+      background: white;
+      border-radius: 4px;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 12px;
+      transition: all 0.2s;
+      text-decoration: none;
+    }
+    .edit-btn:hover {
+      background: #1A5F5A;
+      border-color: #1A5F5A;
+    }
+    .remove-btn {
+      color: #dc3545;
+      font-weight: bold;
+    }
+    .remove-btn:hover {
+      background: #dc3545;
+      color: white;
+      border-color: #dc3545;
+    }
     .save-order-btn {
       margin-top: 16px;
       padding: 12px 24px;
@@ -432,6 +459,8 @@
                   </div>
                 </div>
                 <div class="lecture-actions">
+                  <a href="/admin/lectures/<%= lecture._id %>/edit" class="action-btn edit-btn" title="تعديل">✏️</a>
+                  <button class="action-btn remove-btn" onclick="removeLectureFromSeries('<%= lecture._id %>', '<%= lecture.titleArabic.substring(0, 30) %>')" title="إزالة من السلسلة">✕</button>
                   <button class="move-btn" onclick="moveLecture('<%= lecture._id %>', 'up')" title="تحريك لأعلى" <%= index === 0 ? 'disabled' : '' %>>▲</button>
                   <button class="move-btn" onclick="moveLecture('<%= lecture._id %>', 'down')" title="تحريك لأسفل" <%= index === lectures.length - 1 ? 'disabled' : '' %>>▼</button>
                 </div>
@@ -579,6 +608,49 @@
         setTimeout(() => {
           saveBtn.textContent = '💾 حفظ الترتيب الجديد';
         }, 2000);
+      }
+    }
+
+    // Remove lecture from series (doesn't delete the lecture)
+    async function removeLectureFromSeries(lectureId, title) {
+      if (!confirm(`هل تريد إزالة "${title}..." من هذه السلسلة؟\n\nلن يتم حذف المحاضرة، فقط إزالتها من السلسلة.`)) {
+        return;
+      }
+
+      try {
+        const response = await fetch(`/admin/lectures/${lectureId}/remove-from-series`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json'
+          }
+        });
+
+        const result = await response.json();
+
+        if (result.success) {
+          // Remove the lecture item from the list
+          const lectureItem = document.querySelector(`.lecture-item[data-id="${lectureId}"]`);
+          if (lectureItem) {
+            lectureItem.style.transition = 'opacity 0.3s, transform 0.3s';
+            lectureItem.style.opacity = '0';
+            lectureItem.style.transform = 'translateX(20px)';
+            setTimeout(() => {
+              lectureItem.remove();
+              updateOrderNumbers();
+              // Update lecture count
+              const countSpan = document.querySelector('.lecture-count');
+              if (countSpan) {
+                const currentCount = parseInt(countSpan.textContent) - 1;
+                countSpan.textContent = `${currentCount} محاضرة`;
+              }
+            }, 300);
+          }
+        } else {
+          alert('فشل في إزالة المحاضرة: ' + (result.error || 'خطأ غير معروف'));
+        }
+      } catch (error) {
+        console.error('Remove lecture error:', error);
+        alert('حدث خطأ أثناء إزالة المحاضرة');
       }
     }
 
