@@ -50,16 +50,14 @@ async function uploadToOCI(filePath, objectName, options = {}) {
   };
   const contentType = options.contentType || contentTypes[ext] || 'audio/mp4';
 
-  // URL-encode objectName to handle non-ASCII characters (Arabic, etc.)
-  const encodedObjectName = encodeURIComponent(objectName);
-
   // Base64 encode the original filename for metadata (HTTP headers require ASCII)
   const originalNameBase64 = Buffer.from(path.basename(filePath)).toString('base64');
 
+  // Don't pre-encode objectName - OCI SDK handles encoding internally
   const putObjectRequest = {
     namespaceName: namespace,
     bucketName: bucketName,
-    objectName: encodedObjectName,
+    objectName: objectName,  // Raw name - SDK will encode
     putObjectBody: fileStream,
     contentLength: stats.size,
     contentType: contentType,
@@ -79,12 +77,11 @@ async function uploadToOCI(filePath, objectName, options = {}) {
 
     return {
       success: true,
-      objectName: encodedObjectName,
-      originalName: objectName,
+      objectName: objectName,  // Return raw name
       etag: response.eTag,
       size: stats.size,
       contentType: contentType,
-      url: getPublicUrl(encodedObjectName)
+      url: getPublicUrl(objectName)  // getPublicUrl will encode
     };
   } catch (error) {
     console.error('Upload error:', error);
@@ -107,13 +104,11 @@ async function deleteFromOCI(objectName) {
   const namespace = oci.getNamespace();
   const bucketName = oci.getBucketName();
 
-  // URL-encode objectName to handle non-ASCII characters
-  const encodedObjectName = encodeURIComponent(objectName);
-
+  // Don't pre-encode - SDK handles encoding
   const deleteObjectRequest = {
     namespaceName: namespace,
     bucketName: bucketName,
-    objectName: encodedObjectName
+    objectName: objectName
   };
 
   try {
@@ -142,14 +137,12 @@ async function objectExists(objectName) {
   const namespace = oci.getNamespace();
   const bucketName = oci.getBucketName();
 
-  // URL-encode objectName to handle non-ASCII characters
-  const encodedObjectName = encodeURIComponent(objectName);
-
+  // Don't pre-encode - SDK handles encoding
   try {
     await client.headObject({
       namespaceName: namespace,
       bucketName: bucketName,
-      objectName: encodedObjectName
+      objectName: objectName
     });
     return true;
   } catch (error) {
@@ -239,14 +232,12 @@ async function getObjectMetadata(objectName) {
   const namespace = oci.getNamespace();
   const bucketName = oci.getBucketName();
 
-  // URL-encode objectName to handle non-ASCII characters
-  const encodedObjectName = encodeURIComponent(objectName);
-
+  // Don't pre-encode - SDK handles encoding
   try {
     const response = await client.headObject({
       namespaceName: namespace,
       bucketName: bucketName,
-      objectName: encodedObjectName
+      objectName: objectName
     });
 
     return {
@@ -282,15 +273,13 @@ async function createPreAuthenticatedRequest(objectName, expiryHours = 24) {
   const namespace = oci.getNamespace();
   const bucketName = oci.getBucketName();
 
-  // URL-encode objectName to handle non-ASCII characters
-  const encodedObjectName = encodeURIComponent(objectName);
-
+  // Don't pre-encode - SDK handles encoding
   const expiryTime = new Date();
   expiryTime.setHours(expiryTime.getHours() + expiryHours);
 
   const createPreauthenticatedRequestDetails = {
     name: `par-${Date.now()}`,  // Simplified name to avoid encoding issues
-    objectName: encodedObjectName,
+    objectName: objectName,  // Raw name - SDK will encode
     accessType: 'ObjectRead',
     timeExpires: expiryTime
   };
