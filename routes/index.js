@@ -149,12 +149,16 @@ router.get('/', async (req, res) => {
       .filter(item => item !== null)
       .sort((a, b) => dayOrder.indexOf(a.dayOfWeek) - dayOrder.indexOf(b.dayOfWeek));
 
+    // Get total lecture count for the site
+    const totalLectureCount = await Lecture.countDocuments({ published: true });
+
     res.render('public/index', {
       title: 'المكتبة الصوتية',
       seriesList: filteredSeries,
       standaloneLectures: allStandaloneLectures,
       khutbaSeries: khutbaSeries,
-      weeklySchedule: sortedSchedule
+      weeklySchedule: sortedSchedule,
+      totalLectureCount
     });
   } catch (error) {
     console.error('Homepage error:', error);
