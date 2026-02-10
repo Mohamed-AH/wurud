@@ -240,6 +240,123 @@
     .save-order-btn.visible {
       display: inline-block;
     }
+    /* Unassociated Lectures Section */
+    .unassociated-section {
+      margin-top: 48px;
+      padding-top: 32px;
+      border-top: 2px dashed #ddd;
+    }
+    .section-toggle {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      cursor: pointer;
+      padding: 16px;
+      background: #fff3e0;
+      border-radius: 8px;
+      margin-bottom: 16px;
+    }
+    .section-toggle:hover {
+      background: #ffe0b2;
+    }
+    .section-toggle h2 {
+      margin: 0;
+      font-size: 18px;
+      color: #e65100;
+    }
+    .toggle-icon {
+      font-size: 20px;
+      transition: transform 0.3s;
+    }
+    .toggle-icon.open {
+      transform: rotate(180deg);
+    }
+    .unassociated-content {
+      display: none;
+    }
+    .unassociated-content.visible {
+      display: block;
+    }
+    .search-box {
+      display: flex;
+      gap: 12px;
+      margin-bottom: 16px;
+    }
+    .search-box input {
+      flex: 1;
+      padding: 10px 14px;
+      border: 1px solid #ddd;
+      border-radius: 6px;
+    }
+    .unassociated-list {
+      max-height: 400px;
+      overflow-y: auto;
+      background: white;
+      border-radius: 8px;
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+    }
+    .unassociated-item {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 12px 16px;
+      border-bottom: 1px solid #eee;
+    }
+    .unassociated-item:last-child {
+      border-bottom: none;
+    }
+    .unassociated-item:hover {
+      background: #f8f9fa;
+    }
+    .unassociated-item .lecture-info {
+      flex: 1;
+    }
+    .unassociated-item .lecture-title {
+      font-weight: 500;
+    }
+    .unassociated-item .lecture-meta {
+      font-size: 12px;
+      color: #666;
+      margin-top: 4px;
+    }
+    .assign-form {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .assign-form input {
+      width: 60px;
+      padding: 6px 8px;
+      border: 1px solid #ddd;
+      border-radius: 4px;
+      text-align: center;
+    }
+    .assign-btn {
+      padding: 6px 12px;
+      background: #1A5F5A;
+      color: white;
+      border: none;
+      border-radius: 4px;
+      cursor: pointer;
+      font-size: 12px;
+    }
+    .assign-btn:hover {
+      background: #145047;
+    }
+    .assign-btn:disabled {
+      background: #ccc;
+      cursor: not-allowed;
+    }
+    .no-unassociated {
+      padding: 32px;
+      text-align: center;
+      color: #666;
+    }
+    .loading-spinner {
+      text-align: center;
+      padding: 32px;
+      color: #666;
+    }
     .status-badge {
       font-size: 10px;
       padding: 2px 6px;
@@ -477,6 +594,22 @@
           </div>
         <% } %>
       </div>
+
+      <!-- Unassociated Lectures Section -->
+      <div class="unassociated-section">
+        <div class="section-toggle" onclick="toggleUnassociated()">
+          <h2>📎 محاضرات بدون سلسلة</h2>
+          <span class="toggle-icon" id="toggleIcon">▼</span>
+        </div>
+        <div class="unassociated-content" id="unassociatedContent">
+          <div class="search-box">
+            <input type="text" id="searchUnassociated" placeholder="بحث في المحاضرات غير المرتبطة..." oninput="filterUnassociated()">
+          </div>
+          <div class="unassociated-list" id="unassociatedList">
+            <div class="loading-spinner">⏳ جاري التحميل...</div>
+          </div>
+        </div>
+      </div>
     </div>
   </div>
 
@@ -661,6 +794,142 @@
         e.returnValue = '';
       }
     });
+
+    // ========== Unassociated Lectures Section ==========
+    let unassociatedLectures = [];
+    let unassociatedLoaded = false;
+
+    function toggleUnassociated() {
+      const content = document.getElementById('unassociatedContent');
+      const icon = document.getElementById('toggleIcon');
+
+      content.classList.toggle('visible');
+      icon.classList.toggle('open');
+
+      // Load data on first open
+      if (content.classList.contains('visible') && !unassociatedLoaded) {
+        loadUnassociatedLectures();
+      }
+    }
+
+    async function loadUnassociatedLectures() {
+      const listEl = document.getElementById('unassociatedList');
+
+      try {
+        const response = await fetch('/admin/api/unassociated-lectures');
+        const data = await response.json();
+
+        if (data.success) {
+          unassociatedLectures = data.lectures;
+          unassociatedLoaded = true;
+          renderUnassociatedLectures(unassociatedLectures);
+        } else {
+          listEl.innerHTML = '<div class="no-unassociated">خطأ في تحميل البيانات</div>';
+        }
+      } catch (error) {
+        console.error('Load unassociated error:', error);
+        listEl.innerHTML = '<div class="no-unassociated">خطأ في الاتصال</div>';
+      }
+    }
+
+    function renderUnassociatedLectures(lectures) {
+      const listEl = document.getElementById('unassociatedList');
+
+      if (lectures.length === 0) {
+        listEl.innerHTML = '<div class="no-unassociated">✓ لا توجد محاضرات غير مرتبطة</div>';
+        return;
+      }
+
+      listEl.innerHTML = lectures.map(lecture => `
+        <div class="unassociated-item" data-id="${lecture._id}" data-title="${lecture.titleArabic || ''}">
+          <div class="lecture-info">
+            <div class="lecture-title">${lecture.titleArabic || 'بدون عنوان'}</div>
+            <div class="lecture-meta">
+              ${lecture.audioFileName ? '🔊 ' + lecture.audioFileName : '⚠️ بدون صوت'}
+              ${lecture.duration ? ' | ' + formatDuration(lecture.duration) : ''}
+            </div>
+          </div>
+          <div class="assign-form">
+            <input type="number" id="num-${lecture._id}" placeholder="#" min="1" title="رقم الدرس">
+            <button class="assign-btn" onclick="assignLecture('${lecture._id}')">
+              إضافة للسلسلة
+            </button>
+          </div>
+        </div>
+      `).join('');
+    }
+
+    function formatDuration(seconds) {
+      if (!seconds) return '';
+      const mins = Math.floor(seconds / 60);
+      const secs = Math.floor(seconds % 60);
+      return `${mins}:${secs.toString().padStart(2, '0')}`;
+    }
+
+    function filterUnassociated() {
+      const searchTerm = document.getElementById('searchUnassociated').value.toLowerCase();
+
+      const filtered = unassociatedLectures.filter(lecture => {
+        const title = (lecture.titleArabic || '').toLowerCase();
+        const audio = (lecture.audioFileName || '').toLowerCase();
+        return title.includes(searchTerm) || audio.includes(searchTerm);
+      });
+
+      renderUnassociatedLectures(filtered);
+    }
+
+    async function assignLecture(lectureId) {
+      const numInput = document.getElementById(`num-${lectureId}`);
+      const lectureNumber = numInput ? numInput.value : null;
+      const btn = event.target;
+
+      btn.disabled = true;
+      btn.textContent = '⏳...';
+
+      try {
+        const response = await fetch(`/admin/lectures/${lectureId}/assign-to-series`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            seriesId: seriesId,
+            lectureNumber: lectureNumber || null
+          })
+        });
+
+        const result = await response.json();
+
+        if (result.success) {
+          // Remove from unassociated list
+          const item = document.querySelector(`.unassociated-item[data-id="${lectureId}"]`);
+          if (item) {
+            item.style.transition = 'opacity 0.3s, transform 0.3s';
+            item.style.opacity = '0';
+            item.style.transform = 'translateX(-20px)';
+            setTimeout(() => {
+              item.remove();
+              // Update local array
+              unassociatedLectures = unassociatedLectures.filter(l => l._id !== lectureId);
+              if (unassociatedLectures.length === 0) {
+                document.getElementById('unassociatedList').innerHTML =
+                  '<div class="no-unassociated">✓ لا توجد محاضرات غير مرتبطة</div>';
+              }
+            }, 300);
+          }
+
+          // Show success and suggest refresh
+          alert('✓ تمت إضافة المحاضرة للسلسلة بنجاح.\nقم بتحديث الصفحة لرؤية التغييرات في قائمة المحاضرات.');
+        } else {
+          btn.disabled = false;
+          btn.textContent = 'إضافة للسلسلة';
+          alert('فشل في إضافة المحاضرة: ' + (result.error || 'خطأ غير معروف'));
+        }
+      } catch (error) {
+        console.error('Assign lecture error:', error);
+        btn.disabled = false;
+        btn.textContent = 'إضافة للسلسلة';
+        alert('خطأ في الاتصال');
+      }
+    }
   </script>
 </body>
 </html>

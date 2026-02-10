@@ -720,6 +720,100 @@ router.post('/lectures/:id/remove-from-series', isAdmin, async (req, res) => {
   }
 });
 
+// @route   GET /admin/api/unassociated-lectures
+// @desc    Get lectures not associated with any series
+// @access  Private (Admin only)
+router.get('/api/unassociated-lectures', isAdmin, async (req, res) => {
+  try {
+    const { Lecture } = require('../../models');
+
+    const lectures = await Lecture.find({ seriesId: null })
+      .select('_id titleArabic titleEnglish slug audioFileName duration lectureNumber createdAt')
+      .sort({ createdAt: -1 })
+      .lean();
+
+    res.json({
+      success: true,
+      count: lectures.length,
+      lectures
+    });
+  } catch (error) {
+    console.error('Get unassociated lectures error:', error);
+    res.status(500).json({ success: false, error: 'Error fetching unassociated lectures' });
+  }
+});
+
+// @route   POST /admin/lectures/:id/assign-to-series
+// @desc    Assign a lecture to a series
+// @access  Private (Admin only)
+router.post('/lectures/:id/assign-to-series', isAdmin, async (req, res) => {
+  try {
+    const { Lecture, Series } = require('../../models');
+    const { generateSlug } = require('../../utils/slugify');
+
+    const { seriesId, lectureNumber } = req.body;
+
+    if (!seriesId) {
+      return res.status(400).json({ success: false, error: 'Series ID is required' });
+    }
+
+    const lecture = await Lecture.findById(req.params.id);
+    if (!lecture) {
+      return res.status(404).json({ success: false, error: 'Lecture not found' });
+    }
+
+    const series = await Series.findById(seriesId);
+    if (!series) {
+      return res.status(404).json({ success: false, error: 'Series not found' });
+    }
+
+    // Store previous series ID if any
+    const previousSeriesId = lecture.seriesId;
+
+    // Update lecture
+    lecture.seriesId = series._id;
+    lecture.sheikhId = series.sheikhId;
+    lecture.category = series.category;
+
+    if (lectureNumber) {
+      lecture.lectureNumber = parseInt(lectureNumber);
+    }
+
+    // Regenerate slug to include series name
+    const baseSlug = generateSlug(`${series.titleArabic}-الدرس-${lecture.lectureNumber || 'x'}`);
+    let slug = baseSlug;
+    let suffix = 1;
+    while (await Lecture.exists({ slug, _id: { $ne: lecture._id } })) {
+      suffix++;
+      slug = `${baseSlug}-${suffix}`;
+    }
+    lecture.slug = slug;
+
+    await lecture.save();
+
+    // Update lecture counts
+    if (previousSeriesId) {
+      await Series.findByIdAndUpdate(previousSeriesId, { $inc: { lectureCount: -1 } });
+    }
+    await Series.findByIdAndUpdate(series._id, { $inc: { lectureCount: 1 } });
+
+    console.log(`[Assign to Series] Lecture ${lecture._id} assigned to series ${series._id}`);
+
+    res.json({
+      success: true,
+      lecture: {
+        _id: lecture._id,
+        titleArabic: lecture.titleArabic,
+        slug: lecture.slug,
+        seriesId: lecture.seriesId
+      }
+    });
+  } catch (error) {
+    console.error('Assign to series error:', error);
+    res.status(500).json({ success: false, error: 'Error assigning lecture to series' });
+  }
+});
+
 // @route   GET /admin/sheikhs
 // @desc    Manage sheikhs page
 // @access  Private (Admin only)
