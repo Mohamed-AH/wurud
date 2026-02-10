@@ -137,7 +137,7 @@ All mobile issues have been fixed:
 2. ~~**3.7 Analytics & Tracking System**~~ ✅ Done - /admin/analytics dashboard
 3. ~~**3.8 Quick Add Lecture to Series**~~ ✅ Done - "+ إضافة درس" button on series edit
 4. ~~**3.10 Admin Data Management**~~ ✅ Done - Duration verification, lecture management
-5. **3.9 Direct OCI Audio Upload** - Upload optimized audio directly to Oracle Cloud
+5. ~~**3.9 Direct OCI Audio Upload**~~ ✅ Done - AJAX upload with progress, duration extraction
 6. **3.1 Server-Side Filtering & Pagination** - Required before 300+ lectures
 7. ~~**3.5 Weekly Class Schedule**~~ ✅ Done - Add entries at /admin/schedule
 8. **3.3 Performance Optimizations** - Caching, bundling, CDN
@@ -353,29 +353,38 @@ Comprehensive tools for managing lecture data, fixing metadata, and verifying au
 - `/admin/lectures` - Search and delete lectures
 - Series edit page → "📎 محاضرات بدون سلسلة" section
 
-#### 3.9 Direct OCI Audio Upload ⬜ NOT STARTED
-**Priority**: MEDIUM | **Status**: Pending
+#### 3.9 Direct OCI Audio Upload ✅ COMPLETED
+**Priority**: MEDIUM | **Status**: Done (2026-02-10)
 
 Upload locally-optimized audio files directly to Oracle Cloud Infrastructure.
 
-**Features:**
-- [ ] Admin upload interface for OCI direct upload
-- [ ] Support for pre-optimized audio (HE-AAC encoded locally)
-- [ ] Progress indicator during upload
-- [ ] Auto-link uploaded file to lecture record
-- [ ] Verify file exists in OCI after upload
-- [ ] Optional: Basic audio validation (format, duration check)
+**Features Implemented:**
+- [x] ~~Admin upload interface for OCI direct upload~~ ✅ Enhanced edit-lecture.ejs
+- [x] ~~Support for pre-optimized audio (HE-AAC encoded locally)~~ ✅ All formats supported
+- [x] ~~Progress indicator during upload~~ ✅ Real XHR progress tracking
+- [x] ~~Auto-link uploaded file to lecture record~~ ✅ Updates audioUrl, audioFileName, fileSize
+- [x] ~~Verify file exists in OCI after upload~~ ✅ objectExists() check
+- [x] ~~Duration extraction~~ ✅ Client-side Audio API + verify-duration endpoint
 
-**Technical:**
-- Use OCI Object Storage SDK or pre-signed URLs
-- Update lecture `audioUrl` field after successful upload
-- Handle large files (up to 100MB+)
+**Technical Implementation:**
+- AJAX upload with XMLHttpRequest for real progress
+- `POST /admin/api/lectures/:id/upload-audio` - JSON response endpoint
+- OCI verification using `objectExists()` after upload
+- Client-side duration extraction before and after upload
+- Auto-verify duration via `/api/lectures/:id/verify-duration`
+- 10-minute timeout for large files (up to 60MB)
 
 **Workflow:**
-1. Optimize audio locally (Audacity/ffmpeg → HE-AAC)
-2. Select lecture in admin
-3. Upload audio file → goes directly to OCI bucket
-4. Lecture record updated with audio URL
+1. Edit lecture → Audio section
+2. Select file → Shows name, size, duration preview
+3. Click "رفع إلى السحابة" → Real progress bar
+4. OCI upload with verification → Success/error feedback
+5. Duration auto-extracted and verified in database
+6. Audio player updated with new file
+
+**Files Modified:**
+- `routes/admin/index.js` - Added API upload endpoint
+- `views/admin/edit-lecture.ejs` - Enhanced upload UI with XHR
 
 ---
 

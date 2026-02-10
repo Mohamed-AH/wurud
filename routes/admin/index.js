@@ -712,6 +712,96 @@ router.post('/lectures/:id/upload-audio', isAdmin, async (req, res) => {
   });
 });
 
+// @route   POST /admin/api/lectures/:id/upload-audio
+// @desc    AJAX upload audio file to OCI with JSON response
+// @access  Private (Admin only)
+router.post('/api/lectures/:id/upload-audio', isAdmin, async (req, res) => {
+  const { upload } = require('../../config/storage');
+  const { uploadToOCI, objectExists } = require('../../utils/ociStorage');
+  const { Lecture } = require('../../models');
+  const fs = require('fs');
+  const path = require('path');
+
+  // Use multer middleware
+  upload.single('audioFile')(req, res, async (err) => {
+    if (err) {
+      console.error('Upload error:', err);
+      return res.status(400).json({
+        success: false,
+        error: `خطأ في الرفع: ${err.message}`
+      });
+    }
+
+    if (!req.file) {
+      return res.status(400).json({
+        success: false,
+        error: 'لم يتم اختيار ملف'
+      });
+    }
+
+    try {
+      const lecture = await Lecture.findById(req.params.id);
+      if (!lecture) {
+        fs.unlinkSync(req.file.path);
+        return res.status(404).json({
+          success: false,
+          error: 'المحاضرة غير موجودة'
+        });
+      }
+
+      // Generate OCI object name from lecture slug or title
+      const ext = path.extname(req.file.originalname).toLowerCase();
+      const objectName = lecture.slug
+        ? `${lecture.slug}${ext}`
+        : `lecture-${lecture._id}${ext}`;
+
+      console.log(`[Audio Upload API] Uploading ${req.file.originalname} as ${objectName}`);
+
+      // Upload to OCI
+      const result = await uploadToOCI(req.file.path, objectName);
+
+      // Verify upload succeeded by checking object exists
+      const verified = await objectExists(objectName);
+      if (!verified) {
+        throw new Error('فشل التحقق من الملف في السحابة');
+      }
+
+      // Update lecture with audio URL
+      lecture.audioUrl = result.url;
+      lecture.audioFileName = objectName;
+      lecture.fileSize = result.size;
+      lecture.durationVerified = false; // Reset verification for new file
+      await lecture.save();
+
+      console.log(`[Audio Upload API] Success: ${objectName} -> ${result.url}`);
+
+      // Clean up local temp file
+      fs.unlinkSync(req.file.path);
+
+      res.json({
+        success: true,
+        audioUrl: result.url,
+        audioFileName: objectName,
+        fileSize: result.size,
+        verified: true,
+        message: 'تم رفع الملف بنجاح'
+      });
+    } catch (error) {
+      console.error('OCI upload error:', error);
+
+      // Clean up local temp file on error
+      if (req.file && fs.existsSync(req.file.path)) {
+        fs.unlinkSync(req.file.path);
+      }
+
+      res.status(500).json({
+        success: false,
+        error: `خطأ في الرفع إلى السحابة: ${error.message}`
+      });
+    }
+  });
+});
+
 // @route   POST /admin/lectures/:id/toggle-published
 // @desc    Toggle lecture published status
 // @access  Private (Admin only)
