@@ -146,3 +146,111 @@ The script validates:
 - ✅ No duplicate lectures (same title + sheikh)
 
 Invalid rows are skipped and reported in the error summary.
+
+---
+
+# Admin Utility Scripts
+
+## Fix Series Lecture Numbers
+
+Fixes lecture numbers based on Arabic ordinals in titles (الأول, الثاني, الثالث...).
+
+```bash
+# Preview changes (dry-run)
+node scripts/fix-series-lecture-numbers.js \
+  --series 6975b906bc30f3df706f32ab \
+  --env .env \
+  --dry-run \
+  --output preview.txt
+
+# Apply changes
+node scripts/fix-series-lecture-numbers.js \
+  --series 6975b906bc30f3df706f32ab \
+  --env .env
+```
+
+**Options:**
+| Option | Description |
+|--------|-------------|
+| `--series ID` | Series ID (required) |
+| `--env FILE` | Path to .env file (default: .env) |
+| `--dry-run` | Preview without making changes |
+| `--output FILE` | Save output to file |
+
+---
+
+## Fix Lecture Slugs
+
+Regenerates slugs using series name + lecture number format.
+
+```bash
+# Preview all lectures
+node scripts/fix-lecture-slugs.js \
+  --env .env \
+  --dry-run \
+  --output preview.txt
+
+# Preview specific series
+node scripts/fix-lecture-slugs.js \
+  --series SERIES_ID \
+  --env .env \
+  --dry-run
+
+# Apply changes
+node scripts/fix-lecture-slugs.js --env .env
+```
+
+---
+
+## Export Database Data
+
+Exports all lectures, series, and sheikhs to a text file for verification.
+
+```bash
+# Export as text
+node scripts/export-db-data.js \
+  --env .env \
+  --output data-export.txt
+
+# Export as JSON
+node scripts/export-db-data.js \
+  --env .env \
+  --output data-export.json \
+  --format json
+```
+
+---
+
+## Sync OCI Durations
+
+Fetches audio durations from OCI storage and updates MongoDB.
+
+```bash
+# Preview
+node scripts/sync-oci-durations.js \
+  --env .env \
+  --dry-run
+
+# Sync all
+node scripts/sync-oci-durations.js --env .env
+
+# Limit to N lectures
+node scripts/sync-oci-durations.js \
+  --env .env \
+  --limit 10
+
+# Force re-sync (even if duration exists)
+node scripts/sync-oci-durations.js \
+  --env .env \
+  --force
+```
+
+---
+
+## Generate Slugs
+
+Generates slugs for lectures, series, and sheikhs that don't have them.
+
+```bash
+node scripts/generate-slugs.js --env .env
+```

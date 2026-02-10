@@ -1,0 +1,242 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title><%= title %> - Duroos</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body {
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      background: #f5f5f5;
+      color: #333;
+    }
+    .header {
+      background: #1A5F5A;
+      color: white;
+      padding: 16px 24px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    .header h1 { font-size: 24px; font-weight: 600; }
+    .header-nav { display: flex; align-items: center; gap: 16px; }
+    .header-nav a { color: white; text-decoration: none; opacity: 0.9; }
+    .header-nav a:hover { opacity: 1; }
+    .container { max-width: 600px; margin: 0 auto; padding: 32px 24px; }
+    .card {
+      background: white;
+      border-radius: 12px;
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+      padding: 32px;
+    }
+    .series-info {
+      background: #e8f5e9;
+      padding: 16px;
+      border-radius: 8px;
+      margin-bottom: 24px;
+    }
+    .series-name {
+      font-size: 18px;
+      font-weight: 600;
+      color: #1A5F5A;
+    }
+    .series-meta {
+      font-size: 14px;
+      color: #666;
+      margin-top: 4px;
+    }
+    .form-group {
+      margin-bottom: 20px;
+    }
+    label {
+      display: block;
+      margin-bottom: 8px;
+      font-weight: 600;
+      color: #2C3E35;
+    }
+    input, textarea {
+      width: 100%;
+      padding: 12px;
+      border: 1px solid #ddd;
+      border-radius: 6px;
+      font-size: 16px;
+      font-family: inherit;
+    }
+    input:focus, textarea:focus {
+      outline: none;
+      border-color: #1A5F5A;
+      box-shadow: 0 0 0 3px rgba(26, 95, 90, 0.1);
+    }
+    textarea {
+      min-height: 80px;
+      resize: vertical;
+    }
+    .form-row {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 16px;
+    }
+    .preview-title {
+      background: #f8f9fa;
+      padding: 12px;
+      border-radius: 6px;
+      font-size: 14px;
+      color: #555;
+      margin-top: 8px;
+    }
+    .preview-title strong {
+      color: #1A5F5A;
+    }
+    .btn {
+      padding: 14px 28px;
+      border: none;
+      border-radius: 6px;
+      font-size: 16px;
+      font-weight: 600;
+      cursor: pointer;
+      text-decoration: none;
+      display: inline-block;
+    }
+    .btn-primary {
+      background: #1A5F5A;
+      color: white;
+    }
+    .btn-primary:hover {
+      background: #145047;
+    }
+    .btn-secondary {
+      background: #6c757d;
+      color: white;
+      margin-right: 12px;
+    }
+    .btn-secondary:hover {
+      background: #5a6268;
+    }
+    .actions {
+      display: flex;
+      gap: 12px;
+      margin-top: 24px;
+    }
+    .hint {
+      font-size: 12px;
+      color: #888;
+      margin-top: 4px;
+    }
+    .quick-badge {
+      display: inline-block;
+      background: #D4AF37;
+      color: #2C1810;
+      padding: 4px 12px;
+      border-radius: 16px;
+      font-size: 12px;
+      font-weight: 600;
+      margin-right: 8px;
+    }
+    @media (max-width: 600px) {
+      .form-row {
+        grid-template-columns: 1fr;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="header">
+    <h1><span class="quick-badge">سريع</span> إضافة درس</h1>
+    <div class="header-nav">
+      <a href="/admin/series/<%= series._id %>/edit">← العودة للسلسلة</a>
+      <a href="/admin/dashboard">لوحة التحكم</a>
+    </div>
+  </div>
+
+  <div class="container">
+    <div class="card">
+      <div class="series-info">
+        <div class="series-name"><%= series.titleArabic %></div>
+        <div class="series-meta">
+          الشيخ: <%= series.sheikhId?.nameArabic || 'غير محدد' %> |
+          التصنيف: <%= series.category || 'أخرى' %>
+        </div>
+      </div>
+
+      <form method="POST" action="/admin/series/<%= series._id %>/quick-add-lecture" id="quickAddForm">
+        <input type="hidden" name="sortOrder" value="<%= nextSortOrder %>">
+
+        <div class="form-row">
+          <div class="form-group">
+            <label for="lectureNumber">رقم الدرس *</label>
+            <input
+              type="number"
+              id="lectureNumber"
+              name="lectureNumber"
+              value="<%= nextLectureNumber %>"
+              min="1"
+              required
+              onchange="updatePreview()"
+            >
+          </div>
+
+          <div class="form-group">
+            <label for="dateRecorded">تاريخ التسجيل</label>
+            <input
+              type="date"
+              id="dateRecorded"
+              name="dateRecorded"
+              value="<%= today %>"
+            >
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label for="titleSuffix">عنوان إضافي (اختياري)</label>
+          <input
+            type="text"
+            id="titleSuffix"
+            name="titleSuffix"
+            placeholder="مثال: باب الصلاة"
+            onkeyup="updatePreview()"
+          >
+          <div class="hint">يُضاف بعد رقم الدرس في العنوان</div>
+        </div>
+
+        <div class="form-group">
+          <label>معاينة العنوان</label>
+          <div class="preview-title" id="titlePreview">
+            <strong><%= series.titleArabic %> - الدرس <%= nextLectureNumber %></strong>
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label for="notes">ملاحظات (اختياري)</label>
+          <textarea
+            id="notes"
+            name="notes"
+            placeholder="أي ملاحظات إضافية..."
+          ></textarea>
+        </div>
+
+        <div class="actions">
+          <button type="submit" class="btn btn-primary">✓ إضافة الدرس</button>
+          <a href="/admin/series/<%= series._id %>/edit" class="btn btn-secondary">إلغاء</a>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <script>
+    const seriesTitle = '<%= series.titleArabic %>';
+
+    function updatePreview() {
+      const lectureNumber = document.getElementById('lectureNumber').value;
+      const titleSuffix = document.getElementById('titleSuffix').value.trim();
+
+      let preview = seriesTitle + ' - الدرس ' + lectureNumber;
+      if (titleSuffix) {
+        preview += ' - ' + titleSuffix;
+      }
+
+      document.getElementById('titlePreview').innerHTML = '<strong>' + preview + '</strong>';
+    }
+  </script>
+</body>
+</html>

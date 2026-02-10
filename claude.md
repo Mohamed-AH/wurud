@@ -108,12 +108,14 @@ All mobile issues have been fixed:
 ### 🎯 Next Steps (Prioritized)
 
 1. ~~**3.6 Total Lecture Count Display**~~ ✅ Done - Gold badge in hero section
-2. **3.7 Analytics & Tracking System** - Page visits, listens, downloads with visibility toggle
-3. **3.1 Server-Side Filtering & Pagination** - Required before 300+ lectures
-4. ~~**3.5 Weekly Class Schedule**~~ ✅ Done - Add entries at /admin/schedule
-5. **3.3 Performance Optimizations** - Caching, bundling, CDN
-6. **3.4 Admin Panel Arabic** - RTL support for admin pages
-7. **Test Coverage Improvements** - Focus on slugify.js, lectures API, middleware
+2. ~~**3.7 Analytics & Tracking System**~~ ✅ Done - /admin/analytics dashboard
+3. ~~**3.8 Quick Add Lecture to Series**~~ ✅ Done - "+ إضافة درس" button on series edit
+4. **3.9 Direct OCI Audio Upload** - Upload optimized audio directly to Oracle Cloud
+5. **3.1 Server-Side Filtering & Pagination** - Required before 300+ lectures
+6. ~~**3.5 Weekly Class Schedule**~~ ✅ Done - Add entries at /admin/schedule
+7. **3.3 Performance Optimizations** - Caching, bundling, CDN
+8. **3.4 Admin Panel Arabic** - RTL support for admin pages
+9. **Test Coverage Improvements** - Focus on slugify.js, lectures API, middleware
 
 ---
 
@@ -253,38 +255,72 @@ Display the total number of lectures prominently on the homepage.
 - [x] ~~Update dynamically as content grows~~ ✅ Real-time count
 - [x] ~~Style to match site aesthetic~~ ✅ Gold border, translucent bg
 
-#### 3.7 Analytics & Tracking System ⬜ NOT STARTED
-**Priority**: MEDIUM | **Status**: Pending
+#### 3.7 Analytics & Tracking System ✅ COMPLETED
+**Priority**: MEDIUM | **Status**: Done (2026-02-09)
 
 Track page visits, listens, and downloads with admin-controlled visibility.
 
+**Implementation:**
+- [x] ~~Track page views~~ ✅ models/PageView.js with daily aggregation
+- [x] ~~Track audio plays~~ ✅ Already in Lecture.playCount
+- [x] ~~Track downloads~~ ✅ Already in Lecture.downloadCount
+- [x] ~~Admin dashboard~~ ✅ /admin/analytics with stats, charts, top content
+- [x] ~~Visibility Toggle~~ ✅ SiteSettings model with thresholds
+  - [x] Admin setting for min plays/downloads/pageviews
+  - [x] Stats hidden on public pages until threshold met
+  - [x] Admin always sees real numbers
+- [x] ~~Daily breakdown~~ ✅ Last 30 days view data
+
+**Files Created:**
+- `models/SiteSettings.js` - Visibility settings and cached stats
+- `models/PageView.js` - Page view tracking with daily aggregation
+- `middleware/analytics.js` - Tracking middleware and helpers
+- `views/admin/analytics.ejs` - Admin analytics dashboard
+
+**Admin Access:** `/admin/analytics`
+
+#### 3.8 Quick Add Lecture to Series ✅ COMPLETED
+**Priority**: MEDIUM | **Status**: Done (2026-02-09)
+
+Streamlined workflow to add new lectures to existing series with minimal input.
+
 **Features:**
-- [ ] Track page views (homepage, lectures, series, sheikh pages)
-- [ ] Track audio plays (already have playCount in Lecture model)
-- [ ] Track downloads (already have downloadCount in Lecture model)
-- [ ] Admin dashboard showing analytics summary
-- [ ] **Visibility Toggle**: Hide public stats until threshold reached
-  - [ ] Admin setting: `minCountToDisplay` (e.g., 1000 plays)
-  - [ ] Stats hidden on public pages until threshold met
-  - [ ] Admin always sees real numbers
-- [ ] Optional: Daily/weekly/monthly breakdown
+- [x] ~~"+" button on series page in admin to add new lecture~~ ✅ Gold button in series edit page
+- [x] ~~Auto-fill series, sheikh, category from parent series~~ ✅ Inherited from series
+- [x] ~~Auto-increment lecture number (next in sequence)~~ ✅ Calculates next number
+- [x] ~~Minimal form: just date, title suffix (optional), notes~~ ✅ Streamlined form
+- [x] ~~Quick save without full form validation~~ ✅ Creates unpublished lecture
+- [ ] Option to immediately upload audio after creation (future)
 
-**Data Model (SiteStats):**
-```javascript
-{
-  totalPageViews: Number,
-  totalPlays: Number,
-  totalDownloads: Number,
-  displayThreshold: Number,  // Min count before showing publicly
-  showPublicStats: Boolean,  // Manual override
-  lastUpdated: Date
-}
-```
+**Files Created:**
+- `views/admin/quick-add-lecture.ejs` - Minimal quick-add form
+- Routes in `routes/admin/index.js` - GET/POST handlers
 
-**Admin UI:**
-- Toggle to show/hide stats publicly
-- Set minimum threshold for auto-display
-- View detailed analytics
+**Admin Access:** Edit any series → Click "+ إضافة درس" button
+
+#### 3.9 Direct OCI Audio Upload ⬜ NOT STARTED
+**Priority**: MEDIUM | **Status**: Pending
+
+Upload locally-optimized audio files directly to Oracle Cloud Infrastructure.
+
+**Features:**
+- [ ] Admin upload interface for OCI direct upload
+- [ ] Support for pre-optimized audio (HE-AAC encoded locally)
+- [ ] Progress indicator during upload
+- [ ] Auto-link uploaded file to lecture record
+- [ ] Verify file exists in OCI after upload
+- [ ] Optional: Basic audio validation (format, duration check)
+
+**Technical:**
+- Use OCI Object Storage SDK or pre-signed URLs
+- Update lecture `audioUrl` field after successful upload
+- Handle large files (up to 100MB+)
+
+**Workflow:**
+1. Optimize audio locally (Audacity/ffmpeg → HE-AAC)
+2. Select lecture in admin
+3. Upload audio file → goes directly to OCI bucket
+4. Lecture record updated with audio URL
 
 ---
 

@@ -1,0 +1,220 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title><%= title %> - Duroos</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body {
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      background: #f5f5f5;
+      color: #333;
+    }
+    .header {
+      background: #1A5F5A;
+      color: white;
+      padding: 16px 24px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+    }
+    .header h1 { font-size: 24px; font-weight: 600; }
+    .header-nav { display: flex; align-items: center; gap: 16px; }
+    .header-nav a { color: white; text-decoration: none; opacity: 0.9; }
+    .header-nav a:hover { opacity: 1; }
+    .container { max-width: 1400px; margin: 0 auto; padding: 32px 24px; }
+    .card {
+      background: white;
+      border-radius: 12px;
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+      padding: 24px;
+    }
+    .search-form {
+      display: flex;
+      gap: 12px;
+      margin-bottom: 24px;
+      flex-wrap: wrap;
+    }
+    .search-form input, .search-form select {
+      padding: 10px 14px;
+      border: 1px solid #ddd;
+      border-radius: 6px;
+      font-size: 14px;
+    }
+    .search-form input { flex: 1; min-width: 200px; }
+    .search-form select { min-width: 200px; }
+    table { width: 100%; border-collapse: collapse; margin-top: 16px; }
+    thead { background: #f8f8f8; }
+    th, td { padding: 12px; text-align: right; border-bottom: 1px solid #eee; }
+    th { font-weight: 600; color: #666; font-size: 13px; }
+    .badge {
+      display: inline-block;
+      padding: 4px 8px;
+      border-radius: 4px;
+      font-size: 12px;
+      font-weight: 500;
+    }
+    .badge-success { background: #d4edda; color: #155724; }
+    .badge-warning { background: #fff3cd; color: #856404; }
+    .badge-info { background: #d1ecf1; color: #0c5460; }
+    .actions { display: flex; gap: 8px; }
+    .btn {
+      padding: 6px 12px;
+      border: none;
+      border-radius: 4px;
+      font-size: 13px;
+      cursor: pointer;
+      text-decoration: none;
+      display: inline-block;
+    }
+    .btn-primary { background: #1A5F5A; color: white; }
+    .btn-primary:hover { background: #145047; }
+    .btn-danger { background: #dc3545; color: white; }
+    .btn-danger:hover { background: #c82333; }
+    .btn-sm { padding: 4px 8px; font-size: 12px; }
+    .empty-state {
+      text-align: center;
+      padding: 48px;
+      color: #666;
+    }
+    .slug { font-size: 11px; color: #888; direction: ltr; text-align: left; }
+    .lecture-title { font-weight: 500; }
+    tr.deleting { opacity: 0.5; background: #fee; }
+    .stats { display: flex; gap: 24px; margin-bottom: 16px; }
+    .stat { background: #f8f8f8; padding: 12px 16px; border-radius: 6px; }
+    .stat-value { font-size: 24px; font-weight: 600; color: #1A5F5A; }
+    .stat-label { font-size: 12px; color: #666; }
+  </style>
+</head>
+<body>
+  <div class="header">
+    <h1>🎙️ إدارة المحاضرات</h1>
+    <div class="header-nav">
+      <a href="/admin/dashboard">لوحة التحكم</a>
+      <a href="/admin/manage">إدارة</a>
+      <a href="/auth/logout">خروج</a>
+    </div>
+  </div>
+
+  <div class="container">
+    <div class="card">
+      <!-- Search Form -->
+      <form class="search-form" method="GET" action="/admin/lectures">
+        <input type="text" name="search" placeholder="بحث بالعنوان أو الرابط..." value="<%= search %>">
+        <select name="seriesId">
+          <option value="">-- كل السلاسل --</option>
+          <% allSeries.forEach(s => { %>
+            <option value="<%= s._id %>" <%= selectedSeriesId === s._id.toString() ? 'selected' : '' %>>
+              <%= s.titleArabic %>
+            </option>
+          <% }) %>
+        </select>
+        <button type="submit" class="btn btn-primary">🔍 بحث</button>
+        <% if (search || selectedSeriesId) { %>
+          <a href="/admin/lectures" class="btn" style="background: #6c757d; color: white;">مسح</a>
+        <% } %>
+      </form>
+
+      <!-- Stats -->
+      <div class="stats">
+        <div class="stat">
+          <div class="stat-value"><%= lectures.length %></div>
+          <div class="stat-label">نتيجة</div>
+        </div>
+      </div>
+
+      <% if (lectures.length > 0) { %>
+        <table>
+          <thead>
+            <tr>
+              <th>العنوان</th>
+              <th>السلسلة</th>
+              <th>الشيخ</th>
+              <th>الحالة</th>
+              <th>الصوت</th>
+              <th>الإجراءات</th>
+            </tr>
+          </thead>
+          <tbody>
+            <% lectures.forEach(lecture => { %>
+              <tr id="row-<%= lecture._id %>">
+                <td>
+                  <div class="lecture-title"><%= lecture.titleArabic %></div>
+                  <div class="slug"><%= lecture.slug || 'no-slug' %></div>
+                </td>
+                <td><%= lecture.seriesId?.titleArabic || '<span style="color:#999">منفصلة</span>' %></td>
+                <td><%= lecture.sheikhId?.nameArabic || 'غير محدد' %></td>
+                <td>
+                  <% if (lecture.published) { %>
+                    <span class="badge badge-success">منشورة</span>
+                  <% } else { %>
+                    <span class="badge badge-warning">مسودة</span>
+                  <% } %>
+                </td>
+                <td>
+                  <% if (lecture.audioFileName || lecture.audioUrl) { %>
+                    <span class="badge badge-info">✓ موجود</span>
+                  <% } else { %>
+                    <span class="badge" style="background:#f8d7da;color:#721c24">✗ لا يوجد</span>
+                  <% } %>
+                </td>
+                <td class="actions">
+                  <a href="/admin/lectures/<%= lecture._id %>/edit" class="btn btn-primary btn-sm">✏️ تعديل</a>
+                  <button class="btn btn-danger btn-sm" onclick="deleteLecture('<%= lecture._id %>', '<%= lecture.titleArabic.replace(/'/g, "\\'").substring(0, 30) %>')">
+                    🗑️ حذف
+                  </button>
+                </td>
+              </tr>
+            <% }) %>
+          </tbody>
+        </table>
+      <% } else { %>
+        <div class="empty-state">
+          <p>لا توجد نتائج</p>
+          <% if (search || selectedSeriesId) { %>
+            <p style="margin-top: 8px; font-size: 14px;">جرب تغيير معايير البحث</p>
+          <% } %>
+        </div>
+      <% } %>
+    </div>
+  </div>
+
+  <script>
+    async function deleteLecture(id, title) {
+      if (!confirm(`هل أنت متأكد من حذف المحاضرة:\n"${title}..."؟\n\nسيتم حذف الملف الصوتي أيضاً!`)) {
+        return;
+      }
+
+      const row = document.getElementById(`row-${id}`);
+      row.classList.add('deleting');
+
+      try {
+        const response = await fetch(`/admin/lectures/${id}/delete`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Accept': 'application/json'
+          }
+        });
+
+        const data = await response.json();
+
+        if (data.success) {
+          row.style.transition = 'all 0.3s ease';
+          row.style.transform = 'translateX(100%)';
+          row.style.opacity = '0';
+          setTimeout(() => row.remove(), 300);
+        } else {
+          row.classList.remove('deleting');
+          alert('فشل الحذف: ' + data.message);
+        }
+      } catch (error) {
+        row.classList.remove('deleting');
+        alert('خطأ: ' + error.message);
+      }
+    }
+  </script>
+</body>
+</html>

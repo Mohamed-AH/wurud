@@ -1266,7 +1266,9 @@ function switchScheduleTab(tab) {
                 </div>
               </div>
               <div class="episode-meta">
-                <span><%= Math.floor(lecture.duration / 60) %>:<%= String(lecture.duration % 60).padStart(2, '0') %></span>
+                <% if (lecture.duration && lecture.duration > 0) { %>
+                  <span>⏱️ <%= Math.floor(lecture.duration / 60) %>:<%= String(lecture.duration % 60).padStart(2, '0') %></span>
+                <% } %>
                 <% if (lecture.location) { %>
                   <span><%= lecture.location %></span>
                 <% } %>
@@ -1327,9 +1329,11 @@ function switchScheduleTab(tab) {
                 الشيخ: <%= lecture.sheikhId ? lecture.sheikhId.nameArabic : '' %>
               </div>
             </div>
-            <div class="series-info">
-              <span><%= Math.floor(lecture.duration / 60) %>:<%= String(lecture.duration % 60).padStart(2, '0') %></span>
-            </div>
+            <% if (lecture.duration && lecture.duration > 0) { %>
+              <div class="series-info">
+                <span>⏱️ <%= Math.floor(lecture.duration / 60) %>:<%= String(lecture.duration % 60).padStart(2, '0') %></span>
+              </div>
+            <% } %>
             <div class="episode-actions" style="margin-top: 16px;">
               <% if (lecture.audioFileName) { %>
                 <button class="btn-play" onclick="playAudio('<%= lecture._id %>', '<%= lecture.titleArabic.replace(/'/g, "\\'") %>', '<%= lecture.sheikhId ? lecture.sheikhId.nameArabic.replace(/'/g, "\\'") : "" %>')">
@@ -1436,7 +1440,9 @@ function switchScheduleTab(tab) {
                     <div class="episode-title"><%= lecture.titleArabic %></div>
                   </div>
                   <div class="episode-meta">
-                    <span><%= Math.floor(lecture.duration / 60) %>:<%= String(lecture.duration % 60).padStart(2, '0') %></span>
+                    <% if (lecture.duration && lecture.duration > 0) { %>
+                      <span>⏱️ <%= Math.floor(lecture.duration / 60) %>:<%= String(lecture.duration % 60).padStart(2, '0') %></span>
+                    <% } %>
                     <% if (lecture.location) { %>
                       <span><%= lecture.location %></span>
                     <% } %>

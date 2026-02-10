@@ -267,6 +267,49 @@ class AudioPlayer {
   // Event handlers
   onLoadedMetadata() {
     this.durationEl.textContent = this.formatTime(this.audio.duration);
+
+    // Verify duration with server (self-correcting duration sync)
+    if (this.currentLecture && this.audio.duration > 0) {
+      this.verifyDuration(this.currentLecture.id, this.audio.duration);
+    }
+  }
+
+  /**
+   * Verify and report duration to server for automatic correction
+   * Uses localStorage to avoid duplicate reports for verified lectures
+   */
+  async verifyDuration(lectureId, actualDuration) {
+    // Check if already verified locally
+    const verifiedKey = `duration_verified_${lectureId}`;
+    if (localStorage.getItem(verifiedKey)) {
+      return; // Already verified, skip
+    }
+
+    try {
+      const response = await fetch(`/api/lectures/${lectureId}/verify-duration`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({ duration: actualDuration })
+      });
+
+      const data = await response.json();
+
+      if (data.success) {
+        // Mark as verified locally to avoid future checks
+        localStorage.setItem(verifiedKey, 'true');
+
+        if (data.updated) {
+          console.log(`✅ Duration corrected: ${data.oldDuration}s → ${data.newDuration}s`);
+        } else if (data.verified) {
+          console.log(`✅ Duration verified: ${Math.round(actualDuration)}s`);
+        }
+      }
+    } catch (error) {
+      // Silently fail - non-critical operation
+      console.warn('Duration verification failed:', error.message);
+    }
   }
 
   onTimeUpdate() {
