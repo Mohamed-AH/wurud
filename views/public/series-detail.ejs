@@ -514,13 +514,19 @@
   <% if (series.descriptionArabic || series.descriptionEnglish) { %>
     <div class="content-section">
       <div class="container">
-        <h2 class="section-title">وصف السلسلة</h2>
+        <h2 class="section-title"><%= locale === 'ar' ? 'عن السلسلة' : 'About the Series' %></h2>
         <div class="description-card">
-          <% if (series.descriptionArabic) { %>
-            <p class="description-text"><%= series.descriptionArabic %></p>
-          <% } %>
-          <% if (series.descriptionEnglish) { %>
-            <p class="description-text-en"><%= series.descriptionEnglish %></p>
+          <% if (locale === 'ar') { %>
+            <% if (series.descriptionArabic) { %>
+              <p class="description-text"><%= series.descriptionArabic %></p>
+            <% } %>
+          <% } else { %>
+            <% if (series.descriptionEnglish) { %>
+              <p class="description-text"><%= series.descriptionEnglish %></p>
+            <% } else if (series.descriptionArabic) { %>
+              <!-- Fallback to Arabic if no English description -->
+              <p class="description-text"><%= series.descriptionArabic %></p>
+            <% } %>
           <% } %>
         </div>
       </div>
