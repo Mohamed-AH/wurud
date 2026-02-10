@@ -743,6 +743,97 @@ router.get('/api/unassociated-lectures', isAdmin, async (req, res) => {
   }
 });
 
+// @route   POST /admin/api/series/create
+// @desc    Create a new series (quick create from unassociated lectures)
+// @access  Private (Admin only)
+router.post('/api/series/create', isAdmin, async (req, res) => {
+  try {
+    const { Series, Sheikh } = require('../../models');
+    const { generateSlug } = require('../../utils/slugify');
+
+    const { titleArabic, titleEnglish, sheikhId, category, tags } = req.body;
+
+    if (!titleArabic || !sheikhId) {
+      return res.status(400).json({
+        success: false,
+        error: 'Title (Arabic) and Sheikh are required'
+      });
+    }
+
+    // Verify sheikh exists
+    const sheikh = await Sheikh.findById(sheikhId);
+    if (!sheikh) {
+      return res.status(404).json({ success: false, error: 'Sheikh not found' });
+    }
+
+    // Generate slug
+    let baseSlug = generateSlug(titleArabic);
+    let slug = baseSlug;
+    let suffix = 1;
+    while (await Series.exists({ slug })) {
+      suffix++;
+      slug = `${baseSlug}-${suffix}`;
+    }
+
+    // Create series
+    const series = new Series({
+      titleArabic,
+      titleEnglish: titleEnglish || '',
+      sheikhId: sheikh._id,
+      category: category || 'Other',
+      tags: tags || [],
+      slug,
+      lectureCount: 0
+    });
+
+    await series.save();
+
+    console.log(`[Create Series] New series created: ${series._id} - ${titleArabic}`);
+
+    res.json({
+      success: true,
+      series: {
+        _id: series._id,
+        titleArabic: series.titleArabic,
+        titleEnglish: series.titleEnglish,
+        slug: series.slug,
+        category: series.category
+      }
+    });
+  } catch (error) {
+    console.error('Create series error:', error);
+
+    // Handle duplicate key error
+    if (error.code === 11000) {
+      return res.status(400).json({
+        success: false,
+        error: 'A series with this title already exists for this sheikh'
+      });
+    }
+
+    res.status(500).json({ success: false, error: 'Error creating series' });
+  }
+});
+
+// @route   GET /admin/api/sheikhs
+// @desc    Get all sheikhs for dropdown
+// @access  Private (Admin only)
+router.get('/api/sheikhs', isAdmin, async (req, res) => {
+  try {
+    const { Sheikh } = require('../../models');
+
+    const sheikhs = await Sheikh.find()
+      .select('_id nameArabic nameEnglish')
+      .sort({ nameArabic: 1 })
+      .lean();
+
+    res.json({ success: true, sheikhs });
+  } catch (error) {
+    console.error('Get sheikhs error:', error);
+    res.status(500).json({ success: false, error: 'Error fetching sheikhs' });
+  }
+});
+
 // @route   POST /admin/lectures/:id/assign-to-series
 // @desc    Assign a lecture to a series
 // @access  Private (Admin only)

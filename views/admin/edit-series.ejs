@@ -357,6 +357,64 @@
       padding: 32px;
       color: #666;
     }
+    /* Create Series Modal */
+    .modal-overlay {
+      display: none;
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background: rgba(0, 0, 0, 0.5);
+      z-index: 1000;
+      align-items: center;
+      justify-content: center;
+    }
+    .modal-overlay.visible {
+      display: flex;
+    }
+    .modal-content {
+      background: white;
+      border-radius: 12px;
+      padding: 32px;
+      max-width: 500px;
+      width: 90%;
+      max-height: 90vh;
+      overflow-y: auto;
+    }
+    .modal-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 24px;
+    }
+    .modal-header h3 {
+      margin: 0;
+      color: #1A5F5A;
+    }
+    .modal-close {
+      background: none;
+      border: none;
+      font-size: 24px;
+      cursor: pointer;
+      color: #666;
+    }
+    .modal-close:hover {
+      color: #333;
+    }
+    .create-series-btn {
+      padding: 10px 20px;
+      background: #D4AF37;
+      color: #2C1810;
+      border: none;
+      border-radius: 6px;
+      cursor: pointer;
+      font-weight: 600;
+      margin-bottom: 16px;
+    }
+    .create-series-btn:hover {
+      background: #c9a033;
+    }
     .status-badge {
       font-size: 10px;
       padding: 2px 6px;
@@ -602,6 +660,9 @@
           <span class="toggle-icon" id="toggleIcon">▼</span>
         </div>
         <div class="unassociated-content" id="unassociatedContent">
+          <button class="create-series-btn" onclick="openCreateSeriesModal()">
+            + إنشاء سلسلة جديدة
+          </button>
           <div class="search-box">
             <input type="text" id="searchUnassociated" placeholder="بحث في المحاضرات غير المرتبطة..." oninput="filterUnassociated()">
           </div>
@@ -610,6 +671,48 @@
           </div>
         </div>
       </div>
+    </div>
+  </div>
+
+  <!-- Create Series Modal -->
+  <div class="modal-overlay" id="createSeriesModal">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h3>📚 إنشاء سلسلة جديدة</h3>
+        <button class="modal-close" onclick="closeCreateSeriesModal()">&times;</button>
+      </div>
+      <form id="createSeriesForm" onsubmit="submitCreateSeries(event)">
+        <div class="form-group">
+          <label for="newSeriesTitleArabic">العنوان بالعربية *</label>
+          <input type="text" id="newSeriesTitleArabic" required placeholder="مثال: شرح كتاب التوحيد">
+        </div>
+        <div class="form-group">
+          <label for="newSeriesTitleEnglish">العنوان بالإنجليزية</label>
+          <input type="text" id="newSeriesTitleEnglish" placeholder="Example: Explanation of Kitab at-Tawhid">
+        </div>
+        <div class="form-group">
+          <label for="newSeriesSheikh">الشيخ *</label>
+          <select id="newSeriesSheikh" required>
+            <option value="">-- اختر الشيخ --</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label for="newSeriesCategory">التصنيف</label>
+          <select id="newSeriesCategory">
+            <option value="Other">أخرى</option>
+            <option value="Aqeedah">عقيدة</option>
+            <option value="Fiqh">فقه</option>
+            <option value="Tafsir">تفسير</option>
+            <option value="Hadith">حديث</option>
+            <option value="Seerah">سيرة</option>
+            <option value="Akhlaq">أخلاق</option>
+          </select>
+        </div>
+        <div class="actions">
+          <button type="submit" class="btn btn-primary">إنشاء السلسلة</button>
+          <button type="button" class="btn btn-secondary" onclick="closeCreateSeriesModal()">إلغاء</button>
+        </div>
+      </form>
     </div>
   </div>
 
@@ -792,6 +895,96 @@
       if (orderChanged) {
         e.preventDefault();
         e.returnValue = '';
+      }
+    });
+
+    // ========== Create Series Modal ==========
+    let sheikhsLoaded = false;
+
+    function openCreateSeriesModal() {
+      document.getElementById('createSeriesModal').classList.add('visible');
+      if (!sheikhsLoaded) {
+        loadSheikhs();
+      }
+    }
+
+    function closeCreateSeriesModal() {
+      document.getElementById('createSeriesModal').classList.remove('visible');
+    }
+
+    async function loadSheikhs() {
+      try {
+        const response = await fetch('/admin/api/sheikhs');
+        const data = await response.json();
+
+        if (data.success) {
+          const select = document.getElementById('newSeriesSheikh');
+          data.sheikhs.forEach(sheikh => {
+            const option = document.createElement('option');
+            option.value = sheikh._id;
+            option.textContent = sheikh.nameArabic;
+            select.appendChild(option);
+          });
+          sheikhsLoaded = true;
+        }
+      } catch (error) {
+        console.error('Load sheikhs error:', error);
+      }
+    }
+
+    async function submitCreateSeries(event) {
+      event.preventDefault();
+
+      const titleArabic = document.getElementById('newSeriesTitleArabic').value.trim();
+      const titleEnglish = document.getElementById('newSeriesTitleEnglish').value.trim();
+      const sheikhId = document.getElementById('newSeriesSheikh').value;
+      const category = document.getElementById('newSeriesCategory').value;
+
+      if (!titleArabic || !sheikhId) {
+        alert('الرجاء إدخال العنوان واختيار الشيخ');
+        return;
+      }
+
+      const submitBtn = event.target.querySelector('button[type="submit"]');
+      submitBtn.disabled = true;
+      submitBtn.textContent = '⏳ جاري الإنشاء...';
+
+      try {
+        const response = await fetch('/admin/api/series/create', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            titleArabic,
+            titleEnglish,
+            sheikhId,
+            category
+          })
+        });
+
+        const result = await response.json();
+
+        if (result.success) {
+          closeCreateSeriesModal();
+          // Redirect to the new series edit page
+          if (confirm(`✓ تم إنشاء السلسلة "${result.series.titleArabic}" بنجاح.\n\nهل تريد الانتقال إلى صفحة تعديل السلسلة الجديدة؟`)) {
+            window.location.href = `/admin/series/${result.series._id}/edit`;
+          }
+        } else {
+          alert('فشل في إنشاء السلسلة: ' + (result.error || 'خطأ غير معروف'));
+        }
+      } catch (error) {
+        console.error('Create series error:', error);
+        alert('خطأ في الاتصال');
+      } finally {
+        submitBtn.disabled = false;
+        submitBtn.textContent = 'إنشاء السلسلة';
+      }
+    }
+
+    // Close modal on outside click
+    document.getElementById('createSeriesModal').addEventListener('click', function(e) {
+      if (e.target === this) {
+        closeCreateSeriesModal();
       }
     });
 
