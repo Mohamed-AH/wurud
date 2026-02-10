@@ -429,6 +429,102 @@
       background: #fff3e0;
       color: #e65100;
     }
+    /* Audio status indicators */
+    .audio-status {
+      font-size: 11px;
+      padding: 2px 6px;
+      border-radius: 4px;
+      margin-right: 6px;
+    }
+    .audio-has {
+      background: #e3f2fd;
+      color: #1565c0;
+    }
+    .audio-none {
+      background: #ffebee;
+      color: #c62828;
+    }
+    .audio-uploading {
+      background: #fff8e1;
+      color: #f57c00;
+    }
+    /* Inline upload styles */
+    .upload-btn {
+      width: 28px;
+      height: 28px;
+      border: 1px solid #C19A6B;
+      background: #fffbf0;
+      border-radius: 4px;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 14px;
+      transition: all 0.2s;
+    }
+    .upload-btn:hover {
+      background: #C19A6B;
+      color: white;
+    }
+    .upload-btn:disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+    }
+    .publish-btn {
+      width: 28px;
+      height: 28px;
+      border: 1px solid #2e7d32;
+      background: #e8f5e9;
+      border-radius: 4px;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 12px;
+      transition: all 0.2s;
+    }
+    .publish-btn:hover {
+      background: #2e7d32;
+      color: white;
+    }
+    .publish-btn.draft {
+      border-color: #e65100;
+      background: #fff3e0;
+    }
+    .publish-btn.draft:hover {
+      background: #e65100;
+      color: white;
+    }
+    .publish-btn:disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+    }
+    .lecture-upload-input {
+      display: none;
+    }
+    .inline-progress {
+      display: none;
+      height: 4px;
+      background: #e0e0e0;
+      border-radius: 2px;
+      margin-top: 4px;
+      overflow: hidden;
+    }
+    .inline-progress.visible {
+      display: block;
+    }
+    .inline-progress-bar {
+      height: 100%;
+      background: linear-gradient(90deg, #1A5F5A, #2E8B57);
+      width: 0%;
+      transition: width 0.2s;
+    }
+    .inline-progress-bar.success {
+      background: #4CAF50;
+    }
+    .inline-progress-bar.error {
+      background: #f44336;
+    }
     .empty-lectures {
       padding: 32px;
       text-align: center;
@@ -622,6 +718,9 @@
                     <span class="status-badge <%= lecture.published ? 'status-published' : 'status-draft' %>">
                       <%= lecture.published ? 'منشور' : 'مسودة' %>
                     </span>
+                    <span class="audio-status <%= lecture.audioUrl ? 'audio-has' : 'audio-none' %>" id="audio-status-<%= lecture._id %>">
+                      <%= lecture.audioUrl ? '🔊 صوت' : '⚠️ بدون صوت' %>
+                    </span>
                     <%= lecture.titleArabic %>
                   </div>
                   <div class="lecture-meta">
@@ -631,9 +730,20 @@
                     <% if (lecture.dateRecorded) { %>
                       التاريخ: <%= new Date(lecture.dateRecorded).toLocaleDateString('ar-SA') %>
                     <% } %>
+                    <% if (lecture.durationSeconds) { %>
+                      | المدة: <%= Math.floor(lecture.durationSeconds / 60) %>:<%= String(lecture.durationSeconds % 60).padStart(2, '0') %>
+                    <% } %>
+                  </div>
+                  <div class="inline-progress" id="progress-<%= lecture._id %>">
+                    <div class="inline-progress-bar" id="progress-bar-<%= lecture._id %>"></div>
                   </div>
                 </div>
                 <div class="lecture-actions">
+                  <input type="file" id="upload-input-<%= lecture._id %>" class="lecture-upload-input" accept=".mp3,.m4a,.aac,.wav,.ogg,.flac" onchange="uploadLectureAudio('<%= lecture._id %>', this)">
+                  <button class="upload-btn" id="upload-btn-<%= lecture._id %>" onclick="document.getElementById('upload-input-<%= lecture._id %>').click()" title="رفع ملف صوتي">📤</button>
+                  <button class="publish-btn <%= lecture.published ? '' : 'draft' %>" id="publish-btn-<%= lecture._id %>" onclick="togglePublish('<%= lecture._id %>')" title="<%= lecture.published ? 'إلغاء النشر' : 'نشر' %>">
+                    <%= lecture.published ? '👁' : '👁‍🗨' %>
+                  </button>
                   <a href="/admin/lectures/<%= lecture._id %>/edit" class="action-btn edit-btn" title="تعديل">✏️</a>
                   <button class="action-btn remove-btn" onclick="removeLectureFromSeries('<%= lecture._id %>', '<%= lecture.titleArabic.substring(0, 30) %>')" title="إزالة من السلسلة">✕</button>
                   <button class="move-btn" onclick="moveLecture('<%= lecture._id %>', 'up')" title="تحريك لأعلى" <%= index === 0 ? 'disabled' : '' %>>▲</button>
@@ -1122,6 +1232,189 @@
         btn.textContent = 'إضافة للسلسلة';
         alert('خطأ في الاتصال');
       }
+    }
+
+    // ========== Toggle Publish ==========
+    async function togglePublish(lectureId) {
+      const btn = document.getElementById(`publish-btn-${lectureId}`);
+      const statusBadge = document.querySelector(`.lecture-item[data-id="${lectureId}"] .status-badge`);
+
+      btn.disabled = true;
+      const originalText = btn.textContent;
+      btn.textContent = '⏳';
+
+      try {
+        const response = await fetch(`/admin/lectures/${lectureId}/toggle-published`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' }
+        });
+
+        const result = await response.json();
+
+        if (result.success) {
+          // Update button appearance
+          if (result.published) {
+            btn.classList.remove('draft');
+            btn.textContent = '👁';
+            btn.title = 'إلغاء النشر';
+            statusBadge.className = 'status-badge status-published';
+            statusBadge.textContent = 'منشور';
+          } else {
+            btn.classList.add('draft');
+            btn.textContent = '👁‍🗨';
+            btn.title = 'نشر';
+            statusBadge.className = 'status-badge status-draft';
+            statusBadge.textContent = 'مسودة';
+          }
+        } else {
+          btn.textContent = originalText;
+          alert('فشل في تغيير حالة النشر');
+        }
+      } catch (error) {
+        console.error('Toggle publish error:', error);
+        btn.textContent = originalText;
+        alert('خطأ في الاتصال');
+      } finally {
+        btn.disabled = false;
+      }
+    }
+
+    // ========== Inline Audio Upload ==========
+    function uploadLectureAudio(lectureId, fileInput) {
+      const file = fileInput.files[0];
+      if (!file) return;
+
+      const uploadBtn = document.getElementById(`upload-btn-${lectureId}`);
+      const progressDiv = document.getElementById(`progress-${lectureId}`);
+      const progressBar = document.getElementById(`progress-bar-${lectureId}`);
+      const audioStatus = document.getElementById(`audio-status-${lectureId}`);
+
+      // Disable upload button
+      uploadBtn.disabled = true;
+      uploadBtn.textContent = '⏳';
+
+      // Show progress bar
+      progressDiv.classList.add('visible');
+      progressBar.style.width = '0%';
+      progressBar.className = 'inline-progress-bar';
+
+      // Update status
+      audioStatus.className = 'audio-status audio-uploading';
+      audioStatus.textContent = '⏳ جاري الرفع...';
+
+      // Create FormData
+      const formData = new FormData();
+      formData.append('audioFile', file);
+
+      // Create XHR for progress tracking
+      const xhr = new XMLHttpRequest();
+
+      xhr.upload.addEventListener('progress', (e) => {
+        if (e.lengthComputable) {
+          const percent = Math.round((e.loaded / e.total) * 100);
+          progressBar.style.width = percent + '%';
+
+          if (percent >= 100) {
+            audioStatus.textContent = '⏳ معالجة...';
+          }
+        }
+      });
+
+      xhr.addEventListener('load', () => {
+        try {
+          const response = JSON.parse(xhr.responseText);
+
+          if (xhr.status === 200 && response.success) {
+            // Success
+            progressBar.style.width = '100%';
+            progressBar.classList.add('success');
+            audioStatus.className = 'audio-status audio-has';
+            audioStatus.textContent = '🔊 صوت';
+
+            // Show brief success message
+            uploadBtn.textContent = '✓';
+            setTimeout(() => {
+              uploadBtn.textContent = '📤';
+              uploadBtn.disabled = false;
+              progressDiv.classList.remove('visible');
+            }, 2000);
+
+            // Verify duration from the uploaded URL
+            verifyUploadedDuration(lectureId, response.audioUrl);
+
+          } else {
+            // Error
+            showUploadError(lectureId, response.error || 'خطأ غير معروف');
+          }
+        } catch (e) {
+          showUploadError(lectureId, 'خطأ في معالجة الاستجابة');
+        }
+
+        // Reset file input
+        fileInput.value = '';
+      });
+
+      xhr.addEventListener('error', () => {
+        showUploadError(lectureId, 'فشل الاتصال');
+        fileInput.value = '';
+      });
+
+      xhr.addEventListener('timeout', () => {
+        showUploadError(lectureId, 'انتهت المهلة');
+        fileInput.value = '';
+      });
+
+      // Send request
+      xhr.open('POST', `/admin/api/lectures/${lectureId}/upload-audio`);
+      xhr.timeout = 600000; // 10 minutes
+      xhr.send(formData);
+    }
+
+    function showUploadError(lectureId, message) {
+      const uploadBtn = document.getElementById(`upload-btn-${lectureId}`);
+      const progressDiv = document.getElementById(`progress-${lectureId}`);
+      const progressBar = document.getElementById(`progress-bar-${lectureId}`);
+      const audioStatus = document.getElementById(`audio-status-${lectureId}`);
+
+      progressBar.classList.add('error');
+      audioStatus.className = 'audio-status audio-none';
+      audioStatus.textContent = '❌ فشل';
+
+      uploadBtn.textContent = '📤';
+      uploadBtn.disabled = false;
+
+      setTimeout(() => {
+        progressDiv.classList.remove('visible');
+        audioStatus.textContent = '⚠️ بدون صوت';
+      }, 3000);
+
+      console.error('Upload error:', message);
+    }
+
+    function verifyUploadedDuration(lectureId, audioUrl) {
+      const audio = new Audio();
+      audio.src = audioUrl;
+      audio.addEventListener('loadedmetadata', () => {
+        const duration = Math.floor(audio.duration);
+
+        // Update duration in lecture meta
+        const lectureItem = document.querySelector(`.lecture-item[data-id="${lectureId}"]`);
+        if (lectureItem) {
+          const metaDiv = lectureItem.querySelector('.lecture-meta');
+          if (metaDiv && !metaDiv.textContent.includes('المدة:')) {
+            const mins = Math.floor(duration / 60);
+            const secs = duration % 60;
+            metaDiv.innerHTML += ` | المدة: ${mins}:${String(secs).padStart(2, '0')}`;
+          }
+        }
+
+        // Send to server to update database
+        fetch(`/api/lectures/${lectureId}/verify-duration`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ duration: duration })
+        }).catch(err => console.error('Duration verify error:', err));
+      });
     }
   </script>
 </body>

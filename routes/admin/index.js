@@ -87,6 +87,57 @@ router.get('/bulk-upload', isAdmin, (req, res) => {
   });
 });
 
+// @route   GET /admin/duration-status
+// @desc    Duration verification status page
+// @access  Private (Admin only)
+router.get('/duration-status', isAdmin, async (req, res) => {
+  try {
+    const { Lecture } = require('../../models');
+
+    // Get stats
+    const total = await Lecture.countDocuments();
+    const withAudio = await Lecture.countDocuments({ audioFileName: { $exists: true, $ne: null, $ne: '' } });
+    const verified = await Lecture.countDocuments({ durationVerified: true });
+    const noAudio = total - withAudio;
+    const pending = withAudio - verified;
+
+    const verifiedPercent = withAudio > 0 ? Math.round((verified / withAudio) * 100) : 0;
+    const pendingPercent = withAudio > 0 ? Math.round((pending / withAudio) * 100) : 0;
+
+    // Get pending lectures (with audio but not verified)
+    const pendingLectures = await Lecture.find({
+      audioFileName: { $exists: true, $ne: null, $ne: '' },
+      $or: [
+        { durationVerified: false },
+        { durationVerified: { $exists: false } }
+      ]
+    })
+      .select('_id titleArabic audioFileName duration seriesId')
+      .populate('seriesId', 'titleArabic')
+      .sort({ createdAt: -1 })
+      .limit(100)
+      .lean();
+
+    res.render('admin/duration-status', {
+      title: 'Duration Verification Status',
+      user: req.user,
+      stats: {
+        total,
+        withAudio,
+        verified,
+        noAudio,
+        pending,
+        verifiedPercent,
+        pendingPercent
+      },
+      pendingLectures
+    });
+  } catch (error) {
+    console.error('Duration status error:', error);
+    res.status(500).send('Error loading duration status page');
+  }
+});
+
 // @route   GET /admin/manage
 // @desc    Manage lectures page
 // @access  Private (Admin only)
@@ -311,7 +362,9 @@ router.get('/series/:id/edit', isAdmin, async (req, res) => {
           lectureNumber: 1,
           sortOrder: 1,
           dateRecorded: 1,
-          published: 1
+          published: 1,
+          audioUrl: 1,
+          durationSeconds: 1
         }
       }
     ]);
@@ -657,6 +710,96 @@ router.post('/lectures/:id/upload-audio', isAdmin, async (req, res) => {
       }
 
       res.status(500).send(`خطأ في الرفع إلى السحابة: ${error.message}`);
+    }
+  });
+});
+
+// @route   POST /admin/api/lectures/:id/upload-audio
+// @desc    AJAX upload audio file to OCI with JSON response
+// @access  Private (Admin only)
+router.post('/api/lectures/:id/upload-audio', isAdmin, async (req, res) => {
+  const { upload } = require('../../config/storage');
+  const { uploadToOCI, objectExists } = require('../../utils/ociStorage');
+  const { Lecture } = require('../../models');
+  const fs = require('fs');
+  const path = require('path');
+
+  // Use multer middleware
+  upload.single('audioFile')(req, res, async (err) => {
+    if (err) {
+      console.error('Upload error:', err);
+      return res.status(400).json({
+        success: false,
+        error: `خطأ في الرفع: ${err.message}`
+      });
+    }
+
+    if (!req.file) {
+      return res.status(400).json({
+        success: false,
+        error: 'لم يتم اختيار ملف'
+      });
+    }
+
+    try {
+      const lecture = await Lecture.findById(req.params.id);
+      if (!lecture) {
+        fs.unlinkSync(req.file.path);
+        return res.status(404).json({
+          success: false,
+          error: 'المحاضرة غير موجودة'
+        });
+      }
+
+      // Generate OCI object name from lecture slug or title
+      const ext = path.extname(req.file.originalname).toLowerCase();
+      const objectName = lecture.slug
+        ? `${lecture.slug}${ext}`
+        : `lecture-${lecture._id}${ext}`;
+
+      console.log(`[Audio Upload API] Uploading ${req.file.originalname} as ${objectName}`);
+
+      // Upload to OCI
+      const result = await uploadToOCI(req.file.path, objectName);
+
+      // Verify upload succeeded by checking object exists
+      const verified = await objectExists(objectName);
+      if (!verified) {
+        throw new Error('فشل التحقق من الملف في السحابة');
+      }
+
+      // Update lecture with audio URL
+      lecture.audioUrl = result.url;
+      lecture.audioFileName = objectName;
+      lecture.fileSize = result.size;
+      lecture.durationVerified = false; // Reset verification for new file
+      await lecture.save();
+
+      console.log(`[Audio Upload API] Success: ${objectName} -> ${result.url}`);
+
+      // Clean up local temp file
+      fs.unlinkSync(req.file.path);
+
+      res.json({
+        success: true,
+        audioUrl: result.url,
+        audioFileName: objectName,
+        fileSize: result.size,
+        verified: true,
+        message: 'تم رفع الملف بنجاح'
+      });
+    } catch (error) {
+      console.error('OCI upload error:', error);
+
+      // Clean up local temp file on error
+      if (req.file && fs.existsSync(req.file.path)) {
+        fs.unlinkSync(req.file.path);
+      }
+
+      res.status(500).json({
+        success: false,
+        error: `خطأ في الرفع إلى السحابة: ${error.message}`
+      });
     }
   });
 });

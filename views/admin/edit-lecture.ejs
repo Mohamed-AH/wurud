@@ -275,102 +275,284 @@
     <div class="card" style="margin-top: 24px;">
       <h3 style="margin-bottom: 16px; color: #1A5F5A;">🎵 ملف الصوت</h3>
 
-      <% if (lecture.audioUrl) { %>
-        <div style="padding: 16px; background: #e8f5e9; border-radius: 8px; margin-bottom: 16px;">
-          <p style="margin: 0; color: #2e7d32;">
-            ✓ الصوت متاح: <strong><%= lecture.audioFileName || 'ملف صوتي' %></strong>
-          </p>
-          <% if (lecture.audioUrl) { %>
-            <audio controls style="width: 100%; margin-top: 12px;">
+      <div id="currentAudioSection">
+        <% if (lecture.audioUrl) { %>
+          <div id="audioStatus" style="padding: 16px; background: #e8f5e9; border-radius: 8px; margin-bottom: 16px;">
+            <p style="margin: 0; color: #2e7d32;">
+              ✓ الصوت متاح: <strong id="currentFileName"><%= lecture.audioFileName || 'ملف صوتي' %></strong>
+              <% if (lecture.durationVerified) { %>
+                <span style="background: #c8e6c9; padding: 2px 8px; border-radius: 4px; font-size: 12px; margin-right: 8px;">✓ المدة موثقة</span>
+              <% } %>
+            </p>
+            <audio id="currentAudio" controls style="width: 100%; margin-top: 12px;">
               <source src="<%= lecture.audioUrl %>" type="audio/mp4">
             </audio>
-          <% } %>
-        </div>
-      <% } else { %>
-        <div style="padding: 16px; background: #fff3e0; border-radius: 8px; margin-bottom: 16px;">
-          <p style="margin: 0; color: #e65100;">⚠️ لا يوجد ملف صوتي مرتبط بهذه المحاضرة</p>
-        </div>
-      <% } %>
-
-      <form
-        id="audioUploadForm"
-        action="/admin/lectures/<%= lecture._id %>/upload-audio"
-        method="POST"
-        enctype="multipart/form-data"
-      >
-        <div class="form-group">
-          <label for="audioFile"><%= lecture.audioUrl ? 'استبدال ملف الصوت' : 'رفع ملف صوتي' %></label>
-          <input
-            type="file"
-            id="audioFile"
-            name="audioFile"
-            accept=".mp3,.m4a,.aac,.wav,.ogg,.flac"
-            style="padding: 12px; background: #f8f9fa; border: 2px dashed #ddd; border-radius: 8px; cursor: pointer;"
-            onchange="handleFileSelect(this)"
-          >
-          <p style="font-size: 12px; color: #666; margin-top: 8px;">
-            الصيغ المدعومة: MP3, M4A, AAC, WAV, OGG, FLAC (الحد الأقصى: 60MB)
-          </p>
-        </div>
-
-        <div id="fileInfo" style="display: none; padding: 12px; background: #e3f2fd; border-radius: 8px; margin-bottom: 16px;">
-          <p style="margin: 0;"><strong>الملف:</strong> <span id="fileName"></span></p>
-          <p style="margin: 4px 0 0;"><strong>الحجم:</strong> <span id="fileSize"></span></p>
-        </div>
-
-        <div id="uploadProgress" style="display: none; margin-bottom: 16px;">
-          <div style="background: #e0e0e0; border-radius: 4px; height: 8px; overflow: hidden;">
-            <div id="progressBar" style="background: #1A5F5A; height: 100%; width: 0%; transition: width 0.3s;"></div>
+            <p style="font-size: 12px; color: #666; margin-top: 8px;">
+              المدة: <span id="currentDuration"><%= lecture.durationSeconds ? Math.floor(lecture.durationSeconds / 60) + ':' + String(lecture.durationSeconds % 60).padStart(2, '0') : 'غير معروفة' %></span>
+              | الحجم: <%= lecture.fileSize ? (lecture.fileSize / (1024 * 1024)).toFixed(2) + ' MB' : 'غير معروف' %>
+            </p>
           </div>
-          <p id="progressText" style="text-align: center; margin-top: 8px; color: #666;">جاري الرفع...</p>
-        </div>
+        <% } else { %>
+          <div id="audioStatus" style="padding: 16px; background: #fff3e0; border-radius: 8px; margin-bottom: 16px;">
+            <p style="margin: 0; color: #e65100;">⚠️ لا يوجد ملف صوتي مرتبط بهذه المحاضرة</p>
+          </div>
+        <% } %>
+      </div>
 
-        <button type="submit" id="uploadBtn" class="btn btn-primary" disabled style="background: #C19A6B;">
-          📤 رفع إلى السحابة
-        </button>
-      </form>
+      <div class="form-group">
+        <label for="audioFile"><%= lecture.audioUrl ? 'استبدال ملف الصوت' : 'رفع ملف صوتي' %></label>
+        <input
+          type="file"
+          id="audioFile"
+          name="audioFile"
+          accept=".mp3,.m4a,.aac,.wav,.ogg,.flac"
+          style="padding: 12px; background: #f8f9fa; border: 2px dashed #ddd; border-radius: 8px; cursor: pointer; width: 100%;"
+          onchange="handleFileSelect(this)"
+        >
+        <p style="font-size: 12px; color: #666; margin-top: 8px;">
+          الصيغ المدعومة: MP3, M4A, AAC, WAV, OGG, FLAC (الحد الأقصى: 60MB)
+          <br>
+          <span style="color: #1A5F5A;">💡 يُفضل رفع ملفات HE-AAC (.m4a) للحصول على أفضل جودة وأقل حجم</span>
+        </p>
+      </div>
+
+      <div id="fileInfo" style="display: none; padding: 12px; background: #e3f2fd; border-radius: 8px; margin-bottom: 16px;">
+        <p style="margin: 0;"><strong>الملف:</strong> <span id="fileName"></span></p>
+        <p style="margin: 4px 0 0;"><strong>الحجم:</strong> <span id="fileSize"></span></p>
+        <p id="localDuration" style="margin: 4px 0 0; display: none;"><strong>المدة:</strong> <span id="localDurationValue"></span></p>
+      </div>
+
+      <div id="uploadProgress" style="display: none; margin-bottom: 16px;">
+        <div style="background: #e0e0e0; border-radius: 4px; height: 12px; overflow: hidden; position: relative;">
+          <div id="progressBar" style="background: linear-gradient(90deg, #1A5F5A, #2E8B57); height: 100%; width: 0%; transition: width 0.2s;"></div>
+        </div>
+        <p id="progressText" style="text-align: center; margin-top: 8px; color: #666;">جاري الرفع...</p>
+      </div>
+
+      <div id="uploadResult" style="display: none; margin-bottom: 16px;"></div>
+
+      <button type="button" id="uploadBtn" class="btn btn-primary" disabled style="background: #C19A6B;" onclick="uploadAudio()">
+        📤 رفع إلى السحابة
+      </button>
     </div>
   </div>
 
   <script>
+    const lectureId = '<%= lecture._id %>';
+    let selectedFile = null;
+
     function handleFileSelect(input) {
       const file = input.files[0];
       const fileInfo = document.getElementById('fileInfo');
       const uploadBtn = document.getElementById('uploadBtn');
+      const localDuration = document.getElementById('localDuration');
+      const localDurationValue = document.getElementById('localDurationValue');
 
       if (file) {
+        selectedFile = file;
         document.getElementById('fileName').textContent = file.name;
         document.getElementById('fileSize').textContent = (file.size / (1024 * 1024)).toFixed(2) + ' MB';
         fileInfo.style.display = 'block';
         uploadBtn.disabled = false;
+
+        // Extract duration from local file using Audio API
+        const audioUrl = URL.createObjectURL(file);
+        const audio = new Audio();
+        audio.src = audioUrl;
+        audio.addEventListener('loadedmetadata', () => {
+          const duration = Math.floor(audio.duration);
+          const minutes = Math.floor(duration / 60);
+          const seconds = duration % 60;
+          localDurationValue.textContent = minutes + ':' + String(seconds).padStart(2, '0');
+          localDuration.style.display = 'block';
+          URL.revokeObjectURL(audioUrl);
+        });
+        audio.addEventListener('error', () => {
+          localDuration.style.display = 'none';
+          URL.revokeObjectURL(audioUrl);
+        });
       } else {
+        selectedFile = null;
         fileInfo.style.display = 'none';
+        localDuration.style.display = 'none';
         uploadBtn.disabled = true;
       }
     }
 
-    document.getElementById('audioUploadForm').addEventListener('submit', function(e) {
+    function uploadAudio() {
+      if (!selectedFile) return;
+
       const uploadBtn = document.getElementById('uploadBtn');
       const progressDiv = document.getElementById('uploadProgress');
       const progressBar = document.getElementById('progressBar');
       const progressText = document.getElementById('progressText');
+      const resultDiv = document.getElementById('uploadResult');
+      const fileInput = document.getElementById('audioFile');
 
+      // Disable controls
       uploadBtn.disabled = true;
       uploadBtn.textContent = '⏳ جاري الرفع...';
+      fileInput.disabled = true;
       progressDiv.style.display = 'block';
+      resultDiv.style.display = 'none';
 
-      // Simulate progress (actual progress would need XHR)
-      let progress = 0;
-      const interval = setInterval(() => {
-        progress += Math.random() * 15;
-        if (progress > 90) progress = 90;
-        progressBar.style.width = progress + '%';
-        progressText.textContent = 'جاري الرفع... ' + Math.round(progress) + '%';
-      }, 500);
+      // Create FormData
+      const formData = new FormData();
+      formData.append('audioFile', selectedFile);
 
-      // Store interval ID to clear on page unload
-      window.uploadInterval = interval;
-    });
+      // Create XHR for real progress tracking
+      const xhr = new XMLHttpRequest();
+
+      xhr.upload.addEventListener('progress', (e) => {
+        if (e.lengthComputable) {
+          const percent = Math.round((e.loaded / e.total) * 100);
+          progressBar.style.width = percent + '%';
+
+          if (percent < 100) {
+            const uploaded = (e.loaded / (1024 * 1024)).toFixed(1);
+            const total = (e.total / (1024 * 1024)).toFixed(1);
+            progressText.textContent = `جاري الرفع... ${percent}% (${uploaded}/${total} MB)`;
+          } else {
+            progressText.textContent = '⏳ جاري المعالجة في السحابة...';
+            progressBar.style.background = 'linear-gradient(90deg, #2E8B57, #3CB371)';
+          }
+        }
+      });
+
+      xhr.addEventListener('load', () => {
+        try {
+          const response = JSON.parse(xhr.responseText);
+
+          if (xhr.status === 200 && response.success) {
+            // Success
+            progressBar.style.width = '100%';
+            progressBar.style.background = '#4CAF50';
+            progressText.textContent = '✓ تم الرفع بنجاح!';
+
+            resultDiv.innerHTML = `
+              <div style="padding: 16px; background: #e8f5e9; border-radius: 8px; color: #2e7d32;">
+                <p style="margin: 0;">✓ ${response.message}</p>
+                <p style="margin: 8px 0 0; font-size: 14px;">
+                  <strong>اسم الملف:</strong> ${response.audioFileName}<br>
+                  <strong>الحجم:</strong> ${(response.fileSize / (1024 * 1024)).toFixed(2)} MB
+                  ${response.verified ? '<br><span style="color: #1A5F5A;">✓ تم التحقق من الملف في السحابة</span>' : ''}
+                </p>
+              </div>
+            `;
+            resultDiv.style.display = 'block';
+
+            // Update audio player with new URL
+            updateAudioPlayer(response.audioUrl, response.audioFileName, response.fileSize);
+
+            // Extract and verify duration from the uploaded file
+            verifyDurationFromUrl(response.audioUrl);
+
+          } else {
+            // Error from server
+            showUploadError(response.error || 'حدث خطأ غير معروف');
+          }
+        } catch (e) {
+          showUploadError('خطأ في معالجة الاستجابة');
+        }
+
+        // Re-enable controls
+        uploadBtn.disabled = false;
+        uploadBtn.textContent = '📤 رفع إلى السحابة';
+        fileInput.disabled = false;
+        fileInput.value = '';
+        selectedFile = null;
+        document.getElementById('fileInfo').style.display = 'none';
+      });
+
+      xhr.addEventListener('error', () => {
+        showUploadError('فشل الاتصال بالخادم');
+        uploadBtn.disabled = false;
+        uploadBtn.textContent = '📤 رفع إلى السحابة';
+        fileInput.disabled = false;
+      });
+
+      xhr.addEventListener('timeout', () => {
+        showUploadError('انتهت مهلة الرفع. حاول مرة أخرى');
+        uploadBtn.disabled = false;
+        uploadBtn.textContent = '📤 رفع إلى السحابة';
+        fileInput.disabled = false;
+      });
+
+      // Send request
+      xhr.open('POST', `/admin/api/lectures/${lectureId}/upload-audio`);
+      xhr.timeout = 600000; // 10 minutes timeout for large files
+      xhr.send(formData);
+    }
+
+    function showUploadError(message) {
+      const progressBar = document.getElementById('progressBar');
+      const progressText = document.getElementById('progressText');
+      const resultDiv = document.getElementById('uploadResult');
+
+      progressBar.style.background = '#f44336';
+      progressText.textContent = '✗ فشل الرفع';
+
+      resultDiv.innerHTML = `
+        <div style="padding: 16px; background: #ffebee; border-radius: 8px; color: #c62828;">
+          <p style="margin: 0;">✗ ${message}</p>
+        </div>
+      `;
+      resultDiv.style.display = 'block';
+    }
+
+    function updateAudioPlayer(audioUrl, fileName, fileSize) {
+      const statusDiv = document.getElementById('audioStatus');
+      statusDiv.style.background = '#e8f5e9';
+      statusDiv.innerHTML = `
+        <p style="margin: 0; color: #2e7d32;">
+          ✓ الصوت متاح: <strong id="currentFileName">${fileName}</strong>
+        </p>
+        <audio id="currentAudio" controls style="width: 100%; margin-top: 12px;">
+          <source src="${audioUrl}" type="audio/mp4">
+        </audio>
+        <p style="font-size: 12px; color: #666; margin-top: 8px;">
+          المدة: <span id="currentDuration">جاري الحساب...</span>
+          | الحجم: ${(fileSize / (1024 * 1024)).toFixed(2)} MB
+        </p>
+      `;
+    }
+
+    function verifyDurationFromUrl(audioUrl) {
+      const audio = new Audio();
+      audio.src = audioUrl;
+      audio.addEventListener('loadedmetadata', () => {
+        const duration = Math.floor(audio.duration);
+        const minutes = Math.floor(duration / 60);
+        const seconds = duration % 60;
+
+        // Update display
+        const durationSpan = document.getElementById('currentDuration');
+        if (durationSpan) {
+          durationSpan.textContent = minutes + ':' + String(seconds).padStart(2, '0');
+        }
+
+        // Send to server to update database
+        fetch(`/api/lectures/${lectureId}/verify-duration`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ duration: duration })
+        })
+        .then(res => res.json())
+        .then(data => {
+          if (data.success && data.updated) {
+            console.log('Duration verified and updated:', duration);
+            // Add verified badge
+            const fileName = document.getElementById('currentFileName');
+            if (fileName && !fileName.parentElement.innerHTML.includes('المدة موثقة')) {
+              fileName.insertAdjacentHTML('afterend',
+                '<span style="background: #c8e6c9; padding: 2px 8px; border-radius: 4px; font-size: 12px; margin-right: 8px;">✓ المدة موثقة</span>'
+              );
+            }
+          }
+        })
+        .catch(err => console.error('Failed to verify duration:', err));
+      });
+    }
   </script>
 </body>
 </html>
