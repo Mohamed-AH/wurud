@@ -470,6 +470,35 @@
       opacity: 0.5;
       cursor: not-allowed;
     }
+    .publish-btn {
+      width: 28px;
+      height: 28px;
+      border: 1px solid #2e7d32;
+      background: #e8f5e9;
+      border-radius: 4px;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 12px;
+      transition: all 0.2s;
+    }
+    .publish-btn:hover {
+      background: #2e7d32;
+      color: white;
+    }
+    .publish-btn.draft {
+      border-color: #e65100;
+      background: #fff3e0;
+    }
+    .publish-btn.draft:hover {
+      background: #e65100;
+      color: white;
+    }
+    .publish-btn:disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+    }
     .lecture-upload-input {
       display: none;
     }
@@ -712,6 +741,9 @@
                 <div class="lecture-actions">
                   <input type="file" id="upload-input-<%= lecture._id %>" class="lecture-upload-input" accept=".mp3,.m4a,.aac,.wav,.ogg,.flac" onchange="uploadLectureAudio('<%= lecture._id %>', this)">
                   <button class="upload-btn" id="upload-btn-<%= lecture._id %>" onclick="document.getElementById('upload-input-<%= lecture._id %>').click()" title="رفع ملف صوتي">📤</button>
+                  <button class="publish-btn <%= lecture.published ? '' : 'draft' %>" id="publish-btn-<%= lecture._id %>" onclick="togglePublish('<%= lecture._id %>')" title="<%= lecture.published ? 'إلغاء النشر' : 'نشر' %>">
+                    <%= lecture.published ? '👁' : '👁‍🗨' %>
+                  </button>
                   <a href="/admin/lectures/<%= lecture._id %>/edit" class="action-btn edit-btn" title="تعديل">✏️</a>
                   <button class="action-btn remove-btn" onclick="removeLectureFromSeries('<%= lecture._id %>', '<%= lecture.titleArabic.substring(0, 30) %>')" title="إزالة من السلسلة">✕</button>
                   <button class="move-btn" onclick="moveLecture('<%= lecture._id %>', 'up')" title="تحريك لأعلى" <%= index === 0 ? 'disabled' : '' %>>▲</button>
@@ -1199,6 +1231,51 @@
         btn.disabled = false;
         btn.textContent = 'إضافة للسلسلة';
         alert('خطأ في الاتصال');
+      }
+    }
+
+    // ========== Toggle Publish ==========
+    async function togglePublish(lectureId) {
+      const btn = document.getElementById(`publish-btn-${lectureId}`);
+      const statusBadge = document.querySelector(`.lecture-item[data-id="${lectureId}"] .status-badge`);
+
+      btn.disabled = true;
+      const originalText = btn.textContent;
+      btn.textContent = '⏳';
+
+      try {
+        const response = await fetch(`/admin/lectures/${lectureId}/toggle-published`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' }
+        });
+
+        const result = await response.json();
+
+        if (result.success) {
+          // Update button appearance
+          if (result.published) {
+            btn.classList.remove('draft');
+            btn.textContent = '👁';
+            btn.title = 'إلغاء النشر';
+            statusBadge.className = 'status-badge status-published';
+            statusBadge.textContent = 'منشور';
+          } else {
+            btn.classList.add('draft');
+            btn.textContent = '👁‍🗨';
+            btn.title = 'نشر';
+            statusBadge.className = 'status-badge status-draft';
+            statusBadge.textContent = 'مسودة';
+          }
+        } else {
+          btn.textContent = originalText;
+          alert('فشل في تغيير حالة النشر');
+        }
+      } catch (error) {
+        console.error('Toggle publish error:', error);
+        btn.textContent = originalText;
+        alert('خطأ في الاتصال');
+      } finally {
+        btn.disabled = false;
       }
     }
 
