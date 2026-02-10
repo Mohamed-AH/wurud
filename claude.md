@@ -12,11 +12,11 @@ A web platform for hosting and streaming ~160 Arabic Islamic lecture audio files
 
 ## 📌 Project State
 
-**Current Phase**: LIVE - Security & Content Updates
-**Last Updated**: 2026-02-09
+**Current Phase**: LIVE - Admin Data Management
+**Last Updated**: 2026-02-10
 **Active Branch**: `claude/fix-homepage-tests-ovChk`
 **Live URL**: https://rasmihassan.com
-**Status**: 🚀 **PRODUCTION LIVE** - Google Search Console verified, indexing in progress
+**Status**: 🚀 **PRODUCTION LIVE** - Admin tools enhanced for data management
 
 ### ✅ SITE IS NOW LIVE
 
@@ -73,8 +73,34 @@ All mobile issues have been fixed:
 - `formatHijriDate()` for proper formatting
 - Displayed on lecture cards using `dateRecordedHijri`
 
-### ✅ Recently Completed
+### ✅ Recently Completed (2026-02-10)
 
+**Admin Data Management Tools:**
+- **Duration Verification System** - Auto-verifies audio duration on playback
+  - `durationVerified` field added to Lecture model
+  - `POST /api/lectures/:id/verify-duration` endpoint
+  - Client-side verification in audioPlayer.js
+  - Admin status page at `/admin/duration-status`
+- **Unassociated Lectures Management** - Assign orphan lectures to series
+  - Collapsible section in series edit page
+  - Search/filter unassociated lectures
+  - Assign with lecture number
+- **Create New Series** - Quick create from unassociated section
+  - Modal form with title, sheikh, category
+  - `POST /admin/api/series/create` endpoint
+- **Lecture Search & Delete** - `/admin/lectures` management page
+  - Search by title/slug
+  - Filter by series
+  - Delete with confirmation
+
+**Admin Scripts:**
+- `scripts/fix-series-lecture-numbers.js` - Fix lecture numbers from Arabic ordinals
+- `scripts/fix-lecture-slugs.js` - Regenerate slugs with series names
+- `scripts/export-db-data.js` - Export all data for verification
+- `scripts/sync-oci-durations.js` - Batch sync durations from OCI
+- `scripts/README.md` - Documentation for all utility scripts
+
+**Previous Completions:**
 - **SEO Implementation** - Full meta tags, JSON-LD, sitemap, robots.txt
 - **Branding Update** - Sheikh Hasan Dhaghriri across site
 - **Hijri Date Display** - Arabic numerals in lecture cards
@@ -110,12 +136,13 @@ All mobile issues have been fixed:
 1. ~~**3.6 Total Lecture Count Display**~~ ✅ Done - Gold badge in hero section
 2. ~~**3.7 Analytics & Tracking System**~~ ✅ Done - /admin/analytics dashboard
 3. ~~**3.8 Quick Add Lecture to Series**~~ ✅ Done - "+ إضافة درس" button on series edit
-4. **3.9 Direct OCI Audio Upload** - Upload optimized audio directly to Oracle Cloud
-5. **3.1 Server-Side Filtering & Pagination** - Required before 300+ lectures
-6. ~~**3.5 Weekly Class Schedule**~~ ✅ Done - Add entries at /admin/schedule
-7. **3.3 Performance Optimizations** - Caching, bundling, CDN
-8. **3.4 Admin Panel Arabic** - RTL support for admin pages
-9. **Test Coverage Improvements** - Focus on slugify.js, lectures API, middleware
+4. ~~**3.10 Admin Data Management**~~ ✅ Done - Duration verification, lecture management
+5. **3.9 Direct OCI Audio Upload** - Upload optimized audio directly to Oracle Cloud
+6. **3.1 Server-Side Filtering & Pagination** - Required before 300+ lectures
+7. ~~**3.5 Weekly Class Schedule**~~ ✅ Done - Add entries at /admin/schedule
+8. **3.3 Performance Optimizations** - Caching, bundling, CDN
+9. **3.4 Admin Panel Arabic** - RTL support for admin pages
+10. **Test Coverage Improvements** - Focus on slugify.js, lectures API, middleware
 
 ---
 
@@ -297,6 +324,34 @@ Streamlined workflow to add new lectures to existing series with minimal input.
 - Routes in `routes/admin/index.js` - GET/POST handlers
 
 **Admin Access:** Edit any series → Click "+ إضافة درس" button
+
+#### 3.10 Admin Data Management ✅ COMPLETED
+**Priority**: MEDIUM | **Status**: Done (2026-02-10)
+
+Comprehensive tools for managing lecture data, fixing metadata, and verifying audio.
+
+**Duration Verification System:**
+- [x] ~~Auto-verify duration on audio playback~~ ✅ audioPlayer.js
+- [x] ~~API endpoint for verification~~ ✅ POST /api/lectures/:id/verify-duration
+- [x] ~~Admin status dashboard~~ ✅ /admin/duration-status
+- [x] ~~Batch sync script~~ ✅ scripts/sync-oci-durations.js
+
+**Lecture Management:**
+- [x] ~~Unassociated lectures section in series edit~~ ✅ Collapsible with search
+- [x] ~~Assign lectures to series with number~~ ✅ POST /admin/lectures/:id/assign-to-series
+- [x] ~~Create new series from unassociated section~~ ✅ Modal form
+- [x] ~~Search/delete lectures~~ ✅ /admin/lectures
+
+**Admin Scripts:**
+- [x] ~~Fix lecture numbers from Arabic ordinals~~ ✅ fix-series-lecture-numbers.js
+- [x] ~~Fix slugs with series names~~ ✅ fix-lecture-slugs.js
+- [x] ~~Export database for verification~~ ✅ export-db-data.js
+- [x] ~~Scripts documentation~~ ✅ scripts/README.md
+
+**Admin Access:**
+- `/admin/duration-status` - Duration verification dashboard
+- `/admin/lectures` - Search and delete lectures
+- Series edit page → "📎 محاضرات بدون سلسلة" section
 
 #### 3.9 Direct OCI Audio Upload ⬜ NOT STARTED
 **Priority**: MEDIUM | **Status**: Pending

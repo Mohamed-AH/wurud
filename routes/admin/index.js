@@ -87,6 +87,57 @@ router.get('/bulk-upload', isAdmin, (req, res) => {
   });
 });
 
+// @route   GET /admin/duration-status
+// @desc    Duration verification status page
+// @access  Private (Admin only)
+router.get('/duration-status', isAdmin, async (req, res) => {
+  try {
+    const { Lecture } = require('../../models');
+
+    // Get stats
+    const total = await Lecture.countDocuments();
+    const withAudio = await Lecture.countDocuments({ audioFileName: { $exists: true, $ne: null, $ne: '' } });
+    const verified = await Lecture.countDocuments({ durationVerified: true });
+    const noAudio = total - withAudio;
+    const pending = withAudio - verified;
+
+    const verifiedPercent = withAudio > 0 ? Math.round((verified / withAudio) * 100) : 0;
+    const pendingPercent = withAudio > 0 ? Math.round((pending / withAudio) * 100) : 0;
+
+    // Get pending lectures (with audio but not verified)
+    const pendingLectures = await Lecture.find({
+      audioFileName: { $exists: true, $ne: null, $ne: '' },
+      $or: [
+        { durationVerified: false },
+        { durationVerified: { $exists: false } }
+      ]
+    })
+      .select('_id titleArabic audioFileName duration seriesId')
+      .populate('seriesId', 'titleArabic')
+      .sort({ createdAt: -1 })
+      .limit(100)
+      .lean();
+
+    res.render('admin/duration-status', {
+      title: 'Duration Verification Status',
+      user: req.user,
+      stats: {
+        total,
+        withAudio,
+        verified,
+        noAudio,
+        pending,
+        verifiedPercent,
+        pendingPercent
+      },
+      pendingLectures
+    });
+  } catch (error) {
+    console.error('Duration status error:', error);
+    res.status(500).send('Error loading duration status page');
+  }
+});
+
 // @route   GET /admin/manage
 // @desc    Manage lectures page
 // @access  Private (Admin only)
