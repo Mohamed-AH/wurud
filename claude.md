@@ -149,7 +149,7 @@ All mobile issues have been fixed:
 10. **Test Coverage Improvements** - Focus on slugify.js, lectures API, middleware
 11. ~~**3.11 Hero Section Text Update**~~ ✅ Done - Updated branding to "موقع الشيخ حسن بن محمد منصور الدغريري"
 12. ~~**3.12 Related Lectures Ordering**~~ ✅ Done - Related lectures sorted by lectureNumber, category displays in Arabic
-13. **3.13 Series Visibility Toggle** - Admin option to show/hide specific series
+13. ~~**3.13 Series Visibility Toggle**~~ ✅ Done - Admin toggle to show/hide series from public site
 14. ~~**3.14 Series Slugs Update Script**~~ ✅ Done - `scripts/fix-series-slugs.js`
 15. ~~**3.15 Admin Buttons Audit**~~ ✅ Done - Added missing buttons to manage.ejs
 
@@ -399,25 +399,25 @@ In the lecture view page, the "Related Lectures" (محاضرات ذات صلة) 
 - `routes/index.js` - Lecture detail route (lines 267-280)
 - `views/public/lecture.ejs` - Category Arabic translation
 
-#### 3.13 Series Visibility Toggle ⬜ NOT STARTED
-**Priority**: MEDIUM | **Status**: Pending
+#### 3.13 Series Visibility Toggle ✅ COMPLETED
+**Priority**: MEDIUM | **Status**: Done (2026-02-12)
 
-Add a toggle option on the series edit page in the admin panel to show or hide a specific series from the public site.
+Added a toggle option on the series edit page in the admin panel to show or hide a specific series from the public site.
 
 **Tasks:**
-- [ ] Add `isVisible` (or `hidden`) field to Series model
-- [ ] Add toggle switch to series edit page (`views/admin/edit-series.ejs`)
-- [ ] Update series edit route to handle visibility toggle
-- [ ] Filter hidden series from public queries (homepage, browse, sitemap)
-- [ ] Show hidden indicator in admin series list
-- [ ] Add admin button/link for this feature
+- [x] ~~Add `isVisible` field to Series model~~ ✅ Boolean, default true, indexed
+- [x] ~~Add toggle switch to series edit page~~ ✅ Modern toggle UI with warning
+- [x] ~~Update series edit route to handle visibility toggle~~ ✅ Handles checkbox state
+- [x] ~~Filter hidden series from public queries~~ ✅ Homepage, browse, series list, sitemap
+- [x] ~~Show hidden indicator in admin series list~~ ✅ Badge shows Visible/Hidden status
+- [x] ~~Add admin button/link for this feature~~ ✅ Toggle in edit-series.ejs
 
-**Files to Update:**
-- `models/Series.js` - Add visibility field
-- `views/admin/edit-series.ejs` - Add toggle UI
-- `routes/admin/index.js` - Handle toggle in POST
-- `routes/index.js` - Filter hidden series from public
-- `routes/index.js` (sitemap) - Exclude hidden series
+**Files Updated:**
+- `models/Series.js` - Added `isVisible` field (lines 63-67)
+- `views/admin/edit-series.ejs` - Added toggle switch with CSS styling
+- `routes/admin/index.js` - Updated POST handler (lines 390-426)
+- `routes/index.js` - Added `{ isVisible: { $ne: false } }` filter to homepage, series list, sitemap, sheikh profile
+- `views/admin/manage.ejs` - Added visibility status column with badges
 
 #### 3.14 Series Slugs Update Script ✅ COMPLETED
 **Priority**: MEDIUM | **Status**: Done (2026-02-12)

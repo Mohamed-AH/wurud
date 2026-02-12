@@ -59,6 +59,11 @@ const seriesSchema = new mongoose.Schema({
     unique: true,
     sparse: true,
     index: true
+  },
+  isVisible: {
+    type: Boolean,
+    default: true,
+    index: true
   }
 }, {
   timestamps: true

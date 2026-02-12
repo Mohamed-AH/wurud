@@ -390,7 +390,7 @@ router.get('/series/:id/edit', isAdmin, async (req, res) => {
 router.post('/series/:id/edit', isAdmin, async (req, res) => {
   try {
     const { Series } = require('../../models');
-    const { titleArabic, titleEnglish, category, descriptionArabic, descriptionEnglish, tags, bookAuthor } = req.body;
+    const { titleArabic, titleEnglish, category, descriptionArabic, descriptionEnglish, tags, bookAuthor, isVisible } = req.body;
 
     // Handle tags - can be a string (single tag) or array (multiple tags)
     let tagsArray = [];
@@ -402,7 +402,10 @@ router.post('/series/:id/edit', isAdmin, async (req, res) => {
     const validCategories = ['Aqeedah', 'Fiqh', 'Tafsir', 'Hadith', 'Seerah', 'Akhlaq', 'Other'];
     const validCategory = validCategories.includes(category) ? category : 'Other';
 
-    console.log(`[Series Edit] ID: ${req.params.id}, Category: ${category} -> ${validCategory}, Tags: ${JSON.stringify(tagsArray)}`);
+    // Handle visibility - checkbox sends 'on' when checked, undefined when not
+    const isVisibleBool = isVisible === 'on' || isVisible === 'true' || isVisible === true;
+
+    console.log(`[Series Edit] ID: ${req.params.id}, Category: ${category} -> ${validCategory}, isVisible: ${isVisibleBool}, Tags: ${JSON.stringify(tagsArray)}`);
 
     await Series.findByIdAndUpdate(req.params.id, {
       titleArabic,
@@ -411,7 +414,8 @@ router.post('/series/:id/edit', isAdmin, async (req, res) => {
       descriptionArabic,
       descriptionEnglish,
       tags: tagsArray,
-      bookAuthor: bookAuthor || null
+      bookAuthor: bookAuthor || null,
+      isVisible: isVisibleBool
     });
 
     res.redirect(`/admin/series/${req.params.id}/edit?success=updated`);
