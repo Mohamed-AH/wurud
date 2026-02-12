@@ -264,61 +264,19 @@ router.get('/lectures/:idOrSlug', async (req, res) => {
       return res.redirect(301, '/lectures/' + encodeURIComponent(canonicalSlug));
     }
 
-    // Get related lectures - prioritize same series, sorted by lectureNumber
+    // Get related lectures from the same series only, sorted by lectureNumber
     let relatedLectures = [];
 
-    // First, get lectures from the same series (sorted by lectureNumber)
     if (lecture.seriesId) {
-      const seriesLectures = await Lecture.find({
+      relatedLectures = await Lecture.find({
         _id: { $ne: lecture._id },
         seriesId: lecture.seriesId._id,
         published: true
       })
         .sort({ lectureNumber: 1, dateRecorded: 1, createdAt: 1 })
-        .limit(6)
         .populate('sheikhId', 'nameArabic nameEnglish honorific')
         .populate('seriesId', 'titleArabic titleEnglish')
         .lean();
-
-      relatedLectures = seriesLectures;
-    }
-
-    // If less than 6 from series, supplement with other lectures by same sheikh
-    if (relatedLectures.length < 6 && lecture.sheikhId) {
-      const existingIds = relatedLectures.map(l => l._id.toString());
-      existingIds.push(lecture._id.toString());
-
-      const sheikhLectures = await Lecture.find({
-        _id: { $nin: existingIds.map(id => require('mongoose').Types.ObjectId.createFromHexString(id)) },
-        sheikhId: lecture.sheikhId._id,
-        published: true
-      })
-        .sort({ dateRecorded: -1, createdAt: -1 })
-        .limit(6 - relatedLectures.length)
-        .populate('sheikhId', 'nameArabic nameEnglish honorific')
-        .populate('seriesId', 'titleArabic titleEnglish')
-        .lean();
-
-      relatedLectures = [...relatedLectures, ...sheikhLectures];
-    }
-
-    // If still less than 6, get by category
-    if (relatedLectures.length < 6) {
-      const existingIds = relatedLectures.map(l => l._id.toString());
-      existingIds.push(lecture._id.toString());
-
-      const categoryLectures = await Lecture.find({
-        _id: { $nin: existingIds.map(id => require('mongoose').Types.ObjectId.createFromHexString(id)) },
-        category: lecture.category,
-        published: true
-      })
-        .sort({ dateRecorded: -1, createdAt: -1 })
-        .limit(6 - relatedLectures.length)
-        .populate('sheikhId', 'nameArabic nameEnglish honorific')
-        .populate('seriesId', 'titleArabic titleEnglish')
-        .lean();
-
-      relatedLectures = [...relatedLectures, ...categoryLectures];
     }
 
     res.render('public/lecture', {
