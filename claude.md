@@ -13,7 +13,7 @@ A web platform for hosting and streaming ~160 Arabic Islamic lecture audio files
 ## 📌 Project State
 
 **Current Phase**: LIVE - Admin Data Management
-**Last Updated**: 2026-02-10
+**Last Updated**: 2026-02-12
 **Active Branch**: `claude/fix-homepage-tests-ovChk`
 **Live URL**: https://rasmihassan.com
 **Status**: 🚀 **PRODUCTION LIVE** - Admin tools enhanced for data management
@@ -65,6 +65,10 @@ All mobile issues have been fixed:
 - Footer: Sheikh bio, Telegram link (t.me/daririhasan), location
 - Title tag: Matches header branding
 - Copyright: Sheikh Hasan bin Mohamed Dhaghriri
+
+**⚠️ PENDING UPDATE (Task 3.11):**
+- Change header/hero from "موقع الشيخ حسن الدغريري" to "موقع الشيخ حسن بن محمد منصور الدغريري"
+- Update all relevant locations including meta tags and JSON-LD
 
 ### ✅ Hijri Date Display
 
@@ -143,6 +147,11 @@ All mobile issues have been fixed:
 8. **3.3 Performance Optimizations** - Caching, bundling, CDN
 9. **3.4 Admin Panel Arabic** - RTL support for admin pages
 10. **Test Coverage Improvements** - Focus on slugify.js, lectures API, middleware
+11. **3.11 Hero Section Text Update** - Update from "موقع الشيخ حسن الدغريري" to "موقع الشيخ حسن بن محمد منصور الدغريري"
+12. **3.12 Related Lectures Ordering** - Display lectures from same series in correct chronological/numerical order
+13. **3.13 Series Visibility Toggle** - Admin option to show/hide specific series
+14. **3.14 Series Slugs Update Script** - Script to update series slugs (similar to lecture slugs script)
+15. **3.15 Admin Buttons Audit** - Add buttons for all features, check for routes without buttons
 
 ---
 
@@ -352,6 +361,102 @@ Comprehensive tools for managing lecture data, fixing metadata, and verifying au
 - `/admin/duration-status` - Duration verification dashboard
 - `/admin/lectures` - Search and delete lectures
 - Series edit page → "📎 محاضرات بدون سلسلة" section
+
+#### 3.11 Hero Section Text Update ⬜ NOT STARTED
+**Priority**: MEDIUM | **Status**: Pending
+
+Update the hero section text from "موقع الشيخ حسن الدغريري" to "موقع الشيخ حسن بن محمد منصور الدغريري".
+
+**Tasks:**
+- [ ] Update hero section in homepage
+- [ ] Update header branding text
+- [ ] Update footer references
+- [ ] Update meta tags and SEO text
+- [ ] Update JSON-LD structured data
+- [ ] Verify all instances in codebase
+
+**Files to Update:**
+- `views/layout.ejs` - Header/footer branding
+- `views/public/index.ejs` - Hero section
+- SEO meta tags and JSON-LD schemas
+
+#### 3.12 Related Lectures Ordering ⬜ NOT STARTED
+**Priority**: MEDIUM | **Status**: Pending
+
+In the lecture view page, the "Related Lectures" (محاضرات ذات صلة) section should display other lectures from the same series in the correct chronological or numerical order.
+
+**Tasks:**
+- [ ] Modify lecture detail query to fetch related lectures from same series
+- [ ] Sort related lectures by lectureNumber (ascending) or dateRecorded
+- [ ] Display proper ordering in the Related Lectures section
+- [ ] Handle edge cases (no series, single lecture series)
+
+**Files to Update:**
+- `routes/index.js` - Lecture detail route query
+- `views/public/lecture.ejs` - Related lectures section
+
+#### 3.13 Series Visibility Toggle ⬜ NOT STARTED
+**Priority**: MEDIUM | **Status**: Pending
+
+Add a toggle option on the series edit page in the admin panel to show or hide a specific series from the public site.
+
+**Tasks:**
+- [ ] Add `isVisible` (or `hidden`) field to Series model
+- [ ] Add toggle switch to series edit page (`views/admin/edit-series.ejs`)
+- [ ] Update series edit route to handle visibility toggle
+- [ ] Filter hidden series from public queries (homepage, browse, sitemap)
+- [ ] Show hidden indicator in admin series list
+- [ ] Add admin button/link for this feature
+
+**Files to Update:**
+- `models/Series.js` - Add visibility field
+- `views/admin/edit-series.ejs` - Add toggle UI
+- `routes/admin/index.js` - Handle toggle in POST
+- `routes/index.js` - Filter hidden series from public
+- `routes/index.js` (sitemap) - Exclude hidden series
+
+#### 3.14 Series Slugs Update Script ⬜ NOT STARTED
+**Priority**: MEDIUM | **Status**: Pending
+
+Create a script to update series slugs, similar to the existing `scripts/fix-lecture-slugs.js` for lectures. This is needed when series names have been modified.
+
+**Tasks:**
+- [ ] Create `scripts/fix-series-slugs.js` based on lecture slugs script
+- [ ] Regenerate slugs from current series titles
+- [ ] Handle slug conflicts (append number if duplicate)
+- [ ] Add dry-run mode for preview
+- [ ] Update scripts/README.md with documentation
+
+**Files to Create/Update:**
+- `scripts/fix-series-slugs.js` (new)
+- `scripts/README.md` - Add documentation
+
+#### 3.15 Admin Buttons Audit ⬜ NOT STARTED
+**Priority**: MEDIUM | **Status**: Pending
+
+Ensure all admin features have accessible buttons on the admin panel. Check for existing routes that lack navigation buttons to prevent redundant work.
+
+**Tasks:**
+- [ ] Audit all admin routes in `routes/admin/index.js`
+- [ ] List all routes and check if they have buttons in admin UI
+- [ ] Add missing buttons to admin dashboard or relevant pages
+- [ ] Ensure consistent navigation across admin panel
+- [ ] Document all admin routes and their access points
+
+**Routes to Check:**
+- `/admin` - Dashboard
+- `/admin/series` - Series list
+- `/admin/series/:id/edit` - Edit series
+- `/admin/lectures` - Lecture management
+- `/admin/schedule` - Schedule management
+- `/admin/analytics` - Analytics dashboard
+- `/admin/duration-status` - Duration verification
+- `/admin/bulk-upload` - Bulk upload
+- Any other routes without buttons
+
+**Files to Update:**
+- `views/admin/dashboard.ejs` - Add missing nav buttons
+- `views/admin/*.ejs` - Ensure consistent navigation
 
 #### 3.9 Direct OCI Audio Upload ✅ COMPLETED
 **Priority**: MEDIUM | **Status**: Done (2026-02-10)
