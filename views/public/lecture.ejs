@@ -370,8 +370,19 @@
 
         <!-- Category -->
         <% if (lecture.category) { %>
+          <%
+            const categoryArabic = {
+              'Tafsir': 'تفسير',
+              'Hadith': 'حديث',
+              'Fiqh': 'فقه',
+              'Aqeedah': 'عقيدة',
+              'Seerah': 'سيرة',
+              'Akhlaq': 'أخلاق',
+              'Other': 'أخرى'
+            };
+          %>
           <div class="meta-item">
-            <span class="badge"><%= lecture.category %></span>
+            <span class="badge"><%= locale === 'ar' ? (categoryArabic[lecture.category] || lecture.category) : lecture.category %></span>
           </div>
         <% } %>
       </div>
