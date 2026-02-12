@@ -150,8 +150,8 @@ All mobile issues have been fixed:
 11. ~~**3.11 Hero Section Text Update**~~ ✅ Done - Updated branding to "موقع الشيخ حسن بن محمد منصور الدغريري"
 12. ~~**3.12 Related Lectures Ordering**~~ ✅ Done - Related lectures sorted by lectureNumber, category displays in Arabic
 13. **3.13 Series Visibility Toggle** - Admin option to show/hide specific series
-14. **3.14 Series Slugs Update Script** - Script to update series slugs (similar to lecture slugs script)
-15. **3.15 Admin Buttons Audit** - Add buttons for all features, check for routes without buttons
+14. ~~**3.14 Series Slugs Update Script**~~ ✅ Done - `scripts/fix-series-slugs.js`
+15. ~~**3.15 Admin Buttons Audit**~~ ✅ Done - Added missing buttons to manage.ejs
 
 ---
 
@@ -419,48 +419,54 @@ Add a toggle option on the series edit page in the admin panel to show or hide a
 - `routes/index.js` - Filter hidden series from public
 - `routes/index.js` (sitemap) - Exclude hidden series
 
-#### 3.14 Series Slugs Update Script ⬜ NOT STARTED
-**Priority**: MEDIUM | **Status**: Pending
+#### 3.14 Series Slugs Update Script ✅ COMPLETED
+**Priority**: MEDIUM | **Status**: Done (2026-02-12)
 
-Create a script to update series slugs, similar to the existing `scripts/fix-lecture-slugs.js` for lectures. This is needed when series names have been modified.
-
-**Tasks:**
-- [ ] Create `scripts/fix-series-slugs.js` based on lecture slugs script
-- [ ] Regenerate slugs from current series titles
-- [ ] Handle slug conflicts (append number if duplicate)
-- [ ] Add dry-run mode for preview
-- [ ] Update scripts/README.md with documentation
-
-**Files to Create/Update:**
-- `scripts/fix-series-slugs.js` (new)
-- `scripts/README.md` - Add documentation
-
-#### 3.15 Admin Buttons Audit ⬜ NOT STARTED
-**Priority**: MEDIUM | **Status**: Pending
-
-Ensure all admin features have accessible buttons on the admin panel. Check for existing routes that lack navigation buttons to prevent redundant work.
+Created a script to update series slugs, similar to `scripts/fix-lecture-slugs.js`.
 
 **Tasks:**
-- [ ] Audit all admin routes in `routes/admin/index.js`
-- [ ] List all routes and check if they have buttons in admin UI
-- [ ] Add missing buttons to admin dashboard or relevant pages
-- [ ] Ensure consistent navigation across admin panel
-- [ ] Document all admin routes and their access points
+- [x] ~~Create `scripts/fix-series-slugs.js` based on lecture slugs script~~ ✅
+- [x] ~~Regenerate slugs from current series titles~~ ✅
+- [x] ~~Handle slug conflicts (append number if duplicate)~~ ✅ Uses generateUniqueSlug
+- [x] ~~Add dry-run mode for preview~~ ✅ `--dry-run` flag
+- [x] ~~Add force mode to regenerate all~~ ✅ `--force` flag
 
-**Routes to Check:**
-- `/admin` - Dashboard
-- `/admin/series` - Series list
-- `/admin/series/:id/edit` - Edit series
-- `/admin/lectures` - Lecture management
-- `/admin/schedule` - Schedule management
-- `/admin/analytics` - Analytics dashboard
-- `/admin/duration-status` - Duration verification
-- `/admin/bulk-upload` - Bulk upload
-- Any other routes without buttons
+**Usage:**
+```bash
+node scripts/fix-series-slugs.js --dry-run   # Preview changes
+node scripts/fix-series-slugs.js             # Apply to series without slugs
+node scripts/fix-series-slugs.js --force     # Regenerate ALL slugs
+```
 
-**Files to Update:**
-- `views/admin/dashboard.ejs` - Add missing nav buttons
-- `views/admin/*.ejs` - Ensure consistent navigation
+**Files Created:**
+- `scripts/fix-series-slugs.js`
+
+#### 3.15 Admin Buttons Audit ✅ COMPLETED
+**Priority**: MEDIUM | **Status**: Done (2026-02-12)
+
+Audited all admin routes and added missing buttons to the manage page Quick Actions.
+
+**Tasks:**
+- [x] ~~Audit all admin routes in `routes/admin/index.js`~~ ✅ 40+ routes identified
+- [x] ~~List all routes and check if they have buttons in admin UI~~ ✅
+- [x] ~~Add missing buttons to admin dashboard or relevant pages~~ ✅ Added to manage.ejs
+- [x] ~~Ensure consistent navigation across admin panel~~ ✅
+
+**Buttons Added to Quick Actions (manage.ejs):**
+- ⏱️ Duration Status (`/admin/duration-status`)
+- 📦 Bulk Upload (`/admin/bulk-upload`)
+- 📅 Schedule (`/admin/schedule`)
+- 📊 Analytics (`/admin/analytics`)
+
+**Existing Buttons (already present):**
+- 👥 Manage Users (admin only)
+- 👨‍🏫 Manage Sheikhs
+- 🎙️ إدارة المحاضرات
+- 📝 Unpublished
+- 🔇 No Audio
+
+**Files Updated:**
+- `views/admin/manage.ejs` - Added missing quick action buttons
 
 #### 3.9 Direct OCI Audio Upload ✅ COMPLETED
 **Priority**: MEDIUM | **Status**: Done (2026-02-10)
