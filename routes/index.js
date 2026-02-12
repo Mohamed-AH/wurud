@@ -7,9 +7,9 @@ const { Lecture, Sheikh, Series, Schedule, SiteSettings } = require('../models')
 // @access  Public
 router.get('/', async (req, res) => {
   try {
-    // Fetch all series with their sheikhs
+    // Fetch all visible series with their sheikhs
     // Note: Series sorted by creation date, but lectures within series will be sorted by dateRecorded
-    const series = await Series.find()
+    const series = await Series.find({ isVisible: { $ne: false } })
       .populate('sheikhId', 'nameArabic nameEnglish honorific')
       .sort({ createdAt: -1 })
       .lean();
@@ -69,8 +69,10 @@ router.get('/', async (req, res) => {
       .lean();
 
     // Get محاضرات متفرقة series (miscellaneous lectures) and include in Lectures tab
+    // Only show if visible
     const miscSeries = await Series.findOne({
-      titleArabic: /محاضرات متفرقة/i
+      titleArabic: /محاضرات متفرقة/i,
+      isVisible: { $ne: false }
     })
       .populate('sheikhId', 'nameArabic nameEnglish honorific')
       .lean();
@@ -264,32 +266,20 @@ router.get('/lectures/:idOrSlug', async (req, res) => {
       return res.redirect(301, '/lectures/' + encodeURIComponent(canonicalSlug));
     }
 
-    // Get related lectures (same series or same sheikh, excluding current)
-    const relatedQuery = {
-      _id: { $ne: lecture._id },
-      published: true,
-      $or: []
-    };
+    // Get related lectures from the same series only, sorted by lectureNumber
+    let relatedLectures = [];
 
     if (lecture.seriesId) {
-      relatedQuery.$or.push({ seriesId: lecture.seriesId._id });
+      relatedLectures = await Lecture.find({
+        _id: { $ne: lecture._id },
+        seriesId: lecture.seriesId._id,
+        published: true
+      })
+        .sort({ lectureNumber: 1, dateRecorded: 1, createdAt: 1 })
+        .populate('sheikhId', 'nameArabic nameEnglish honorific')
+        .populate('seriesId', 'titleArabic titleEnglish')
+        .lean();
     }
-    if (lecture.sheikhId) {
-      relatedQuery.$or.push({ sheikhId: lecture.sheikhId._id });
-    }
-
-    // If no series or sheikh, get by category
-    if (relatedQuery.$or.length === 0) {
-      delete relatedQuery.$or;
-      relatedQuery.category = lecture.category;
-    }
-
-    const relatedLectures = await Lecture.find(relatedQuery)
-      .sort({ createdAt: -1 })
-      .limit(6)
-      .populate('sheikhId', 'nameArabic nameEnglish honorific')
-      .populate('seriesId', 'titleArabic titleEnglish')
-      .lean();
 
     res.render('public/lecture', {
       title: lecture.titleArabic,
@@ -361,8 +351,8 @@ router.get('/sheikhs/:idOrSlug', async (req, res) => {
       totalDuration: lectures.reduce((sum, lecture) => sum + (lecture.duration || 0), 0)
     };
 
-    // Get series by this sheikh
-    const series = await Series.find({ sheikhId: sheikh._id })
+    // Get visible series by this sheikh
+    const series = await Series.find({ sheikhId: sheikh._id, isVisible: { $ne: false } })
       .sort({ titleArabic: 1 })
       .lean();
 
@@ -385,7 +375,8 @@ router.get('/sheikhs/:idOrSlug', async (req, res) => {
 // @access  Public
 router.get('/series', async (req, res) => {
   try {
-    const series = await Series.find()
+    // Only show visible series
+    const series = await Series.find({ isVisible: { $ne: false } })
       .sort({ titleArabic: 1 })
       .populate('sheikhId', 'nameArabic nameEnglish honorific')
       .lean();
@@ -414,7 +405,8 @@ router.get('/series/:idOrSlug', async (req, res) => {
       { path: 'sheikhId', select: 'nameArabic nameEnglish honorific bioArabic bioEnglish slug' }
     );
 
-    if (!series) {
+    // Return 404 if series not found or if hidden
+    if (!series || series.isVisible === false) {
       return res.status(404).send('Series not found');
     }
 
@@ -522,8 +514,8 @@ router.get('/sitemap.xml', async (req, res) => {
       .select('_id slug updatedAt')
       .lean();
 
-    // Get all series
-    const series = await Series.find()
+    // Get all visible series (exclude hidden ones)
+    const series = await Series.find({ isVisible: { $ne: false } })
       .select('_id slug updatedAt')
       .lean();
 

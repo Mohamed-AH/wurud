@@ -46,6 +46,7 @@
     }
     .badge-success { background: #d4edda; color: #155724; }
     .badge-warning { background: #fff3cd; color: #856404; }
+    .badge-hidden { background: #f8d7da; color: #721c24; }
     .actions { display: flex; gap: 8px; }
     .btn {
       padding: 6px 12px;
@@ -94,8 +95,12 @@
         <% } %>
         <a href="/admin/sheikhs" class="btn btn-primary">👨‍🏫 Manage Sheikhs</a>
         <a href="/admin/lectures" class="btn btn-primary">🎙️ إدارة المحاضرات</a>
-        <a href="/admin/lectures/unpublished" class="btn btn-primary">📝 View Unpublished Lectures</a>
-        <a href="/admin/lectures/no-audio" class="btn btn-primary">🔇 View Lectures Without Audio</a>
+        <a href="/admin/lectures/unpublished" class="btn btn-primary">📝 Unpublished</a>
+        <a href="/admin/lectures/no-audio" class="btn btn-primary">🔇 No Audio</a>
+        <a href="/admin/duration-status" class="btn btn-primary">⏱️ Duration Status</a>
+        <a href="/admin/bulk-upload" class="btn btn-primary">📦 Bulk Upload</a>
+        <a href="/admin/schedule" class="btn btn-primary">📅 Schedule</a>
+        <a href="/admin/analytics" class="btn btn-primary">📊 Analytics</a>
       </div>
     </div>
 
@@ -113,6 +118,7 @@
               <th>Title (English)</th>
               <th>Sheikh</th>
               <th>Category</th>
+              <th>Status</th>
               <th>Created</th>
               <th>Actions</th>
             </tr>
@@ -124,6 +130,13 @@
                 <td><%= s.titleEnglish || 'N/A' %></td>
                 <td><%= s.sheikhId?.nameArabic || 'N/A' %></td>
                 <td><%= s.category || 'N/A' %></td>
+                <td>
+                  <% if (s.isVisible === false) { %>
+                    <span class="badge badge-hidden">🚫 Hidden</span>
+                  <% } else { %>
+                    <span class="badge badge-success">👁️ Visible</span>
+                  <% } %>
+                </td>
                 <td><%= new Date(s.createdAt).toLocaleDateString() %></td>
                 <td class="actions">
                   <a href="/admin/series/<%= s._id %>/edit" class="btn btn-primary">✏️ Edit</a>

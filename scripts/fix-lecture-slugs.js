@@ -145,9 +145,11 @@ async function fixSlugs() {
   // ========== SLUG FIXING ==========
   log('🔧 Processing slug fixes...\n');
 
-  let fixed = 0;
-  let skipped = 0;
-  let errors = 0;
+  // First pass: compute all new slugs and check for uniqueness among them
+  // This avoids false positive "duplicates" where the new slug matches an old
+  // record that will also be updated
+  const slugUpdates = [];
+  const newSlugMap = new Map(); // Track new slugs to detect actual duplicates
 
   for (const lecture of lectures) {
     const title = lecture.titleArabic;
@@ -159,18 +161,65 @@ async function fixSlugs() {
 
     // Check if slug matches
     if (currentSlug === newSlug) {
+      slugUpdates.push({ lecture, newSlug: null, skipped: true });
+      continue;
+    }
+
+    // Track this new slug for duplicate detection within the batch
+    if (!newSlugMap.has(newSlug)) {
+      newSlugMap.set(newSlug, []);
+    }
+    newSlugMap.get(newSlug).push(lecture._id.toString());
+
+    slugUpdates.push({ lecture, newSlug, series, skipped: false });
+  }
+
+  // Second pass: resolve duplicates within the new slugs only
+  // (not against old database slugs that will be replaced)
+  for (const update of slugUpdates) {
+    if (update.skipped || !update.newSlug) continue;
+
+    const duplicateIds = newSlugMap.get(update.newSlug);
+    if (duplicateIds.length > 1) {
+      // Multiple lectures want the same new slug - add suffix based on position
+      const position = duplicateIds.indexOf(update.lecture._id.toString());
+      if (position > 0) {
+        update.newSlug = `${update.newSlug}-${position + 1}`;
+      }
+    }
+  }
+
+  // Check for any remaining conflicts with lectures NOT in our update batch
+  // (only relevant when using --series filter)
+  if (SERIES_ID) {
+    const lectureIds = lectures.map(l => l._id);
+    for (const update of slugUpdates) {
+      if (update.skipped || !update.newSlug) continue;
+
+      let suffix = 1;
+      let uniqueSlug = update.newSlug;
+      while (await Lecture.exists({ slug: uniqueSlug, _id: { $nin: lectureIds } })) {
+        suffix++;
+        uniqueSlug = `${update.newSlug}-${suffix}`;
+      }
+      update.newSlug = uniqueSlug;
+    }
+  }
+
+  // Third pass: apply updates
+  let fixed = 0;
+  let skipped = 0;
+  let errors = 0;
+
+  for (const update of slugUpdates) {
+    if (update.skipped) {
       skipped++;
       continue;
     }
 
-    // Check for uniqueness (excluding current lecture)
-    let suffix = 1;
-    let uniqueSlug = newSlug;
-    while (await Lecture.exists({ slug: uniqueSlug, _id: { $ne: lecture._id } })) {
-      suffix++;
-      uniqueSlug = `${newSlug}-${suffix}`;
-    }
-    newSlug = uniqueSlug;
+    const { lecture, newSlug, series } = update;
+    const title = lecture.titleArabic;
+    const currentSlug = lecture.slug;
 
     const seriesName = series?.titleArabic ? ` [${series.titleArabic.substring(0, 30)}]` : '';
     log(`📝 ${title.substring(0, 50)}...${seriesName}`);

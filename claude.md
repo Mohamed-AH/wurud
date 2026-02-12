@@ -13,7 +13,7 @@ A web platform for hosting and streaming ~160 Arabic Islamic lecture audio files
 ## 📌 Project State
 
 **Current Phase**: LIVE - Admin Data Management
-**Last Updated**: 2026-02-10
+**Last Updated**: 2026-02-12
 **Active Branch**: `claude/fix-homepage-tests-ovChk`
 **Live URL**: https://rasmihassan.com
 **Status**: 🚀 **PRODUCTION LIVE** - Admin tools enhanced for data management
@@ -65,6 +65,10 @@ All mobile issues have been fixed:
 - Footer: Sheikh bio, Telegram link (t.me/daririhasan), location
 - Title tag: Matches header branding
 - Copyright: Sheikh Hasan bin Mohamed Dhaghriri
+
+**✅ COMPLETED (Task 3.11 - 2026-02-12):**
+- Changed header/hero from "موقع الشيخ حسن الدغريري" to "موقع الشيخ حسن بن محمد منصور الدغريري"
+- Updated all relevant locations including meta tags and JSON-LD
 
 ### ✅ Hijri Date Display
 
@@ -143,6 +147,11 @@ All mobile issues have been fixed:
 8. **3.3 Performance Optimizations** - Caching, bundling, CDN
 9. **3.4 Admin Panel Arabic** - RTL support for admin pages
 10. **Test Coverage Improvements** - Focus on slugify.js, lectures API, middleware
+11. ~~**3.11 Hero Section Text Update**~~ ✅ Done - Updated branding to "موقع الشيخ حسن بن محمد منصور الدغريري"
+12. ~~**3.12 Related Lectures Ordering**~~ ✅ Done - Related lectures sorted by lectureNumber, category displays in Arabic
+13. ~~**3.13 Series Visibility Toggle**~~ ✅ Done - Admin toggle to show/hide series from public site
+14. ~~**3.14 Series Slugs Update Script**~~ ✅ Done - `scripts/fix-series-slugs.js`
+15. ~~**3.15 Admin Buttons Audit**~~ ✅ Done - Added missing buttons to manage.ejs
 
 ---
 
@@ -352,6 +361,112 @@ Comprehensive tools for managing lecture data, fixing metadata, and verifying au
 - `/admin/duration-status` - Duration verification dashboard
 - `/admin/lectures` - Search and delete lectures
 - Series edit page → "📎 محاضرات بدون سلسلة" section
+
+#### 3.11 Hero Section Text Update ✅ COMPLETED
+**Priority**: MEDIUM | **Status**: Done (2026-02-12)
+
+Updated the hero section text from "موقع الشيخ حسن الدغريري" to "موقع الشيخ حسن بن محمد منصور الدغريري".
+
+**Tasks:**
+- [x] ~~Update hero section in homepage~~ ✅ Header branding updated
+- [x] ~~Update header branding text~~ ✅ Done in `views/partials/header.ejs`
+- [x] ~~Update footer references~~ ✅ Done in `views/partials/footer.ejs`
+- [x] ~~Update meta tags and SEO text~~ ✅ Title, og:title, og:site_name, twitter:title
+- [x] ~~Update JSON-LD structured data~~ ✅ WebSite name and Person name updated
+- [x] ~~Verify all instances in codebase~~ ✅ All instances updated
+
+**Files Updated:**
+- `views/layout.ejs` - Title, meta tags, JSON-LD schemas
+- `views/partials/header.ejs` - Logo text
+- `views/partials/footer.ejs` - Copyright text
+
+#### 3.12 Related Lectures Ordering ✅ COMPLETED
+**Priority**: MEDIUM | **Status**: Done (2026-02-12)
+
+In the lecture view page, the "Related Lectures" (محاضرات ذات صلة) section now displays other lectures from the same series in correct numerical order.
+
+**Tasks:**
+- [x] ~~Modify lecture detail query to fetch related lectures from same series~~ ✅ Only same series
+- [x] ~~Sort related lectures by lectureNumber (ascending) or dateRecorded~~ ✅ Sorted by lectureNumber
+- [x] ~~Display proper ordering in the Related Lectures section~~ ✅ Working
+- [x] ~~Fix category badge to display in Arabic~~ ✅ Added categoryArabic mapping
+
+**Implementation:**
+- Fetches lectures from the same series only, sorted by `lectureNumber: 1`
+- Category badge now displays in Arabic (فقه، عقيدة، etc.) when locale is Arabic
+
+**Files Updated:**
+- `routes/index.js` - Lecture detail route (lines 267-280)
+- `views/public/lecture.ejs` - Category Arabic translation
+
+#### 3.13 Series Visibility Toggle ✅ COMPLETED
+**Priority**: MEDIUM | **Status**: Done (2026-02-12)
+
+Added a toggle option on the series edit page in the admin panel to show or hide a specific series from the public site.
+
+**Tasks:**
+- [x] ~~Add `isVisible` field to Series model~~ ✅ Boolean, default true, indexed
+- [x] ~~Add toggle switch to series edit page~~ ✅ Modern toggle UI with warning
+- [x] ~~Update series edit route to handle visibility toggle~~ ✅ Handles checkbox state
+- [x] ~~Filter hidden series from public queries~~ ✅ Homepage, browse, series list, sitemap
+- [x] ~~Show hidden indicator in admin series list~~ ✅ Badge shows Visible/Hidden status
+- [x] ~~Add admin button/link for this feature~~ ✅ Toggle in edit-series.ejs
+
+**Files Updated:**
+- `models/Series.js` - Added `isVisible` field (lines 63-67)
+- `views/admin/edit-series.ejs` - Added toggle switch with CSS styling
+- `routes/admin/index.js` - Updated POST handler (lines 390-426)
+- `routes/index.js` - Added `{ isVisible: { $ne: false } }` filter to homepage, series list, sitemap, sheikh profile
+- `views/admin/manage.ejs` - Added visibility status column with badges
+
+#### 3.14 Series Slugs Update Script ✅ COMPLETED
+**Priority**: MEDIUM | **Status**: Done (2026-02-12)
+
+Created a script to update series slugs, similar to `scripts/fix-lecture-slugs.js`.
+
+**Tasks:**
+- [x] ~~Create `scripts/fix-series-slugs.js` based on lecture slugs script~~ ✅
+- [x] ~~Regenerate slugs from current series titles~~ ✅
+- [x] ~~Handle slug conflicts (append number if duplicate)~~ ✅ Uses generateUniqueSlug
+- [x] ~~Add dry-run mode for preview~~ ✅ `--dry-run` flag
+- [x] ~~Add force mode to regenerate all~~ ✅ `--force` flag
+
+**Usage:**
+```bash
+node scripts/fix-series-slugs.js --dry-run   # Preview changes
+node scripts/fix-series-slugs.js             # Apply to series without slugs
+node scripts/fix-series-slugs.js --force     # Regenerate ALL slugs
+```
+
+**Files Created:**
+- `scripts/fix-series-slugs.js`
+
+#### 3.15 Admin Buttons Audit ✅ COMPLETED
+**Priority**: MEDIUM | **Status**: Done (2026-02-12)
+
+Audited all admin routes and added missing buttons to the manage page Quick Actions.
+
+**Tasks:**
+- [x] ~~Audit all admin routes in `routes/admin/index.js`~~ ✅ 40+ routes identified
+- [x] ~~List all routes and check if they have buttons in admin UI~~ ✅
+- [x] ~~Add missing buttons to admin dashboard or relevant pages~~ ✅ Added to manage.ejs
+- [x] ~~Ensure consistent navigation across admin panel~~ ✅
+
+**Buttons Added to Quick Actions (manage.ejs):**
+- ⏱️ Duration Status (`/admin/duration-status`)
+- 📦 Bulk Upload (`/admin/bulk-upload`)
+- 📅 Schedule (`/admin/schedule`)
+- 📊 Analytics (`/admin/analytics`)
+
+**Existing Buttons (already present):**
+- 👥 Manage Users (admin only)
+- 👨‍🏫 Manage Sheikhs
+- 🎙️ إدارة المحاضرات
+- 📝 Unpublished
+- 🔇 No Audio
+
+**Files Updated:**
+- `views/admin/manage.ejs` - Added missing quick action buttons
 
 #### 3.9 Direct OCI Audio Upload ✅ COMPLETED
 **Priority**: MEDIUM | **Status**: Done (2026-02-10)

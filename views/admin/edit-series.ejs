@@ -563,6 +563,81 @@
       margin-bottom: 20px;
       border: 1px solid #f5c6cb;
     }
+    /* Toggle Switch Styles */
+    .toggle-container {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 16px;
+      background: #f8f9fa;
+      border-radius: 8px;
+      border: 2px solid #ddd;
+    }
+    .toggle-container.hidden-series {
+      background: #fff3e0;
+      border-color: #e65100;
+    }
+    .toggle-switch {
+      position: relative;
+      width: 56px;
+      height: 28px;
+      flex-shrink: 0;
+    }
+    .toggle-switch input {
+      opacity: 0;
+      width: 0;
+      height: 0;
+    }
+    .toggle-slider {
+      position: absolute;
+      cursor: pointer;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background-color: #ccc;
+      transition: 0.4s;
+      border-radius: 28px;
+    }
+    .toggle-slider:before {
+      position: absolute;
+      content: "";
+      height: 20px;
+      width: 20px;
+      left: 4px;
+      bottom: 4px;
+      background-color: white;
+      transition: 0.4s;
+      border-radius: 50%;
+    }
+    .toggle-switch input:checked + .toggle-slider {
+      background-color: #1A5F5A;
+    }
+    .toggle-switch input:checked + .toggle-slider:before {
+      transform: translateX(28px);
+    }
+    .toggle-label {
+      font-weight: 600;
+      color: #2C3E35;
+    }
+    .toggle-description {
+      font-size: 12px;
+      color: #666;
+      margin-top: 4px;
+    }
+    .hidden-warning {
+      display: none;
+      padding: 8px 12px;
+      background: #dc3545;
+      color: white;
+      border-radius: 6px;
+      font-size: 13px;
+      font-weight: 600;
+      margin-top: 8px;
+    }
+    .toggle-container.hidden-series .hidden-warning {
+      display: block;
+    }
   </style>
 </head>
 <body>
@@ -687,6 +762,27 @@
           <p style="font-size: 12px; color: #666; margin-top: 4px;">
             💡 اسم مؤلف الكتاب الذي يشرحه الشيخ (يظهر في صفحة السلسلة)
           </p>
+        </div>
+
+        <div class="form-group">
+          <label>إظهار السلسلة للعموم</label>
+          <div class="toggle-container <%= series.isVisible === false ? 'hidden-series' : '' %>" id="visibilityContainer">
+            <label class="toggle-switch">
+              <input type="checkbox" name="isVisible" id="isVisible" <%= series.isVisible !== false ? 'checked' : '' %> onchange="updateVisibilityUI()">
+              <span class="toggle-slider"></span>
+            </label>
+            <div>
+              <div class="toggle-label" id="visibilityLabel">
+                <%= series.isVisible !== false ? '👁️ مرئية للعموم' : '🚫 مخفية' %>
+              </div>
+              <div class="toggle-description">
+                عند إيقاف هذا الخيار، لن تظهر السلسلة في الصفحة الرئيسية أو صفحة التصفح أو خريطة الموقع
+              </div>
+            </div>
+          </div>
+          <div class="hidden-warning" id="hiddenWarning" style="<%= series.isVisible !== false ? 'display: none;' : '' %>">
+            ⚠️ هذه السلسلة مخفية حالياً ولن تظهر للزوار
+          </div>
         </div>
 
         <div class="actions">
@@ -829,6 +925,24 @@
   <script>
     const seriesId = '<%= series._id %>';
     let orderChanged = false;
+
+    // Visibility toggle UI update
+    function updateVisibilityUI() {
+      const checkbox = document.getElementById('isVisible');
+      const container = document.getElementById('visibilityContainer');
+      const label = document.getElementById('visibilityLabel');
+      const warning = document.getElementById('hiddenWarning');
+
+      if (checkbox.checked) {
+        container.classList.remove('hidden-series');
+        label.textContent = '👁️ مرئية للعموم';
+        warning.style.display = 'none';
+      } else {
+        container.classList.add('hidden-series');
+        label.textContent = '🚫 مخفية';
+        warning.style.display = 'block';
+      }
+    }
 
     // Drag and drop functionality
     const lecturesList = document.getElementById('lecturesList');
