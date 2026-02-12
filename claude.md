@@ -148,7 +148,7 @@ All mobile issues have been fixed:
 9. **3.4 Admin Panel Arabic** - RTL support for admin pages
 10. **Test Coverage Improvements** - Focus on slugify.js, lectures API, middleware
 11. ~~**3.11 Hero Section Text Update**~~ ✅ Done - Updated branding to "موقع الشيخ حسن بن محمد منصور الدغريري"
-12. ~~**3.12 Related Lectures Ordering**~~ ✅ Done - Related lectures now sorted by lectureNumber
+12. ~~**3.12 Related Lectures Ordering**~~ ✅ Done - Related lectures sorted by lectureNumber, category displays in Arabic
 13. **3.13 Series Visibility Toggle** - Admin option to show/hide specific series
 14. **3.14 Series Slugs Update Script** - Script to update series slugs (similar to lecture slugs script)
 15. **3.15 Admin Buttons Audit** - Add buttons for all features, check for routes without buttons
@@ -386,18 +386,18 @@ Updated the hero section text from "موقع الشيخ حسن الدغريري"
 In the lecture view page, the "Related Lectures" (محاضرات ذات صلة) section now displays other lectures from the same series in correct numerical order.
 
 **Tasks:**
-- [x] ~~Modify lecture detail query to fetch related lectures from same series~~ ✅ Prioritizes same series
+- [x] ~~Modify lecture detail query to fetch related lectures from same series~~ ✅ Only same series
 - [x] ~~Sort related lectures by lectureNumber (ascending) or dateRecorded~~ ✅ Sorted by lectureNumber
 - [x] ~~Display proper ordering in the Related Lectures section~~ ✅ Working
-- [x] ~~Handle edge cases (no series, single lecture series)~~ ✅ Falls back to sheikh, then category
+- [x] ~~Fix category badge to display in Arabic~~ ✅ Added categoryArabic mapping
 
 **Implementation:**
-- First fetches lectures from the same series, sorted by `lectureNumber: 1`
-- Supplements with sheikh's other lectures if less than 6
-- Falls back to same category lectures if needed
+- Fetches lectures from the same series only, sorted by `lectureNumber: 1`
+- Category badge now displays in Arabic (فقه، عقيدة، etc.) when locale is Arabic
 
 **Files Updated:**
-- `routes/index.js` - Lecture detail route (lines 267-322)
+- `routes/index.js` - Lecture detail route (lines 267-280)
+- `views/public/lecture.ejs` - Category Arabic translation
 
 #### 3.13 Series Visibility Toggle ⬜ NOT STARTED
 **Priority**: MEDIUM | **Status**: Pending
