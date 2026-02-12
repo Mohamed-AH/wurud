@@ -264,32 +264,62 @@ router.get('/lectures/:idOrSlug', async (req, res) => {
       return res.redirect(301, '/lectures/' + encodeURIComponent(canonicalSlug));
     }
 
-    // Get related lectures (same series or same sheikh, excluding current)
-    const relatedQuery = {
-      _id: { $ne: lecture._id },
-      published: true,
-      $or: []
-    };
+    // Get related lectures - prioritize same series, sorted by lectureNumber
+    let relatedLectures = [];
 
+    // First, get lectures from the same series (sorted by lectureNumber)
     if (lecture.seriesId) {
-      relatedQuery.$or.push({ seriesId: lecture.seriesId._id });
-    }
-    if (lecture.sheikhId) {
-      relatedQuery.$or.push({ sheikhId: lecture.sheikhId._id });
+      const seriesLectures = await Lecture.find({
+        _id: { $ne: lecture._id },
+        seriesId: lecture.seriesId._id,
+        published: true
+      })
+        .sort({ lectureNumber: 1, dateRecorded: 1, createdAt: 1 })
+        .limit(6)
+        .populate('sheikhId', 'nameArabic nameEnglish honorific')
+        .populate('seriesId', 'titleArabic titleEnglish')
+        .lean();
+
+      relatedLectures = seriesLectures;
     }
 
-    // If no series or sheikh, get by category
-    if (relatedQuery.$or.length === 0) {
-      delete relatedQuery.$or;
-      relatedQuery.category = lecture.category;
+    // If less than 6 from series, supplement with other lectures by same sheikh
+    if (relatedLectures.length < 6 && lecture.sheikhId) {
+      const existingIds = relatedLectures.map(l => l._id.toString());
+      existingIds.push(lecture._id.toString());
+
+      const sheikhLectures = await Lecture.find({
+        _id: { $nin: existingIds.map(id => require('mongoose').Types.ObjectId.createFromHexString(id)) },
+        sheikhId: lecture.sheikhId._id,
+        published: true
+      })
+        .sort({ dateRecorded: -1, createdAt: -1 })
+        .limit(6 - relatedLectures.length)
+        .populate('sheikhId', 'nameArabic nameEnglish honorific')
+        .populate('seriesId', 'titleArabic titleEnglish')
+        .lean();
+
+      relatedLectures = [...relatedLectures, ...sheikhLectures];
     }
 
-    const relatedLectures = await Lecture.find(relatedQuery)
-      .sort({ createdAt: -1 })
-      .limit(6)
-      .populate('sheikhId', 'nameArabic nameEnglish honorific')
-      .populate('seriesId', 'titleArabic titleEnglish')
-      .lean();
+    // If still less than 6, get by category
+    if (relatedLectures.length < 6) {
+      const existingIds = relatedLectures.map(l => l._id.toString());
+      existingIds.push(lecture._id.toString());
+
+      const categoryLectures = await Lecture.find({
+        _id: { $nin: existingIds.map(id => require('mongoose').Types.ObjectId.createFromHexString(id)) },
+        category: lecture.category,
+        published: true
+      })
+        .sort({ dateRecorded: -1, createdAt: -1 })
+        .limit(6 - relatedLectures.length)
+        .populate('sheikhId', 'nameArabic nameEnglish honorific')
+        .populate('seriesId', 'titleArabic titleEnglish')
+        .lean();
+
+      relatedLectures = [...relatedLectures, ...categoryLectures];
+    }
 
     res.render('public/lecture', {
       title: lecture.titleArabic,

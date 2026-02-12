@@ -66,9 +66,9 @@ All mobile issues have been fixed:
 - Title tag: Matches header branding
 - Copyright: Sheikh Hasan bin Mohamed Dhaghriri
 
-**⚠️ PENDING UPDATE (Task 3.11):**
-- Change header/hero from "موقع الشيخ حسن الدغريري" to "موقع الشيخ حسن بن محمد منصور الدغريري"
-- Update all relevant locations including meta tags and JSON-LD
+**✅ COMPLETED (Task 3.11 - 2026-02-12):**
+- Changed header/hero from "موقع الشيخ حسن الدغريري" to "موقع الشيخ حسن بن محمد منصور الدغريري"
+- Updated all relevant locations including meta tags and JSON-LD
 
 ### ✅ Hijri Date Display
 
@@ -147,8 +147,8 @@ All mobile issues have been fixed:
 8. **3.3 Performance Optimizations** - Caching, bundling, CDN
 9. **3.4 Admin Panel Arabic** - RTL support for admin pages
 10. **Test Coverage Improvements** - Focus on slugify.js, lectures API, middleware
-11. **3.11 Hero Section Text Update** - Update from "موقع الشيخ حسن الدغريري" to "موقع الشيخ حسن بن محمد منصور الدغريري"
-12. **3.12 Related Lectures Ordering** - Display lectures from same series in correct chronological/numerical order
+11. ~~**3.11 Hero Section Text Update**~~ ✅ Done - Updated branding to "موقع الشيخ حسن بن محمد منصور الدغريري"
+12. ~~**3.12 Related Lectures Ordering**~~ ✅ Done - Related lectures now sorted by lectureNumber
 13. **3.13 Series Visibility Toggle** - Admin option to show/hide specific series
 14. **3.14 Series Slugs Update Script** - Script to update series slugs (similar to lecture slugs script)
 15. **3.15 Admin Buttons Audit** - Add buttons for all features, check for routes without buttons
@@ -362,38 +362,42 @@ Comprehensive tools for managing lecture data, fixing metadata, and verifying au
 - `/admin/lectures` - Search and delete lectures
 - Series edit page → "📎 محاضرات بدون سلسلة" section
 
-#### 3.11 Hero Section Text Update ⬜ NOT STARTED
-**Priority**: MEDIUM | **Status**: Pending
+#### 3.11 Hero Section Text Update ✅ COMPLETED
+**Priority**: MEDIUM | **Status**: Done (2026-02-12)
 
-Update the hero section text from "موقع الشيخ حسن الدغريري" to "موقع الشيخ حسن بن محمد منصور الدغريري".
-
-**Tasks:**
-- [ ] Update hero section in homepage
-- [ ] Update header branding text
-- [ ] Update footer references
-- [ ] Update meta tags and SEO text
-- [ ] Update JSON-LD structured data
-- [ ] Verify all instances in codebase
-
-**Files to Update:**
-- `views/layout.ejs` - Header/footer branding
-- `views/public/index.ejs` - Hero section
-- SEO meta tags and JSON-LD schemas
-
-#### 3.12 Related Lectures Ordering ⬜ NOT STARTED
-**Priority**: MEDIUM | **Status**: Pending
-
-In the lecture view page, the "Related Lectures" (محاضرات ذات صلة) section should display other lectures from the same series in the correct chronological or numerical order.
+Updated the hero section text from "موقع الشيخ حسن الدغريري" to "موقع الشيخ حسن بن محمد منصور الدغريري".
 
 **Tasks:**
-- [ ] Modify lecture detail query to fetch related lectures from same series
-- [ ] Sort related lectures by lectureNumber (ascending) or dateRecorded
-- [ ] Display proper ordering in the Related Lectures section
-- [ ] Handle edge cases (no series, single lecture series)
+- [x] ~~Update hero section in homepage~~ ✅ Header branding updated
+- [x] ~~Update header branding text~~ ✅ Done in `views/partials/header.ejs`
+- [x] ~~Update footer references~~ ✅ Done in `views/partials/footer.ejs`
+- [x] ~~Update meta tags and SEO text~~ ✅ Title, og:title, og:site_name, twitter:title
+- [x] ~~Update JSON-LD structured data~~ ✅ WebSite name and Person name updated
+- [x] ~~Verify all instances in codebase~~ ✅ All instances updated
 
-**Files to Update:**
-- `routes/index.js` - Lecture detail route query
-- `views/public/lecture.ejs` - Related lectures section
+**Files Updated:**
+- `views/layout.ejs` - Title, meta tags, JSON-LD schemas
+- `views/partials/header.ejs` - Logo text
+- `views/partials/footer.ejs` - Copyright text
+
+#### 3.12 Related Lectures Ordering ✅ COMPLETED
+**Priority**: MEDIUM | **Status**: Done (2026-02-12)
+
+In the lecture view page, the "Related Lectures" (محاضرات ذات صلة) section now displays other lectures from the same series in correct numerical order.
+
+**Tasks:**
+- [x] ~~Modify lecture detail query to fetch related lectures from same series~~ ✅ Prioritizes same series
+- [x] ~~Sort related lectures by lectureNumber (ascending) or dateRecorded~~ ✅ Sorted by lectureNumber
+- [x] ~~Display proper ordering in the Related Lectures section~~ ✅ Working
+- [x] ~~Handle edge cases (no series, single lecture series)~~ ✅ Falls back to sheikh, then category
+
+**Implementation:**
+- First fetches lectures from the same series, sorted by `lectureNumber: 1`
+- Supplements with sheikh's other lectures if less than 6
+- Falls back to same category lectures if needed
+
+**Files Updated:**
+- `routes/index.js` - Lecture detail route (lines 267-322)
 
 #### 3.13 Series Visibility Toggle ⬜ NOT STARTED
 **Priority**: MEDIUM | **Status**: Pending
