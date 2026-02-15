@@ -13,7 +13,7 @@ A web platform for hosting and streaming ~160 Arabic Islamic lecture audio files
 ## 📌 Project State
 
 **Current Phase**: LIVE - Admin Data Management
-**Last Updated**: 2026-02-12
+**Last Updated**: 2026-02-15
 **Active Branch**: `claude/fix-homepage-tests-ovChk`
 **Live URL**: https://rasmihassan.com
 **Status**: 🚀 **PRODUCTION LIVE** - Admin tools enhanced for data management
@@ -77,7 +77,22 @@ All mobile issues have been fixed:
 - `formatHijriDate()` for proper formatting
 - Displayed on lecture cards using `dateRecordedHijri`
 
-### ✅ Recently Completed (2026-02-10)
+### ✅ Recently Completed (2026-02-15)
+
+**Hijri Date Standardization:**
+- All user-facing dates now display in Hijri calendar format
+- Fixed YYYY/MM/DD format support for standalone lectures
+- Fixed missing Hijri dates in standalone lectures tab
+- Added `scripts/update-hijri-dates.js` with dry-run mode for batch updates
+
+**E2E Test Improvements:**
+- Fixed E2E test setup to work in both CI and local environments
+- Test configuration now properly handles different environments
+
+**Series Description Sync:**
+- Added `scripts/sync-series-descriptions.js` to sync Arabic descriptions from series to lectures
+
+### ✅ Previously Completed (2026-02-10)
 
 **Admin Data Management Tools:**
 - **Duration Verification System** - Auto-verifies audio duration on playback
