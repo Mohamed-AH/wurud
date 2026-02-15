@@ -1,11 +1,58 @@
 /**
  * Playwright Global Setup - Seeds the test database before E2E tests run.
+ *
+ * Environment support:
+ * - CI: Uses MONGODB_URI from environment (Docker container)
+ * - Local: Uses mongodb-memory-server for isolated testing
  */
 
 const mongoose = require('mongoose');
+const fs = require('fs');
+const path = require('path');
+
+// Path to store the MongoDB URI for the web server to use
+const MONGO_URI_FILE = path.join(__dirname, '.mongo-uri');
 
 async function globalSetup() {
-  const mongoUri = process.env.MONGODB_URI || 'mongodb://localhost:27017/wurud_test';
+  let mongoUri;
+  let mongoServer = null;
+
+  // Check if MONGODB_URI is provided (CI environment or local override)
+  if (process.env.MONGODB_URI) {
+    mongoUri = process.env.MONGODB_URI;
+    console.log(`E2E global setup: Using provided MONGODB_URI: ${mongoUri}`);
+  } else {
+    // Try to use mongodb-memory-server for local testing
+    try {
+      const { MongoMemoryServer } = require('mongodb-memory-server');
+
+      mongoServer = await MongoMemoryServer.create({
+        instance: {
+          port: 27018,
+        },
+      });
+
+      mongoUri = mongoServer.getUri();
+      console.log(`E2E global setup: MongoDB Memory Server started at ${mongoUri}`);
+    } catch (error) {
+      console.error('E2E global setup: Failed to start MongoDB Memory Server:', error.message);
+      console.error('Please either:');
+      console.error('  1. Set MONGODB_URI environment variable');
+      console.error('  2. Run MongoDB locally on port 27017');
+      console.error('  3. Fix mongodb-memory-server binary download issues');
+      throw error;
+    }
+  }
+
+  // Save the URI to a file so the web server can read it
+  fs.writeFileSync(MONGO_URI_FILE, mongoUri);
+
+  // Also save to a JSON file for persistence across processes
+  const serverInfo = {
+    uri: mongoUri,
+    usingMemoryServer: mongoServer !== null,
+  };
+  fs.writeFileSync(MONGO_URI_FILE + '.json', JSON.stringify(serverInfo));
 
   await mongoose.connect(mongoUri);
 
