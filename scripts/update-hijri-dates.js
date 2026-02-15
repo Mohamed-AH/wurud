@@ -1,6 +1,10 @@
 /**
  * Update Hijri Dates Script
  * Converts existing dateRecorded values to Hijri dates
+ *
+ * Usage:
+ *   node scripts/update-hijri-dates.js           # Dry run (preview only)
+ *   node scripts/update-hijri-dates.js --apply   # Actually apply changes
  */
 
 require('dotenv').config();
@@ -8,8 +12,15 @@ const moment = require('moment-hijri');
 const connectDB = require('../config/database');
 const { Lecture } = require('../models');
 
+// Check for --apply flag
+const dryRun = !process.argv.includes('--apply');
+
 async function updateHijriDates() {
   try {
+    if (dryRun) {
+      console.log('🔍 DRY RUN MODE - No changes will be made');
+      console.log('   Run with --apply to actually update the database\n');
+    }
     console.log('🚀 Starting Hijri date conversion...\n');
 
     // Connect to database
@@ -41,30 +52,43 @@ async function updateHijriDates() {
         const hijriMoment = moment(lecture.dateRecorded);
         const hijriDate = hijriMoment.format('iYYYY/iMM/iDD'); // Format: 1445/06/15
 
-        // Update lecture
-        lecture.dateRecordedHijri = hijriDate;
-        await lecture.save();
+        if (dryRun) {
+          // Preview only
+          console.log(`  → Would update: ${lecture.titleArabic.substring(0, 50)}...`);
+          console.log(`    Gregorian: ${lecture.dateRecorded.toISOString().split('T')[0]}`);
+          console.log(`    Hijri: ${hijriDate}\n`);
+          updated++;
+        } else {
+          // Actually update
+          lecture.dateRecordedHijri = hijriDate;
+          await lecture.save();
 
-        updated++;
-        console.log(`  ✓ Updated: ${lecture.titleArabic.substring(0, 50)}...`);
-        console.log(`    Gregorian: ${lecture.dateRecorded.toISOString().split('T')[0]}`);
-        console.log(`    Hijri: ${hijriDate}\n`);
+          updated++;
+          console.log(`  ✓ Updated: ${lecture.titleArabic.substring(0, 50)}...`);
+          console.log(`    Gregorian: ${lecture.dateRecorded.toISOString().split('T')[0]}`);
+          console.log(`    Hijri: ${hijriDate}\n`);
+        }
       } catch (error) {
         errors++;
-        console.error(`  ✗ Error updating ${lecture.titleArabic.substring(0, 50)}...`);
+        console.error(`  ✗ Error ${dryRun ? 'processing' : 'updating'} ${lecture.titleArabic.substring(0, 50)}...`);
         console.error(`    ${error.message}\n`);
       }
     }
 
     console.log('\n' + '='.repeat(60));
-    console.log('📈 UPDATE SUMMARY');
+    console.log(dryRun ? '📈 DRY RUN SUMMARY' : '📈 UPDATE SUMMARY');
     console.log('='.repeat(60));
     console.log(`Total lectures found:   ${lectures.length}`);
-    console.log(`Successfully updated:   ${updated}`);
+    console.log(`${dryRun ? 'Would update' : 'Successfully updated'}:   ${updated}`);
     console.log(`Errors:                 ${errors}`);
     console.log('='.repeat(60));
 
-    console.log('\n✅ Hijri date conversion completed!\n');
+    if (dryRun) {
+      console.log('\n💡 To apply these changes, run:');
+      console.log('   node scripts/update-hijri-dates.js --apply\n');
+    } else {
+      console.log('\n✅ Hijri date conversion completed!\n');
+    }
 
   } catch (error) {
     console.error('\n❌ Update failed:', error);
