@@ -7,6 +7,7 @@ const { extractAudioMetadata, isValidAudioFile } = require('../../utils/audioMet
 const fileManager = require('../../utils/fileManager');
 const path = require('path');
 const { Lecture, Sheikh, Series } = require('../../models');
+const { convertToHijri } = require('../../utils/dateUtils');
 
 // @route   POST /api/lectures
 // @desc    Upload a new lecture with audio file
@@ -89,6 +90,15 @@ router.post('/',
         }
       }
 
+      // Auto-convert Gregorian to Hijri (if not manually provided)
+      const recordedDate = dateRecorded ? new Date(dateRecorded) : null;
+      let hijriDate = dateRecordedHijri ? dateRecordedHijri.trim() : null;
+
+      // If Hijri date not provided but Gregorian is, auto-convert
+      if (!hijriDate && recordedDate) {
+        hijriDate = convertToHijri(recordedDate);
+      }
+
       // Create lecture document
       const lecture = await Lecture.create({
         audioFileName: file.filename,
@@ -103,8 +113,8 @@ router.post('/',
         fileSize: audioMetadata.fileSize,
         location: location ? location.trim() : 'غير محدد',
         category: category || 'Other',
-        dateRecorded: dateRecorded ? new Date(dateRecorded) : null,
-        dateRecordedHijri: dateRecordedHijri ? dateRecordedHijri.trim() : null,
+        dateRecorded: recordedDate,
+        dateRecordedHijri: hijriDate,
         published: published === 'true' || published === true,
         featured: featured === 'true' || featured === true
       });
