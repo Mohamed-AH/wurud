@@ -1329,11 +1329,14 @@ function switchScheduleTab(tab) {
                 الشيخ: <%= lecture.sheikhId ? lecture.sheikhId.nameArabic : '' %>
               </div>
             </div>
-            <% if (lecture.duration && lecture.duration > 0) { %>
-              <div class="series-info">
+            <div class="series-info">
+              <% if (lecture.duration && lecture.duration > 0) { %>
                 <span>⏱️ <%= Math.floor(lecture.duration / 60) %>:<%= String(lecture.duration % 60).padStart(2, '0') %></span>
-              </div>
-            <% } %>
+              <% } %>
+              <% if (lecture.dateRecordedHijri) { %>
+                <span class="hijri-date">📅 <%= formatHijriDate(lecture.dateRecordedHijri) %></span>
+              <% } %>
+            </div>
             <div class="episode-actions" style="margin-top: 16px;">
               <% if (lecture.audioFileName) { %>
                 <button class="btn-play" onclick="playAudio('<%= lecture._id %>', '<%= lecture.titleArabic.replace(/'/g, "\\'") %>', '<%= lecture.sheikhId ? lecture.sheikhId.nameArabic.replace(/'/g, "\\'") : "" %>')">

@@ -92,16 +92,10 @@ module.exports = defineConfig({
 
   // Run your local dev server before starting the tests
   webServer: {
-    command: 'npm start',
+    command: 'node tests/e2e/start-test-server.js',
     url: 'http://localhost:3000',
     reuseExistingServer: !isCI,
     timeout: 120 * 1000,
-    // In CI, pass required env vars to the server
-    env: isCI ? {
-      NODE_ENV: 'test',
-      SESSION_SECRET: 'test-session-secret-for-e2e',
-      MONGODB_URI: process.env.MONGODB_URI || 'mongodb://localhost:27017/wurud_test',
-      PORT: '3000',
-    } : undefined,
+    // Environment is handled by start-test-server.js which reads from .mongo-uri file
   },
 });

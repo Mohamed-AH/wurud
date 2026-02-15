@@ -1,6 +1,7 @@
 const express = require('express');
 const router = express.Router();
 const { isAdmin, isEditor, isSuperAdmin } = require('../../middleware/auth');
+const { convertToHijri } = require('../../utils/dateUtils');
 
 // @route   GET /admin/login
 // @desc    Admin login page
@@ -540,7 +541,10 @@ router.post('/series/:id/quick-add-lecture', isAdmin, async (req, res) => {
     const seriesSlug = generateSlug(series.titleArabic);
     const suggestedFilename = `${seriesSlug}-${lectureNumber}.m4a`;
 
-    // Create the lecture
+    // Create the lecture with auto Hijri conversion
+    const recordedDate = dateRecorded ? new Date(dateRecorded) : new Date();
+    const hijriDate = convertToHijri(recordedDate);
+
     const lecture = new Lecture({
       titleArabic,
       titleEnglish: series.titleEnglish ? `${series.titleEnglish} - Lesson ${lectureNumber}` : '',
@@ -549,7 +553,8 @@ router.post('/series/:id/quick-add-lecture', isAdmin, async (req, res) => {
       category: series.category || 'Other',
       lectureNumber: parseInt(lectureNumber),
       sortOrder: parseInt(req.body.sortOrder) || 0,
-      dateRecorded: dateRecorded ? new Date(dateRecorded) : new Date(),
+      dateRecorded: recordedDate,
+      dateRecordedHijri: hijriDate,
       notes: notes || '',
       slug,
       // Store suggested filename in metadata for later audio upload
@@ -630,6 +635,10 @@ router.post('/lectures/:id/edit', isAdmin, async (req, res) => {
       tagsArray = Array.isArray(tags) ? tags : [tags];
     }
 
+    // Auto-convert Gregorian to Hijri
+    const recordedDate = dateRecorded ? new Date(dateRecorded) : null;
+    const hijriDate = recordedDate ? convertToHijri(recordedDate) : null;
+
     await Lecture.findByIdAndUpdate(req.params.id, {
       titleArabic,
       titleEnglish,
@@ -641,7 +650,8 @@ router.post('/lectures/:id/edit', isAdmin, async (req, res) => {
       published: published === 'true',
       featured: featured === 'true',
       location: location || 'غير محدد',
-      dateRecorded: dateRecorded ? new Date(dateRecorded) : null,
+      dateRecorded: recordedDate,
+      dateRecordedHijri: hijriDate,
       tags: tagsArray
     });
 

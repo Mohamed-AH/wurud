@@ -280,20 +280,32 @@ function formatHijriDate(dateStr, locale) {
   // Try to parse different date formats
   let day, month, year;
 
+  // Handle "YYYY/MM/DD" format (stored by convertToHijri)
+  const yearFirstSlashMatch = dateStr.match(/^(\d{4})\/(\d{1,2})\/(\d{1,2})$/);
+  if (yearFirstSlashMatch) {
+    year = yearFirstSlashMatch[1];
+    month = yearFirstSlashMatch[2];
+    day = yearFirstSlashMatch[3];
+  }
+
   // Handle "DD/MM/YYYY" format
-  const slashMatch = dateStr.match(/(\d{1,2})\/(\d{1,2})\/(\d{4})/);
-  if (slashMatch) {
-    day = slashMatch[1];
-    month = slashMatch[2];
-    year = slashMatch[3];
+  if (!day) {
+    const slashMatch = dateStr.match(/(\d{1,2})\/(\d{1,2})\/(\d{4})/);
+    if (slashMatch) {
+      day = slashMatch[1];
+      month = slashMatch[2];
+      year = slashMatch[3];
+    }
   }
 
   // Handle "YYYY-MM-DD" format
-  const dashMatch = dateStr.match(/(\d{4})-(\d{1,2})-(\d{1,2})/);
-  if (dashMatch) {
-    year = dashMatch[1];
-    month = dashMatch[2];
-    day = dashMatch[3];
+  if (!day) {
+    const dashMatch = dateStr.match(/(\d{4})-(\d{1,2})-(\d{1,2})/);
+    if (dashMatch) {
+      year = dashMatch[1];
+      month = dashMatch[2];
+      day = dashMatch[3];
+    }
   }
 
   if (!day || !month || !year) {

@@ -159,6 +159,16 @@ describe('i18n Utility', () => {
       expect(result).toBe('28/07/1447');
     });
 
+    it('should format YYYY/MM/DD (convertToHijri output) in Arabic', () => {
+      const result = formatHijriDate('1447/07/28', 'ar');
+      expect(result).toBe('٢٨ / ٠٧ / ١٤٤٧');
+    });
+
+    it('should format YYYY/MM/DD (convertToHijri output) in English', () => {
+      const result = formatHijriDate('1447/07/28', 'en');
+      expect(result).toBe('28/07/1447');
+    });
+
     it('should return empty string for null/undefined', () => {
       expect(formatHijriDate(null, 'ar')).toBe('');
       expect(formatHijriDate(undefined, 'en')).toBe('');
