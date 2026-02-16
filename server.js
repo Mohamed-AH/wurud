@@ -135,6 +135,7 @@ const adminRoutes = require('./routes/admin');
 const lecturesApiRoutes = require('./routes/api/lectures');
 const sheikhsApiRoutes = require('./routes/api/sheikhs');
 const seriesApiRoutes = require('./routes/api/series');
+const homepageApiRoutes = require('./routes/api/homepage');
 const streamRoutes = require('./routes/stream');
 const downloadRoutes = require('./routes/download');
 
@@ -144,6 +145,7 @@ app.use('/admin', adminRoutes);
 app.use('/api/lectures', lecturesApiRoutes);
 app.use('/api/sheikhs', sheikhsApiRoutes);
 app.use('/api/series', seriesApiRoutes);
+app.use('/api/homepage', homepageApiRoutes);
 app.use('/stream', streamRoutes);
 app.use('/download', downloadRoutes);
 

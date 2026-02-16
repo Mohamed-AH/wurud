@@ -1061,13 +1061,13 @@ function switchScheduleTab(tab) {
 <!-- Navigation Tabs -->
 <div class="nav-tabs">
   <div class="nav-tabs-container">
-    <button class="nav-tab active" onclick="switchTab('series')" id="tab-series">
+    <button class="nav-tab active" id="tab-series">
       📚 السلاسل
     </button>
-    <button class="nav-tab" onclick="switchTab('lectures')" id="tab-lectures">
+    <button class="nav-tab" id="tab-lectures">
       🎙️ المحاضرات
     </button>
-    <button class="nav-tab" onclick="switchTab('khutbas')" id="tab-khutbas">
+    <button class="nav-tab" id="tab-khutbas">
       🕌 الخطب
     </button>
   </div>
@@ -1105,19 +1105,19 @@ function switchScheduleTab(tab) {
   <div class="filter-group">
     <span class="filter-label">النوع:</span>
     <div class="filter-chips">
-      <button class="chip active" data-filter="all" data-type="seriesType" onclick="filterBySeriesType('all')">
+      <button class="chip active" data-filter="all" data-type="seriesType">
         الكل
       </button>
-      <button class="chip" data-filter="online" data-type="seriesType" onclick="filterBySeriesType('online')">
+      <button class="chip" data-filter="online" data-type="seriesType">
         عن بعد
       </button>
-      <button class="chip" data-filter="archive-ramadan" data-type="seriesType" onclick="filterBySeriesType('archive-ramadan')">
+      <button class="chip" data-filter="archive-ramadan" data-type="seriesType">
         أرشيف رمضان
       </button>
-      <button class="chip" data-filter="archive" data-type="seriesType" onclick="filterBySeriesType('archive')">
+      <button class="chip" data-filter="archive" data-type="seriesType">
         أرشيف
       </button>
-      <button class="chip" data-filter="masjid" data-type="seriesType" onclick="filterBySeriesType('masjid')">
+      <button class="chip" data-filter="masjid" data-type="seriesType">
         جامع الورود
       </button>
     </div>
@@ -1126,16 +1126,16 @@ function switchScheduleTab(tab) {
   <div class="filter-group">
     <span class="filter-label">الترتيب:</span>
     <div class="filter-chips">
-      <button class="chip active" data-sort="newest" onclick="sortByDate('newest')">
+      <button class="chip active" data-sort="newest">
         الأحدث أولاً
       </button>
-      <button class="chip" data-sort="oldest" onclick="sortByDate('oldest')">
+      <button class="chip" data-sort="oldest">
         الأقدم أولاً
       </button>
     </div>
   </div>
 
-  <button class="clear-filters-btn" onclick="clearAllFilters()" id="clearFiltersBtn" style="display: none;">
+  <button class="clear-filters-btn" id="clearFiltersBtn" style="display: none;">
     مسح الفلاتر ✕
   </button>
 </div>
@@ -1480,34 +1480,6 @@ function switchScheduleTab(tab) {
 </div>
 
 <script>
-  // Switch between tabs
-  function switchTab(tabName) {
-    // Hide all tab contents
-    document.querySelectorAll('.tab-content').forEach(content => {
-      content.classList.remove('active');
-    });
-
-    // Remove active class from all tabs
-    document.querySelectorAll('.nav-tab').forEach(tab => {
-      tab.classList.remove('active');
-    });
-
-    // Show selected tab content
-    const contentElement = document.getElementById('content-' + tabName);
-    if (contentElement) {
-      contentElement.classList.add('active');
-    }
-
-    // Activate selected tab button
-    const tabElement = document.getElementById('tab-' + tabName);
-    if (tabElement) {
-      tabElement.classList.add('active');
-    }
-
-    // Re-apply current filter to new tab
-    applyFilter();
-  }
-
   // Toggle series expansion
   function toggleSeries(seriesId) {
     const episodesList = document.getElementById('episodes-' + seriesId);
@@ -1542,134 +1514,6 @@ function switchScheduleTab(tab) {
     }
   }
 
-  // Filter chips
-  document.querySelectorAll('.chip').forEach(chip => {
-    chip.addEventListener('click', function() {
-      const filterType = this.dataset.type;
-      const filterValue = this.dataset.filter;
-
-      // Update active state
-      document.querySelectorAll('.chip[data-type="' + filterType + '"]').forEach(c => c.classList.remove('active'));
-      this.classList.add('active');
-
-      // Apply filter to cards in active tab only
-      applyFilter();
-      updateClearButtonVisibility();
-    });
-  });
-
-  // Clear all filters
-  function clearAllFilters() {
-    // Reset category filter to "all"
-    document.querySelectorAll('.chip[data-type="category"]').forEach(c => c.classList.remove('active'));
-    const allCategoryChip = document.querySelector('.chip[data-type="category"][data-filter="all"]');
-    if (allCategoryChip) allCategoryChip.classList.add('active');
-
-    // Reset series type filter to "all"
-    document.querySelectorAll('.chip[data-type="seriesType"]').forEach(c => c.classList.remove('active'));
-    const allTypeChip = document.querySelector('.chip[data-type="seriesType"][data-filter="all"]');
-    if (allTypeChip) allTypeChip.classList.add('active');
-
-    // Reset sort to "newest"
-    document.querySelectorAll('.chip[data-sort]').forEach(c => c.classList.remove('active'));
-    const newestChip = document.querySelector('.chip[data-sort="newest"]');
-    if (newestChip) newestChip.classList.add('active');
-
-    // Clear search input
-    const searchInput = document.getElementById('searchInput');
-    if (searchInput) searchInput.value = '';
-
-    // Apply filter and sort
-    applyFilter();
-    sortByDate('newest');
-    updateClearButtonVisibility();
-  }
-
-  // Show/hide clear button based on active filters
-  function updateClearButtonVisibility() {
-    const clearBtn = document.getElementById('clearFiltersBtn');
-    if (!clearBtn) return;
-
-    const activeCategoryFilter = document.querySelector('.chip[data-type="category"].active');
-    const activeSeriesTypeFilter = document.querySelector('.chip[data-type="seriesType"].active');
-    const activeSortFilter = document.querySelector('.chip[data-sort].active');
-    const searchInput = document.getElementById('searchInput');
-
-    const hasActiveFilter = (activeCategoryFilter && activeCategoryFilter.dataset.filter !== 'all') ||
-                           (activeSeriesTypeFilter && activeSeriesTypeFilter.dataset.filter !== 'all') ||
-                           (activeSortFilter && activeSortFilter.dataset.sort !== 'newest') ||
-                           (searchInput && searchInput.value.trim() !== '');
-
-    clearBtn.style.display = hasActiveFilter ? 'inline-block' : 'none';
-  }
-
-  // Apply current category filter
-  function applyFilter() {
-    const activeTab = document.querySelector('.tab-content.active');
-    if (!activeTab) return;
-
-    // Get active category filter
-    const activeCategoryFilter = document.querySelector('.chip[data-type="category"].active');
-    const categoryValue = activeCategoryFilter ? activeCategoryFilter.dataset.filter : 'all';
-
-    // Get active series type filter
-    const activeSeriesTypeFilter = document.querySelector('.chip[data-type="seriesType"].active');
-    const seriesTypeValue = activeSeriesTypeFilter ? activeSeriesTypeFilter.dataset.filter : 'all';
-
-    // Filter series cards in active tab only
-    const cards = activeTab.querySelectorAll('.series-card');
-    cards.forEach(card => {
-      const category = card.dataset.category;
-      const seriesType = card.dataset.seriesType;
-
-      const categoryMatch = categoryValue === 'all' || category === categoryValue;
-      const seriesTypeMatch = seriesTypeValue === 'all' || seriesType === seriesTypeValue;
-
-      if (categoryMatch && seriesTypeMatch) {
-        card.style.display = 'block';
-      } else {
-        card.style.display = 'none';
-      }
-    });
-  }
-
-  // Filter by series type (online, archive, archive-ramadan, masjid)
-  function filterBySeriesType(type) {
-    // Update active chip
-    document.querySelectorAll('.chip[data-type="seriesType"]').forEach(c => c.classList.remove('active'));
-    const activeChip = document.querySelector(`.chip[data-type="seriesType"][data-filter="${type}"]`);
-    if (activeChip) activeChip.classList.add('active');
-
-    applyFilter();
-    updateClearButtonVisibility();
-  }
-
-  // Search functionality
-  const searchInput = document.getElementById('searchInput');
-  searchInput.addEventListener('input', performSearch);
-
-  function performSearch() {
-    const searchTerm = searchInput.value.toLowerCase();
-    const activeTab = document.querySelector('.tab-content.active');
-    if (!activeTab) return;
-
-    // Search in active tab only
-    const cards = activeTab.querySelectorAll('.series-card');
-    cards.forEach(card => {
-      const title = card.querySelector('.series-title')?.textContent.toLowerCase() || '';
-      const author = card.querySelector('.series-author')?.textContent.toLowerCase() || '';
-      const sheikh = card.querySelector('.series-sheikh')?.textContent.toLowerCase() || '';
-
-      if (title.includes(searchTerm) || author.includes(searchTerm) || sheikh.includes(searchTerm)) {
-        card.style.display = 'block';
-      } else {
-        card.style.display = 'none';
-      }
-    });
-
-    updateClearButtonVisibility();
-  }
-
   // Play audio using sticky audio player
   function playAudio(lectureId, title, sheikh) {
     if (window.audioPlayer) {
@@ -1681,33 +1525,6 @@ function switchScheduleTab(tab) {
     } else {
       alert('جاري تحميل المشغل، يرجى المحاولة مرة أخرى.');
     }
-  }
-
-  // Sort series by date
-  function sortByDate(sortType) {
-    // Update active state for sort buttons
-    document.querySelectorAll('.chip[data-sort]').forEach(btn => btn.classList.remove('active'));
-    document.querySelector(`.chip[data-sort="${sortType}"]`)?.classList.add('active');
-
-    // Get all series cards in the active tab
-    const activeTab = document.querySelector('.tab-content.active');
-    const seriesList = activeTab.querySelector('.series-list');
-    const cards = Array.from(seriesList.querySelectorAll('.series-card'));
-
-    // Sort cards based on type
-    cards.sort((a, b) => {
-      const dateA = parseInt(a.dataset.date) || 0;
-      const dateB = parseInt(b.dataset.date) || 0;
-      return sortType === 'newest' ? dateB - dateA : dateA - dateB;
-    });
-
-    // Re-append cards in sorted order
-    cards.forEach(card => seriesList.appendChild(card));
-
-    updateClearButtonVisibility();
-
-    // Re-apply category filter to maintain visibility
-    applyFilter();
   }
 
   // Sort lectures within a specific series
@@ -1750,3 +1567,6 @@ function switchScheduleTab(tab) {
     episodes.forEach(episode => container.appendChild(episode));
   }
 </script>
+
+<!-- Server-side filtering and pagination module -->
+<script src="/js/homepage.js"></script>
