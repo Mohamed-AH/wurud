@@ -1,6 +1,10 @@
 const express = require('express');
 const router = express.Router();
 const { Lecture, Series } = require('../../models');
+const cache = require('../../utils/cache');
+
+// Cache TTL for API endpoints (in seconds)
+const API_CACHE_TTL = 300; // 5 minutes
 
 /**
  * Homepage API - Server-side filtering and pagination

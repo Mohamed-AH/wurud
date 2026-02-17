@@ -107,8 +107,18 @@ app.use(session({
 app.use(passport.initialize());
 app.use(passport.session());
 
-// Static files
-app.use(express.static(path.join(__dirname, 'public')));
+// Static files with cache headers
+app.use(express.static(path.join(__dirname, 'public'), {
+  maxAge: isProduction ? '1y' : 0, // 1 year cache in production
+  etag: true,
+  lastModified: true,
+  setHeaders: (res, filePath) => {
+    // Set immutable for versioned assets
+    if (isProduction) {
+      res.setHeader('Cache-Control', 'public, max-age=31536000, immutable');
+    }
+  }
+}));
 
 // Cookie parser (for locale storage)
 app.use(cookieParser());

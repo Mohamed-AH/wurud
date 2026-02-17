@@ -1,176 +1,199 @@
 const express = require('express');
 const router = express.Router();
 const { Lecture, Sheikh, Series, Schedule, SiteSettings } = require('../models');
+const cache = require('../utils/cache');
+
+// Cache TTLs (in seconds)
+const CACHE_TTL = {
+  HOMEPAGE: 300,        // 5 minutes for homepage data
+  SERIES_LIST: 600,     // 10 minutes for series list
+  SITEMAP: 3600,        // 1 hour for sitemap
+  SCHEDULE: 300         // 5 minutes for schedule
+};
+
+// Helper function to fetch homepage data (for caching)
+async function fetchHomepageData() {
+  // Fetch all visible series with their sheikhs
+  const series = await Series.find({ isVisible: { $ne: false } })
+    .populate('sheikhId', 'nameArabic nameEnglish honorific')
+    .sort({ createdAt: -1 })
+    .lean();
+
+  // For each series, fetch its lectures (sorted by sortOrder for correct display order)
+  const seriesList = await Promise.all(
+    series.map(async (s) => {
+      const lectures = await Lecture.aggregate([
+        {
+          $match: {
+            seriesId: s._id,
+            published: true
+          }
+        },
+        {
+          $addFields: {
+            effectiveSortOrder: { $ifNull: ['$sortOrder', 999999] }
+          }
+        },
+        {
+          $sort: {
+            effectiveSortOrder: 1,
+            lectureNumber: 1,
+            createdAt: 1
+          }
+        },
+        {
+          $unset: ['effectiveSortOrder']
+        }
+      ]);
+
+      // Get original author - prefer Series.bookAuthor, fallback to lecture description
+      const originalAuthor = s.bookAuthor || lectures.find(l => l.descriptionArabic)?.descriptionArabic
+        ?.replace('من كتاب: ', '') || null;
+
+      return {
+        ...s,
+        sheikh: s.sheikhId,
+        lectures: lectures,
+        lectureCount: lectures.length,
+        originalAuthor: originalAuthor
+      };
+    })
+  );
+
+  // Filter out series with no published lectures
+  const filteredSeries = seriesList.filter(s => s.lectureCount > 0);
+
+  // Get all standalone lectures (not in any series)
+  const standaloneLectures = await Lecture.find({
+    seriesId: null,
+    published: true
+  })
+    .populate('sheikhId', 'nameArabic nameEnglish honorific')
+    .sort({ dateRecorded: -1, createdAt: -1 })
+    .lean();
+
+  // Get محاضرات متفرقة series (miscellaneous lectures)
+  const miscSeries = await Series.findOne({
+    titleArabic: /محاضرات متفرقة/i,
+    isVisible: { $ne: false }
+  })
+    .populate('sheikhId', 'nameArabic nameEnglish honorific')
+    .lean();
+
+  let miscLectures = [];
+  if (miscSeries) {
+    miscLectures = await Lecture.find({
+      seriesId: miscSeries._id,
+      published: true
+    })
+      .populate('sheikhId', 'nameArabic nameEnglish honorific')
+      .sort({ dateRecorded: -1, createdAt: -1 })
+      .lean();
+  }
+
+  // Combine standalone and miscellaneous lectures for Lectures tab
+  const allStandaloneLectures = [...standaloneLectures, ...miscLectures];
+
+  // Get Khutba series (for Khutbas tab)
+  const khutbaSeries = filteredSeries.filter(s => {
+    if (s.tags && s.tags.includes('khutba')) {
+      return true;
+    }
+    return s.titleArabic && (
+      s.titleArabic.includes('خطب') ||
+      s.titleArabic.includes('خطبة')
+    );
+  });
+
+  // Get total lecture count
+  const totalLectureCount = await Lecture.countDocuments({ published: true });
+
+  return {
+    seriesList: filteredSeries,
+    standaloneLectures: allStandaloneLectures,
+    khutbaSeries,
+    totalLectureCount
+  };
+}
+
+// Helper function to fetch schedule data (for caching)
+async function fetchScheduleData() {
+  const scheduleItems = await Schedule.find({ isActive: true })
+    .populate('seriesId', 'titleArabic titleEnglish slug')
+    .sort({ sortOrder: 1 })
+    .lean();
+
+  const weeklySchedule = await Promise.all(
+    scheduleItems.map(async (item) => {
+      if (!item.seriesId) return null;
+
+      const lectureCount = await Lecture.countDocuments({
+        seriesId: item.seriesId._id,
+        published: true
+      });
+
+      const latestLecture = await Lecture.findOne({
+        seriesId: item.seriesId._id,
+        published: true
+      })
+        .sort({ dateRecorded: -1, createdAt: -1 })
+        .select('titleArabic titleEnglish slug dateRecorded createdAt lectureNumber')
+        .lean();
+
+      const isNew = latestLecture && (
+        new Date() - new Date(latestLecture.dateRecorded || latestLecture.createdAt) < 7 * 24 * 60 * 60 * 1000
+      );
+
+      return {
+        ...item,
+        latestLecture,
+        lectureCount,
+        isNew
+      };
+    })
+  );
+
+  const dayOrder = ['السبت', 'الأحد', 'الاثنين', 'الثلاثاء', 'الأربعاء', 'الخميس', 'الجمعة'];
+  return weeklySchedule
+    .filter(item => item !== null)
+    .sort((a, b) => dayOrder.indexOf(a.dayOfWeek) - dayOrder.indexOf(b.dayOfWeek));
+}
 
 // @route   GET /
 // @desc    Homepage - Series-based view with tabs
 // @access  Public
 router.get('/', async (req, res) => {
   try {
-    // Fetch all visible series with their sheikhs
-    // Note: Series sorted by creation date, but lectures within series will be sorted by dateRecorded
-    const series = await Series.find({ isVisible: { $ne: false } })
-      .populate('sheikhId', 'nameArabic nameEnglish honorific')
-      .sort({ createdAt: -1 })
-      .lean();
-
-    // For each series, fetch its lectures (sorted by sortOrder for correct display order)
-    const seriesList = await Promise.all(
-      series.map(async (s) => {
-        const lectures = await Lecture.aggregate([
-          {
-            $match: {
-              seriesId: s._id,
-              published: true
-            }
-          },
-          {
-            $addFields: {
-              effectiveSortOrder: { $ifNull: ['$sortOrder', 999999] }
-            }
-          },
-          {
-            $sort: {
-              effectiveSortOrder: 1,
-              lectureNumber: 1,
-              createdAt: 1
-            }
-          },
-          {
-            $unset: ['effectiveSortOrder']
-          }
-        ]);
-
-        // Get original author - prefer Series.bookAuthor, fallback to lecture description
-        const originalAuthor = s.bookAuthor || lectures.find(l => l.descriptionArabic)?.descriptionArabic
-          ?.replace('من كتاب: ', '') || null;
-
-        return {
-          ...s,
-          sheikh: s.sheikhId,
-          lectures: lectures,
-          lectureCount: lectures.length,
-          originalAuthor: originalAuthor
-        };
-      })
+    // Get homepage data from cache or fetch
+    const homepageData = await cache.getOrSet(
+      'homepage:data',
+      fetchHomepageData,
+      CACHE_TTL.HOMEPAGE
     );
 
-    // Filter out series with no published lectures
-    const filteredSeries = seriesList.filter(s => s.lectureCount > 0);
-
-    // Get all standalone lectures (not in any series)
-    // Sort by recording date (most recent first), fallback to creation date
-    const standaloneLectures = await Lecture.find({
-      seriesId: null,
-      published: true
-    })
-      .populate('sheikhId', 'nameArabic nameEnglish honorific')
-      .sort({ dateRecorded: -1, createdAt: -1 })
-      .lean();
-
-    // Get محاضرات متفرقة series (miscellaneous lectures) and include in Lectures tab
-    // Only show if visible
-    const miscSeries = await Series.findOne({
-      titleArabic: /محاضرات متفرقة/i,
-      isVisible: { $ne: false }
-    })
-      .populate('sheikhId', 'nameArabic nameEnglish honorific')
-      .lean();
-
-    let miscLectures = [];
-    if (miscSeries) {
-      miscLectures = await Lecture.find({
-        seriesId: miscSeries._id,
-        published: true
-      })
-        .populate('sheikhId', 'nameArabic nameEnglish honorific')
-        .sort({ dateRecorded: -1, createdAt: -1 })
-        .lean();
-    }
-
-    // Combine standalone and miscellaneous lectures for Lectures tab
-    const allStandaloneLectures = [...standaloneLectures, ...miscLectures];
-
-    // Get Khutba series (for Khutbas tab) - use tags for better filtering
-    // Also fallback to title-based detection for backward compatibility
-    const khutbaSeries = filteredSeries.filter(s => {
-      // Check if tags include 'khutba'
-      if (s.tags && s.tags.includes('khutba')) {
-        return true;
-      }
-      // Fallback to title-based detection for content without tags
-      return s.titleArabic && (
-        s.titleArabic.includes('خطب') ||
-        s.titleArabic.includes('خطبة')
-      );
-    });
-
-    // Fetch weekly schedule with latest lecture for each series
-    const scheduleItems = await Schedule.find({ isActive: true })
-      .populate('seriesId', 'titleArabic titleEnglish slug')
-      .sort({ sortOrder: 1 })
-      .lean();
-
-    // For each schedule item, get the most recent lecture and lecture count
-    const weeklySchedule = await Promise.all(
-      scheduleItems.map(async (item) => {
-        if (!item.seriesId) return null;
-
-        // Get total lecture count for this series
-        const lectureCount = await Lecture.countDocuments({
-          seriesId: item.seriesId._id,
-          published: true
-        });
-
-        // Get the most recent lecture in this series
-        const latestLecture = await Lecture.findOne({
-          seriesId: item.seriesId._id,
-          published: true
-        })
-          .sort({ dateRecorded: -1, createdAt: -1 })
-          .select('titleArabic titleEnglish slug dateRecorded createdAt lectureNumber')
-          .lean();
-
-        // Check if lecture is "new" (< 7 days old)
-        const isNew = latestLecture && (
-          new Date() - new Date(latestLecture.dateRecorded || latestLecture.createdAt) < 7 * 24 * 60 * 60 * 1000
-        );
-
-        return {
-          ...item,
-          latestLecture,
-          lectureCount,
-          isNew
-        };
-      })
+    // Get schedule data from cache or fetch
+    const weeklySchedule = await cache.getOrSet(
+      'homepage:schedule',
+      fetchScheduleData,
+      CACHE_TTL.SCHEDULE
     );
 
-    // Filter out null items and sort by day order
-    const dayOrder = ['السبت', 'الأحد', 'الاثنين', 'الثلاثاء', 'الأربعاء', 'الخميس', 'الجمعة'];
-    const sortedSchedule = weeklySchedule
-      .filter(item => item !== null)
-      .sort((a, b) => dayOrder.indexOf(a.dayOfWeek) - dayOrder.indexOf(b.dayOfWeek));
-
-    // Get total lecture count for the site
-    const totalLectureCount = await Lecture.countDocuments({ published: true });
-
-    // Check if public stats should be shown
+    // Check if public stats should be shown (not cached - lightweight)
     let showPublicStats = false;
     try {
       const settings = await SiteSettings.getSettings();
       showPublicStats = settings.shouldShowPublicStats();
     } catch (err) {
-      // If settings fail, default to hidden
       console.error('Failed to get site settings:', err.message);
     }
 
     res.render('public/index', {
       title: 'المكتبة الصوتية',
-      seriesList: filteredSeries,
-      standaloneLectures: allStandaloneLectures,
-      khutbaSeries: khutbaSeries,
-      weeklySchedule: sortedSchedule,
-      totalLectureCount,
+      seriesList: homepageData.seriesList,
+      standaloneLectures: homepageData.standaloneLectures,
+      khutbaSeries: homepageData.khutbaSeries,
+      weeklySchedule,
+      totalLectureCount: homepageData.totalLectureCount,
       showPublicStats
     });
   } catch (error) {
@@ -502,29 +525,26 @@ router.get('/series/:idOrSlug', async (req, res) => {
   }
 });
 
-// @route   GET /sitemap.xml
-// @desc    XML Sitemap for SEO (uses slugs when available)
-// @access  Public
-router.get('/sitemap.xml', async (req, res) => {
-  try {
-    const baseUrl = 'https://rasmihassan.com';
+// Helper function to generate sitemap XML (for caching)
+async function generateSitemap() {
+  const baseUrl = 'https://rasmihassan.com';
 
-    // Get all published lectures (include slug for SEO-friendly URLs)
-    const lectures = await Lecture.find({ published: true })
-      .select('_id slug updatedAt')
-      .lean();
+  // Get all published lectures (include slug for SEO-friendly URLs)
+  const lectures = await Lecture.find({ published: true })
+    .select('_id slug updatedAt')
+    .lean();
 
-    // Get all visible series (exclude hidden ones)
-    const series = await Series.find({ isVisible: { $ne: false } })
-      .select('_id slug updatedAt')
-      .lean();
+  // Get all visible series (exclude hidden ones)
+  const series = await Series.find({ isVisible: { $ne: false } })
+    .select('_id slug updatedAt')
+    .lean();
 
-    // Get all sheikhs
-    const sheikhs = await Sheikh.find()
-      .select('_id slug updatedAt')
-      .lean();
+  // Get all sheikhs
+  const sheikhs = await Sheikh.find()
+    .select('_id slug updatedAt')
+    .lean();
 
-    let xml = `<?xml version="1.0" encoding="UTF-8"?>
+  let xml = `<?xml version="1.0" encoding="UTF-8"?>
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
   <!-- Homepage -->
   <url>
@@ -549,48 +569,63 @@ router.get('/sitemap.xml', async (req, res) => {
   </url>
 `;
 
-    // Add lectures (use slug if available, otherwise ID)
-    for (const lecture of lectures) {
-      const lastmod = lecture.updatedAt ? new Date(lecture.updatedAt).toISOString().split('T')[0] : '';
-      const lectureUrl = lecture.slug ? encodeURIComponent(lecture.slug) : lecture._id;
-      xml += `  <url>
+  // Add lectures (use slug if available, otherwise ID)
+  for (const lecture of lectures) {
+    const lastmod = lecture.updatedAt ? new Date(lecture.updatedAt).toISOString().split('T')[0] : '';
+    const lectureUrl = lecture.slug ? encodeURIComponent(lecture.slug) : lecture._id;
+    xml += `  <url>
     <loc>${baseUrl}/lectures/${lectureUrl}</loc>
     ${lastmod ? `<lastmod>${lastmod}</lastmod>` : ''}
     <changefreq>monthly</changefreq>
     <priority>0.7</priority>
   </url>
 `;
-    }
+  }
 
-    // Add series (use slug if available, otherwise ID)
-    for (const s of series) {
-      const lastmod = s.updatedAt ? new Date(s.updatedAt).toISOString().split('T')[0] : '';
-      const seriesUrl = s.slug ? encodeURIComponent(s.slug) : s._id;
-      xml += `  <url>
+  // Add series (use slug if available, otherwise ID)
+  for (const s of series) {
+    const lastmod = s.updatedAt ? new Date(s.updatedAt).toISOString().split('T')[0] : '';
+    const seriesUrl = s.slug ? encodeURIComponent(s.slug) : s._id;
+    xml += `  <url>
     <loc>${baseUrl}/series/${seriesUrl}</loc>
     ${lastmod ? `<lastmod>${lastmod}</lastmod>` : ''}
     <changefreq>weekly</changefreq>
     <priority>0.8</priority>
   </url>
 `;
-    }
+  }
 
-    // Add sheikhs (use slug if available, otherwise ID)
-    for (const sheikh of sheikhs) {
-      const lastmod = sheikh.updatedAt ? new Date(sheikh.updatedAt).toISOString().split('T')[0] : '';
-      const sheikhUrl = sheikh.slug ? encodeURIComponent(sheikh.slug) : sheikh._id;
-      xml += `  <url>
+  // Add sheikhs (use slug if available, otherwise ID)
+  for (const sheikh of sheikhs) {
+    const lastmod = sheikh.updatedAt ? new Date(sheikh.updatedAt).toISOString().split('T')[0] : '';
+    const sheikhUrl = sheikh.slug ? encodeURIComponent(sheikh.slug) : sheikh._id;
+    xml += `  <url>
     <loc>${baseUrl}/sheikhs/${sheikhUrl}</loc>
     ${lastmod ? `<lastmod>${lastmod}</lastmod>` : ''}
     <changefreq>monthly</changefreq>
     <priority>0.8</priority>
   </url>
 `;
-    }
+  }
 
-    xml += `</urlset>`;
+  xml += `</urlset>`;
+  return xml;
+}
+
+// @route   GET /sitemap.xml
+// @desc    XML Sitemap for SEO (uses slugs when available)
+// @access  Public
+router.get('/sitemap.xml', async (req, res) => {
+  try {
+    // Get sitemap from cache or generate
+    const xml = await cache.getOrSet(
+      'sitemap:xml',
+      generateSitemap,
+      CACHE_TTL.SITEMAP
+    );
 
     res.set('Content-Type', 'application/xml');
+    res.set('Cache-Control', 'public, max-age=3600'); // 1 hour browser cache
     res.send(xml);
   } catch (error) {
     console.error('Sitemap generation error:', error);
