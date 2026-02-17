@@ -335,25 +335,27 @@
     background: rgba(193, 154, 107, 0.1);
   }
 
-  /* Episodes List */
+  /* Episodes List - CLS-safe animation approach */
   .episodes-list {
-    display: none;
     background: #F5EBE0;
+    max-height: 0;
+    overflow: hidden;
+    transition: max-height 0.3s ease-out, opacity 0.2s ease-out;
+    opacity: 0;
   }
 
   .episodes-list.show {
-    display: block !important;
-    visibility: visible !important;
-    opacity: 1 !important;
-    height: auto !important;
-    overflow: visible !important;
+    max-height: 10000px; /* Large enough for any content */
+    overflow: visible;
+    opacity: 1;
+    transition: max-height 0.5s ease-in, opacity 0.3s ease-in;
   }
 
   /* More specific selector for Khutba tab to ensure proper display */
   #content-khutbas .episodes-list.show {
-    display: block !important;
-    visibility: visible !important;
-    opacity: 1 !important;
+    max-height: 10000px;
+    overflow: visible;
+    opacity: 1;
   }
 
   .episode-item {
@@ -1568,5 +1570,5 @@ function switchScheduleTab(tab) {
   }
 </script>
 
-<!-- Server-side filtering and pagination module -->
-<script src="/js/homepage.js"></script>
+<!-- Server-side filtering and pagination module (minified) -->
+<script src="/js/homepage.min.js" defer></script>
