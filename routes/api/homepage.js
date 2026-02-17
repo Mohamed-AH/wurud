@@ -93,8 +93,10 @@ router.get('/series', async (req, res) => {
       excludeKhutbas = 'true'
     } = req.query;
 
-    const pageNum = Math.max(1, parseInt(page));
-    const limitNum = Math.min(50, Math.max(1, parseInt(limit)));
+    const parsedPage = parseInt(page);
+    const parsedLimit = parseInt(limit);
+    const pageNum = Math.max(1, isNaN(parsedPage) ? 1 : parsedPage);
+    const limitNum = Math.min(50, Math.max(1, isNaN(parsedLimit) ? 10 : parsedLimit));
     const skip = (pageNum - 1) * limitNum;
 
     // Build base query
@@ -235,8 +237,10 @@ router.get('/standalone', async (req, res) => {
       includeMisc = 'true'
     } = req.query;
 
-    const pageNum = Math.max(1, parseInt(page));
-    const limitNum = Math.min(50, Math.max(1, parseInt(limit)));
+    const parsedPage = parseInt(page);
+    const parsedLimit = parseInt(limit);
+    const pageNum = Math.max(1, isNaN(parsedPage) ? 1 : parsedPage);
+    const limitNum = Math.min(50, Math.max(1, isNaN(parsedLimit) ? 20 : parsedLimit));
     const skip = (pageNum - 1) * limitNum;
 
     // Build base query for standalone lectures
@@ -344,8 +348,10 @@ router.get('/khutbas', async (req, res) => {
       sort = 'newest'
     } = req.query;
 
-    const pageNum = Math.max(1, parseInt(page));
-    const limitNum = Math.min(50, Math.max(1, parseInt(limit)));
+    const parsedPage = parseInt(page);
+    const parsedLimit = parseInt(limit);
+    const pageNum = Math.max(1, isNaN(parsedPage) ? 1 : parsedPage);
+    const limitNum = Math.min(50, Math.max(1, isNaN(parsedLimit) ? 10 : parsedLimit));
     const skip = (pageNum - 1) * limitNum;
 
     // Build base query
