@@ -157,9 +157,9 @@ All mobile issues have been fixed:
 3. ~~**3.8 Quick Add Lecture to Series**~~ ✅ Done - "+ إضافة درس" button on series edit
 4. ~~**3.10 Admin Data Management**~~ ✅ Done - Duration verification, lecture management
 5. ~~**3.9 Direct OCI Audio Upload**~~ ✅ Done - AJAX upload with progress, duration extraction
-6. **3.1 Server-Side Filtering & Pagination** - Required before 300+ lectures
+6. ~~**3.1 Server-Side Filtering & Pagination**~~ ✅ Done - API endpoints with pagination
 7. ~~**3.5 Weekly Class Schedule**~~ ✅ Done - Add entries at /admin/schedule
-8. **3.3 Performance Optimizations** - Caching, bundling, CDN
+8. **3.3 Performance Optimizations** - Caching, bundling, CDN (NEXT)
 9. **3.4 Admin Panel Arabic** - RTL support for admin pages
 10. **Test Coverage Improvements** - Focus on slugify.js, lectures API, middleware
 11. ~~**3.11 Hero Section Text Update**~~ ✅ Done - Updated branding to "موقع الشيخ حسن بن محمد منصور الدغريري"
@@ -243,13 +243,23 @@ All mobile issues have been fixed:
 
 ### Priority 3: MEDIUM
 
-#### 3.1 Scalability: Server-Side Filtering & Pagination ⬜ NOT STARTED
-**Priority**: MEDIUM | **Status**: Pending (Required before 300+ lectures)
+#### 3.1 Scalability: Server-Side Filtering & Pagination ✅ COMPLETED
+**Priority**: MEDIUM | **Status**: Done (2026-02-17)
 
-- [ ] Move filtering from client-side to server-side
-- [ ] Implement pagination or infinite scroll
-- [ ] API endpoints for filtered/paginated results
-- [ ] Update frontend to call API instead of client-side filter
+- [x] Move filtering from client-side to server-side ✅
+- [x] Implement pagination or infinite scroll ✅
+- [x] API endpoints for filtered/paginated results ✅
+- [x] Update frontend to call API instead of client-side filter ✅
+
+**Implementation:**
+- Created `/routes/api/homepage.js` with 4 endpoints:
+  - `GET /api/homepage/series` - Paginated series with lectures
+  - `GET /api/homepage/standalone` - Paginated standalone lectures
+  - `GET /api/homepage/khutbas` - Paginated khutba series
+  - `GET /api/homepage/stats` - Tab counts for UI badges
+- Server-side filtering: category, type, search
+- Pagination with validation (page, limit, skip)
+- 58 unit tests added (see `tests/unit/homepage.test.js`)
 
 #### 3.2 Mobile UX Enhancements ✅ COMPLETED
 **Priority**: MEDIUM | **Status**: Done
