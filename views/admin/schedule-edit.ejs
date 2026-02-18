@@ -148,6 +148,7 @@
             <label for="dayOfWeek">Day of Week (Arabic) *</label>
             <select name="dayOfWeek" id="dayOfWeek" required>
               <option value="">Select Day</option>
+              <option value="يومي" <%= scheduleItem && scheduleItem.dayOfWeek === 'يومي' ? 'selected' : '' %>>يومي (Daily)</option>
               <option value="السبت" <%= scheduleItem && scheduleItem.dayOfWeek === 'السبت' ? 'selected' : '' %>>السبت (Saturday)</option>
               <option value="الأحد" <%= scheduleItem && scheduleItem.dayOfWeek === 'الأحد' ? 'selected' : '' %>>الأحد (Sunday)</option>
               <option value="الاثنين" <%= scheduleItem && scheduleItem.dayOfWeek === 'الاثنين' ? 'selected' : '' %>>الاثنين (Monday)</option>
@@ -162,6 +163,7 @@
             <label for="dayOfWeekEnglish">Day of Week (English)</label>
             <select name="dayOfWeekEnglish" id="dayOfWeekEnglish">
               <option value="">Auto-select</option>
+              <option value="Daily" <%= scheduleItem && scheduleItem.dayOfWeekEnglish === 'Daily' ? 'selected' : '' %>>Daily</option>
               <option value="Saturday" <%= scheduleItem && scheduleItem.dayOfWeekEnglish === 'Saturday' ? 'selected' : '' %>>Saturday</option>
               <option value="Sunday" <%= scheduleItem && scheduleItem.dayOfWeekEnglish === 'Sunday' ? 'selected' : '' %>>Sunday</option>
               <option value="Monday" <%= scheduleItem && scheduleItem.dayOfWeekEnglish === 'Monday' ? 'selected' : '' %>>Monday</option>
@@ -241,6 +243,7 @@
     // Auto-select English day when Arabic day changes
     document.getElementById('dayOfWeek').addEventListener('change', function() {
       const dayMap = {
+        'يومي': 'Daily',
         'السبت': 'Saturday',
         'الأحد': 'Sunday',
         'الاثنين': 'Monday',
