@@ -2,6 +2,13 @@ const express = require('express');
 const router = express.Router();
 const { isAdmin, isEditor, isSuperAdmin } = require('../../middleware/auth');
 const { convertToHijri } = require('../../utils/dateUtils');
+const cache = require('../../utils/cache');
+
+// Helper function to invalidate homepage cache after admin changes
+function invalidateHomepageCache() {
+  cache.invalidatePattern('homepage:*');
+  cache.del('sitemap:xml');
+}
 
 // @route   GET /admin/login
 // @desc    Admin login page
@@ -251,6 +258,9 @@ router.post('/lectures/:id/delete', isAdmin, async (req, res) => {
     // Delete the lecture
     await Lecture.findByIdAndDelete(req.params.id);
 
+    // Invalidate homepage cache
+    invalidateHomepageCache();
+
     // Check if request expects JSON (AJAX) or redirect
     if (req.xhr || req.headers.accept?.includes('application/json')) {
       return res.json({ success: true, message: 'Lecture deleted' });
@@ -419,6 +429,9 @@ router.post('/series/:id/edit', isAdmin, async (req, res) => {
       isVisible: isVisibleBool
     });
 
+    // Invalidate homepage cache
+    invalidateHomepageCache();
+
     res.redirect(`/admin/series/${req.params.id}/edit?success=updated`);
   } catch (error) {
     console.error('Update series error:', error);
@@ -567,6 +580,9 @@ router.post('/series/:id/quick-add-lecture', isAdmin, async (req, res) => {
     // Update series lecture count
     await Series.findByIdAndUpdate(series._id, { $inc: { lectureCount: 1 } });
 
+    // Invalidate homepage cache
+    invalidateHomepageCache();
+
     // Redirect back to series edit page with success message
     res.redirect(`/admin/series/${series._id}/edit?success=lecture_added&lectureId=${lecture._id}`);
   } catch (error) {
@@ -654,6 +670,9 @@ router.post('/lectures/:id/edit', isAdmin, async (req, res) => {
       dateRecordedHijri: hijriDate,
       tags: tagsArray
     });
+
+    // Invalidate homepage cache
+    invalidateHomepageCache();
 
     res.redirect('/admin/manage?success=lecture-updated');
   } catch (error) {
@@ -832,6 +851,9 @@ router.post('/lectures/:id/toggle-published', isAdmin, async (req, res) => {
 
     lecture.published = !lecture.published;
     await lecture.save();
+
+    // Invalidate homepage cache
+    invalidateHomepageCache();
 
     res.json({
       success: true,
@@ -1459,6 +1481,9 @@ router.post('/schedule/add', isAdmin, async (req, res) => {
 
     await scheduleItem.save();
 
+    // Invalidate homepage cache (schedule affects homepage)
+    invalidateHomepageCache();
+
     res.redirect('/admin/schedule?success=created');
   } catch (error) {
     console.error('Schedule create error:', error);
@@ -1528,6 +1553,9 @@ router.post('/schedule/:id/edit', isAdmin, async (req, res) => {
       notes: notes || undefined
     });
 
+    // Invalidate homepage cache
+    invalidateHomepageCache();
+
     res.redirect('/admin/schedule?success=updated');
   } catch (error) {
     console.error('Schedule update error:', error);
@@ -1543,6 +1571,9 @@ router.post('/schedule/:id/delete', isAdmin, async (req, res) => {
     const { Schedule } = require('../../models');
 
     await Schedule.findByIdAndDelete(req.params.id);
+
+    // Invalidate homepage cache
+    invalidateHomepageCache();
 
     res.redirect('/admin/schedule?success=deleted');
   } catch (error) {

@@ -107,8 +107,18 @@ app.use(session({
 app.use(passport.initialize());
 app.use(passport.session());
 
-// Static files
-app.use(express.static(path.join(__dirname, 'public')));
+// Static files with cache headers
+app.use(express.static(path.join(__dirname, 'public'), {
+  maxAge: isProduction ? '1y' : 0, // 1 year cache in production
+  etag: true,
+  lastModified: true,
+  setHeaders: (res, filePath) => {
+    // Set immutable for versioned assets
+    if (isProduction) {
+      res.setHeader('Cache-Control', 'public, max-age=31536000, immutable');
+    }
+  }
+}));
 
 // Cookie parser (for locale storage)
 app.use(cookieParser());
@@ -135,6 +145,7 @@ const adminRoutes = require('./routes/admin');
 const lecturesApiRoutes = require('./routes/api/lectures');
 const sheikhsApiRoutes = require('./routes/api/sheikhs');
 const seriesApiRoutes = require('./routes/api/series');
+const homepageApiRoutes = require('./routes/api/homepage');
 const streamRoutes = require('./routes/stream');
 const downloadRoutes = require('./routes/download');
 
@@ -144,6 +155,7 @@ app.use('/admin', adminRoutes);
 app.use('/api/lectures', lecturesApiRoutes);
 app.use('/api/sheikhs', sheikhsApiRoutes);
 app.use('/api/series', seriesApiRoutes);
+app.use('/api/homepage', homepageApiRoutes);
 app.use('/stream', streamRoutes);
 app.use('/download', downloadRoutes);
 

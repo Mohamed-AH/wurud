@@ -4,12 +4,12 @@ const scheduleSchema = new mongoose.Schema({
   dayOfWeek: {
     type: String,
     required: true,
-    enum: ['السبت', 'الأحد', 'الاثنين', 'الثلاثاء', 'الأربعاء', 'الخميس', 'الجمعة'],
+    enum: ['يومي', 'السبت', 'الأحد', 'الاثنين', 'الثلاثاء', 'الأربعاء', 'الخميس', 'الجمعة'],
     index: true
   },
   dayOfWeekEnglish: {
     type: String,
-    enum: ['Saturday', 'Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday']
+    enum: ['Daily', 'Saturday', 'Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday']
   },
   time: {
     type: String,
@@ -58,7 +58,7 @@ scheduleSchema.index({ isActive: 1, sortOrder: 1 });
 
 // Helper to get day number for sorting (Saturday = 0 in Islamic week)
 scheduleSchema.statics.getDayOrder = function(day) {
-  const days = ['السبت', 'الأحد', 'الاثنين', 'الثلاثاء', 'الأربعاء', 'الخميس', 'الجمعة'];
+  const days = ['يومي', 'السبت', 'الأحد', 'الاثنين', 'الثلاثاء', 'الأربعاء', 'الخميس', 'الجمعة'];
   return days.indexOf(day);
 };
 
