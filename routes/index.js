@@ -164,18 +164,19 @@ async function fetchScheduleData() {
 // @access  Public
 router.get('/', async (req, res) => {
   try {
-    // Get homepage data from cache or fetch
-    const homepageData = await cache.getOrSet(
-      'homepage:data',
-      fetchHomepageData,
-      CACHE_TTL.HOMEPAGE
-    );
-
-    // Get schedule data from cache or fetch
+    // PERFORMANCE: Only load schedule initially, series loaded via API
+    // Get schedule data from cache or fetch (lightweight)
     const weeklySchedule = await cache.getOrSet(
       'homepage:schedule',
       fetchScheduleData,
       CACHE_TTL.SCHEDULE
+    );
+
+    // Get total lecture count (lightweight query)
+    const totalLectureCount = await cache.getOrSet(
+      'homepage:lectureCount',
+      () => Lecture.countDocuments({ published: true }),
+      CACHE_TTL.HOMEPAGE
     );
 
     // Check if public stats should be shown (not cached - lightweight)
@@ -189,12 +190,13 @@ router.get('/', async (req, res) => {
 
     res.render('public/index', {
       title: 'المكتبة الصوتية',
-      seriesList: homepageData.seriesList,
-      standaloneLectures: homepageData.standaloneLectures,
-      khutbaSeries: homepageData.khutbaSeries,
+      seriesList: [],           // Empty - loaded via API
+      standaloneLectures: [],   // Empty - loaded via API
+      khutbaSeries: [],         // Empty - loaded via API
       weeklySchedule,
-      totalLectureCount: homepageData.totalLectureCount,
-      showPublicStats
+      totalLectureCount,
+      showPublicStats,
+      lazyLoadSeries: true      // Flag for template to show loading state
     });
   } catch (error) {
     console.error('Homepage error:', error);

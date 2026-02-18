@@ -484,6 +484,10 @@
   function renderSeries(seriesList, replace) {
     if (!seriesContainer) return;
 
+    // Remove loading skeleton if present
+    const skeleton = document.getElementById('seriesLoadingSkeleton');
+    if (skeleton) skeleton.remove();
+
     if (replace) {
       seriesContainer.innerHTML = '';
     }

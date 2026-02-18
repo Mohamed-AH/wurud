@@ -871,6 +871,42 @@
       padding: 12px 16px;
     }
   }
+
+  /* Skeleton loading styles */
+  .series-skeleton {
+    padding: 0 var(--space-lg);
+  }
+  .skeleton-card {
+    background: var(--cream);
+    border: 2px solid var(--border-light);
+    border-radius: 12px;
+    padding: 24px;
+    margin-bottom: 16px;
+  }
+  .skeleton-header {
+    height: 28px;
+    background: linear-gradient(90deg, var(--border-light) 25%, var(--cream) 50%, var(--border-light) 75%);
+    background-size: 200% 100%;
+    animation: skeleton-shimmer 1.5s infinite;
+    border-radius: 6px;
+    margin-bottom: 16px;
+    width: 60%;
+  }
+  .skeleton-line {
+    height: 16px;
+    background: linear-gradient(90deg, var(--border-light) 25%, var(--cream) 50%, var(--border-light) 75%);
+    background-size: 200% 100%;
+    animation: skeleton-shimmer 1.5s infinite;
+    border-radius: 4px;
+    margin-bottom: 12px;
+  }
+  .skeleton-line.short {
+    width: 40%;
+  }
+  @keyframes skeleton-shimmer {
+    0% { background-position: 200% 0; }
+    100% { background-position: -200% 0; }
+  }
 </style>
 
 <!-- Search Hero -->
@@ -1145,7 +1181,27 @@ function switchScheduleTab(tab) {
 <!-- Series Tab Content -->
 <div id="content-series" class="tab-content active">
 <div class="series-list">
-  <% if (seriesList && seriesList.length > 0) { %>
+  <% if (typeof lazyLoadSeries !== 'undefined' && lazyLoadSeries) { %>
+    <!-- Loading skeleton - series will be loaded via API -->
+    <div class="series-skeleton" id="seriesLoadingSkeleton">
+      <div class="skeleton-card">
+        <div class="skeleton-header"></div>
+        <div class="skeleton-line"></div>
+        <div class="skeleton-line short"></div>
+      </div>
+      <div class="skeleton-card">
+        <div class="skeleton-header"></div>
+        <div class="skeleton-line"></div>
+        <div class="skeleton-line short"></div>
+      </div>
+      <div class="skeleton-card">
+        <div class="skeleton-header"></div>
+        <div class="skeleton-line"></div>
+        <div class="skeleton-line short"></div>
+      </div>
+      <p style="text-align: center; color: var(--text-muted); padding: 20px;">جاري تحميل السلاسل...</p>
+    </div>
+  <% } else if (seriesList && seriesList.length > 0) { %>
     <% seriesList.forEach(series => {
       // Get the most recent lecture date for sorting
       // Find the lecture with the latest dateRecorded
