@@ -32,7 +32,9 @@ describe('Public Routes Integration Tests', () => {
     });
 
     const publicRoutes = require('../../../routes/index');
+    const homepageApi = require('../../../routes/api/homepage');
     app.use('/', publicRoutes);
+    app.use('/api/homepage', homepageApi);
   });
 
   afterAll(async () => {
@@ -58,7 +60,7 @@ describe('Public Routes Integration Tests', () => {
       expect(response.body.khutbaSeries).toEqual([]);
     });
 
-    it('should return series with published lectures', async () => {
+    it('should return series with published lectures via API', async () => {
       const sheikh = await Sheikh.create({
         nameArabic: 'الشيخ أحمد',
         honorific: 'حفظه الله'
@@ -76,14 +78,21 @@ describe('Public Routes Integration Tests', () => {
         lectureNumber: 1
       });
 
-      const response = await request(app)
+      // Homepage now lazy-loads series via API
+      const homepageResponse = await request(app)
         .get('/')
         .expect(200);
 
-      expect(response.body.seriesList).toHaveLength(1);
-      expect(response.body.seriesList[0].titleArabic).toBe('شرح التوحيد');
-      expect(response.body.seriesList[0].lectureCount).toBe(1);
-      expect(response.body.seriesList[0].sheikh.nameArabic).toBe('الشيخ أحمد');
+      expect(homepageResponse.body.seriesList).toHaveLength(0); // Empty - loaded via API
+      expect(homepageResponse.body.lazyLoadSeries).toBe(true);
+
+      // Test API endpoint
+      const apiResponse = await request(app)
+        .get('/api/homepage/series')
+        .expect(200);
+
+      expect(apiResponse.body.seriesList).toHaveLength(1);
+      expect(apiResponse.body.seriesList[0].titleArabic).toBe('شرح التوحيد');
     });
 
     it('should filter out series with no published lectures', async () => {
@@ -101,7 +110,7 @@ describe('Public Routes Integration Tests', () => {
       expect(response.body.seriesList).toHaveLength(0);
     });
 
-    it('should identify khutba series by tag', async () => {
+    it('should identify khutba series by tag via API', async () => {
       const sheikh = await Sheikh.create({ nameArabic: 'الشيخ' });
       const series = await Series.create({
         titleArabic: 'مجموعة',
@@ -115,14 +124,22 @@ describe('Public Routes Integration Tests', () => {
         published: true
       });
 
-      const response = await request(app)
+      // Homepage returns empty khutbaSeries (loaded via API)
+      const homepageResponse = await request(app)
         .get('/')
         .expect(200);
 
-      expect(response.body.khutbaSeries).toHaveLength(1);
+      expect(homepageResponse.body.khutbaSeries).toHaveLength(0);
+
+      // Test API endpoint
+      const apiResponse = await request(app)
+        .get('/api/homepage/khutbas')
+        .expect(200);
+
+      expect(apiResponse.body.khutbaSeries).toHaveLength(1);
     });
 
-    it('should identify khutba series by title', async () => {
+    it('should identify khutba series by title via API', async () => {
       const sheikh = await Sheikh.create({ nameArabic: 'الشيخ' });
       const series = await Series.create({
         titleArabic: 'خطب الجمعة',
@@ -135,14 +152,22 @@ describe('Public Routes Integration Tests', () => {
         published: true
       });
 
-      const response = await request(app)
+      // Homepage returns empty khutbaSeries (loaded via API)
+      const homepageResponse = await request(app)
         .get('/')
         .expect(200);
 
-      expect(response.body.khutbaSeries).toHaveLength(1);
+      expect(homepageResponse.body.khutbaSeries).toHaveLength(0);
+
+      // Test API endpoint
+      const apiResponse = await request(app)
+        .get('/api/homepage/khutbas')
+        .expect(200);
+
+      expect(apiResponse.body.khutbaSeries).toHaveLength(1);
     });
 
-    it('should return standalone lectures', async () => {
+    it('should return standalone lectures via API', async () => {
       const sheikh = await Sheikh.create({
         nameArabic: 'الشيخ',
         honorific: 'حفظه الله'
@@ -154,12 +179,20 @@ describe('Public Routes Integration Tests', () => {
         published: true
       });
 
-      const response = await request(app)
+      // Homepage returns empty standaloneLectures (loaded via API)
+      const homepageResponse = await request(app)
         .get('/')
         .expect(200);
 
-      expect(response.body.standaloneLectures).toHaveLength(1);
-      expect(response.body.standaloneLectures[0].titleArabic).toBe('محاضرة مستقلة');
+      expect(homepageResponse.body.standaloneLectures).toHaveLength(0);
+
+      // Test API endpoint
+      const apiResponse = await request(app)
+        .get('/api/homepage/standalone')
+        .expect(200);
+
+      expect(apiResponse.body.standaloneLectures).toHaveLength(1);
+      expect(apiResponse.body.standaloneLectures[0].titleArabic).toBe('محاضرة مستقلة');
     });
   });
 
