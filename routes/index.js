@@ -640,16 +640,37 @@ router.get('/sitemap.xml', async (req, res) => {
 // @access  Public
 router.get('/robots.txt', (req, res) => {
   const robotsTxt = `# Robots.txt for rasmihassan.com
+
 User-agent: *
 Allow: /
+Disallow: /admin/
+Disallow: /api/
+Disallow: /auth/
 
 # Sitemap
 Sitemap: https://rasmihassan.com/sitemap.xml
 
-# Disallow admin and API routes
-Disallow: /admin/
-Disallow: /api/
-Disallow: /auth/
+# Block AI training bots
+User-agent: Amazonbot
+Disallow: /
+
+User-agent: Bytespider
+Disallow: /
+
+User-agent: CCBot
+Disallow: /
+
+User-agent: ClaudeBot
+Disallow: /
+
+User-agent: Google-Extended
+Disallow: /
+
+User-agent: GPTBot
+Disallow: /
+
+User-agent: meta-externalagent
+Disallow: /
 `;
 
   res.set('Content-Type', 'text/plain');

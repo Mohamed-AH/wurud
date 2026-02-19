@@ -79,7 +79,8 @@
         <button class="control-btn control-btn-small" id="muteBtn" title="<%= locale === 'ar' ? 'كتم الصوت' : 'Mute' %>">
           <span id="volumeIcon">🔊</span>
         </button>
-        <input type="range" class="volume-slider" id="volumeSlider" min="0" max="100" value="100">
+        <label for="volumeSlider" class="visually-hidden"><%= locale === 'ar' ? 'مستوى الصوت' : 'Volume level' %></label>
+        <input type="range" class="volume-slider" id="volumeSlider" min="0" max="100" value="100" aria-label="<%= locale === 'ar' ? 'مستوى الصوت' : 'Volume level' %>">
       </div>
 
       <!-- Download Button -->
