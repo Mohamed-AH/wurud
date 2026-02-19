@@ -74,10 +74,14 @@
   <!-- DNS Prefetch for external resources -->
   <link rel="dns-prefetch" href="https://objectstorage.me-jeddah-1.oraclecloud.com">
 
-  <!-- Self-hosted Noto Naskh Arabic (static instances, matching Google Fonts) -->
+  <!-- Self-hosted Arabic fonts (Scheherazade New for display, Noto Naskh Arabic for body) -->
+  <link rel="preload" href="/fonts/ScheherazadeNew-400.woff2" as="font" type="font/woff2" crossorigin>
+  <link rel="preload" href="/fonts/ScheherazadeNew-700.woff2" as="font" type="font/woff2" crossorigin>
   <link rel="preload" href="/fonts/NotoNaskhArabic-400.woff2" as="font" type="font/woff2" crossorigin>
   <link rel="preload" href="/fonts/NotoNaskhArabic-700.woff2" as="font" type="font/woff2" crossorigin>
   <style>
+    @font-face{font-family:'Scheherazade New';src:url('/fonts/ScheherazadeNew-400.woff2') format('woff2');font-weight:400;font-style:normal;font-display:swap}
+    @font-face{font-family:'Scheherazade New';src:url('/fonts/ScheherazadeNew-700.woff2') format('woff2');font-weight:700;font-style:normal;font-display:swap}
     @font-face{font-family:'Noto Naskh Arabic';src:url('/fonts/NotoNaskhArabic-400.woff2') format('woff2');font-weight:400;font-style:normal;font-display:swap}
     @font-face{font-family:'Noto Naskh Arabic';src:url('/fonts/NotoNaskhArabic-700.woff2') format('woff2');font-weight:700;font-style:normal;font-display:swap}
   </style>
@@ -92,7 +96,7 @@
 
   <!-- Critical inline CSS for above-the-fold content (minimized for performance) -->
   <style>
-    :root{--primary-dark:#2C1810;--primary-brown:#5C4033;--accent-gold:#C19A6B;--accent-amber:#D4A574;--cream:#F5EBE0;--paper:#FAF7F2;--sage:#8B9D83;--text-primary:#2C1810;--text-secondary:#5C4033;--text-muted:#8B7355;--border-light:#E8DCC8;--shadow-warm:rgba(92,64,51,0.15);--font-arabic-display:'Noto Naskh Arabic',Tahoma,sans-serif;--font-arabic-body:'Noto Naskh Arabic',Tahoma,sans-serif;--space-xs:4px;--space-sm:8px;--space-md:16px;--space-lg:24px;--space-xl:32px;--space-2xl:48px;--space-3xl:64px}
+    :root{--primary-dark:#2C1810;--primary-brown:#5C4033;--accent-gold:#C19A6B;--accent-amber:#D4A574;--cream:#F5EBE0;--paper:#FAF7F2;--sage:#8B9D83;--text-primary:#2C1810;--text-secondary:#5C4033;--text-muted:#8B7355;--border-light:#E8DCC8;--shadow-warm:rgba(92,64,51,0.15);--font-arabic-display:'Scheherazade New',serif;--font-arabic-body:'Noto Naskh Arabic',serif;--space-xs:4px;--space-sm:8px;--space-md:16px;--space-lg:24px;--space-xl:32px;--space-2xl:48px;--space-3xl:64px}
     *{margin:0;padding:0;box-sizing:border-box}
     body{font-family:var(--font-arabic-body);background:var(--paper);color:var(--text-primary);line-height:1.9;direction:rtl;padding-bottom:140px}
     h1,h2,h3,h4,h5,h6{font-family:var(--font-arabic-display);font-weight:700}
