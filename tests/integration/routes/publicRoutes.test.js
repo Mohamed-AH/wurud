@@ -91,8 +91,8 @@ describe('Public Routes Integration Tests', () => {
         .get('/api/homepage/series')
         .expect(200);
 
-      expect(apiResponse.body.seriesList).toHaveLength(1);
-      expect(apiResponse.body.seriesList[0].titleArabic).toBe('شرح التوحيد');
+      expect(apiResponse.body.series).toHaveLength(1);
+      expect(apiResponse.body.series[0].titleArabic).toBe('شرح التوحيد');
     });
 
     it('should filter out series with no published lectures', async () => {
@@ -136,7 +136,7 @@ describe('Public Routes Integration Tests', () => {
         .get('/api/homepage/khutbas')
         .expect(200);
 
-      expect(apiResponse.body.khutbaSeries).toHaveLength(1);
+      expect(apiResponse.body.series).toHaveLength(1);
     });
 
     it('should identify khutba series by title via API', async () => {
@@ -164,7 +164,7 @@ describe('Public Routes Integration Tests', () => {
         .get('/api/homepage/khutbas')
         .expect(200);
 
-      expect(apiResponse.body.khutbaSeries).toHaveLength(1);
+      expect(apiResponse.body.series).toHaveLength(1);
     });
 
     it('should return standalone lectures via API', async () => {
@@ -191,8 +191,8 @@ describe('Public Routes Integration Tests', () => {
         .get('/api/homepage/standalone')
         .expect(200);
 
-      expect(apiResponse.body.standaloneLectures).toHaveLength(1);
-      expect(apiResponse.body.standaloneLectures[0].titleArabic).toBe('محاضرة مستقلة');
+      expect(apiResponse.body.lectures).toHaveLength(1);
+      expect(apiResponse.body.lectures[0].titleArabic).toBe('محاضرة مستقلة');
     });
   });
 
