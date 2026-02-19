@@ -319,7 +319,8 @@ describe('Admin Routes Integration Tests', () => {
         })
         .expect(302);
 
-      expect(response.headers.location).toContain('/admin/manage');
+      expect(response.headers.location).toContain('/admin/series/');
+      expect(response.headers.location).toContain('success=updated');
 
       const updated = await Series.findById(series._id);
       expect(updated.titleArabic).toBe('بعد');
