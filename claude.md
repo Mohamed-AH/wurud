@@ -12,11 +12,11 @@ A web platform for hosting and streaming ~160 Arabic Islamic lecture audio files
 
 ## 📌 Project State
 
-**Current Phase**: LIVE - Admin Data Management
-**Last Updated**: 2026-02-17
+**Current Phase**: LIVE - Performance Optimized
+**Last Updated**: 2026-02-19
 **Active Branch**: `claude/fix-homepage-tests-ovChk`
 **Live URL**: https://rasmihassan.com
-**Status**: 🚀 **PRODUCTION LIVE** - Admin tools enhanced for data management
+**Status**: 🚀 **PRODUCTION LIVE** - Performance optimizations complete, fonts self-hosted
 
 ### ✅ SITE IS NOW LIVE
 
@@ -77,7 +77,38 @@ All mobile issues have been fixed:
 - `formatHijriDate()` for proper formatting
 - Displayed on lecture cards using `dateRecordedHijri`
 
-### ✅ Recently Completed (2026-02-15)
+### ✅ Recently Completed (2026-02-19)
+
+**Performance Optimizations (GTmetrix Analysis):**
+- Self-hosted Arabic fonts to eliminate FOUT and reduce latency
+  - Scheherazade New (95KB + 107KB) for headings (`--font-arabic-display`)
+  - Noto Naskh Arabic (98KB × 2) for body text (`--font-arabic-body`)
+  - All fonts preloaded with `font-display: swap`
+- Lazy-load series data via API for faster initial page load
+- Critical CSS inlined, non-critical CSS loaded async
+- JavaScript files minified (~40% reduction)
+- Added favicon.svg (was causing 404)
+- CLS prevention with min-height and contain properties
+- Removed Google Fonts CDN dependency (was causing FOUT)
+
+**Desktop Performance (PageSpeed):**
+- FCP: 0.9s ✅
+- LCP: 0.9s ✅
+- TBT: 0ms ✅
+- CLS: 0 ✅
+
+**Mobile Performance (PageSpeed - throttled 3G simulation):**
+- FCP: ~3.9s (limited by network simulation, not code)
+- Server response: 0.2s actual
+
+**Files Updated:**
+- `views/layout.ejs` - Self-hosted @font-face declarations, resource hints
+- `public/fonts/` - 4 woff2 font files (Scheherazade New + Noto Naskh Arabic)
+- `routes/index.js` - Lazy-load series via API
+- `server.js` - Updated CSP for self-hosted fonts
+- `public/js/*.js` - Minified JavaScript files
+
+### ✅ Previously Completed (2026-02-15)
 
 **Hijri Date Standardization:**
 - All user-facing dates now display in Hijri calendar format
@@ -597,11 +628,11 @@ Upload locally-optimized audio files directly to Oracle Cloud Infrastructure.
 - [x] **UX: Search Placeholder** - Better placeholder text
 - [x] **UX: Clear All Filters** - Button to reset filters
 
-### 🎨 Active Branch: `claude/new-design-usy2P` (Brown/Gold Scholarly Design)
+### 🎨 Active Branch: `claude/fix-homepage-tests-ovChk` (Brown/Gold Scholarly Design)
 
 **Design Status**: ✅ DESIGN_CRITIQUE.md COMPLETE
 **Design**: Warm scholarly brown (#2C1810, #5C4033) and gold (#C19A6B) manuscript aesthetic
-**Fonts**: Scheherazade New (display) + Noto Naskh Arabic (body)
+**Fonts**: Self-hosted Scheherazade New (display) + Noto Naskh Arabic (body) - 4 woff2 files in `/public/fonts/`
 
 ### ✅ **COMPLETED** (All Design Specifications Met):
 
@@ -1380,9 +1411,10 @@ Never speculate about code you have not opened. If the user references a specifi
 **Styling**: Tailwind CSS 3.4+
 **Deployment**: Oracle Cloud VM (Always Free) + Nginx + PM2
 
-**Fonts**:
-- Arabic: Noto Naskh Arabic, Amiri (headings)
-- English: Spectral, Cormorant Garamond (headings)
+**Fonts** (self-hosted in `/public/fonts/`):
+- Arabic Display: Scheherazade New (headings) - 400, 700 weights
+- Arabic Body: Noto Naskh Arabic - 400, 700 weights
+- Fallback: Tahoma, serif
 
 ## Project Structure
 
