@@ -102,6 +102,9 @@ describe('Authentication Integration Tests', () => {
     });
 
     it('should require unique email', async () => {
+      // Ensure indexes are synced (unique constraint)
+      await Admin.syncIndexes();
+
       await Admin.create({
         email: 'duplicate@test.com',
         displayName: 'User 1',
