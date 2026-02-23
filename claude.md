@@ -12,8 +12,8 @@ A web platform for hosting and streaming ~160 Arabic Islamic lecture audio files
 
 ## 📌 Project State
 
-**Current Phase**: LIVE - Performance Optimized
-**Last Updated**: 2026-02-19
+**Current Phase**: LIVE - Feature Development
+**Last Updated**: 2026-02-23
 **Active Branch**: `claude/fix-homepage-tests-ovChk`
 **Live URL**: https://rasmihassan.com
 **Status**: 🚀 **PRODUCTION LIVE** - Performance optimizations complete, fonts self-hosted
@@ -191,8 +191,9 @@ All mobile issues have been fixed:
 6. ~~**3.1 Server-Side Filtering & Pagination**~~ ✅ Done - API endpoints with pagination
 7. ~~**3.5 Weekly Class Schedule**~~ ✅ Done - Add entries at /admin/schedule
 8. ~~**3.3 Performance Optimizations**~~ ✅ Done - In-memory caching, static cache headers, Cloudflare CDN guide
-9. **3.4 Admin Panel Arabic** - RTL support for admin pages (NEXT)
-10. **Test Coverage Improvements** - Focus on slugify.js, lectures API, middleware
+9. **3.4 Admin Panel Arabic** - RTL support for admin pages 🔄 IN PROGRESS
+10. **3.16 Quick Links Section** - Homepage featured collections with admin management (NEW)
+11. **Test Coverage Improvements** - Focus on slugify.js, lectures API, middleware
 11. ~~**3.11 Hero Section Text Update**~~ ✅ Done - Updated branding to "موقع الشيخ حسن بن محمد منصور الدغريري"
 12. ~~**3.12 Related Lectures Ordering**~~ ✅ Done - Related lectures sorted by lectureNumber, category displays in Arabic
 13. ~~**3.13 Series Visibility Toggle**~~ ✅ Done - Admin toggle to show/hide series from public site
@@ -315,13 +316,22 @@ All mobile issues have been fixed:
 - Static asset caching with `immutable` directive
 - Cloudflare CDN setup guide at `docs/CLOUDFLARE_CDN_SETUP.md`
 
-#### 3.4 Admin Panel - Arabic Version ⬜ NOT STARTED
-**Priority**: MEDIUM | **Status**: Pending
+#### 3.4 Admin Panel - Arabic Version 🔄 IN PROGRESS
+**Priority**: MEDIUM | **Status**: In Progress (Started 2026-02-23)
 
-- [ ] Add RTL layout support to admin pages
-- [ ] Translate admin UI strings
-- [ ] Add language toggle to admin panel
-- [ ] Ensure form inputs work with Arabic text
+Add comprehensive Arabic (RTL) support to the admin panel, leveraging the existing i18n system.
+
+**Subtasks:**
+- [ ] Add RTL layout support to admin pages (CSS overrides for admin templates)
+- [ ] Translate admin UI strings (extend `utils/i18n.js` with admin keys)
+- [ ] Add language toggle to admin panel (persist preference)
+- [ ] Ensure form inputs work with Arabic text (bidirectional support)
+
+**Implementation Notes:**
+- i18n system already exists in `utils/i18n.js` with 85+ translation keys
+- Public pages already have RTL/LTR CSS support to reference
+- Admin templates in `views/admin/` (18 EJS files)
+- Add admin-specific translation keys to existing translations object
 
 #### 3.5 Weekly Class Schedule ✅ COMPLETED
 **Priority**: MEDIUM | **Status**: Done (2026-02-09)
@@ -530,6 +540,73 @@ Audited all admin routes and added missing buttons to the manage page Quick Acti
 
 **Files Updated:**
 - `views/admin/manage.ejs` - Added missing quick action buttons
+
+#### 3.16 Quick Links Section ⬜ NOT STARTED
+**Priority**: MEDIUM | **Status**: Pending
+
+Add a "Featured Collections" section on the homepage, positioned directly below the Weekly Class Schedule and before the series cards. This section provides quick navigation to curated content collections.
+
+**Purpose:**
+- Quick access to archived series (completed historical content)
+- Highlight completed series (finished multi-part lectures)
+- Feature seasonal content (Ramadan, Hajj, special occasions)
+- Admin-customizable content curation
+
+**Data Model - FeaturedCollection:**
+```javascript
+{
+  title: { ar: String, en: String },        // Collection name
+  description: { ar: String, en: String },  // Optional description
+  type: enum ['archived', 'completed', 'seasonal', 'custom'],
+  icon: String,                              // Emoji or icon class
+  series: [{ type: ObjectId, ref: 'Series' }], // Linked series
+  lectures: [{ type: ObjectId, ref: 'Lecture' }], // Or individual lectures
+  displayOrder: Number,                      // Sort order on homepage
+  isActive: Boolean,                         // Show/hide toggle
+  startDate: Date,                           // Optional: for seasonal
+  endDate: Date,                             // Optional: for seasonal
+  backgroundColor: String,                   // Custom card color
+  timestamps: true
+}
+```
+
+**Subtasks:**
+- [ ] Create FeaturedCollection model (`models/FeaturedCollection.js`)
+- [ ] Create admin management page (`/admin/collections`)
+  - [ ] CRUD operations for collections
+  - [ ] Drag-drop reordering
+  - [ ] Series/lecture picker with search
+  - [ ] Preview functionality
+- [ ] Add homepage section below Weekly Schedule
+  - [ ] Responsive card layout (3 columns desktop, 1 mobile)
+  - [ ] Icon + title + count display
+  - [ ] Click through to filtered view or custom page
+- [ ] Create collection detail page (`/collections/:slug`)
+- [ ] Add admin quick action button
+- [ ] Add to sitemap
+
+**UI Design (Homepage Section):**
+```
+┌─────────────────────────────────────────────────────────┐
+│  📚 المجموعات المميزة / Featured Collections            │
+├─────────────────┬─────────────────┬─────────────────────┤
+│  📁 الأرشيف     │  ✅ سلاسل مكتملة │  🌙 موسم رمضان      │
+│  Archived       │  Completed      │  Ramadan Season    │
+│  45 series      │  12 series      │  8 series          │
+└─────────────────┴─────────────────┴─────────────────────┘
+```
+
+**Admin Interface:**
+- `/admin/collections` - List all collections with reorder
+- `/admin/collections/new` - Create new collection
+- `/admin/collections/:id/edit` - Edit collection, manage linked content
+
+**Files to Create:**
+- `models/FeaturedCollection.js` - Data model
+- `routes/admin/collections.js` - Admin routes
+- `views/admin/collections.ejs` - Collection list
+- `views/admin/collection-form.ejs` - Create/edit form
+- `views/public/collection.ejs` - Public collection page (optional)
 
 #### 3.9 Direct OCI Audio Upload ✅ COMPLETED
 **Priority**: MEDIUM | **Status**: Done (2026-02-10)
