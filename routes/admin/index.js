@@ -2,7 +2,11 @@ const express = require('express');
 const router = express.Router();
 const { isAdmin, isEditor, isSuperAdmin } = require('../../middleware/auth');
 const { convertToHijri } = require('../../utils/dateUtils');
+const { adminI18nMiddleware } = require('../../utils/i18n');
 const cache = require('../../utils/cache');
+
+// Apply admin i18n middleware to all admin routes
+router.use(adminI18nMiddleware);
 
 // Helper function to invalidate homepage cache after admin changes
 function invalidateHomepageCache() {
