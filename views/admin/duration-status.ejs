@@ -1,9 +1,8 @@
 <!DOCTYPE html>
-<html lang="ar" dir="rtl">
+<html lang="<%= adminLocale %>" dir="<%= adminDir %>">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>حالة التحقق من المدة - Duroos</title>
+  <%- include('partials/head') %>
+  <title><%= adminLocale === 'ar' ? 'حالة التحقق من المدة' : 'Duration Verification Status' %> - <%= t('admin_title') %></title>
   <style>
     * { margin: 0; padding: 0; box-sizing: border-box; }
     body {
@@ -11,18 +10,6 @@
       background: #f5f5f5;
       color: #333;
     }
-    .header {
-      background: #1A5F5A;
-      color: white;
-      padding: 16px 24px;
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-    }
-    .header h1 { font-size: 24px; font-weight: 600; }
-    .header-nav { display: flex; gap: 16px; }
-    .header-nav a { color: white; text-decoration: none; opacity: 0.9; }
-    .header-nav a:hover { opacity: 1; }
     .container { max-width: 1200px; margin: 0 auto; padding: 32px 24px; }
 
     /* Stats Cards */
@@ -118,6 +105,9 @@
       display: flex;
       gap: 12px;
     }
+
+    [dir="rtl"] .info-list li { flex-direction: row-reverse; }
+
     .info-list li:last-child {
       border-bottom: none;
     }
@@ -163,12 +153,15 @@
       border-collapse: collapse;
     }
     th {
-      text-align: right;
       padding: 12px;
       background: #f5f5f5;
       font-weight: 600;
       border-bottom: 2px solid #ddd;
     }
+
+    [dir="rtl"] th { text-align: right; }
+    [dir="ltr"] th { text-align: left; }
+
     td {
       padding: 12px;
       border-bottom: 1px solid #eee;
@@ -199,79 +192,74 @@
   </style>
 </head>
 <body>
-  <div class="header">
-    <h1>📊 حالة التحقق من المدة</h1>
-    <div class="header-nav">
-      <a href="/admin/dashboard">لوحة التحكم</a>
-      <a href="/admin/analytics">التحليلات</a>
-      <a href="/admin/manage">إدارة</a>
-    </div>
-  </div>
+  <%- include('partials/header', { activePage: 'analytics' }) %>
 
-  <div class="container">
+  <main class="admin-container">
     <!-- Stats Cards -->
     <div class="stats-grid">
       <div class="stat-card total">
         <div class="stat-value"><%= stats.total %></div>
-        <div class="stat-label">إجمالي المحاضرات</div>
+        <div class="stat-label"><%= adminLocale === 'ar' ? 'إجمالي المحاضرات' : 'Total Lectures' %></div>
       </div>
       <div class="stat-card verified">
         <div class="stat-value"><%= stats.verified %></div>
-        <div class="stat-label">تم التحقق ✓</div>
-        <div class="stat-percent"><%= stats.verifiedPercent %>% من الإجمالي</div>
+        <div class="stat-label"><%= adminLocale === 'ar' ? 'تم التحقق ✓' : 'Verified ✓' %></div>
+        <div class="stat-percent"><%= stats.verifiedPercent %>% <%= adminLocale === 'ar' ? 'من الإجمالي' : 'of total' %></div>
       </div>
       <div class="stat-card pending">
         <div class="stat-value"><%= stats.pending %></div>
-        <div class="stat-label">في انتظار التحقق</div>
-        <div class="stat-percent"><%= stats.pendingPercent %>% متبقي</div>
+        <div class="stat-label"><%= adminLocale === 'ar' ? 'في انتظار التحقق' : 'Pending Verification' %></div>
+        <div class="stat-percent"><%= stats.pendingPercent %>% <%= adminLocale === 'ar' ? 'متبقي' : 'remaining' %></div>
       </div>
       <div class="stat-card no-audio">
         <div class="stat-value"><%= stats.noAudio %></div>
-        <div class="stat-label">بدون صوت</div>
+        <div class="stat-label"><%= adminLocale === 'ar' ? 'بدون صوت' : 'No Audio' %></div>
       </div>
     </div>
 
     <!-- Progress Bar -->
     <div class="progress-section">
-      <div class="progress-title">📈 تقدم التحقق</div>
+      <div class="progress-title"><%= adminLocale === 'ar' ? '📈 تقدم التحقق' : '📈 Verification Progress' %></div>
       <div class="progress-bar-container">
         <div class="progress-bar" style="width: <%= stats.verifiedPercent %>%;"></div>
       </div>
       <div class="progress-text">
-        تم التحقق من <%= stats.verified %> من أصل <%= stats.withAudio %> محاضرة لديها ملف صوتي
+        <%= adminLocale === 'ar'
+          ? `تم التحقق من ${stats.verified} من أصل ${stats.withAudio} محاضرة لديها ملف صوتي`
+          : `Verified ${stats.verified} out of ${stats.withAudio} lectures with audio files` %>
       </div>
     </div>
 
     <!-- How It Works -->
     <div class="info-section">
-      <div class="info-title">🔧 كيف يعمل التحقق التلقائي؟</div>
+      <div class="info-title"><%= adminLocale === 'ar' ? '🔧 كيف يعمل التحقق التلقائي؟' : '🔧 How does auto-verification work?' %></div>
       <ul class="info-list">
         <li>
           <span class="info-icon">🎧</span>
           <div class="info-text">
-            <strong>عند تشغيل المحاضرة</strong>
-            <span>يقوم المتصفح بتحميل الملف الصوتي وقراءة المدة الفعلية</span>
+            <strong><%= adminLocale === 'ar' ? 'عند تشغيل المحاضرة' : 'When playing a lecture' %></strong>
+            <span><%= adminLocale === 'ar' ? 'يقوم المتصفح بتحميل الملف الصوتي وقراءة المدة الفعلية' : 'The browser loads the audio file and reads the actual duration' %></span>
           </div>
         </li>
         <li>
           <span class="info-icon">📊</span>
           <div class="info-text">
-            <strong>مقارنة المدة</strong>
-            <span>يتم مقارنة المدة الفعلية مع المدة المخزنة في قاعدة البيانات</span>
+            <strong><%= adminLocale === 'ar' ? 'مقارنة المدة' : 'Duration comparison' %></strong>
+            <span><%= adminLocale === 'ar' ? 'يتم مقارنة المدة الفعلية مع المدة المخزنة في قاعدة البيانات' : 'The actual duration is compared with the stored duration in the database' %></span>
           </div>
         </li>
         <li>
           <span class="info-icon">🔄</span>
           <div class="info-text">
-            <strong>التحديث التلقائي</strong>
-            <span>إذا كان الفرق أكثر من ثانيتين، يتم تحديث المدة تلقائياً</span>
+            <strong><%= adminLocale === 'ar' ? 'التحديث التلقائي' : 'Automatic update' %></strong>
+            <span><%= adminLocale === 'ar' ? 'إذا كان الفرق أكثر من ثانيتين، يتم تحديث المدة تلقائياً' : 'If the difference is more than 2 seconds, the duration is updated automatically' %></span>
           </div>
         </li>
         <li>
           <span class="info-icon">✅</span>
           <div class="info-text">
-            <strong>علامة التحقق</strong>
-            <span>يتم تعليم المحاضرة كـ "تم التحقق" لتجنب التكرار</span>
+            <strong><%= adminLocale === 'ar' ? 'علامة التحقق' : 'Verification mark' %></strong>
+            <span><%= adminLocale === 'ar' ? 'يتم تعليم المحاضرة كـ "تم التحقق" لتجنب التكرار' : 'The lecture is marked as "verified" to avoid repetition' %></span>
           </div>
         </li>
       </ul>
@@ -281,8 +269,8 @@
     <div class="table-section">
       <div class="table-header">
         <div>
-          <div class="table-title">⏳ محاضرات في انتظار التحقق</div>
-          <div class="table-subtitle">ستتم عملية التحقق تلقائياً عند تشغيل هذه المحاضرات</div>
+          <div class="table-title"><%= adminLocale === 'ar' ? '⏳ محاضرات في انتظار التحقق' : '⏳ Lectures Pending Verification' %></div>
+          <div class="table-subtitle"><%= adminLocale === 'ar' ? 'ستتم عملية التحقق تلقائياً عند تشغيل هذه المحاضرات' : 'Verification will happen automatically when these lectures are played' %></div>
         </div>
       </div>
 
@@ -290,10 +278,10 @@
         <table>
           <thead>
             <tr>
-              <th>المحاضرة</th>
-              <th>السلسلة</th>
-              <th>المدة المخزنة</th>
-              <th>ملف الصوت</th>
+              <th><%= adminLocale === 'ar' ? 'المحاضرة' : 'Lecture' %></th>
+              <th><%= adminLocale === 'ar' ? 'السلسلة' : 'Series' %></th>
+              <th><%= adminLocale === 'ar' ? 'المدة المخزنة' : 'Stored Duration' %></th>
+              <th><%= adminLocale === 'ar' ? 'ملف الصوت' : 'Audio File' %></th>
             </tr>
           </thead>
           <tbody>
@@ -301,10 +289,10 @@
               <tr>
                 <td>
                   <a href="/admin/lectures/<%= lecture._id %>/edit" style="color: #1A5F5A; text-decoration: none;">
-                    <%= lecture.titleArabic ? lecture.titleArabic.substring(0, 50) + '...' : 'بدون عنوان' %>
+                    <%= lecture.titleArabic ? lecture.titleArabic.substring(0, 50) + '...' : (adminLocale === 'ar' ? 'بدون عنوان' : 'No title') %>
                   </a>
                 </td>
-                <td><%= lecture.seriesId?.titleArabic || '-' %></td>
+                <td><%= lecture.seriesId ? (adminLocale === 'ar' ? lecture.seriesId.titleArabic : (lecture.seriesId.titleEnglish || lecture.seriesId.titleArabic)) : '-' %></td>
                 <td>
                   <span class="duration-badge stored">
                     <%= Math.floor(lecture.duration / 60) %>:<%= String(lecture.duration % 60).padStart(2, '0') %>
@@ -319,16 +307,18 @@
         </table>
         <% if (pendingLectures.length > 50) { %>
           <div style="text-align: center; padding: 16px; color: #666;">
-            ... و <%= pendingLectures.length - 50 %> محاضرة أخرى
+            <%= adminLocale === 'ar'
+              ? `... و ${pendingLectures.length - 50} محاضرة أخرى`
+              : `... and ${pendingLectures.length - 50} more lectures` %>
           </div>
         <% } %>
       <% } else { %>
         <div class="empty-state">
           <div class="empty-icon">✅</div>
-          <div>تم التحقق من جميع المحاضرات!</div>
+          <div><%= adminLocale === 'ar' ? 'تم التحقق من جميع المحاضرات!' : 'All lectures have been verified!' %></div>
         </div>
       <% } %>
     </div>
-  </div>
+  </main>
 </body>
 </html>
