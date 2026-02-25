@@ -11,10 +11,17 @@ Reorganize the homepage to display series in **multiple manageable sections** (A
 
 ## Requirements Summary
 
+### Homepage Layout (Top to Bottom)
+1. **Hero Section** (existing)
+2. **Weekly Schedule** (existing, toggleable)
+3. **New Sections** (Featured, Active, Completed, Archive, etc.)
+4. **Existing Tabs** (Series, Standalone, Khutbas - toggleable)
+
 ### Homepage Sections
 - Multiple sections: Active, Completed, Archive, Featured, Custom
 - Each section uses the **Schedule Table UI** (works well on desktop/mobile)
 - Sections are collapsible or have "Show more" functionality
+- **Click behavior**: Series links to `/series/:slug` (no inline expansion)
 
 ### Admin: Section Management
 | Capability | Description |
@@ -32,17 +39,28 @@ Reorganize the homepage to display series in **multiple manageable sections** (A
 | Quick Filter | Filter series list by current section |
 | Bulk Operations | Move multiple series at once (optional) |
 
+### Admin: Homepage Configuration
+| Setting | Description |
+|---------|-------------|
+| Show Schedule | Toggle Weekly Schedule section visibility |
+| Show Series Tab | Toggle existing "Series" tab visibility |
+| Show Standalone Tab | Toggle existing "Standalone" tab visibility |
+| Show Khutbas Tab | Toggle existing "Khutbas" tab visibility |
+
 ### Flexibility
 - Seasonal adjustments (e.g., Ramadan section appears in Ramadan)
 - Easy to recategorize series as they complete or become archived
+
+### Content Workflow
+- All content organized as: **Series → Lectures**
+- No need for standalone lecture handling (user will create "Standalone" series)
+- Consistent URL structure via `/series/:slug`
 
 ---
 
 ## Data Model
 
-### Option A: Section Model + Series.sectionId (Recommended)
-
-**New Model: `Section`**
+### New Model: `Section`
 ```javascript
 // models/Section.js
 {
@@ -92,9 +110,23 @@ Reorganize the homepage to display series in **multiple manageable sections** (A
 **Pros**: Series can appear in multiple sections
 **Cons**: More complex queries, extra model
 
-### Recommendation: Option A
+### Modify: `SiteSettings` Model (add homepage config)
+```javascript
+// Add to existing models/SiteSettings.js
+{
+  // ... existing fields ...
 
-Most series belong to one category (Active OR Completed OR Archive). Option A is simpler and sufficient. If multi-section is needed later, we can add a `featured` boolean to Series.
+  // Homepage configuration
+  homepage: {
+    showSchedule: { type: Boolean, default: true },
+    showSeriesTab: { type: Boolean, default: true },
+    showStandaloneTab: { type: Boolean, default: true },
+    showKhutbasTab: { type: Boolean, default: true }
+  }
+}
+```
+
+This uses the existing `SiteSettings` model (singleton pattern) rather than creating a new model.
 
 ---
 
@@ -133,10 +165,11 @@ Series without a section assignment go to "Active" by default.
    - Create default sections
    - Optionally auto-assign existing series based on `seriesType` field
 
-### Phase 2: Admin Routes (~1 hour)
+### Phase 2: Admin Routes (~1.5 hours)
 
 **File: `routes/admin/index.js`**
 
+**Section Management Routes:**
 | Route | Method | Description |
 |-------|--------|-------------|
 | `/admin/sections` | GET | List all sections with series counts |
@@ -149,7 +182,13 @@ Series without a section assignment go to "Active" by default.
 | `/admin/sections/:id/series` | GET | Manage series in section |
 | `/admin/sections/:id/series/reorder` | POST | Reorder series in section (AJAX) |
 
-**Also add to existing series routes:**
+**Homepage Configuration Routes:**
+| Route | Method | Description |
+|-------|--------|-------------|
+| `/admin/homepage-config` | GET | Homepage configuration page |
+| `/admin/homepage-config` | POST | Update homepage settings |
+
+**Series Routes (add to existing):**
 | Route | Method | Description |
 |-------|--------|-------------|
 | `/admin/series/:id/assign-section` | POST | Assign series to section |
@@ -178,12 +217,20 @@ Series without a section assignment go to "Active" by default.
    - "Add series" dropdown/modal
    - Filter/search for quick finding
 
-4. **Update `views/admin/edit-series.ejs`**
+4. **`views/admin/homepage-config.ejs`** - Homepage settings
+   - Toggle: Show Schedule section
+   - Toggle: Show Series tab
+   - Toggle: Show Standalone tab
+   - Toggle: Show Khutbas tab
+   - Save button
+
+5. **Update `views/admin/edit-series.ejs`**
    - Add "Section" dropdown to assign series to a section
    - Show current section assignment
 
-5. **Update `views/admin/manage.ejs`**
+6. **Update `views/admin/manage.ejs`**
    - Add quick action: "📑 Sections" → `/admin/sections`
+   - Add quick action: "🏠 Homepage Config" → `/admin/homepage-config`
 
 ### Phase 4: Homepage Integration (~1.5 hours)
 
@@ -305,20 +352,22 @@ expand: 'Expand',
 |------|--------|-----------------|
 | `models/Section.js` | CREATE | ~60 |
 | `models/Series.js` | EDIT | ~10 |
+| `models/SiteSettings.js` | EDIT | ~15 |
 | `models/index.js` | EDIT | ~2 |
 | `scripts/seed-sections.js` | CREATE | ~80 |
-| `routes/admin/index.js` | EDIT | ~200 |
+| `routes/admin/index.js` | EDIT | ~250 |
 | `views/admin/sections.ejs` | CREATE | ~250 |
 | `views/admin/section-form.ejs` | CREATE | ~200 |
 | `views/admin/section-series.ejs` | CREATE | ~200 |
+| `views/admin/homepage-config.ejs` | CREATE | ~150 |
 | `views/admin/edit-series.ejs` | EDIT | ~30 |
-| `views/admin/manage.ejs` | EDIT | ~5 |
-| `routes/index.js` | EDIT | ~50 |
-| `views/public/index.ejs` | EDIT | ~150 |
+| `views/admin/manage.ejs` | EDIT | ~10 |
+| `routes/index.js` | EDIT | ~60 |
+| `views/public/index.ejs` | EDIT | ~180 |
 | `public/js/sections.js` | CREATE | ~50 |
-| `utils/i18n.js` | EDIT | ~20 |
+| `utils/i18n.js` | EDIT | ~25 |
 
-**Total**: ~1,300 lines across 14 files
+**Total**: ~1,550 lines across 16 files
 
 ---
 
@@ -395,29 +444,46 @@ expand: 'Expand',
 
 ## Testing Checklist
 
+### Section Management
 - [ ] Section CRUD works (create, read, update, delete)
-- [ ] Section reordering works
+- [ ] Section reordering works (up/down arrows)
+- [ ] Default sections protected from deletion
+
+### Series Management
 - [ ] Series assignment to sections works
 - [ ] Series reordering within sections works
-- [ ] Homepage displays sections correctly
+- [ ] Unassigned series appear in "Active" section
+
+### Homepage Display
+- [ ] Sections display in correct order
 - [ ] Collapse/expand works
-- [ ] "Show more" works
+- [ ] "Show more" button works
+- [ ] Series links to `/series/:slug`
 - [ ] RTL/LTR display correct
 - [ ] Mobile responsive
-- [ ] Cache invalidation on changes
-- [ ] Default sections can't be deleted (optional protection)
+
+### Homepage Configuration
+- [ ] Schedule toggle works
+- [ ] Series tab toggle works
+- [ ] Standalone tab toggle works
+- [ ] Khutbas tab toggle works
+- [ ] Layout order correct (Schedule → Sections → Tabs)
+
+### Cache & Performance
+- [ ] Cache invalidation on section changes
+- [ ] Cache invalidation on homepage config changes
 
 ---
 
-## Open Questions
+## Confirmed Decisions
 
-1. **Keep existing tabs?** Currently homepage has tabs (Series, Standalone, Khutbas). Should sections replace tabs entirely, or appear below tabs?
-
-2. **Series detail expansion**: Currently clicking a series card expands to show lectures inline. Keep this behavior within sections?
-
-3. **Standalone lectures**: These don't belong to series. Should there be a "Standalone" section, or keep the separate tab?
-
-4. **Default section**: If a series has no section assigned, which section does it appear in? (Suggest: Active)
+| Question | Decision |
+|----------|----------|
+| Keep existing tabs? | Yes, but toggleable via admin. Sections appear ABOVE tabs. |
+| Series click behavior? | Links to `/series/:slug` (no inline expansion) |
+| Standalone lectures? | No special handling. All content uses Series → Lectures workflow. |
+| Default section? | "Active" for series without section assignment |
+| Schedule visibility? | Toggleable via admin homepage config |
 
 ---
 
@@ -425,15 +491,17 @@ expand: 'Expand',
 
 | Phase | Description | Time |
 |-------|-------------|------|
-| 1 | Data model | 30 min |
-| 2 | Admin routes | 1 hour |
-| 3 | Admin views | 2 hours |
+| 1 | Data model (Section + SiteSettings + Series) | 30 min |
+| 2 | Admin routes (sections + homepage config) | 1.5 hours |
+| 3 | Admin views (4 new pages + 2 updates) | 2.5 hours |
 | 4 | Homepage integration | 1.5 hours |
-| 5 | JavaScript | 30 min |
+| 5 | JavaScript (collapse/expand, show more) | 30 min |
 | 6 | Translations & polish | 30 min |
 | 7 | Testing & fixes | 1 hour |
-| **Total** | | **~7 hours** |
+| **Total** | | **~8 hours** |
 
 ---
 
-Ready to proceed when you confirm the approach and answer the open questions.
+## Status: READY FOR APPROVAL
+
+All requirements clarified. Ready to begin implementation when approved.
