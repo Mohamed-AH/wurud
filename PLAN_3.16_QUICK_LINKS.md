@@ -1,243 +1,439 @@
-# Task 3.16: Quick Links / Featured Collections Section
+# Task 3.16: Dynamic Series Section Management
 
 ## Overview
 
-Add a "Featured Collections" section on the homepage, positioned directly below the Weekly Class Schedule and before the series Navigation Tabs. This section provides admin-curated quick navigation to grouped content.
+Reorganize the homepage to display series in **multiple manageable sections** (Active, Completed, Archive, Featured, etc.) instead of one long list. Each section uses the same table layout as the Weekly Schedule section.
+
+**Problem**: ~27 active series make the current interface cluttered.
+**Solution**: Group series into admin-managed sections with table view.
 
 ---
 
-## Questions to Clarify
+## Requirements Summary
 
-1. **Scope of MVP**: Should we start with a simplified version (just links to filtered views) or the full model with individual series/lecture assignments?
+### Homepage Sections
+- Multiple sections: Active, Completed, Archive, Featured, Custom
+- Each section uses the **Schedule Table UI** (works well on desktop/mobile)
+- Sections are collapsible or have "Show more" functionality
 
-2. **Collection Detail Page**: Is `/collections/:slug` necessary for MVP, or can collections simply link to filtered homepage views (e.g., `/?type=archive`)?
+### Admin: Section Management
+| Capability | Description |
+|------------|-------------|
+| Create/Delete | Add new sections, remove unused ones |
+| Rename | Edit section titles (AR/EN) |
+| Reorder | Move entire sections up/down on the page |
+| Toggle Visibility | Show/hide sections as needed |
 
-3. **Drag-drop reordering**: Is this essential for MVP or can we use simple up/down arrows initially?
+### Admin: Content Management
+| Capability | Description |
+|------------|-------------|
+| Assign Series | Move series into sections (dropdown or drag) |
+| Reorder Series | Change order within each section |
+| Quick Filter | Filter series list by current section |
+| Bulk Operations | Move multiple series at once (optional) |
+
+### Flexibility
+- Seasonal adjustments (e.g., Ramadan section appears in Ramadan)
+- Easy to recategorize series as they complete or become archived
 
 ---
 
-## Proposed Approach: Simplified MVP
+## Data Model
 
-Based on the existing filter system on the homepage (which already supports `archive`, `archive-ramadan`, `online`, `masjid` types), I recommend a **simplified approach** for faster delivery:
+### Option A: Section Model + Series.sectionId (Recommended)
 
-### Option A: Filter-Based Collections (Simpler)
-- Collections are essentially **saved filters** with custom icons/titles
-- Clicking a collection applies that filter to the homepage
-- No new public page needed - just homepage filter presets
-- Admin manages: title (ar/en), icon, filter type, display order, active status
-
-### Option B: Full Model (As Specified)
-- Collections can contain arbitrary series/lectures
-- Requires new `/collections/:slug` public page
-- More complex admin UI with series/lecture picker
-- More flexible but more development work
-
-**My Recommendation**: Start with **Option A** for MVP, then extend to Option B if needed.
-
----
-
-## Implementation Plan (Option A - MVP)
-
-### Phase 1: Data Model
-**File**: `models/FeaturedCollection.js`
-
+**New Model: `Section`**
 ```javascript
+// models/Section.js
 {
-  title: { ar: String, en: String },        // Collection name
-  description: { ar: String, en: String },  // Optional subtitle
-  icon: String,                              // Emoji (e.g., "📁", "🌙", "✅")
-  filterType: String,                        // Maps to existing homepage filter
-  // Options: 'archive', 'archive-ramadan', 'online', 'completed', 'custom'
-  customFilter: {                            // For 'custom' type only
-    category: String,                        // Fiqh, Aqeedah, etc.
-    seriesType: String,                      // archive, online, etc.
-    search: String                           // Search term
+  title: {
+    ar: { type: String, required: true },  // "السلاسل المكتملة"
+    en: { type: String, required: true }   // "Completed Series"
   },
-  displayOrder: Number,                      // Sort order (0 = first)
-  isActive: Boolean,                         // Show/hide toggle
-  backgroundColor: String,                   // Optional custom color
-  timestamps: true
+  slug: { type: String, unique: true },     // "completed"
+  description: {
+    ar: String,
+    en: String
+  },
+  icon: { type: String, default: '📚' },    // Emoji icon
+  displayOrder: { type: Number, default: 0 },
+  isVisible: { type: Boolean, default: true },
+  isDefault: { type: Boolean, default: false }, // Can't delete default sections
+  collapsedByDefault: { type: Boolean, default: false },
+  maxVisible: { type: Number, default: 5 }, // Show X items, then "Show more"
+  createdAt: Date,
+  updatedAt: Date
 }
 ```
 
-**Estimated count**: 10-15 fields, simple schema
+**Modify: `Series` Model** (add fields)
+```javascript
+// Add to models/Series.js
+{
+  sectionId: { type: ObjectId, ref: 'Section', default: null },
+  sectionOrder: { type: Number, default: 0 }  // Order within section
+}
+```
 
-### Phase 2: Admin Routes
-**File**: `routes/admin/index.js` (add to existing)
+**Pros**: Simple, single query per section, easy to manage
+**Cons**: Series can only be in one section at a time
+
+### Option B: Junction Table (More Flexible)
+
+**New Model: `SectionAssignment`**
+```javascript
+{
+  sectionId: { type: ObjectId, ref: 'Section', required: true },
+  seriesId: { type: ObjectId, ref: 'Series', required: true },
+  displayOrder: { type: Number, default: 0 }
+}
+```
+
+**Pros**: Series can appear in multiple sections
+**Cons**: More complex queries, extra model
+
+### Recommendation: Option A
+
+Most series belong to one category (Active OR Completed OR Archive). Option A is simpler and sufficient. If multi-section is needed later, we can add a `featured` boolean to Series.
+
+---
+
+## Default Sections (Pre-created)
+
+| Order | Slug | Title (AR) | Title (EN) | Icon | Notes |
+|-------|------|------------|------------|------|-------|
+| 0 | `featured` | مميز | Featured | ⭐ | Optional highlight section |
+| 1 | `active` | السلاسل الجارية | Active Series | 📖 | Currently ongoing |
+| 2 | `completed` | السلاسل المكتملة | Completed Series | ✅ | Finished series |
+| 3 | `archive` | الأرشيف | Archive | 📁 | Older content |
+| 4 | `ramadan` | أرشيف رمضان | Ramadan Archive | 🌙 | Seasonal |
+
+Series without a section assignment go to "Active" by default.
+
+---
+
+## Implementation Plan
+
+### Phase 1: Data Model (~30 min)
+
+1. **Create `models/Section.js`**
+   - Schema as defined above
+   - Pre/post hooks for slug generation
+   - Static method: `getOrderedSections()`
+
+2. **Update `models/Series.js`**
+   - Add `sectionId` field (ObjectId, ref: 'Section')
+   - Add `sectionOrder` field (Number, default: 0)
+   - Update indexes
+
+3. **Update `models/index.js`**
+   - Export Section model
+
+4. **Create seed script: `scripts/seed-sections.js`**
+   - Create default sections
+   - Optionally auto-assign existing series based on `seriesType` field
+
+### Phase 2: Admin Routes (~1 hour)
+
+**File: `routes/admin/index.js`**
 
 | Route | Method | Description |
 |-------|--------|-------------|
-| `/admin/collections` | GET | List all collections |
-| `/admin/collections/new` | GET | Create collection form |
-| `/admin/collections/new` | POST | Create collection |
-| `/admin/collections/:id/edit` | GET | Edit collection form |
-| `/admin/collections/:id` | POST | Update collection |
-| `/admin/collections/:id/delete` | POST | Delete collection |
-| `/admin/collections/reorder` | POST | Update display order |
+| `/admin/sections` | GET | List all sections with series counts |
+| `/admin/sections/new` | GET | Create section form |
+| `/admin/sections/new` | POST | Create section |
+| `/admin/sections/:id/edit` | GET | Edit section form |
+| `/admin/sections/:id` | POST | Update section |
+| `/admin/sections/:id/delete` | POST | Delete section (reassign series first) |
+| `/admin/sections/reorder` | POST | Update section order (AJAX) |
+| `/admin/sections/:id/series` | GET | Manage series in section |
+| `/admin/sections/:id/series/reorder` | POST | Reorder series in section (AJAX) |
 
-### Phase 3: Admin Views
-**Files to create**:
+**Also add to existing series routes:**
+| Route | Method | Description |
+|-------|--------|-------------|
+| `/admin/series/:id/assign-section` | POST | Assign series to section |
 
-1. `views/admin/collections.ejs` - List page with reorder
-   - Table with: Icon, Title (AR), Title (EN), Filter Type, Status, Actions
-   - Simple up/down buttons for reordering (not drag-drop for MVP)
-   - Add new button
+### Phase 3: Admin Views (~2 hours)
 
-2. `views/admin/collection-form.ejs` - Create/Edit form
-   - Title (AR/EN) inputs
-   - Description (AR/EN) textareas
-   - Icon picker (emoji dropdown or text input)
-   - Filter type dropdown
-   - Custom filter fields (conditional)
-   - Background color picker
-   - Active toggle
+1. **`views/admin/sections.ejs`** - Section list page
+   - Table: Icon, Title (AR), Title (EN), Series Count, Visible, Actions
+   - Up/Down arrows for reordering
+   - "Add Section" button
+   - Click row to manage series in that section
 
-### Phase 4: Homepage Integration
-**File**: `views/public/index.ejs`
+2. **`views/admin/section-form.ejs`** - Create/Edit section
+   - Title (AR/EN)
+   - Slug (auto-generated, editable)
+   - Icon (emoji picker or text)
+   - Description (AR/EN) - optional
+   - Visibility toggle
+   - Collapsed by default toggle
+   - Max visible items
 
-Add new section between Weekly Schedule (line ~1097) and Navigation Tabs (line ~1099):
+3. **`views/admin/section-series.ejs`** - Manage series in section
+   - Table of series in this section
+   - Up/Down arrows for reordering
+   - "Remove from section" button
+   - "Add series" dropdown/modal
+   - Filter/search for quick finding
 
-```html
-<!-- Featured Collections Section -->
-<% if (featuredCollections && featuredCollections.length > 0) { %>
-<section class="featured-collections-section">
-  <h2 class="section-title">
-    📚 <%= locale === 'ar' ? 'المجموعات المميزة' : 'Featured Collections' %>
-  </h2>
-  <div class="collections-grid">
-    <% featuredCollections.forEach(collection => { %>
-    <a href="/?filter=<%= collection.filterType %>" class="collection-card">
-      <span class="collection-icon"><%= collection.icon %></span>
-      <span class="collection-title">
-        <%= locale === 'ar' ? collection.title.ar : collection.title.en %>
-      </span>
-      <span class="collection-count"><%= collection.count %> سلسلة</span>
-    </a>
-    <% }) %>
-  </div>
-</section>
-<% } %>
+4. **Update `views/admin/edit-series.ejs`**
+   - Add "Section" dropdown to assign series to a section
+   - Show current section assignment
+
+5. **Update `views/admin/manage.ejs`**
+   - Add quick action: "📑 Sections" → `/admin/sections`
+
+### Phase 4: Homepage Integration (~1.5 hours)
+
+**File: `routes/index.js`**
+
+Update `fetchHomepageData()`:
+```javascript
+// Fetch sections with their series
+const sections = await Section.find({ isVisible: true })
+  .sort({ displayOrder: 1 })
+  .lean();
+
+// For each section, fetch series
+const sectionsWithSeries = await Promise.all(
+  sections.map(async (section) => {
+    const series = await Series.find({
+      sectionId: section._id,
+      isVisible: { $ne: false }
+    })
+      .populate('sheikhId')
+      .sort({ sectionOrder: 1 })
+      .lean();
+
+    // Fetch lectures for each series...
+    return { ...section, series: seriesWithLectures };
+  })
+);
+
+// Also fetch "unsectioned" series (sectionId: null) → goes to Active
 ```
 
-**CSS**: Add to index.ejs styles (matching brown/gold theme)
+**File: `views/public/index.ejs`**
 
-### Phase 5: Route Updates
-**File**: `routes/index.js`
+Replace current series display with section-based layout:
 
-1. Fetch active collections for homepage
-2. Calculate counts for each collection based on filter type
-3. Pass to template
+```html
+<% sections.forEach(section => { %>
+<section class="series-section" id="section-<%= section.slug %>">
+  <div class="section-header">
+    <h2 class="section-title">
+      <span class="section-icon"><%= section.icon %></span>
+      <%= locale === 'ar' ? section.title.ar : section.title.en %>
+      <span class="section-count">(<%= section.series.length %>)</span>
+    </h2>
+    <button class="toggle-section" aria-expanded="true">
+      <%= locale === 'ar' ? 'طي' : 'Collapse' %>
+    </button>
+  </div>
 
-### Phase 6: Quick Action Button
-**File**: `views/admin/manage.ejs`
+  <div class="section-content">
+    <table class="series-table">
+      <!-- Same table structure as Schedule -->
+      <% section.series.slice(0, section.maxVisible).forEach(s => { %>
+      <tr class="series-row">
+        <td class="series-title"><%= locale === 'ar' ? s.titleArabic : s.titleEnglish %></td>
+        <td class="series-sheikh"><%= s.sheikh?.nameArabic %></td>
+        <td class="series-count"><%= s.lectureCount %> درس</td>
+        <td class="series-actions">
+          <a href="/series/<%= s.slug %>">عرض</a>
+        </td>
+      </tr>
+      <% }) %>
+    </table>
 
-Add button: `📚 Collections` → `/admin/collections`
+    <% if (section.series.length > section.maxVisible) { %>
+    <button class="show-more" data-section="<%= section.slug %>">
+      <%= locale === 'ar' ? 'عرض المزيد' : 'Show more' %>
+      (<%= section.series.length - section.maxVisible %>)
+    </button>
+    <% } %>
+  </div>
+</section>
+<% }) %>
+```
 
-### Phase 7: Cache Invalidation
-**File**: `routes/admin/index.js`
+**CSS**: Match the Schedule table styling (already exists)
 
-Add `invalidateHomepageCache()` after collection CRUD operations.
+### Phase 5: JavaScript Enhancements (~30 min)
+
+**File: `public/js/sections.js`** (or inline in index.ejs)
+
+- Toggle section collapse/expand
+- "Show more" functionality
+- Persist collapsed state in localStorage
+
+**File: `views/admin/sections.ejs`** (inline JS)
+
+- AJAX reordering for sections
+- AJAX reordering for series within sections
+
+### Phase 6: Translations & Polish (~30 min)
+
+**File: `utils/i18n.js`**
+```javascript
+// Add keys
+sections: 'Sections',
+sections_ar: 'الأقسام',
+manage_sections: 'Manage Sections',
+add_section: 'Add Section',
+edit_section: 'Edit Section',
+section_title: 'Section Title',
+series_in_section: 'Series in Section',
+assign_to_section: 'Assign to Section',
+no_section: 'No Section',
+show_more: 'Show more',
+collapse: 'Collapse',
+expand: 'Expand',
+// ... etc
+```
+
+**File: `middleware/adminI18n.js`**
+- Add admin-specific section translation keys
 
 ---
 
 ## File Changes Summary
 
-| File | Action | Description |
-|------|--------|-------------|
-| `models/FeaturedCollection.js` | CREATE | New data model |
-| `models/index.js` | EDIT | Export new model |
-| `routes/admin/index.js` | EDIT | Add collection routes (~100 lines) |
-| `views/admin/collections.ejs` | CREATE | List page (~200 lines) |
-| `views/admin/collection-form.ejs` | CREATE | Form page (~250 lines) |
-| `views/admin/manage.ejs` | EDIT | Add quick action button |
-| `views/public/index.ejs` | EDIT | Add collections section (~50 lines CSS, ~30 lines HTML) |
-| `routes/index.js` | EDIT | Fetch collections for homepage (~20 lines) |
-| `utils/i18n.js` | EDIT | Add translation keys (~10 keys) |
+| File | Action | Estimated Lines |
+|------|--------|-----------------|
+| `models/Section.js` | CREATE | ~60 |
+| `models/Series.js` | EDIT | ~10 |
+| `models/index.js` | EDIT | ~2 |
+| `scripts/seed-sections.js` | CREATE | ~80 |
+| `routes/admin/index.js` | EDIT | ~200 |
+| `views/admin/sections.ejs` | CREATE | ~250 |
+| `views/admin/section-form.ejs` | CREATE | ~200 |
+| `views/admin/section-series.ejs` | CREATE | ~200 |
+| `views/admin/edit-series.ejs` | EDIT | ~30 |
+| `views/admin/manage.ejs` | EDIT | ~5 |
+| `routes/index.js` | EDIT | ~50 |
+| `views/public/index.ejs` | EDIT | ~150 |
+| `public/js/sections.js` | CREATE | ~50 |
+| `utils/i18n.js` | EDIT | ~20 |
 
-**Total new code**: ~700-800 lines
-**Estimated files**: 3 new, 6 modified
-
----
-
-## UI Design
-
-### Homepage Section (Desktop - 3 columns)
-```
-┌─────────────────────────────────────────────────────────────────┐
-│  📚 المجموعات المميزة                                            │
-├───────────────────┬───────────────────┬───────────────────────┤
-│  ┌─────────────┐  │  ┌─────────────┐  │  ┌─────────────────┐  │
-│  │     📁      │  │  │     ✅      │  │  │       🌙        │  │
-│  │   الأرشيف   │  │  │ سلاسل مكتملة │  │  │  أرشيف رمضان    │  │
-│  │  45 سلسلة   │  │  │   12 سلسلة  │  │  │    8 سلسلة      │  │
-│  └─────────────┘  │  └─────────────┘  │  └─────────────────┘  │
-└───────────────────┴───────────────────┴───────────────────────┘
-```
-
-### Homepage Section (Mobile - 1 column, horizontal scroll or stacked)
-```
-┌─────────────────────┐
-│ 📚 المجموعات المميزة │
-├─────────────────────┤
-│ 📁 الأرشيف - 45     │
-├─────────────────────┤
-│ ✅ سلاسل مكتملة - 12 │
-├─────────────────────┤
-│ 🌙 أرشيف رمضان - 8  │
-└─────────────────────┘
-```
-
-### Card Styling
-- Background: Cream (#F5EBE0) with gold border
-- Icon: Large (32-40px) emoji
-- Title: Scheherazade New, 18px
-- Count: Muted text, smaller
-- Hover: Subtle lift + gold border glow
+**Total**: ~1,300 lines across 14 files
 
 ---
 
-## Default Collections (Pre-populated)
+## UI Mockups
 
-| Icon | Title (AR) | Title (EN) | Filter |
-|------|------------|------------|--------|
-| 📁 | الأرشيف | Archive | `archive` |
-| 🌙 | أرشيف رمضان | Ramadan Archive | `archive-ramadan` |
-| 💻 | عن بُعد | Online Classes | `online` |
-| 🕌 | جامع الورود | Masjid Classes | `masjid` |
+### Homepage Section (Desktop)
+```
+┌──────────────────────────────────────────────────────────────────────┐
+│ ⭐ مميز / Featured                                            [طي] │
+├──────────────────────────────────────────────────────────────────────┤
+│ شرح كتاب التوحيد        │ الشيخ حسن الدغريري │ 45 درس │  [عرض]    │
+│ شرح الأصول الثلاثة       │ الشيخ حسن الدغريري │ 12 درس │  [عرض]    │
+└──────────────────────────────────────────────────────────────────────┘
+
+┌──────────────────────────────────────────────────────────────────────┐
+│ 📖 السلاسل الجارية / Active Series (15)                       [طي] │
+├──────────────────────────────────────────────────────────────────────┤
+│ شرح العقيدة الواسطية     │ الشيخ حسن الدغريري │ 28 درس │  [عرض]    │
+│ شرح كتاب الصيام          │ الشيخ حسن الدغريري │ 8 درس  │  [عرض]    │
+│ ... 5 more rows ...                                                  │
+├──────────────────────────────────────────────────────────────────────┤
+│                    [عرض المزيد (10)]                                 │
+└──────────────────────────────────────────────────────────────────────┘
+
+┌──────────────────────────────────────────────────────────────────────┐
+│ ✅ السلاسل المكتملة / Completed Series (8)                    [طي] │
+├──────────────────────────────────────────────────────────────────────┤
+│ ...                                                                  │
+└──────────────────────────────────────────────────────────────────────┘
+```
+
+### Admin: Section List
+```
+┌──────────────────────────────────────────────────────────────────────┐
+│  📑 Sections Management                           [+ Add Section]   │
+├──────────────────────────────────────────────────────────────────────┤
+│ ↑↓ │ Icon │ Title (AR)      │ Title (EN)     │ Series │ Visible │ ⚙ │
+├────┼──────┼─────────────────┼────────────────┼────────┼─────────┼───┤
+│ ↑↓ │ ⭐   │ مميز            │ Featured       │ 3      │ ✅      │ ✏🗑│
+│ ↑↓ │ 📖   │ السلاسل الجارية  │ Active Series  │ 15     │ ✅      │ ✏🗑│
+│ ↑↓ │ ✅   │ السلاسل المكتملة │ Completed      │ 8      │ ✅      │ ✏🗑│
+│ ↑↓ │ 📁   │ الأرشيف         │ Archive        │ 4      │ ❌      │ ✏🗑│
+└──────────────────────────────────────────────────────────────────────┘
+```
+
+### Admin: Manage Series in Section
+```
+┌──────────────────────────────────────────────────────────────────────┐
+│  ← Back │ 📖 Active Series - Manage Content                         │
+├──────────────────────────────────────────────────────────────────────┤
+│ [Search series...]  [+ Add Series to Section]                        │
+├──────────────────────────────────────────────────────────────────────┤
+│ ↑↓ │ Series Title              │ Sheikh           │ Lectures │ ⚙    │
+├────┼───────────────────────────┼──────────────────┼──────────┼──────┤
+│ ↑↓ │ شرح العقيدة الواسطية      │ الشيخ حسن الدغريري│ 28       │ ✏ ❌ │
+│ ↑↓ │ شرح كتاب الصيام           │ الشيخ حسن الدغريري│ 8        │ ✏ ❌ │
+│ ...                                                                  │
+└──────────────────────────────────────────────────────────────────────┘
+```
+
+---
+
+## Migration Plan
+
+1. Run `scripts/seed-sections.js` to create default sections
+2. Auto-assign existing series based on criteria:
+   - Series with `seriesType: 'archive'` → Archive section
+   - Series with `tags: ['ramadan']` → Ramadan Archive section
+   - Series with `isCompleted: true` (if exists) → Completed section
+   - Everything else → Active section
+3. Admin manually adjusts as needed
 
 ---
 
 ## Testing Checklist
 
-- [ ] Model validation works
-- [ ] Admin can create/edit/delete collections
-- [ ] Reordering works
-- [ ] Collections appear on homepage
-- [ ] Clicking collection applies filter
+- [ ] Section CRUD works (create, read, update, delete)
+- [ ] Section reordering works
+- [ ] Series assignment to sections works
+- [ ] Series reordering within sections works
+- [ ] Homepage displays sections correctly
+- [ ] Collapse/expand works
+- [ ] "Show more" works
 - [ ] RTL/LTR display correct
 - [ ] Mobile responsive
-- [ ] Cache invalidates on changes
-- [ ] Empty state when no collections
+- [ ] Cache invalidation on changes
+- [ ] Default sections can't be deleted (optional protection)
 
 ---
 
-## Future Enhancements (Not MVP)
+## Open Questions
 
-1. **Series/Lecture Picker**: Allow selecting specific series/lectures instead of filter-based
-2. **Drag-drop Reordering**: Replace up/down buttons with drag-drop
-3. **Collection Detail Page**: `/collections/:slug` with custom layout
-4. **Seasonal Auto-toggle**: Auto-show/hide based on startDate/endDate
-5. **Custom Icons**: Upload custom images instead of emoji only
-6. **Analytics**: Track collection click-through rates
+1. **Keep existing tabs?** Currently homepage has tabs (Series, Standalone, Khutbas). Should sections replace tabs entirely, or appear below tabs?
+
+2. **Series detail expansion**: Currently clicking a series card expands to show lectures inline. Keep this behavior within sections?
+
+3. **Standalone lectures**: These don't belong to series. Should there be a "Standalone" section, or keep the separate tab?
+
+4. **Default section**: If a series has no section assigned, which section does it appear in? (Suggest: Active)
 
 ---
 
-## Questions for User
+## Timeline Estimate
 
-1. Is the **filter-based approach** (Option A) acceptable for MVP, or do you need the full series/lecture picker from the start?
+| Phase | Description | Time |
+|-------|-------------|------|
+| 1 | Data model | 30 min |
+| 2 | Admin routes | 1 hour |
+| 3 | Admin views | 2 hours |
+| 4 | Homepage integration | 1.5 hours |
+| 5 | JavaScript | 30 min |
+| 6 | Translations & polish | 30 min |
+| 7 | Testing & fixes | 1 hour |
+| **Total** | | **~7 hours** |
 
-2. For reordering, are **up/down arrows** acceptable, or is drag-drop essential?
+---
 
-3. Should clicking a collection **apply the filter on homepage** or **go to a separate page**?
-
-4. Any specific collections you want pre-populated beyond the defaults listed?
+Ready to proceed when you confirm the approach and answer the open questions.
