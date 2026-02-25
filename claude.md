@@ -13,7 +13,7 @@ A web platform for hosting and streaming ~160 Arabic Islamic lecture audio files
 ## 📌 Project State
 
 **Current Phase**: LIVE - Feature Development
-**Last Updated**: 2026-02-23
+**Last Updated**: 2026-02-25
 **Active Branch**: `claude/fix-homepage-tests-ovChk`
 **Live URL**: https://rasmihassan.com
 **Status**: 🚀 **PRODUCTION LIVE** - Performance optimizations complete, fonts self-hosted
@@ -191,7 +191,7 @@ All mobile issues have been fixed:
 6. ~~**3.1 Server-Side Filtering & Pagination**~~ ✅ Done - API endpoints with pagination
 7. ~~**3.5 Weekly Class Schedule**~~ ✅ Done - Add entries at /admin/schedule
 8. ~~**3.3 Performance Optimizations**~~ ✅ Done - In-memory caching, static cache headers, Cloudflare CDN guide
-9. **3.4 Admin Panel Arabic** - RTL support for admin pages 🔄 IN PROGRESS
+9. ~~**3.4 Admin Panel Arabic**~~ ✅ Done - Full bilingual support for all 18 admin templates
 10. **3.16 Quick Links Section** - Homepage featured collections with admin management (NEW)
 11. **Test Coverage Improvements** - Focus on slugify.js, lectures API, middleware
 11. ~~**3.11 Hero Section Text Update**~~ ✅ Done - Updated branding to "موقع الشيخ حسن بن محمد منصور الدغريري"
@@ -316,22 +316,30 @@ All mobile issues have been fixed:
 - Static asset caching with `immutable` directive
 - Cloudflare CDN setup guide at `docs/CLOUDFLARE_CDN_SETUP.md`
 
-#### 3.4 Admin Panel - Arabic Version 🔄 IN PROGRESS
-**Priority**: MEDIUM | **Status**: In Progress (Started 2026-02-23)
+#### 3.4 Admin Panel - Arabic Version ✅ COMPLETED
+**Priority**: MEDIUM | **Status**: Done (2026-02-25)
 
-Add comprehensive Arabic (RTL) support to the admin panel, leveraging the existing i18n system.
+Added comprehensive Arabic (RTL) and English bilingual support to all admin panel pages.
 
 **Subtasks:**
-- [ ] Add RTL layout support to admin pages (CSS overrides for admin templates)
-- [ ] Translate admin UI strings (extend `utils/i18n.js` with admin keys)
-- [ ] Add language toggle to admin panel (persist preference)
-- [ ] Ensure form inputs work with Arabic text (bidirectional support)
+- [x] Add RTL layout support to admin pages (CSS `[dir="rtl"]`/`[dir="ltr"]` selectors)
+- [x] Translate admin UI strings (inline ternary with `adminLocale === 'ar'`)
+- [x] Add language toggle to admin panel (cookie-based `admin_locale` preference)
+- [x] Ensure form inputs work with Arabic text (explicit `dir` attributes)
 
-**Implementation Notes:**
-- i18n system already exists in `utils/i18n.js` with 85+ translation keys
-- Public pages already have RTL/LTR CSS support to reference
-- Admin templates in `views/admin/` (18 EJS files)
-- Add admin-specific translation keys to existing translations object
+**Implementation Summary:**
+- All 18 admin templates updated with full bilingual support
+- Created `adminI18nMiddleware` in `middleware/adminI18n.js`
+- Admin header partial with language toggle dropdown
+- JavaScript `msgs` object pattern for client-side translations
+- Dynamic `<html lang="<%= adminLocale %>" dir="<%= adminDir %>">`
+- RTL/LTR CSS for tables, buttons, forms, badges, actions
+
+**Files Updated:**
+- `middleware/adminI18n.js` - Admin i18n middleware (new)
+- `views/admin/partials/head.ejs` - Shared admin head partial (new)
+- `views/admin/partials/header.ejs` - Admin header with language toggle (new)
+- All 18 admin template files in `views/admin/`
 
 #### 3.5 Weekly Class Schedule ✅ COMPLETED
 **Priority**: MEDIUM | **Status**: Done (2026-02-09)
