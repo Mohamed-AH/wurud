@@ -192,7 +192,7 @@ All mobile issues have been fixed:
 7. ~~**3.5 Weekly Class Schedule**~~ ✅ Done - Add entries at /admin/schedule
 8. ~~**3.3 Performance Optimizations**~~ ✅ Done - In-memory caching, static cache headers, Cloudflare CDN guide
 9. ~~**3.4 Admin Panel Arabic**~~ ✅ Done - Full bilingual support for all 18 admin templates
-10. **3.16 Quick Links Section** - Homepage featured collections with admin management (NEW)
+10. ~~**3.16 Dynamic Series Section Management**~~ ✅ Done - Homepage sections, admin CRUD, homepage config toggles
 11. **Test Coverage Improvements** - Focus on slugify.js, lectures API, middleware
 11. ~~**3.11 Hero Section Text Update**~~ ✅ Done - Updated branding to "موقع الشيخ حسن بن محمد منصور الدغريري"
 12. ~~**3.12 Related Lectures Ordering**~~ ✅ Done - Related lectures sorted by lectureNumber, category displays in Arabic
@@ -549,72 +549,76 @@ Audited all admin routes and added missing buttons to the manage page Quick Acti
 **Files Updated:**
 - `views/admin/manage.ejs` - Added missing quick action buttons
 
-#### 3.16 Quick Links Section ⬜ NOT STARTED
-**Priority**: MEDIUM | **Status**: Pending
+#### 3.16 Dynamic Series Section Management ✅ COMPLETED
+**Priority**: MEDIUM | **Status**: Done (2026-02-25)
 
-Add a "Featured Collections" section on the homepage, positioned directly below the Weekly Class Schedule and before the series cards. This section provides quick navigation to curated content collections.
+Admin-managed homepage sections for grouping series (Featured, Active, Completed, Archive, Ramadan). Replaced the original "Quick Links" concept with a full section management system.
 
-**Purpose:**
-- Quick access to archived series (completed historical content)
-- Highlight completed series (finished multi-part lectures)
-- Feature seasonal content (Ramadan, Hajj, special occasions)
-- Admin-customizable content curation
+**Features Implemented:**
+- [x] ~~Section CRUD~~ ✅ Create, edit, delete sections with title AR/EN, icon, maxVisible, description
+- [x] ~~Section reordering~~ ✅ AJAX up/down arrows with bulkWrite
+- [x] ~~Series assignment~~ ✅ Assign series to sections, reorder within sections
+- [x] ~~Homepage rendering~~ ✅ Collapsible section blocks with series tables above tabs
+- [x] ~~Homepage config toggles~~ ✅ Toggle Schedule, Series Tab, Standalone Tab, Khutbas Tab
+- [x] ~~Seed script~~ ✅ Creates 5 default sections (Featured, Active, Completed, Archive, Ramadan)
+- [x] ~~Collapse state persistence~~ ✅ localStorage for section collapse state
+- [x] ~~Bilingual support~~ ✅ Full AR/EN for all admin pages and homepage sections
 
-**Data Model - FeaturedCollection:**
+**Data Model - Section:**
 ```javascript
 {
-  title: { ar: String, en: String },        // Collection name
-  description: { ar: String, en: String },  // Optional description
-  type: enum ['archived', 'completed', 'seasonal', 'custom'],
-  icon: String,                              // Emoji or icon class
-  series: [{ type: ObjectId, ref: 'Series' }], // Linked series
-  lectures: [{ type: ObjectId, ref: 'Lecture' }], // Or individual lectures
-  displayOrder: Number,                      // Sort order on homepage
-  isActive: Boolean,                         // Show/hide toggle
-  startDate: Date,                           // Optional: for seasonal
-  endDate: Date,                             // Optional: for seasonal
-  backgroundColor: String,                   // Custom card color
-  timestamps: true
+  title: { ar: String, en: String },
+  slug: String (unique, auto-generated),
+  icon: String (emoji),
+  displayOrder: Number,
+  isVisible: Boolean (default: true),
+  isDefault: Boolean (default: false),
+  collapsedByDefault: Boolean (default: false),
+  maxVisible: Number (default: 5),
+  description: { ar: String, en: String }
 }
 ```
 
-**Subtasks:**
-- [ ] Create FeaturedCollection model (`models/FeaturedCollection.js`)
-- [ ] Create admin management page (`/admin/collections`)
-  - [ ] CRUD operations for collections
-  - [ ] Drag-drop reordering
-  - [ ] Series/lecture picker with search
-  - [ ] Preview functionality
-- [ ] Add homepage section below Weekly Schedule
-  - [ ] Responsive card layout (3 columns desktop, 1 mobile)
-  - [ ] Icon + title + count display
-  - [ ] Click through to filtered view or custom page
-- [ ] Create collection detail page (`/collections/:slug`)
-- [ ] Add admin quick action button
-- [ ] Add to sitemap
+**Series Model Extensions:**
+- `sectionId` (ObjectId ref to Section, indexed)
+- `sectionOrder` (Number, default 0)
 
-**UI Design (Homepage Section):**
-```
-┌─────────────────────────────────────────────────────────┐
-│  📚 المجموعات المميزة / Featured Collections            │
-├─────────────────┬─────────────────┬─────────────────────┤
-│  📁 الأرشيف     │  ✅ سلاسل مكتملة │  🌙 موسم رمضان      │
-│  Archived       │  Completed      │  Ramadan Season    │
-│  45 series      │  12 series      │  8 series          │
-└─────────────────┴─────────────────┴─────────────────────┘
-```
+**SiteSettings Extension:**
+- `homepage.showSchedule` (Boolean, default: true)
+- `homepage.showSeriesTab` (Boolean, default: true)
+- `homepage.showStandaloneTab` (Boolean, default: true)
+- `homepage.showKhutbasTab` (Boolean, default: true)
 
-**Admin Interface:**
-- `/admin/collections` - List all collections with reorder
-- `/admin/collections/new` - Create new collection
-- `/admin/collections/:id/edit` - Edit collection, manage linked content
+**Admin Routes:**
+- `/admin/sections` - List all sections with reorder
+- `/admin/sections/new` - Create new section
+- `/admin/sections/:id/edit` - Edit section
+- `/admin/sections/:id/series` - Manage series in section
+- `/admin/homepage-config` - Toggle homepage features
 
-**Files to Create:**
-- `models/FeaturedCollection.js` - Data model
-- `routes/admin/collections.js` - Admin routes
-- `views/admin/collections.ejs` - Collection list
-- `views/admin/collection-form.ejs` - Create/edit form
-- `views/public/collection.ejs` - Public collection page (optional)
+**Homepage Layout Order:**
+1. Hero Section (always visible)
+2. Weekly Schedule (toggleable)
+3. Series Sections (admin-managed, collapsible)
+4. Content Tabs: Series / Standalone / Khutbas (each toggleable)
+
+**Files Created:**
+- `models/Section.js` - Section model with static methods
+- `views/admin/sections.ejs` - Section list page
+- `views/admin/section-form.ejs` - Create/edit form
+- `views/admin/section-series.ejs` - Series management within section
+- `views/admin/homepage-config.ejs` - Homepage toggle settings
+- `scripts/seed-sections.js` - Idempotent seed script
+
+**Files Modified:**
+- `models/Series.js` - Added sectionId, sectionOrder
+- `models/SiteSettings.js` - Added homepage config
+- `models/index.js` - Exported Section
+- `routes/admin/index.js` - Added ~407 lines of section/config routes
+- `routes/index.js` - Added fetchSectionsData(), homepage config integration
+- `views/public/index.ejs` - Section rendering, tab conditionals
+- `views/admin/manage.ejs` - Quick action buttons
+- `views/admin/edit-series.ejs` - Section assignment dropdown
 
 #### 3.9 Direct OCI Audio Upload ✅ COMPLETED
 **Priority**: MEDIUM | **Status**: Done (2026-02-10)
