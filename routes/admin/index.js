@@ -340,7 +340,7 @@ router.get('/lectures/no-audio', isAdmin, async (req, res) => {
 // @access  Private (Admin only)
 router.get('/series/:id/edit', isAdmin, async (req, res) => {
   try {
-    const { Series, Sheikh, Lecture } = require('../../models');
+    const { Series, Sheikh, Lecture, Section } = require('../../models');
 
     const series = await Series.findById(req.params.id)
       .populate('sheikhId', 'nameArabic nameEnglish')
@@ -351,6 +351,7 @@ router.get('/series/:id/edit', isAdmin, async (req, res) => {
     }
 
     const sheikhs = await Sheikh.find().sort({ nameArabic: 1 }).lean();
+    const sections = await Section.find().sort({ displayOrder: 1 }).lean();
 
     // Get lectures in this series, ordered by sortOrder
     // Use aggregation to handle null/undefined sortOrder values consistently
@@ -389,6 +390,7 @@ router.get('/series/:id/edit', isAdmin, async (req, res) => {
       user: req.user,
       series,
       sheikhs,
+      sections,
       lectures,
       success: req.query.success,
       error: req.query.error

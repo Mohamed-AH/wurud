@@ -790,6 +790,26 @@
           </div>
         </div>
 
+        <div class="form-group">
+          <label><%= adminLocale === 'ar' ? 'القسم في الصفحة الرئيسية' : 'Homepage Section' %></label>
+          <div style="display:flex;gap:10px;align-items:flex-start;">
+            <select id="sectionSelect" style="flex:1;padding:10px 14px;border:1px solid #ddd;border-radius:8px;font-size:14px;">
+              <option value=""><%= adminLocale === 'ar' ? '-- بدون قسم --' : '-- No Section --' %></option>
+              <% if (typeof sections !== 'undefined' && sections) { %>
+                <% sections.forEach(function(sec) { %>
+                  <option value="<%= sec._id %>" <%= series.sectionId && series.sectionId.toString() === sec._id.toString() ? 'selected' : '' %>>
+                    <%= sec.icon %> <%= adminLocale === 'ar' ? sec.title.ar : sec.title.en %>
+                  </option>
+                <% }) %>
+              <% } %>
+            </select>
+            <button type="button" class="btn btn-primary" style="padding:10px 16px;font-size:13px;white-space:nowrap;" onclick="assignSection()"><%= adminLocale === 'ar' ? 'تعيين' : 'Assign' %></button>
+          </div>
+          <div style="font-size:12px;color:#888;margin-top:4px;">
+            <%= adminLocale === 'ar' ? 'حدد القسم الذي تظهر فيه هذه السلسلة في الصفحة الرئيسية' : 'Select which homepage section this series appears in' %>
+          </div>
+        </div>
+
         <div class="actions">
           <button type="submit" class="btn btn-primary"><%= adminLocale === 'ar' ? '💾 حفظ التغييرات' : '💾 Save Changes' %></button>
           <a href="/admin/manage" class="btn btn-secondary"><%= adminLocale === 'ar' ? '↩️ إلغاء' : '↩️ Cancel' %></a>
@@ -973,6 +993,27 @@
       goToEdit: isArabic ? 'بنجاح.\n\nهل تريد الانتقال إلى صفحة تعديل السلسلة الجديدة؟' : 'successfully.\n\nDo you want to go to the new series edit page?',
       createFailed: isArabic ? 'فشل في إنشاء السلسلة: ' : 'Failed to create series: '
     };
+
+    // Section assignment
+    function assignSection() {
+      const select = document.getElementById('sectionSelect');
+      const sectionId = select.value;
+      const seriesId = '<%= series._id %>';
+
+      fetch(`/admin/series/${seriesId}/assign-section`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ sectionId })
+      })
+      .then(res => {
+        if (res.redirected) {
+          window.location.href = res.url;
+        } else {
+          window.location.reload();
+        }
+      })
+      .catch(() => alert(isArabic ? 'حدث خطأ' : 'An error occurred'));
+    }
 
     // Visibility toggle UI update
     function updateVisibilityUI() {
