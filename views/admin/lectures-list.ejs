@@ -1,9 +1,8 @@
 <!DOCTYPE html>
-<html lang="ar" dir="rtl">
+<html lang="<%= adminLocale %>" dir="<%= adminDir %>">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title><%= title %> - Duroos</title>
+  <%- include('partials/head') %>
+  <title><%= adminLocale === 'ar' ? 'إدارة المحاضرات' : 'Manage Lectures' %> - <%= t('admin_title') %></title>
   <style>
     * { margin: 0; padding: 0; box-sizing: border-box; }
     body {
@@ -11,19 +10,6 @@
       background: #f5f5f5;
       color: #333;
     }
-    .header {
-      background: #1A5F5A;
-      color: white;
-      padding: 16px 24px;
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
-    }
-    .header h1 { font-size: 24px; font-weight: 600; }
-    .header-nav { display: flex; align-items: center; gap: 16px; }
-    .header-nav a { color: white; text-decoration: none; opacity: 0.9; }
-    .header-nav a:hover { opacity: 1; }
     .container { max-width: 1400px; margin: 0 auto; padding: 32px 24px; }
     .card {
       background: white;
@@ -37,6 +23,11 @@
       margin-bottom: 24px;
       flex-wrap: wrap;
     }
+
+    [dir="rtl"] .search-form {
+      flex-direction: row-reverse;
+    }
+
     .search-form input, .search-form select {
       padding: 10px 14px;
       border: 1px solid #ddd;
@@ -47,7 +38,11 @@
     .search-form select { min-width: 200px; }
     table { width: 100%; border-collapse: collapse; margin-top: 16px; }
     thead { background: #f8f8f8; }
-    th, td { padding: 12px; text-align: right; border-bottom: 1px solid #eee; }
+    th, td { padding: 12px; border-bottom: 1px solid #eee; }
+
+    [dir="rtl"] th, [dir="rtl"] td { text-align: right; }
+    [dir="ltr"] th, [dir="ltr"] td { text-align: left; }
+
     th { font-weight: 600; color: #666; font-size: 13px; }
     .badge {
       display: inline-block;
@@ -60,6 +55,11 @@
     .badge-warning { background: #fff3cd; color: #856404; }
     .badge-info { background: #d1ecf1; color: #0c5460; }
     .actions { display: flex; gap: 8px; }
+
+    [dir="rtl"] .actions {
+      flex-direction: row-reverse;
+    }
+
     .btn {
       padding: 6px 12px;
       border: none;
@@ -79,41 +79,43 @@
       padding: 48px;
       color: #666;
     }
-    .slug { font-size: 11px; color: #888; direction: ltr; text-align: left; }
+    .slug { font-size: 11px; color: #888; direction: ltr; }
+
+    [dir="rtl"] .slug { text-align: left; }
+    [dir="ltr"] .slug { text-align: right; }
+
     .lecture-title { font-weight: 500; }
     tr.deleting { opacity: 0.5; background: #fee; }
     .stats { display: flex; gap: 24px; margin-bottom: 16px; }
+
+    [dir="rtl"] .stats {
+      flex-direction: row-reverse;
+    }
+
     .stat { background: #f8f8f8; padding: 12px 16px; border-radius: 6px; }
     .stat-value { font-size: 24px; font-weight: 600; color: #1A5F5A; }
     .stat-label { font-size: 12px; color: #666; }
   </style>
 </head>
 <body>
-  <div class="header">
-    <h1>🎙️ إدارة المحاضرات</h1>
-    <div class="header-nav">
-      <a href="/admin/dashboard">لوحة التحكم</a>
-      <a href="/admin/manage">إدارة</a>
-      <a href="/auth/logout">خروج</a>
-    </div>
-  </div>
+  <%- include('partials/header', { activePage: 'manage' }) %>
 
-  <div class="container">
+  <main class="admin-container">
     <div class="card">
       <!-- Search Form -->
       <form class="search-form" method="GET" action="/admin/lectures">
-        <input type="text" name="search" placeholder="بحث بالعنوان أو الرابط..." value="<%= search %>">
+        <input type="text" name="search" placeholder="<%= adminLocale === 'ar' ? 'بحث بالعنوان أو الرابط...' : 'Search by title or slug...' %>" value="<%= search %>">
         <select name="seriesId">
-          <option value="">-- كل السلاسل --</option>
+          <option value=""><%= adminLocale === 'ar' ? '-- كل السلاسل --' : '-- All Series --' %></option>
           <% allSeries.forEach(s => { %>
             <option value="<%= s._id %>" <%= selectedSeriesId === s._id.toString() ? 'selected' : '' %>>
-              <%= s.titleArabic %>
+              <%= adminLocale === 'ar' ? s.titleArabic : (s.titleEnglish || s.titleArabic) %>
             </option>
           <% }) %>
         </select>
-        <button type="submit" class="btn btn-primary">🔍 بحث</button>
+        <button type="submit" class="btn btn-primary"><%= adminLocale === 'ar' ? '🔍 بحث' : '🔍 Search' %></button>
         <% if (search || selectedSeriesId) { %>
-          <a href="/admin/lectures" class="btn" style="background: #6c757d; color: white;">مسح</a>
+          <a href="/admin/lectures" class="btn" style="background: #6c757d; color: white;"><%= adminLocale === 'ar' ? 'مسح' : 'Clear' %></a>
         <% } %>
       </form>
 
@@ -121,7 +123,7 @@
       <div class="stats">
         <div class="stat">
           <div class="stat-value"><%= lectures.length %></div>
-          <div class="stat-label">نتيجة</div>
+          <div class="stat-label"><%= adminLocale === 'ar' ? 'نتيجة' : 'results' %></div>
         </div>
       </div>
 
@@ -129,41 +131,47 @@
         <table>
           <thead>
             <tr>
-              <th>العنوان</th>
-              <th>السلسلة</th>
-              <th>الشيخ</th>
-              <th>الحالة</th>
-              <th>الصوت</th>
-              <th>الإجراءات</th>
+              <th><%= adminLocale === 'ar' ? 'العنوان' : 'Title' %></th>
+              <th><%= adminLocale === 'ar' ? 'السلسلة' : 'Series' %></th>
+              <th><%= adminLocale === 'ar' ? 'الشيخ' : 'Sheikh' %></th>
+              <th><%= adminLocale === 'ar' ? 'الحالة' : 'Status' %></th>
+              <th><%= adminLocale === 'ar' ? 'الصوت' : 'Audio' %></th>
+              <th><%= adminLocale === 'ar' ? 'الإجراءات' : 'Actions' %></th>
             </tr>
           </thead>
           <tbody>
             <% lectures.forEach(lecture => { %>
               <tr id="row-<%= lecture._id %>">
                 <td>
-                  <div class="lecture-title"><%= lecture.titleArabic %></div>
+                  <div class="lecture-title"><%= adminLocale === 'ar' ? lecture.titleArabic : (lecture.titleEnglish || lecture.titleArabic) %></div>
                   <div class="slug"><%= lecture.slug || 'no-slug' %></div>
                 </td>
-                <td><%= lecture.seriesId?.titleArabic || '<span style="color:#999">منفصلة</span>' %></td>
-                <td><%= lecture.sheikhId?.nameArabic || 'غير محدد' %></td>
+                <td>
+                  <% if (lecture.seriesId) { %>
+                    <%= adminLocale === 'ar' ? lecture.seriesId.titleArabic : (lecture.seriesId.titleEnglish || lecture.seriesId.titleArabic) %>
+                  <% } else { %>
+                    <span style="color:#999"><%= adminLocale === 'ar' ? 'منفصلة' : 'Standalone' %></span>
+                  <% } %>
+                </td>
+                <td><%= lecture.sheikhId ? (adminLocale === 'ar' ? lecture.sheikhId.nameArabic : (lecture.sheikhId.nameEnglish || lecture.sheikhId.nameArabic)) : (adminLocale === 'ar' ? 'غير محدد' : 'Unspecified') %></td>
                 <td>
                   <% if (lecture.published) { %>
-                    <span class="badge badge-success">منشورة</span>
+                    <span class="badge badge-success"><%= adminLocale === 'ar' ? 'منشورة' : 'Published' %></span>
                   <% } else { %>
-                    <span class="badge badge-warning">مسودة</span>
+                    <span class="badge badge-warning"><%= adminLocale === 'ar' ? 'مسودة' : 'Draft' %></span>
                   <% } %>
                 </td>
                 <td>
                   <% if (lecture.audioFileName || lecture.audioUrl) { %>
-                    <span class="badge badge-info">✓ موجود</span>
+                    <span class="badge badge-info"><%= adminLocale === 'ar' ? '✓ موجود' : '✓ Available' %></span>
                   <% } else { %>
-                    <span class="badge" style="background:#f8d7da;color:#721c24">✗ لا يوجد</span>
+                    <span class="badge" style="background:#f8d7da;color:#721c24"><%= adminLocale === 'ar' ? '✗ لا يوجد' : '✗ Missing' %></span>
                   <% } %>
                 </td>
                 <td class="actions">
-                  <a href="/admin/lectures/<%= lecture._id %>/edit" class="btn btn-primary btn-sm">✏️ تعديل</a>
+                  <a href="/admin/lectures/<%= lecture._id %>/edit" class="btn btn-primary btn-sm"><%= adminLocale === 'ar' ? '✏️ تعديل' : '✏️ Edit' %></a>
                   <button class="btn btn-danger btn-sm" onclick="deleteLecture('<%= lecture._id %>', '<%= lecture.titleArabic.replace(/'/g, "\\'").substring(0, 30) %>')">
-                    🗑️ حذف
+                    <%= adminLocale === 'ar' ? '🗑️ حذف' : '🗑️ Delete' %>
                   </button>
                 </td>
               </tr>
@@ -172,18 +180,27 @@
         </table>
       <% } else { %>
         <div class="empty-state">
-          <p>لا توجد نتائج</p>
+          <p><%= adminLocale === 'ar' ? 'لا توجد نتائج' : 'No results found' %></p>
           <% if (search || selectedSeriesId) { %>
-            <p style="margin-top: 8px; font-size: 14px;">جرب تغيير معايير البحث</p>
+            <p style="margin-top: 8px; font-size: 14px;"><%= adminLocale === 'ar' ? 'جرب تغيير معايير البحث' : 'Try changing your search criteria' %></p>
           <% } %>
         </div>
       <% } %>
     </div>
-  </div>
+  </main>
 
   <script>
+    const isArabic = '<%= adminLocale %>' === 'ar';
+
+    const msgs = {
+      confirmDelete: isArabic ? 'هل أنت متأكد من حذف المحاضرة:' : 'Are you sure you want to delete:',
+      audioWarning: isArabic ? '\n\nسيتم حذف الملف الصوتي أيضاً!' : '\n\nThe audio file will also be deleted!',
+      deleteFailed: isArabic ? 'فشل الحذف: ' : 'Delete failed: ',
+      error: isArabic ? 'خطأ: ' : 'Error: '
+    };
+
     async function deleteLecture(id, title) {
-      if (!confirm(`هل أنت متأكد من حذف المحاضرة:\n"${title}..."؟\n\nسيتم حذف الملف الصوتي أيضاً!`)) {
+      if (!confirm(`${msgs.confirmDelete}\n"${title}..."?${msgs.audioWarning}`)) {
         return;
       }
 
@@ -203,16 +220,16 @@
 
         if (data.success) {
           row.style.transition = 'all 0.3s ease';
-          row.style.transform = 'translateX(100%)';
+          row.style.transform = isArabic ? 'translateX(-100%)' : 'translateX(100%)';
           row.style.opacity = '0';
           setTimeout(() => row.remove(), 300);
         } else {
           row.classList.remove('deleting');
-          alert('فشل الحذف: ' + data.message);
+          alert(msgs.deleteFailed + data.message);
         }
       } catch (error) {
         row.classList.remove('deleting');
-        alert('خطأ: ' + error.message);
+        alert(msgs.error + error.message);
       }
     }
   </script>

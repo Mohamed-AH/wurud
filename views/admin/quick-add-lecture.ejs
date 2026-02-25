@@ -1,9 +1,8 @@
 <!DOCTYPE html>
-<html lang="ar" dir="rtl">
+<html lang="<%= adminLocale %>" dir="<%= adminDir %>">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title><%= title %> - Duroos</title>
+  <%- include('partials/head') %>
+  <title><%= adminLocale === 'ar' ? 'إضافة درس سريع' : 'Quick Add Lecture' %> - <%= t('admin_title') %></title>
   <style>
     * { margin: 0; padding: 0; box-sizing: border-box; }
     body {
@@ -11,18 +10,6 @@
       background: #f5f5f5;
       color: #333;
     }
-    .header {
-      background: #1A5F5A;
-      color: white;
-      padding: 16px 24px;
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-    }
-    .header h1 { font-size: 24px; font-weight: 600; }
-    .header-nav { display: flex; align-items: center; gap: 16px; }
-    .header-nav a { color: white; text-decoration: none; opacity: 0.9; }
-    .header-nav a:hover { opacity: 1; }
     .container { max-width: 600px; margin: 0 auto; padding: 32px 24px; }
     .card {
       background: white;
@@ -108,8 +95,16 @@
     .btn-secondary {
       background: #6c757d;
       color: white;
+    }
+
+    [dir="rtl"] .btn-secondary {
       margin-right: 12px;
     }
+
+    [dir="ltr"] .btn-secondary {
+      margin-left: 12px;
+    }
+
     .btn-secondary:hover {
       background: #5a6268;
     }
@@ -118,6 +113,11 @@
       gap: 12px;
       margin-top: 24px;
     }
+
+    [dir="rtl"] .actions {
+      flex-direction: row-reverse;
+    }
+
     .hint {
       font-size: 12px;
       color: #888;
@@ -131,8 +131,16 @@
       border-radius: 16px;
       font-size: 12px;
       font-weight: 600;
+    }
+
+    [dir="rtl"] .quick-badge {
       margin-right: 8px;
     }
+
+    [dir="ltr"] .quick-badge {
+      margin-left: 8px;
+    }
+
     @media (max-width: 600px) {
       .form-row {
         grid-template-columns: 1fr;
@@ -141,21 +149,15 @@
   </style>
 </head>
 <body>
-  <div class="header">
-    <h1><span class="quick-badge">سريع</span> إضافة درس</h1>
-    <div class="header-nav">
-      <a href="/admin/series/<%= series._id %>/edit">← العودة للسلسلة</a>
-      <a href="/admin/dashboard">لوحة التحكم</a>
-    </div>
-  </div>
+  <%- include('partials/header', { activePage: 'manage' }) %>
 
-  <div class="container">
+  <main class="admin-container">
     <div class="card">
       <div class="series-info">
-        <div class="series-name"><%= series.titleArabic %></div>
+        <div class="series-name"><%= adminLocale === 'ar' ? series.titleArabic : (series.titleEnglish || series.titleArabic) %></div>
         <div class="series-meta">
-          الشيخ: <%= series.sheikhId?.nameArabic || 'غير محدد' %> |
-          التصنيف: <%= series.category || 'أخرى' %>
+          <%= adminLocale === 'ar' ? 'الشيخ:' : 'Sheikh:' %> <%= series.sheikhId ? (adminLocale === 'ar' ? series.sheikhId.nameArabic : (series.sheikhId.nameEnglish || series.sheikhId.nameArabic)) : (adminLocale === 'ar' ? 'غير محدد' : 'Unspecified') %> |
+          <%= adminLocale === 'ar' ? 'التصنيف:' : 'Category:' %> <%= translateCategory ? translateCategory(series.category || 'Other') : (series.category || 'Other') %>
         </div>
       </div>
 
@@ -164,7 +166,7 @@
 
         <div class="form-row">
           <div class="form-group">
-            <label for="lectureNumber">رقم الدرس *</label>
+            <label for="lectureNumber"><%= adminLocale === 'ar' ? 'رقم الدرس' : 'Lecture Number' %> *</label>
             <input
               type="number"
               id="lectureNumber"
@@ -173,64 +175,70 @@
               min="1"
               required
               onchange="updatePreview()"
+              class="form-control"
             >
           </div>
 
           <div class="form-group">
-            <label for="dateRecorded">تاريخ التسجيل</label>
+            <label for="dateRecorded"><%= adminLocale === 'ar' ? 'تاريخ التسجيل' : 'Recording Date' %></label>
             <input
               type="date"
               id="dateRecorded"
               name="dateRecorded"
               value="<%= today %>"
+              class="form-control"
             >
           </div>
         </div>
 
         <div class="form-group">
-          <label for="titleSuffix">عنوان إضافي (اختياري)</label>
+          <label for="titleSuffix"><%= adminLocale === 'ar' ? 'عنوان إضافي (اختياري)' : 'Additional Title (optional)' %></label>
           <input
             type="text"
             id="titleSuffix"
             name="titleSuffix"
-            placeholder="مثال: باب الصلاة"
+            placeholder="<%= adminLocale === 'ar' ? 'مثال: باب الصلاة' : 'Example: Chapter on Prayer' %>"
             onkeyup="updatePreview()"
+            class="form-control"
           >
-          <div class="hint">يُضاف بعد رقم الدرس في العنوان</div>
+          <div class="hint"><%= adminLocale === 'ar' ? 'يُضاف بعد رقم الدرس في العنوان' : 'Added after the lecture number in the title' %></div>
         </div>
 
         <div class="form-group">
-          <label>معاينة العنوان</label>
+          <label><%= adminLocale === 'ar' ? 'معاينة العنوان' : 'Title Preview' %></label>
           <div class="preview-title" id="titlePreview">
-            <strong><%= series.titleArabic %> - الدرس <%= nextLectureNumber %></strong>
+            <strong><%= series.titleArabic %> - <%= adminLocale === 'ar' ? 'الدرس' : 'Lecture' %> <%= nextLectureNumber %></strong>
           </div>
         </div>
 
         <div class="form-group">
-          <label for="notes">ملاحظات (اختياري)</label>
+          <label for="notes"><%= adminLocale === 'ar' ? 'ملاحظات (اختياري)' : 'Notes (optional)' %></label>
           <textarea
             id="notes"
             name="notes"
-            placeholder="أي ملاحظات إضافية..."
+            placeholder="<%= adminLocale === 'ar' ? 'أي ملاحظات إضافية...' : 'Any additional notes...' %>"
+            class="form-control"
           ></textarea>
         </div>
 
         <div class="actions">
-          <button type="submit" class="btn btn-primary">✓ إضافة الدرس</button>
-          <a href="/admin/series/<%= series._id %>/edit" class="btn btn-secondary">إلغاء</a>
+          <button type="submit" class="btn btn-primary"><%= adminLocale === 'ar' ? '✓ إضافة الدرس' : '✓ Add Lecture' %></button>
+          <a href="/admin/series/<%= series._id %>/edit" class="btn btn-secondary"><%= adminLocale === 'ar' ? 'إلغاء' : 'Cancel' %></a>
         </div>
       </form>
     </div>
-  </div>
+  </main>
 
   <script>
     const seriesTitle = '<%= series.titleArabic %>';
+    const isArabic = '<%= adminLocale %>' === 'ar';
+    const lectureLabel = isArabic ? 'الدرس' : 'Lecture';
 
     function updatePreview() {
       const lectureNumber = document.getElementById('lectureNumber').value;
       const titleSuffix = document.getElementById('titleSuffix').value.trim();
 
-      let preview = seriesTitle + ' - الدرس ' + lectureNumber;
+      let preview = seriesTitle + ' - ' + lectureLabel + ' ' + lectureNumber;
       if (titleSuffix) {
         preview += ' - ' + titleSuffix;
       }
