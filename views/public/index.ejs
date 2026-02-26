@@ -1068,6 +1068,231 @@
     }
   }
 
+  /* Small phones (below 480px) */
+  @media (max-width: 480px) {
+    .search-hero {
+      min-height: 180px;
+      padding: var(--space-md) var(--space-sm);
+    }
+
+    .search-hero-quote {
+      font-size: 17px;
+      line-height: 1.5;
+      margin-bottom: 16px;
+    }
+
+    .search-hero::before {
+      font-size: 80px;
+    }
+
+    .search-container {
+      padding: 0 4px;
+    }
+
+    .search-input {
+      font-size: 15px;
+      padding: 12px 14px;
+    }
+
+    .search-btn {
+      padding: 12px 20px;
+      font-size: 14px;
+    }
+
+    .lecture-count-badge {
+      gap: 8px;
+      margin-top: 16px;
+      padding: 12px 0;
+    }
+
+    .count-divider {
+      width: 24px;
+    }
+
+    .count-number {
+      font-size: 18px;
+    }
+
+    .count-label {
+      font-size: 12px;
+    }
+
+    /* Navigation tabs - smaller */
+    .nav-tabs-container {
+      padding: 0 8px;
+    }
+
+    .nav-tab {
+      font-size: 13px;
+      padding: 10px 8px;
+    }
+
+    /* Schedule - compact */
+    .weekly-schedule-section {
+      padding: var(--space-md);
+    }
+
+    .schedule-title {
+      font-size: 18px;
+    }
+
+    .schedule-tab {
+      padding: 6px 10px;
+      font-size: 12px;
+    }
+
+    .schedule-table th,
+    .schedule-table td {
+      padding: 6px 8px;
+      font-size: 11px;
+    }
+
+    .schedule-lesson-num {
+      font-size: 10px;
+      padding: 2px 6px;
+      min-width: 36px;
+    }
+
+    /* Sections - compact */
+    .homepage-sections {
+      padding: 0 var(--space-sm);
+    }
+
+    .section-header {
+      padding: 10px 12px;
+    }
+
+    .section-title {
+      font-size: 16px;
+    }
+
+    .section-table td {
+      padding: 8px 10px;
+    }
+
+    .section-series-title {
+      font-size: 14px;
+    }
+
+    .section-series-subtitle {
+      font-size: 11px;
+    }
+  }
+
+  /* Very small phones (below 360px) */
+  @media (max-width: 360px) {
+    .search-hero {
+      min-height: 160px;
+      padding: var(--space-sm);
+    }
+
+    .search-hero-quote {
+      font-size: 15px;
+      line-height: 1.4;
+      margin-bottom: 12px;
+    }
+
+    .search-hero::before {
+      font-size: 60px;
+    }
+
+    .search-input {
+      font-size: 14px;
+      padding: 10px 12px;
+    }
+
+    .search-btn {
+      padding: 10px 16px;
+      font-size: 13px;
+    }
+
+    .lecture-count-badge {
+      flex-direction: column;
+      gap: 4px;
+    }
+
+    .count-divider {
+      width: 40px;
+      height: 1px;
+    }
+
+    .count-number {
+      font-size: 16px;
+    }
+
+    .count-label {
+      font-size: 11px;
+    }
+
+    /* Navigation tabs - stack or scroll */
+    .nav-tabs-container {
+      padding: 0 4px;
+      overflow-x: auto;
+      -webkit-overflow-scrolling: touch;
+    }
+
+    .nav-tab {
+      font-size: 12px;
+      padding: 8px 6px;
+      white-space: nowrap;
+      flex: none;
+      min-width: auto;
+    }
+
+    /* Schedule - minimal */
+    .schedule-title {
+      font-size: 16px;
+    }
+
+    .schedule-tabs {
+      flex-wrap: wrap;
+      gap: 4px;
+    }
+
+    .schedule-tab {
+      padding: 5px 8px;
+      font-size: 11px;
+    }
+
+    .schedule-table th,
+    .schedule-table td {
+      padding: 5px 6px;
+      font-size: 10px;
+    }
+
+    .schedule-lesson-num {
+      font-size: 9px;
+      padding: 2px 4px;
+      min-width: 32px;
+    }
+
+    /* Sections - minimal */
+    .section-header {
+      padding: 8px 10px;
+    }
+
+    .section-title {
+      font-size: 14px;
+    }
+
+    .section-table td {
+      padding: 6px 8px;
+    }
+
+    .section-series-title {
+      font-size: 13px;
+    }
+
+    .section-series-subtitle {
+      font-size: 10px;
+    }
+
+    .section-show-more {
+      font-size: 12px;
+      padding: 8px;
+    }
+  }
+
   /* Skeleton loading styles */
   .series-skeleton {
     padding: 0 var(--space-lg);

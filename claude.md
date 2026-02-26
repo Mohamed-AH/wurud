@@ -193,7 +193,8 @@ All mobile issues have been fixed:
 8. ~~**3.3 Performance Optimizations**~~ ✅ Done - In-memory caching, static cache headers, Cloudflare CDN guide
 9. ~~**3.4 Admin Panel Arabic**~~ ✅ Done - Full bilingual support for all 18 admin templates
 10. ~~**3.16 Dynamic Series Section Management**~~ ✅ Done - Homepage sections, admin CRUD, homepage config toggles
-11. **Test Coverage Improvements** - Focus on slugify.js, lectures API, middleware
+11. ~~**3.17 Mobile Responsiveness Fixes**~~ ✅ Done - Homepage, audio UI, lecture page responsive down to 320px
+12. **Test Coverage Improvements** - Focus on slugify.js, lectures API, middleware
 11. ~~**3.11 Hero Section Text Update**~~ ✅ Done - Updated branding to "موقع الشيخ حسن بن محمد منصور الدغريري"
 12. ~~**3.12 Related Lectures Ordering**~~ ✅ Done - Related lectures sorted by lectureNumber, category displays in Arabic
 13. ~~**3.13 Series Visibility Toggle**~~ ✅ Done - Admin toggle to show/hide series from public site
@@ -619,6 +620,24 @@ Admin-managed homepage sections for grouping series (Featured, Active, Completed
 - `views/public/index.ejs` - Section rendering, tab conditionals
 - `views/admin/manage.ejs` - Quick action buttons
 - `views/admin/edit-series.ejs` - Section assignment dropdown
+
+#### 3.17 Mobile Responsiveness Fixes ✅ COMPLETED
+**Priority**: MEDIUM | **Status**: Done (2026-02-26)
+
+Fixed responsive design issues for all screen sizes down to 320px (iPhone SE, Galaxy Fold, etc.).
+
+**Issues Fixed:**
+- [x] ~~Homepage layout breaks below 450px width~~ ✅ Added 480px and 360px breakpoints
+- [x] ~~Audio player UI distorted below 350px width~~ ✅ Compact controls and spacing
+
+**Breakpoints Added:**
+- `@media (max-width: 480px)` - Small phones
+- `@media (max-width: 360px)` - Very small phones
+
+**Files Updated:**
+- `views/public/index.ejs` - Homepage responsive CSS (hero, search, tabs, schedule, sections)
+- `views/public/lecture.ejs` - Lecture page responsive CSS (breadcrumb, hero, play section, buttons)
+- `public/css/audioPlayer.css` - Audio player responsive CSS (controls, buttons, progress bar)
 
 #### 3.9 Direct OCI Audio Upload ✅ COMPLETED
 **Priority**: MEDIUM | **Status**: Done (2026-02-10)

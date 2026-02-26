@@ -461,3 +461,177 @@ html[dir="rtl"] .speed-menu {
     transform: translateX(-50%);
   }
 }
+
+/* Small phones (below 480px) */
+@media (max-width: 480px) {
+  .audio-player {
+    padding: 10px 12px;
+  }
+
+  .player-container {
+    gap: 10px;
+  }
+
+  .now-playing-label {
+    font-size: 10px;
+  }
+
+  .lecture-title {
+    font-size: 14px;
+  }
+
+  .sheikh-name {
+    font-size: 12px;
+  }
+
+  .time-display {
+    font-size: 12px;
+  }
+
+  .control-btn {
+    width: 32px;
+    height: 32px;
+    font-size: 12px;
+  }
+
+  .control-btn-primary {
+    width: 40px;
+    height: 40px;
+    font-size: 14px;
+  }
+
+  .skip-btn {
+    width: 36px;
+    height: 36px;
+  }
+
+  .skip-icon svg {
+    width: 14px;
+    height: 14px;
+  }
+
+  .skip-seconds {
+    font-size: 7px;
+  }
+
+  .control-btn-small {
+    width: 32px;
+    height: 32px;
+    font-size: 12px;
+  }
+
+  .player-actions {
+    gap: 8px;
+  }
+
+  #speedLabel {
+    font-size: 11px;
+  }
+
+  .progress-handle {
+    width: 12px;
+    height: 12px;
+  }
+}
+
+/* Very small phones (below 360px) */
+@media (max-width: 360px) {
+  .audio-player {
+    padding: 8px 10px;
+  }
+
+  .player-container {
+    gap: 8px;
+  }
+
+  .now-playing-label {
+    font-size: 9px;
+    letter-spacing: 0.5px;
+  }
+
+  .lecture-title {
+    font-size: 13px;
+    margin-bottom: 2px;
+  }
+
+  .sheikh-name {
+    font-size: 11px;
+  }
+
+  .time-display {
+    font-size: 11px;
+  }
+
+  /* Smaller control buttons */
+  .control-buttons {
+    gap: 6px;
+  }
+
+  .control-btn {
+    width: 28px;
+    height: 28px;
+    font-size: 11px;
+    border-width: 1.5px;
+  }
+
+  .control-btn-primary {
+    width: 36px;
+    height: 36px;
+    font-size: 13px;
+  }
+
+  .skip-btn {
+    width: 32px;
+    height: 32px;
+  }
+
+  .skip-icon svg {
+    width: 12px;
+    height: 12px;
+  }
+
+  .skip-seconds {
+    font-size: 6px;
+    margin-top: -1px;
+  }
+
+  .control-btn-small {
+    width: 28px;
+    height: 28px;
+    font-size: 11px;
+  }
+
+  .player-actions {
+    gap: 6px;
+  }
+
+  #speedLabel {
+    font-size: 10px;
+  }
+
+  .download-btn svg {
+    width: 14px;
+    height: 14px;
+  }
+
+  .progress-container {
+    height: 6px;
+  }
+
+  .progress-handle {
+    width: 10px;
+    height: 10px;
+    right: -5px;
+  }
+
+  /* Speed menu adjustments */
+  .speed-menu {
+    bottom: 100px;
+    min-width: 70px;
+  }
+
+  .speed-option {
+    padding: 6px 10px;
+    font-size: 12px;
+  }
+}
