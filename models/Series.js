@@ -64,6 +64,18 @@ const seriesSchema = new mongoose.Schema({
     type: Boolean,
     default: true,
     index: true
+  },
+  // Section assignment for homepage organization
+  sectionId: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'Section',
+    default: null,
+    index: true
+  },
+  // Order within the assigned section
+  sectionOrder: {
+    type: Number,
+    default: 0
   }
 }, {
   timestamps: true

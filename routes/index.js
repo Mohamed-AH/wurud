@@ -1,6 +1,6 @@
 const express = require('express');
 const router = express.Router();
-const { Lecture, Sheikh, Series, Schedule, SiteSettings } = require('../models');
+const { Lecture, Sheikh, Series, Section, Schedule, SiteSettings } = require('../models');
 const cache = require('../utils/cache');
 
 // Cache TTLs (in seconds)
@@ -159,6 +159,52 @@ async function fetchScheduleData() {
     .sort((a, b) => dayOrder.indexOf(a.dayOfWeek) - dayOrder.indexOf(b.dayOfWeek));
 }
 
+// Helper function to fetch homepage sections with their series
+async function fetchSectionsData() {
+  const sections = await Section.find({ isVisible: true })
+    .sort({ displayOrder: 1 })
+    .lean();
+
+  const sectionsWithSeries = await Promise.all(
+    sections.map(async (section) => {
+      const seriesInSection = await Series.find({
+        sectionId: section._id,
+        isVisible: { $ne: false }
+      })
+        .populate('sheikhId', 'nameArabic nameEnglish honorific')
+        .sort({ sectionOrder: 1 })
+        .lean();
+
+      // Get lecture counts for each series
+      const seriesWithCounts = await Promise.all(
+        seriesInSection.map(async (s) => {
+          const lectureCount = await Lecture.countDocuments({
+            seriesId: s._id,
+            published: true
+          });
+          return {
+            ...s,
+            sheikh: s.sheikhId,
+            lectureCount
+          };
+        })
+      );
+
+      // Filter out series with no published lectures
+      const filteredSeries = seriesWithCounts.filter(s => s.lectureCount > 0);
+
+      return {
+        ...section,
+        series: filteredSeries,
+        totalSeriesCount: filteredSeries.length
+      };
+    })
+  );
+
+  // Only return sections that have at least one series
+  return sectionsWithSeries.filter(s => s.totalSeriesCount > 0);
+}
+
 // @route   GET /
 // @desc    Homepage - Series-based view with tabs
 // @access  Public
@@ -179,11 +225,32 @@ router.get('/', async (req, res) => {
       CACHE_TTL.HOMEPAGE
     );
 
-    // Check if public stats should be shown (not cached - lightweight)
+    // Get homepage sections (cached)
+    const homepageSections = await cache.getOrSet(
+      'homepage:sections',
+      fetchSectionsData,
+      CACHE_TTL.HOMEPAGE
+    );
+
+    // Get site settings for homepage config and stats
     let showPublicStats = false;
+    let homepageConfig = {
+      showSchedule: true,
+      showSeriesTab: true,
+      showStandaloneTab: true,
+      showKhutbasTab: true
+    };
     try {
       const settings = await SiteSettings.getSettings();
       showPublicStats = settings.shouldShowPublicStats();
+      if (settings.homepage) {
+        homepageConfig = {
+          showSchedule: settings.homepage.showSchedule !== false,
+          showSeriesTab: settings.homepage.showSeriesTab !== false,
+          showStandaloneTab: settings.homepage.showStandaloneTab !== false,
+          showKhutbasTab: settings.homepage.showKhutbasTab !== false
+        };
+      }
     } catch (err) {
       console.error('Failed to get site settings:', err.message);
     }
@@ -195,6 +262,8 @@ router.get('/', async (req, res) => {
       khutbaSeries: [],         // Empty - loaded via API
       weeklySchedule,
       totalLectureCount,
+      homepageSections,
+      homepageConfig,
       showPublicStats,
       lazyLoadSeries: true      // Flag for template to show loading state
     });

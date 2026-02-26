@@ -1,9 +1,8 @@
 <!DOCTYPE html>
-<html lang="ar" dir="rtl">
+<html lang="<%= adminLocale %>" dir="<%= adminDir %>">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title><%= title %> - Duroos</title>
+  <%- include('partials/head') %>
+  <title><%= adminLocale === 'ar' ? 'تعديل السلسلة' : 'Edit Series' %> - <%= t('admin_title') %></title>
   <style>
     * { margin: 0; padding: 0; box-sizing: border-box; }
     body {
@@ -641,78 +640,79 @@
   </style>
 </head>
 <body>
-  <div class="header">
-    <h1>✏️ تعديل السلسلة</h1>
-    <div class="header-nav">
-      <a href="/admin/dashboard">لوحة التحكم</a>
-      <a href="/admin/manage">إدارة</a>
-      <a href="/auth/logout">خروج</a>
-    </div>
-  </div>
+  <%- include('partials/header', { activePage: 'manage' }) %>
 
-  <div class="container">
+  <main class="admin-container">
     <% if (typeof success !== 'undefined' && success === 'lecture_added') { %>
-      <div class="success-message">✓ تمت إضافة الدرس بنجاح</div>
+      <div class="success-message"><%= adminLocale === 'ar' ? '✓ تمت إضافة الدرس بنجاح' : '✓ Lecture added successfully' %></div>
     <% } %>
     <% if (typeof success !== 'undefined' && success === 'updated') { %>
-      <div class="success-message">✓ تم حفظ التغييرات بنجاح</div>
+      <div class="success-message"><%= adminLocale === 'ar' ? '✓ تم حفظ التغييرات بنجاح' : '✓ Changes saved successfully' %></div>
     <% } %>
     <% if (typeof error !== 'undefined' && error === 'add_failed') { %>
-      <div class="error-message">❌ حدث خطأ أثناء إضافة الدرس</div>
+      <div class="error-message"><%= adminLocale === 'ar' ? '❌ حدث خطأ أثناء إضافة الدرس' : '❌ Error adding lecture' %></div>
     <% } %>
     <div class="card">
       <form method="POST" action="/admin/series/<%= series._id %>/edit">
         <div class="form-group">
-          <label for="titleArabic">العنوان بالعربية *</label>
+          <label for="titleArabic"><%= adminLocale === 'ar' ? 'العنوان بالعربية' : 'Title (Arabic)' %> *</label>
           <input
             type="text"
             id="titleArabic"
             name="titleArabic"
             value="<%= series.titleArabic %>"
             required
+            dir="rtl"
+            class="form-control"
           >
         </div>
 
         <div class="form-group">
-          <label for="titleEnglish">العنوان بالإنجليزية</label>
+          <label for="titleEnglish"><%= adminLocale === 'ar' ? 'العنوان بالإنجليزية' : 'Title (English)' %></label>
           <input
             type="text"
             id="titleEnglish"
             name="titleEnglish"
             value="<%= series.titleEnglish || '' %>"
+            dir="ltr"
+            class="form-control"
           >
         </div>
 
         <div class="form-group">
-          <label for="category">التصنيف (يتحكم بفلتر الصفحة الرئيسية)</label>
+          <label for="category"><%= adminLocale === 'ar' ? 'التصنيف (يتحكم بفلتر الصفحة الرئيسية)' : 'Category (Controls homepage filter)' %></label>
           <%
             // Default to 'Other' if category is null/undefined
             const currentCategory = series.category || 'Other';
           %>
-          <select id="category" name="category" style="background: #fffbf0; border: 2px solid #C19A6B;">
-            <option value="Aqeedah" <%= currentCategory === 'Aqeedah' ? 'selected' : '' %>>عقيدة</option>
-            <option value="Fiqh" <%= currentCategory === 'Fiqh' ? 'selected' : '' %>>فقه</option>
-            <option value="Tafsir" <%= currentCategory === 'Tafsir' ? 'selected' : '' %>>تفسير</option>
-            <option value="Hadith" <%= currentCategory === 'Hadith' ? 'selected' : '' %>>حديث</option>
-            <option value="Seerah" <%= currentCategory === 'Seerah' ? 'selected' : '' %>>سيرة</option>
-            <option value="Akhlaq" <%= currentCategory === 'Akhlaq' ? 'selected' : '' %>>أخلاق</option>
-            <option value="Other" <%= currentCategory === 'Other' ? 'selected' : '' %>>أخرى</option>
+          <select id="category" name="category" class="form-control" style="background: #fffbf0; border: 2px solid #C19A6B;">
+            <option value="Aqeedah" <%= currentCategory === 'Aqeedah' ? 'selected' : '' %>><%= adminLocale === 'ar' ? 'عقيدة' : 'Aqeedah' %></option>
+            <option value="Fiqh" <%= currentCategory === 'Fiqh' ? 'selected' : '' %>><%= adminLocale === 'ar' ? 'فقه' : 'Fiqh' %></option>
+            <option value="Tafsir" <%= currentCategory === 'Tafsir' ? 'selected' : '' %>><%= adminLocale === 'ar' ? 'تفسير' : 'Tafsir' %></option>
+            <option value="Hadith" <%= currentCategory === 'Hadith' ? 'selected' : '' %>><%= adminLocale === 'ar' ? 'حديث' : 'Hadith' %></option>
+            <option value="Seerah" <%= currentCategory === 'Seerah' ? 'selected' : '' %>><%= adminLocale === 'ar' ? 'سيرة' : 'Seerah' %></option>
+            <option value="Akhlaq" <%= currentCategory === 'Akhlaq' ? 'selected' : '' %>><%= adminLocale === 'ar' ? 'أخلاق' : 'Akhlaq' %></option>
+            <option value="Other" <%= currentCategory === 'Other' ? 'selected' : '' %>><%= adminLocale === 'ar' ? 'أخرى' : 'Other' %></option>
           </select>
           <p style="font-size: 12px; color: #C19A6B; margin-top: 4px; font-weight: 600;">
-            ⚠️ هذا الحقل يحدد تصنيف السلسلة في فلاتر الصفحة الرئيسية
+            <%= adminLocale === 'ar' ? '⚠️ هذا الحقل يحدد تصنيف السلسلة في فلاتر الصفحة الرئيسية' : '⚠️ This field determines the series category in homepage filters' %>
           </p>
         </div>
 
         <div class="form-group">
-          <label>نوع المحتوى</label>
+          <label><%= adminLocale === 'ar' ? 'نوع المحتوى' : 'Content Type' %></label>
           <div style="display: flex; gap: 24px; padding: 16px; background: #f8f9fa; border-radius: 8px;">
             <%
               // Content TYPE tags only - subject/topic is handled by Category above
               const availableTags = ['series', 'lecture', 'khutba'];
-              const tagLabels = {
+              const tagLabels = adminLocale === 'ar' ? {
                 'series': 'سلسلة دروس',
                 'lecture': 'محاضرة منفردة',
                 'khutba': 'خطبة جمعة'
+              } : {
+                'series': 'Lecture Series',
+                'lecture': 'Single Lecture',
+                'khutba': 'Friday Sermon'
               };
               const seriesTags = series.tags || [];
             %>
@@ -730,42 +730,47 @@
             <% }) %>
           </div>
           <p style="font-size: 12px; color: #666; margin-top: 8px;">
-            💡 نوع المحتوى (التصنيف بالأعلى يحدد الموضوع: عقيدة، فقه، إلخ)
+            💡 <%= adminLocale === 'ar' ? 'نوع المحتوى (التصنيف بالأعلى يحدد الموضوع: عقيدة، فقه، إلخ)' : 'Content type (Category above determines the subject: Aqeedah, Fiqh, etc.)' %>
           </p>
         </div>
 
         <div class="form-group">
-          <label for="descriptionArabic">الوصف بالعربية</label>
+          <label for="descriptionArabic"><%= adminLocale === 'ar' ? 'الوصف بالعربية' : 'Description (Arabic)' %></label>
           <textarea
             id="descriptionArabic"
             name="descriptionArabic"
+            dir="rtl"
+            class="form-control"
           ><%= series.descriptionArabic || '' %></textarea>
         </div>
 
         <div class="form-group">
-          <label for="descriptionEnglish">الوصف بالإنجليزية</label>
+          <label for="descriptionEnglish"><%= adminLocale === 'ar' ? 'الوصف بالإنجليزية' : 'Description (English)' %></label>
           <textarea
             id="descriptionEnglish"
             name="descriptionEnglish"
+            dir="ltr"
+            class="form-control"
           ><%= series.descriptionEnglish || '' %></textarea>
         </div>
 
         <div class="form-group">
-          <label for="bookAuthor">المؤلف الأصلي للكتاب</label>
+          <label for="bookAuthor"><%= adminLocale === 'ar' ? 'المؤلف الأصلي للكتاب' : 'Original Book Author' %></label>
           <input
             type="text"
             id="bookAuthor"
             name="bookAuthor"
             value="<%= series.bookAuthor || '' %>"
-            placeholder="مثال: الشيخ أحمد بن يحيى النجمي"
+            placeholder="<%= adminLocale === 'ar' ? 'مثال: الشيخ أحمد بن يحيى النجمي' : 'Example: Sheikh Ahmad ibn Yahya an-Najmi' %>"
+            class="form-control"
           >
           <p style="font-size: 12px; color: #666; margin-top: 4px;">
-            💡 اسم مؤلف الكتاب الذي يشرحه الشيخ (يظهر في صفحة السلسلة)
+            💡 <%= adminLocale === 'ar' ? 'اسم مؤلف الكتاب الذي يشرحه الشيخ (يظهر في صفحة السلسلة)' : 'Name of the book author being explained by the sheikh (displayed on series page)' %>
           </p>
         </div>
 
         <div class="form-group">
-          <label>إظهار السلسلة للعموم</label>
+          <label><%= adminLocale === 'ar' ? 'إظهار السلسلة للعموم' : 'Series Visibility' %></label>
           <div class="toggle-container <%= series.isVisible === false ? 'hidden-series' : '' %>" id="visibilityContainer">
             <label class="toggle-switch">
               <input type="checkbox" name="isVisible" id="isVisible" <%= series.isVisible !== false ? 'checked' : '' %> onchange="updateVisibilityUI()">
@@ -773,32 +778,52 @@
             </label>
             <div>
               <div class="toggle-label" id="visibilityLabel">
-                <%= series.isVisible !== false ? '👁️ مرئية للعموم' : '🚫 مخفية' %>
+                <%= series.isVisible !== false ? (adminLocale === 'ar' ? '👁️ مرئية للعموم' : '👁️ Visible to Public') : (adminLocale === 'ar' ? '🚫 مخفية' : '🚫 Hidden') %>
               </div>
               <div class="toggle-description">
-                عند إيقاف هذا الخيار، لن تظهر السلسلة في الصفحة الرئيسية أو صفحة التصفح أو خريطة الموقع
+                <%= adminLocale === 'ar' ? 'عند إيقاف هذا الخيار، لن تظهر السلسلة في الصفحة الرئيسية أو صفحة التصفح أو خريطة الموقع' : 'When disabled, the series will not appear on homepage, browse page, or sitemap' %>
               </div>
             </div>
           </div>
           <div class="hidden-warning" id="hiddenWarning" style="<%= series.isVisible !== false ? 'display: none;' : '' %>">
-            ⚠️ هذه السلسلة مخفية حالياً ولن تظهر للزوار
+            <%= adminLocale === 'ar' ? '⚠️ هذه السلسلة مخفية حالياً ولن تظهر للزوار' : '⚠️ This series is currently hidden and will not appear to visitors' %>
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label><%= adminLocale === 'ar' ? 'القسم في الصفحة الرئيسية' : 'Homepage Section' %></label>
+          <div style="display:flex;gap:10px;align-items:flex-start;">
+            <select id="sectionSelect" style="flex:1;padding:10px 14px;border:1px solid #ddd;border-radius:8px;font-size:14px;">
+              <option value=""><%= adminLocale === 'ar' ? '-- بدون قسم --' : '-- No Section --' %></option>
+              <% if (typeof sections !== 'undefined' && sections) { %>
+                <% sections.forEach(function(sec) { %>
+                  <option value="<%= sec._id %>" <%= series.sectionId && series.sectionId.toString() === sec._id.toString() ? 'selected' : '' %>>
+                    <%= sec.icon %> <%= adminLocale === 'ar' ? sec.title.ar : sec.title.en %>
+                  </option>
+                <% }) %>
+              <% } %>
+            </select>
+            <button type="button" class="btn btn-primary" style="padding:10px 16px;font-size:13px;white-space:nowrap;" onclick="assignSection()"><%= adminLocale === 'ar' ? 'تعيين' : 'Assign' %></button>
+          </div>
+          <div style="font-size:12px;color:#888;margin-top:4px;">
+            <%= adminLocale === 'ar' ? 'حدد القسم الذي تظهر فيه هذه السلسلة في الصفحة الرئيسية' : 'Select which homepage section this series appears in' %>
           </div>
         </div>
 
         <div class="actions">
-          <button type="submit" class="btn btn-primary">💾 حفظ التغييرات</button>
-          <a href="/admin/manage" class="btn btn-secondary">↩️ إلغاء</a>
+          <button type="submit" class="btn btn-primary"><%= adminLocale === 'ar' ? '💾 حفظ التغييرات' : '💾 Save Changes' %></button>
+          <a href="/admin/manage" class="btn btn-secondary"><%= adminLocale === 'ar' ? '↩️ إلغاء' : '↩️ Cancel' %></a>
         </div>
       </form>
 
       <!-- Lectures Reorder Section -->
       <div class="lectures-section">
         <div class="section-header">
-          <h2 class="section-title">📚 ترتيب المحاضرات</h2>
+          <h2 class="section-title"><%= adminLocale === 'ar' ? '📚 ترتيب المحاضرات' : '📚 Reorder Lectures' %></h2>
           <div style="display: flex; align-items: center; gap: 12px;">
-            <span class="lecture-count"><%= lectures.length %> محاضرة</span>
-            <a href="/admin/series/<%= series._id %>/quick-add-lecture" class="btn-add-lecture" title="إضافة درس جديد">
-              + إضافة درس
+            <span class="lecture-count"><%= lectures.length %> <%= adminLocale === 'ar' ? 'محاضرة' : 'lectures' %></span>
+            <a href="/admin/series/<%= series._id %>/quick-add-lecture" class="btn-add-lecture" title="<%= adminLocale === 'ar' ? 'إضافة درس جديد' : 'Add new lecture' %>">
+              + <%= adminLocale === 'ar' ? 'إضافة درس' : 'Add Lecture' %>
             </a>
           </div>
         </div>
@@ -812,22 +837,22 @@
                 <div class="lecture-info">
                   <div class="lecture-title">
                     <span class="status-badge <%= lecture.published ? 'status-published' : 'status-draft' %>">
-                      <%= lecture.published ? 'منشور' : 'مسودة' %>
+                      <%= lecture.published ? (adminLocale === 'ar' ? 'منشور' : 'Published') : (adminLocale === 'ar' ? 'مسودة' : 'Draft') %>
                     </span>
                     <span class="audio-status <%= lecture.audioUrl ? 'audio-has' : 'audio-none' %>" id="audio-status-<%= lecture._id %>">
-                      <%= lecture.audioUrl ? '🔊 صوت' : '⚠️ بدون صوت' %>
+                      <%= lecture.audioUrl ? (adminLocale === 'ar' ? '🔊 صوت' : '🔊 Audio') : (adminLocale === 'ar' ? '⚠️ بدون صوت' : '⚠️ No Audio') %>
                     </span>
-                    <%= lecture.titleArabic %>
+                    <%= adminLocale === 'ar' ? lecture.titleArabic : (lecture.titleEnglish || lecture.titleArabic) %>
                   </div>
                   <div class="lecture-meta">
                     <% if (lecture.lectureNumber) { %>
-                      رقم الدرس: <%= lecture.lectureNumber %> |
+                      <%= adminLocale === 'ar' ? 'رقم الدرس' : 'Lecture #' %>: <%= lecture.lectureNumber %> |
                     <% } %>
                     <% if (lecture.dateRecorded) { %>
-                      التاريخ: <%= new Date(lecture.dateRecorded).toLocaleDateString('ar-SA') %>
+                      <%= adminLocale === 'ar' ? 'التاريخ' : 'Date' %>: <%= new Date(lecture.dateRecorded).toLocaleDateString(adminLocale === 'ar' ? 'ar-SA' : 'en-US') %>
                     <% } %>
                     <% if (lecture.durationSeconds) { %>
-                      | المدة: <%= Math.floor(lecture.durationSeconds / 60) %>:<%= String(lecture.durationSeconds % 60).padStart(2, '0') %>
+                      | <%= adminLocale === 'ar' ? 'المدة' : 'Duration' %>: <%= Math.floor(lecture.durationSeconds / 60) %>:<%= String(lecture.durationSeconds % 60).padStart(2, '0') %>
                     <% } %>
                   </div>
                   <div class="inline-progress" id="progress-<%= lecture._id %>">
@@ -836,24 +861,24 @@
                 </div>
                 <div class="lecture-actions">
                   <input type="file" id="upload-input-<%= lecture._id %>" class="lecture-upload-input" accept=".mp3,.m4a,.aac,.wav,.ogg,.flac" onchange="uploadLectureAudio('<%= lecture._id %>', this)">
-                  <button class="upload-btn" id="upload-btn-<%= lecture._id %>" onclick="document.getElementById('upload-input-<%= lecture._id %>').click()" title="رفع ملف صوتي">📤</button>
-                  <button class="publish-btn <%= lecture.published ? '' : 'draft' %>" id="publish-btn-<%= lecture._id %>" onclick="togglePublish('<%= lecture._id %>')" title="<%= lecture.published ? 'إلغاء النشر' : 'نشر' %>">
+                  <button class="upload-btn" id="upload-btn-<%= lecture._id %>" onclick="document.getElementById('upload-input-<%= lecture._id %>').click()" title="<%= adminLocale === 'ar' ? 'رفع ملف صوتي' : 'Upload audio file' %>">📤</button>
+                  <button class="publish-btn <%= lecture.published ? '' : 'draft' %>" id="publish-btn-<%= lecture._id %>" onclick="togglePublish('<%= lecture._id %>')" title="<%= lecture.published ? (adminLocale === 'ar' ? 'إلغاء النشر' : 'Unpublish') : (adminLocale === 'ar' ? 'نشر' : 'Publish') %>">
                     <%= lecture.published ? '👁' : '👁‍🗨' %>
                   </button>
-                  <a href="/admin/lectures/<%= lecture._id %>/edit" class="action-btn edit-btn" title="تعديل">✏️</a>
-                  <button class="action-btn remove-btn" onclick="removeLectureFromSeries('<%= lecture._id %>', '<%= lecture.titleArabic.substring(0, 30) %>')" title="إزالة من السلسلة">✕</button>
-                  <button class="move-btn" onclick="moveLecture('<%= lecture._id %>', 'up')" title="تحريك لأعلى" <%= index === 0 ? 'disabled' : '' %>>▲</button>
-                  <button class="move-btn" onclick="moveLecture('<%= lecture._id %>', 'down')" title="تحريك لأسفل" <%= index === lectures.length - 1 ? 'disabled' : '' %>>▼</button>
+                  <a href="/admin/lectures/<%= lecture._id %>/edit" class="action-btn edit-btn" title="<%= adminLocale === 'ar' ? 'تعديل' : 'Edit' %>">✏️</a>
+                  <button class="action-btn remove-btn" onclick="removeLectureFromSeries('<%= lecture._id %>', '<%= lecture.titleArabic.substring(0, 30) %>')" title="<%= adminLocale === 'ar' ? 'إزالة من السلسلة' : 'Remove from series' %>">✕</button>
+                  <button class="move-btn" onclick="moveLecture('<%= lecture._id %>', 'up')" title="<%= adminLocale === 'ar' ? 'تحريك لأعلى' : 'Move up' %>" <%= index === 0 ? 'disabled' : '' %>>▲</button>
+                  <button class="move-btn" onclick="moveLecture('<%= lecture._id %>', 'down')" title="<%= adminLocale === 'ar' ? 'تحريك لأسفل' : 'Move down' %>" <%= index === lectures.length - 1 ? 'disabled' : '' %>>▼</button>
                 </div>
               </div>
             <% }); %>
           </div>
 
-          <button class="save-order-btn" id="saveOrderBtn" onclick="saveOrder()">💾 حفظ الترتيب الجديد</button>
+          <button class="save-order-btn" id="saveOrderBtn" onclick="saveOrder()"><%= adminLocale === 'ar' ? '💾 حفظ الترتيب الجديد' : '💾 Save New Order' %></button>
         <% } else { %>
           <div class="lectures-list">
             <div class="empty-lectures">
-              <p>لا توجد محاضرات في هذه السلسلة</p>
+              <p><%= adminLocale === 'ar' ? 'لا توجد محاضرات في هذه السلسلة' : 'No lectures in this series' %></p>
             </div>
           </div>
         <% } %>
@@ -862,61 +887,61 @@
       <!-- Unassociated Lectures Section -->
       <div class="unassociated-section">
         <div class="section-toggle" onclick="toggleUnassociated()">
-          <h2>📎 محاضرات بدون سلسلة</h2>
+          <h2><%= adminLocale === 'ar' ? '📎 محاضرات بدون سلسلة' : '📎 Unassociated Lectures' %></h2>
           <span class="toggle-icon" id="toggleIcon">▼</span>
         </div>
         <div class="unassociated-content" id="unassociatedContent">
           <button class="create-series-btn" onclick="openCreateSeriesModal()">
-            + إنشاء سلسلة جديدة
+            + <%= adminLocale === 'ar' ? 'إنشاء سلسلة جديدة' : 'Create New Series' %>
           </button>
           <div class="search-box">
-            <input type="text" id="searchUnassociated" placeholder="بحث في المحاضرات غير المرتبطة..." oninput="filterUnassociated()">
+            <input type="text" id="searchUnassociated" placeholder="<%= adminLocale === 'ar' ? 'بحث في المحاضرات غير المرتبطة...' : 'Search unassociated lectures...' %>" oninput="filterUnassociated()">
           </div>
           <div class="unassociated-list" id="unassociatedList">
-            <div class="loading-spinner">⏳ جاري التحميل...</div>
+            <div class="loading-spinner"><%= adminLocale === 'ar' ? '⏳ جاري التحميل...' : '⏳ Loading...' %></div>
           </div>
         </div>
       </div>
     </div>
-  </div>
+  </main>
 
   <!-- Create Series Modal -->
   <div class="modal-overlay" id="createSeriesModal">
     <div class="modal-content">
       <div class="modal-header">
-        <h3>📚 إنشاء سلسلة جديدة</h3>
+        <h3><%= adminLocale === 'ar' ? '📚 إنشاء سلسلة جديدة' : '📚 Create New Series' %></h3>
         <button class="modal-close" onclick="closeCreateSeriesModal()">&times;</button>
       </div>
       <form id="createSeriesForm" onsubmit="submitCreateSeries(event)">
         <div class="form-group">
-          <label for="newSeriesTitleArabic">العنوان بالعربية *</label>
-          <input type="text" id="newSeriesTitleArabic" required placeholder="مثال: شرح كتاب التوحيد">
+          <label for="newSeriesTitleArabic"><%= adminLocale === 'ar' ? 'العنوان بالعربية' : 'Title (Arabic)' %> *</label>
+          <input type="text" id="newSeriesTitleArabic" required placeholder="<%= adminLocale === 'ar' ? 'مثال: شرح كتاب التوحيد' : 'Example: شرح كتاب التوحيد' %>" dir="rtl" class="form-control">
         </div>
         <div class="form-group">
-          <label for="newSeriesTitleEnglish">العنوان بالإنجليزية</label>
-          <input type="text" id="newSeriesTitleEnglish" placeholder="Example: Explanation of Kitab at-Tawhid">
+          <label for="newSeriesTitleEnglish"><%= adminLocale === 'ar' ? 'العنوان بالإنجليزية' : 'Title (English)' %></label>
+          <input type="text" id="newSeriesTitleEnglish" placeholder="Example: Explanation of Kitab at-Tawhid" dir="ltr" class="form-control">
         </div>
         <div class="form-group">
-          <label for="newSeriesSheikh">الشيخ *</label>
-          <select id="newSeriesSheikh" required>
-            <option value="">-- اختر الشيخ --</option>
+          <label for="newSeriesSheikh"><%= adminLocale === 'ar' ? 'الشيخ' : 'Sheikh' %> *</label>
+          <select id="newSeriesSheikh" required class="form-control">
+            <option value=""><%= adminLocale === 'ar' ? '-- اختر الشيخ --' : '-- Select Sheikh --' %></option>
           </select>
         </div>
         <div class="form-group">
-          <label for="newSeriesCategory">التصنيف</label>
-          <select id="newSeriesCategory">
-            <option value="Other">أخرى</option>
-            <option value="Aqeedah">عقيدة</option>
-            <option value="Fiqh">فقه</option>
-            <option value="Tafsir">تفسير</option>
-            <option value="Hadith">حديث</option>
-            <option value="Seerah">سيرة</option>
-            <option value="Akhlaq">أخلاق</option>
+          <label for="newSeriesCategory"><%= adminLocale === 'ar' ? 'التصنيف' : 'Category' %></label>
+          <select id="newSeriesCategory" class="form-control">
+            <option value="Other"><%= adminLocale === 'ar' ? 'أخرى' : 'Other' %></option>
+            <option value="Aqeedah"><%= adminLocale === 'ar' ? 'عقيدة' : 'Aqeedah' %></option>
+            <option value="Fiqh"><%= adminLocale === 'ar' ? 'فقه' : 'Fiqh' %></option>
+            <option value="Tafsir"><%= adminLocale === 'ar' ? 'تفسير' : 'Tafsir' %></option>
+            <option value="Hadith"><%= adminLocale === 'ar' ? 'حديث' : 'Hadith' %></option>
+            <option value="Seerah"><%= adminLocale === 'ar' ? 'سيرة' : 'Seerah' %></option>
+            <option value="Akhlaq"><%= adminLocale === 'ar' ? 'أخلاق' : 'Akhlaq' %></option>
           </select>
         </div>
         <div class="actions">
-          <button type="submit" class="btn btn-primary">إنشاء السلسلة</button>
-          <button type="button" class="btn btn-secondary" onclick="closeCreateSeriesModal()">إلغاء</button>
+          <button type="submit" class="btn btn-primary"><%= adminLocale === 'ar' ? 'إنشاء السلسلة' : 'Create Series' %></button>
+          <button type="button" class="btn btn-secondary" onclick="closeCreateSeriesModal()"><%= adminLocale === 'ar' ? 'إلغاء' : 'Cancel' %></button>
         </div>
       </form>
     </div>
@@ -925,6 +950,70 @@
   <script>
     const seriesId = '<%= series._id %>';
     let orderChanged = false;
+    const isArabic = '<%= adminLocale %>' === 'ar';
+
+    // Translated messages
+    const msgs = {
+      visiblePublic: isArabic ? '👁️ مرئية للعموم' : '👁️ Visible to Public',
+      hidden: isArabic ? '🚫 مخفية' : '🚫 Hidden',
+      saving: isArabic ? '⏳ جاري الحفظ...' : '⏳ Saving...',
+      saved: isArabic ? '✅ تم الحفظ' : '✅ Saved',
+      saveOrder: isArabic ? '💾 حفظ الترتيب الجديد' : '💾 Save New Order',
+      saveFailed: isArabic ? '❌ فشل الحفظ' : '❌ Save Failed',
+      confirmRemove: isArabic ? 'هل تريد إزالة' : 'Do you want to remove',
+      fromSeries: isArabic ? 'من هذه السلسلة؟' : 'from this series?',
+      removeNote: isArabic ? '\n\nلن يتم حذف المحاضرة، فقط إزالتها من السلسلة.' : '\n\nThe lecture will not be deleted, only removed from the series.',
+      removeFailed: isArabic ? 'فشل في إزالة المحاضرة: ' : 'Failed to remove lecture: ',
+      unknownError: isArabic ? 'خطأ غير معروف' : 'Unknown error',
+      removeError: isArabic ? 'حدث خطأ أثناء إزالة المحاضرة' : 'Error occurred while removing lecture',
+      lecture: isArabic ? 'محاضرة' : 'lecture',
+      noUnassociated: isArabic ? '✓ لا توجد محاضرات غير مرتبطة' : '✓ No unassociated lectures',
+      noTitle: isArabic ? 'بدون عنوان' : 'No title',
+      noAudio: isArabic ? '⚠️ بدون صوت' : '⚠️ No audio',
+      lectureNum: isArabic ? 'رقم الدرس' : 'Lecture #',
+      addToSeries: isArabic ? 'إضافة للسلسلة' : 'Add to Series',
+      loadError: isArabic ? 'خطأ في تحميل البيانات' : 'Error loading data',
+      connError: isArabic ? 'خطأ في الاتصال' : 'Connection error',
+      addSuccess: isArabic ? '✓ تمت إضافة المحاضرة للسلسلة بنجاح.\nقم بتحديث الصفحة لرؤية التغييرات في قائمة المحاضرات.' : '✓ Lecture added to series successfully.\nRefresh the page to see changes in the lecture list.',
+      addFailed: isArabic ? 'فشل في إضافة المحاضرة: ' : 'Failed to add lecture: ',
+      publishFailed: isArabic ? 'فشل في تغيير حالة النشر' : 'Failed to change publish status',
+      published: isArabic ? 'منشور' : 'Published',
+      draft: isArabic ? 'مسودة' : 'Draft',
+      uploading: isArabic ? '⏳ جاري الرفع...' : '⏳ Uploading...',
+      processing: isArabic ? '⏳ معالجة...' : '⏳ Processing...',
+      hasAudio: isArabic ? '🔊 صوت' : '🔊 Audio',
+      uploadFailed: isArabic ? '❌ فشل' : '❌ Failed',
+      noAudioStatus: isArabic ? '⚠️ بدون صوت' : '⚠️ No Audio',
+      duration: isArabic ? 'المدة' : 'Duration',
+      selectSheikh: isArabic ? '-- اختر الشيخ --' : '-- Select Sheikh --',
+      fillRequired: isArabic ? 'الرجاء إدخال العنوان واختيار الشيخ' : 'Please enter title and select sheikh',
+      creating: isArabic ? '⏳ جاري الإنشاء...' : '⏳ Creating...',
+      createSeries: isArabic ? 'إنشاء السلسلة' : 'Create Series',
+      seriesCreated: isArabic ? '✓ تم إنشاء السلسلة' : '✓ Series created',
+      goToEdit: isArabic ? 'بنجاح.\n\nهل تريد الانتقال إلى صفحة تعديل السلسلة الجديدة؟' : 'successfully.\n\nDo you want to go to the new series edit page?',
+      createFailed: isArabic ? 'فشل في إنشاء السلسلة: ' : 'Failed to create series: '
+    };
+
+    // Section assignment
+    function assignSection() {
+      const select = document.getElementById('sectionSelect');
+      const sectionId = select.value;
+      const seriesId = '<%= series._id %>';
+
+      fetch(`/admin/series/${seriesId}/assign-section`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ sectionId })
+      })
+      .then(res => {
+        if (res.redirected) {
+          window.location.href = res.url;
+        } else {
+          window.location.reload();
+        }
+      })
+      .catch(() => alert(isArabic ? 'حدث خطأ' : 'An error occurred'));
+    }
 
     // Visibility toggle UI update
     function updateVisibilityUI() {
@@ -935,11 +1024,11 @@
 
       if (checkbox.checked) {
         container.classList.remove('hidden-series');
-        label.textContent = '👁️ مرئية للعموم';
+        label.textContent = msgs.visiblePublic;
         warning.style.display = 'none';
       } else {
         container.classList.add('hidden-series');
-        label.textContent = '🚫 مخفية';
+        label.textContent = msgs.hidden;
         warning.style.display = 'block';
       }
     }
@@ -1036,7 +1125,7 @@
       const lectureIds = Array.from(items).map(item => item.dataset.id);
 
       const saveBtn = document.getElementById('saveOrderBtn');
-      saveBtn.textContent = '⏳ جاري الحفظ...';
+      saveBtn.textContent = msgs.saving;
       saveBtn.disabled = true;
 
       try {
@@ -1051,29 +1140,29 @@
         const result = await response.json();
 
         if (result.success) {
-          saveBtn.textContent = '✅ تم الحفظ';
+          saveBtn.textContent = msgs.saved;
           orderChanged = false;
           setTimeout(() => {
-            saveBtn.textContent = '💾 حفظ الترتيب الجديد';
+            saveBtn.textContent = msgs.saveOrder;
             saveBtn.classList.remove('visible');
             saveBtn.disabled = false;
           }, 2000);
         } else {
-          throw new Error(result.error || 'Unknown error');
+          throw new Error(result.error || msgs.unknownError);
         }
       } catch (error) {
         console.error('Save order error:', error);
-        saveBtn.textContent = '❌ فشل الحفظ';
+        saveBtn.textContent = msgs.saveFailed;
         saveBtn.disabled = false;
         setTimeout(() => {
-          saveBtn.textContent = '💾 حفظ الترتيب الجديد';
+          saveBtn.textContent = msgs.saveOrder;
         }, 2000);
       }
     }
 
     // Remove lecture from series (doesn't delete the lecture)
     async function removeLectureFromSeries(lectureId, title) {
-      if (!confirm(`هل تريد إزالة "${title}..." من هذه السلسلة؟\n\nلن يتم حذف المحاضرة، فقط إزالتها من السلسلة.`)) {
+      if (!confirm(`${msgs.confirmRemove} "${title}..." ${msgs.fromSeries}${msgs.removeNote}`)) {
         return;
       }
 
@@ -1101,16 +1190,16 @@
               const countSpan = document.querySelector('.lecture-count');
               if (countSpan) {
                 const currentCount = parseInt(countSpan.textContent) - 1;
-                countSpan.textContent = `${currentCount} محاضرة`;
+                countSpan.textContent = `${currentCount} ${msgs.lecture}`;
               }
             }, 300);
           }
         } else {
-          alert('فشل في إزالة المحاضرة: ' + (result.error || 'خطأ غير معروف'));
+          alert(msgs.removeFailed + (result.error || msgs.unknownError));
         }
       } catch (error) {
         console.error('Remove lecture error:', error);
-        alert('حدث خطأ أثناء إزالة المحاضرة');
+        alert(msgs.removeError);
       }
     }
 
@@ -1165,13 +1254,13 @@
       const category = document.getElementById('newSeriesCategory').value;
 
       if (!titleArabic || !sheikhId) {
-        alert('الرجاء إدخال العنوان واختيار الشيخ');
+        alert(msgs.fillRequired);
         return;
       }
 
       const submitBtn = event.target.querySelector('button[type="submit"]');
       submitBtn.disabled = true;
-      submitBtn.textContent = '⏳ جاري الإنشاء...';
+      submitBtn.textContent = msgs.creating;
 
       try {
         const response = await fetch('/admin/api/series/create', {
@@ -1190,18 +1279,18 @@
         if (result.success) {
           closeCreateSeriesModal();
           // Redirect to the new series edit page
-          if (confirm(`✓ تم إنشاء السلسلة "${result.series.titleArabic}" بنجاح.\n\nهل تريد الانتقال إلى صفحة تعديل السلسلة الجديدة؟`)) {
+          if (confirm(`${msgs.seriesCreated} "${result.series.titleArabic}" ${msgs.goToEdit}`)) {
             window.location.href = `/admin/series/${result.series._id}/edit`;
           }
         } else {
-          alert('فشل في إنشاء السلسلة: ' + (result.error || 'خطأ غير معروف'));
+          alert(msgs.createFailed + (result.error || msgs.unknownError));
         }
       } catch (error) {
         console.error('Create series error:', error);
-        alert('خطأ في الاتصال');
+        alert(msgs.connError);
       } finally {
         submitBtn.disabled = false;
-        submitBtn.textContent = 'إنشاء السلسلة';
+        submitBtn.textContent = msgs.createSeries;
       }
     }
 
@@ -1241,11 +1330,11 @@
           unassociatedLoaded = true;
           renderUnassociatedLectures(unassociatedLectures);
         } else {
-          listEl.innerHTML = '<div class="no-unassociated">خطأ في تحميل البيانات</div>';
+          listEl.innerHTML = '<div class="no-unassociated">' + msgs.loadError + '</div>';
         }
       } catch (error) {
         console.error('Load unassociated error:', error);
-        listEl.innerHTML = '<div class="no-unassociated">خطأ في الاتصال</div>';
+        listEl.innerHTML = '<div class="no-unassociated">' + msgs.connError + '</div>';
       }
     }
 
@@ -1253,23 +1342,23 @@
       const listEl = document.getElementById('unassociatedList');
 
       if (lectures.length === 0) {
-        listEl.innerHTML = '<div class="no-unassociated">✓ لا توجد محاضرات غير مرتبطة</div>';
+        listEl.innerHTML = '<div class="no-unassociated">' + msgs.noUnassociated + '</div>';
         return;
       }
 
       listEl.innerHTML = lectures.map(lecture => `
         <div class="unassociated-item" data-id="${lecture._id}" data-title="${lecture.titleArabic || ''}">
           <div class="lecture-info">
-            <div class="lecture-title">${lecture.titleArabic || 'بدون عنوان'}</div>
+            <div class="lecture-title">${lecture.titleArabic || msgs.noTitle}</div>
             <div class="lecture-meta">
-              ${lecture.audioFileName ? '🔊 ' + lecture.audioFileName : '⚠️ بدون صوت'}
+              ${lecture.audioFileName ? '🔊 ' + lecture.audioFileName : msgs.noAudio}
               ${lecture.duration ? ' | ' + formatDuration(lecture.duration) : ''}
             </div>
           </div>
           <div class="assign-form">
-            <input type="number" id="num-${lecture._id}" placeholder="#" min="1" title="رقم الدرس">
+            <input type="number" id="num-${lecture._id}" placeholder="#" min="1" title="${msgs.lectureNum}">
             <button class="assign-btn" onclick="assignLecture('${lecture._id}')">
-              إضافة للسلسلة
+              ${msgs.addToSeries}
             </button>
           </div>
         </div>
@@ -1328,23 +1417,23 @@
               unassociatedLectures = unassociatedLectures.filter(l => l._id !== lectureId);
               if (unassociatedLectures.length === 0) {
                 document.getElementById('unassociatedList').innerHTML =
-                  '<div class="no-unassociated">✓ لا توجد محاضرات غير مرتبطة</div>';
+                  '<div class="no-unassociated">' + msgs.noUnassociated + '</div>';
               }
             }, 300);
           }
 
           // Show success and suggest refresh
-          alert('✓ تمت إضافة المحاضرة للسلسلة بنجاح.\nقم بتحديث الصفحة لرؤية التغييرات في قائمة المحاضرات.');
+          alert(msgs.addSuccess);
         } else {
           btn.disabled = false;
-          btn.textContent = 'إضافة للسلسلة';
-          alert('فشل في إضافة المحاضرة: ' + (result.error || 'خطأ غير معروف'));
+          btn.textContent = msgs.addToSeries;
+          alert(msgs.addFailed + (result.error || msgs.unknownError));
         }
       } catch (error) {
         console.error('Assign lecture error:', error);
         btn.disabled = false;
-        btn.textContent = 'إضافة للسلسلة';
-        alert('خطأ في الاتصال');
+        btn.textContent = msgs.addToSeries;
+        alert(msgs.connError);
       }
     }
 
@@ -1370,24 +1459,24 @@
           if (result.published) {
             btn.classList.remove('draft');
             btn.textContent = '👁';
-            btn.title = 'إلغاء النشر';
+            btn.title = isArabic ? 'إلغاء النشر' : 'Unpublish';
             statusBadge.className = 'status-badge status-published';
-            statusBadge.textContent = 'منشور';
+            statusBadge.textContent = msgs.published;
           } else {
             btn.classList.add('draft');
             btn.textContent = '👁‍🗨';
-            btn.title = 'نشر';
+            btn.title = isArabic ? 'نشر' : 'Publish';
             statusBadge.className = 'status-badge status-draft';
-            statusBadge.textContent = 'مسودة';
+            statusBadge.textContent = msgs.draft;
           }
         } else {
           btn.textContent = originalText;
-          alert('فشل في تغيير حالة النشر');
+          alert(msgs.publishFailed);
         }
       } catch (error) {
         console.error('Toggle publish error:', error);
         btn.textContent = originalText;
-        alert('خطأ في الاتصال');
+        alert(msgs.connError);
       } finally {
         btn.disabled = false;
       }
@@ -1414,7 +1503,7 @@
 
       // Update status
       audioStatus.className = 'audio-status audio-uploading';
-      audioStatus.textContent = '⏳ جاري الرفع...';
+      audioStatus.textContent = msgs.uploading;
 
       // Create FormData
       const formData = new FormData();
@@ -1429,7 +1518,7 @@
           progressBar.style.width = percent + '%';
 
           if (percent >= 100) {
-            audioStatus.textContent = '⏳ معالجة...';
+            audioStatus.textContent = msgs.processing;
           }
         }
       });
@@ -1443,7 +1532,7 @@
             progressBar.style.width = '100%';
             progressBar.classList.add('success');
             audioStatus.className = 'audio-status audio-has';
-            audioStatus.textContent = '🔊 صوت';
+            audioStatus.textContent = msgs.hasAudio;
 
             // Show brief success message
             uploadBtn.textContent = '✓';
@@ -1458,10 +1547,10 @@
 
           } else {
             // Error
-            showUploadError(lectureId, response.error || 'خطأ غير معروف');
+            showUploadError(lectureId, response.error || msgs.unknownError);
           }
         } catch (e) {
-          showUploadError(lectureId, 'خطأ في معالجة الاستجابة');
+          showUploadError(lectureId, isArabic ? 'خطأ في معالجة الاستجابة' : 'Error processing response');
         }
 
         // Reset file input
@@ -1469,12 +1558,12 @@
       });
 
       xhr.addEventListener('error', () => {
-        showUploadError(lectureId, 'فشل الاتصال');
+        showUploadError(lectureId, isArabic ? 'فشل الاتصال' : 'Connection failed');
         fileInput.value = '';
       });
 
       xhr.addEventListener('timeout', () => {
-        showUploadError(lectureId, 'انتهت المهلة');
+        showUploadError(lectureId, isArabic ? 'انتهت المهلة' : 'Timeout');
         fileInput.value = '';
       });
 
@@ -1492,14 +1581,14 @@
 
       progressBar.classList.add('error');
       audioStatus.className = 'audio-status audio-none';
-      audioStatus.textContent = '❌ فشل';
+      audioStatus.textContent = msgs.uploadFailed;
 
       uploadBtn.textContent = '📤';
       uploadBtn.disabled = false;
 
       setTimeout(() => {
         progressDiv.classList.remove('visible');
-        audioStatus.textContent = '⚠️ بدون صوت';
+        audioStatus.textContent = msgs.noAudioStatus;
       }, 3000);
 
       console.error('Upload error:', message);
@@ -1515,10 +1604,11 @@
         const lectureItem = document.querySelector(`.lecture-item[data-id="${lectureId}"]`);
         if (lectureItem) {
           const metaDiv = lectureItem.querySelector('.lecture-meta');
-          if (metaDiv && !metaDiv.textContent.includes('المدة:')) {
+          const durationLabel = msgs.duration;
+          if (metaDiv && !metaDiv.textContent.includes(durationLabel)) {
             const mins = Math.floor(duration / 60);
             const secs = duration % 60;
-            metaDiv.innerHTML += ` | المدة: ${mins}:${String(secs).padStart(2, '0')}`;
+            metaDiv.innerHTML += ` | ${durationLabel}: ${mins}:${String(secs).padStart(2, '0')}`;
           }
         }
 

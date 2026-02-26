@@ -1,18 +1,16 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="<%= adminLocale %>" dir="<%= adminDir %>">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title><%= title %> - Duroos</title>
+  <title><%= t('admin_login_title') %> - <%= t('admin_title') %></title>
+  <link rel="stylesheet" href="/css/admin.css">
+  <% if (adminIsRTL) { %>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Naskh+Arabic:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <% } %>
   <style>
-    * {
-      margin: 0;
-      padding: 0;
-      box-sizing: border-box;
-    }
-
     body {
-      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
       background: linear-gradient(135deg, #1A5F5A 0%, #2C3E35 100%);
       min-height: 100vh;
       display: flex;
@@ -36,7 +34,7 @@
       margin-bottom: 12px;
     }
 
-    h1 {
+    .login-container h1 {
       color: #2C3E35;
       font-size: 28px;
       margin-bottom: 8px;
@@ -78,6 +76,10 @@
       width: 100%;
     }
 
+    [dir="rtl"] .google-btn {
+      flex-direction: row-reverse;
+    }
+
     .google-btn:hover {
       background: #f8f8f8;
       box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
@@ -100,24 +102,57 @@
       color: #1A5F5A;
     }
 
+    .login-lang-toggle {
+      position: absolute;
+      top: 20px;
+      right: 20px;
+      display: flex;
+      gap: 8px;
+    }
+
+    [dir="rtl"] .login-lang-toggle {
+      right: auto;
+      left: 20px;
+    }
+
+    .login-lang-toggle a {
+      padding: 8px 16px;
+      background: rgba(255, 255, 255, 0.2);
+      color: white;
+      text-decoration: none;
+      border-radius: 6px;
+      font-size: 14px;
+      transition: all 0.3s ease;
+    }
+
+    .login-lang-toggle a:hover,
+    .login-lang-toggle a.active {
+      background: rgba(255, 255, 255, 0.35);
+    }
+
     @media (max-width: 480px) {
       .login-container {
         padding: 32px 24px;
       }
 
-      h1 {
+      .login-container h1 {
         font-size: 24px;
       }
     }
   </style>
 </head>
 <body>
+  <div class="login-lang-toggle">
+    <a href="?lang=en" class="<%= adminLocale === 'en' ? 'active' : '' %>">EN</a>
+    <a href="?lang=ar" class="<%= adminLocale === 'ar' ? 'active' : '' %>">عربي</a>
+  </div>
+
   <div class="login-container">
     <div class="logo">🎙️</div>
-    <h1>Admin Login</h1>
-    <p class="subtitle">Duroos Islamic Lectures Platform</p>
+    <h1><%= t('admin_login_title') %></h1>
+    <p class="subtitle"><%= t('admin_login_subtitle') %></p>
 
-    <% if (errorMessage) { %>
+    <% if (typeof errorMessage !== 'undefined' && errorMessage) { %>
       <div class="error-message">
         <%= errorMessage %>
       </div>
@@ -130,12 +165,12 @@
         <path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"/>
         <path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/>
       </svg>
-      Sign in with Google
+      <%= t('admin_login_google') %>
     </a>
 
     <div class="info-text">
-      <strong>Admin Access Only</strong><br>
-      Only whitelisted email addresses can access the admin panel.
+      <strong><%= t('admin_login_admin_only') %></strong><br>
+      <%= t('admin_login_whitelist_info') %>
     </div>
   </div>
 </body>

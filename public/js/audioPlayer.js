@@ -9,6 +9,8 @@ class AudioPlayer {
     this.player = document.getElementById('audioPlayer');
     this.currentLecture = null;
     this.isPlaying = false;
+    this.isDragging = false;
+    this.isTouchDragging = false;
 
     // Initialize elements
     this.initElements();
@@ -72,8 +74,7 @@ class AudioPlayer {
     this.closePlayerBtn.addEventListener('click', () => this.close());
 
     // Progress bar - mouse events
-    this.progressContainer.addEventListener('click', (e) => this.seek(e));
-    this.progressHandle.addEventListener('mousedown', (e) => this.startDrag(e));
+    this.progressContainer.addEventListener('mousedown', (e) => this.startDrag(e));
 
     // Progress bar - touch events (for mobile)
     this.progressContainer.addEventListener('touchstart', (e) => this.handleTouchStart(e), { passive: false });
@@ -162,18 +163,53 @@ class AudioPlayer {
   }
 
   seek(e) {
+    if (!this.audio.duration || isNaN(this.audio.duration)) return;
+
     const rect = this.progressContainer.getBoundingClientRect();
-    const percent = (e.clientX - rect.left) / rect.width;
-    this.audio.currentTime = percent * this.audio.duration;
+    const isRTL = document.documentElement.dir === 'rtl';
+
+    // Calculate percent - invert for RTL
+    let percent;
+    if (isRTL) {
+      percent = Math.max(0, Math.min(1, (rect.right - e.clientX) / rect.width));
+    } else {
+      percent = Math.max(0, Math.min(1, (e.clientX - rect.left) / rect.width));
+    }
+
+    const newTime = percent * this.audio.duration;
+
+    // Update visual immediately for smooth feedback
+    this.progressBar.style.width = `${percent * 100}%`;
+    this.currentTimeEl.textContent = this.formatTime(newTime);
+
+    this.audio.currentTime = newTime;
   }
 
   startDrag(e) {
     e.preventDefault();
-    const onMouseMove = (e) => this.seek(e);
+    this.isDragging = true;
+
+    // Add dragging class for visual feedback
+    this.progressContainer.classList.add('dragging');
+    document.body.classList.add('audio-seeking');
+
+    // Seek to initial click position
+    this.seek(e);
+
+    const onMouseMove = (e) => {
+      if (this.isDragging) {
+        this.seek(e);
+      }
+    };
+
     const onMouseUp = () => {
+      this.isDragging = false;
+      this.progressContainer.classList.remove('dragging');
+      document.body.classList.remove('audio-seeking');
       document.removeEventListener('mousemove', onMouseMove);
       document.removeEventListener('mouseup', onMouseUp);
     };
+
     document.addEventListener('mousemove', onMouseMove);
     document.addEventListener('mouseup', onMouseUp);
   }
@@ -182,6 +218,11 @@ class AudioPlayer {
   handleTouchStart(e) {
     e.preventDefault();
     this.isTouchDragging = true;
+
+    // Add dragging class for visual feedback
+    this.progressContainer.classList.add('dragging');
+    document.body.classList.add('audio-seeking');
+
     this.seekFromTouch(e);
   }
 
@@ -194,15 +235,34 @@ class AudioPlayer {
 
   handleTouchEnd(e) {
     this.isTouchDragging = false;
+    this.progressContainer.classList.remove('dragging');
+    document.body.classList.remove('audio-seeking');
   }
 
   seekFromTouch(e) {
+    if (!this.audio.duration || isNaN(this.audio.duration)) return;
+
     const touch = e.touches[0] || e.changedTouches[0];
     if (!touch) return;
 
     const rect = this.progressContainer.getBoundingClientRect();
-    const percent = Math.max(0, Math.min(1, (touch.clientX - rect.left) / rect.width));
-    this.audio.currentTime = percent * this.audio.duration;
+    const isRTL = document.documentElement.dir === 'rtl';
+
+    // Calculate percent - invert for RTL
+    let percent;
+    if (isRTL) {
+      percent = Math.max(0, Math.min(1, (rect.right - touch.clientX) / rect.width));
+    } else {
+      percent = Math.max(0, Math.min(1, (touch.clientX - rect.left) / rect.width));
+    }
+
+    const newTime = percent * this.audio.duration;
+
+    // Update visual immediately for smooth feedback
+    this.progressBar.style.width = `${percent * 100}%`;
+    this.currentTimeEl.textContent = this.formatTime(newTime);
+
+    this.audio.currentTime = newTime;
   }
 
   toggleSpeedMenu() {
@@ -313,6 +373,9 @@ class AudioPlayer {
   }
 
   onTimeUpdate() {
+    // Skip visual updates during drag to prevent jumping
+    if (this.isDragging || this.isTouchDragging) return;
+
     // Update progress bar
     const percent = (this.audio.currentTime / this.audio.duration) * 100;
     this.progressBar.style.width = `${percent}%`;

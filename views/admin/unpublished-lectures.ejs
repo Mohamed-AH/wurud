@@ -1,9 +1,8 @@
 <!DOCTYPE html>
-<html lang="ar" dir="rtl">
+<html lang="<%= adminLocale %>" dir="<%= adminDir %>">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title><%= title %> - Duroos</title>
+  <%- include('partials/head') %>
+  <title><%= adminLocale === 'ar' ? 'المحاضرات غير المنشورة' : 'Unpublished Lectures' %> - <%= t('admin_title') %></title>
   <style>
     * { margin: 0; padding: 0; box-sizing: border-box; }
     body {
@@ -11,19 +10,6 @@
       background: #f5f5f5;
       color: #333;
     }
-    .header {
-      background: #1A5F5A;
-      color: white;
-      padding: 16px 24px;
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
-    }
-    .header h1 { font-size: 24px; font-weight: 600; }
-    .header-nav { display: flex; align-items: center; gap: 16px; }
-    .header-nav a { color: white; text-decoration: none; opacity: 0.9; }
-    .header-nav a:hover { opacity: 1; }
     .container { max-width: 1400px; margin: 0 auto; padding: 32px 24px; }
     .card {
       background: white;
@@ -33,7 +19,11 @@
     }
     table { width: 100%; border-collapse: collapse; margin-top: 16px; }
     thead { background: #f8f8f8; }
-    th, td { padding: 12px; text-align: right; border-bottom: 1px solid #eee; }
+    th, td { padding: 12px; border-bottom: 1px solid #eee; }
+
+    [dir="rtl"] th, [dir="rtl"] td { text-align: right; }
+    [dir="ltr"] th, [dir="ltr"] td { text-align: left; }
+
     th { font-weight: 600; color: #666; font-size: 13px; }
     .badge {
       display: inline-block;
@@ -45,6 +35,9 @@
       color: #856404;
     }
     .actions { display: flex; gap: 8px; }
+
+    [dir="rtl"] .actions { flex-direction: row-reverse; }
+
     .btn {
       padding: 6px 12px;
       border: none;
@@ -66,41 +59,34 @@
   </style>
 </head>
 <body>
-  <div class="header">
-    <h1>📝 المحاضرات غير المنشورة</h1>
-    <div class="header-nav">
-      <a href="/admin/dashboard">لوحة التحكم</a>
-      <a href="/admin/manage">إدارة</a>
-      <a href="/auth/logout">خروج</a>
-    </div>
-  </div>
+  <%- include('partials/header', { activePage: 'manage' }) %>
 
-  <div class="container">
+  <main class="admin-container">
     <div class="card">
-      <h2 style="margin-bottom: 16px;">إجمالي: <%= lectures.length %> محاضرة</h2>
+      <h2 style="margin-bottom: 16px;"><%= adminLocale === 'ar' ? 'إجمالي:' : 'Total:' %> <%= lectures.length %> <%= adminLocale === 'ar' ? 'محاضرة' : 'lectures' %></h2>
 
       <% if (lectures.length > 0) { %>
         <table>
           <thead>
             <tr>
-              <th>العنوان بالعربية</th>
-              <th>الشيخ</th>
-              <th>السلسلة</th>
-              <th>الحالة</th>
-              <th>الإجراءات</th>
+              <th><%= adminLocale === 'ar' ? 'العنوان بالعربية' : 'Title (Arabic)' %></th>
+              <th><%= adminLocale === 'ar' ? 'الشيخ' : 'Sheikh' %></th>
+              <th><%= adminLocale === 'ar' ? 'السلسلة' : 'Series' %></th>
+              <th><%= adminLocale === 'ar' ? 'الحالة' : 'Status' %></th>
+              <th><%= adminLocale === 'ar' ? 'الإجراءات' : 'Actions' %></th>
             </tr>
           </thead>
           <tbody>
             <% lectures.forEach(lecture => { %>
               <tr>
-                <td><%= lecture.titleArabic %></td>
-                <td><%= lecture.sheikhId?.nameArabic || 'غير محدد' %></td>
-                <td><%= lecture.seriesId?.titleArabic || 'منفصلة' %></td>
-                <td><span class="badge">غير منشورة</span></td>
+                <td><%= adminLocale === 'ar' ? lecture.titleArabic : (lecture.titleEnglish || lecture.titleArabic) %></td>
+                <td><%= lecture.sheikhId ? (adminLocale === 'ar' ? lecture.sheikhId.nameArabic : (lecture.sheikhId.nameEnglish || lecture.sheikhId.nameArabic)) : (adminLocale === 'ar' ? 'غير محدد' : 'Unspecified') %></td>
+                <td><%= lecture.seriesId ? (adminLocale === 'ar' ? lecture.seriesId.titleArabic : (lecture.seriesId.titleEnglish || lecture.seriesId.titleArabic)) : (adminLocale === 'ar' ? 'منفصلة' : 'Standalone') %></td>
+                <td><span class="badge"><%= adminLocale === 'ar' ? 'غير منشورة' : 'Unpublished' %></span></td>
                 <td class="actions">
-                  <a href="/admin/lectures/<%= lecture._id %>/edit" class="btn btn-primary">✏️ تعديل</a>
+                  <a href="/admin/lectures/<%= lecture._id %>/edit" class="btn btn-primary"><%= adminLocale === 'ar' ? '✏️ تعديل' : '✏️ Edit' %></a>
                   <button class="btn btn-success" onclick="publishLecture('<%= lecture._id %>')">
-                    ✅ نشر
+                    <%= adminLocale === 'ar' ? '✅ نشر' : '✅ Publish' %>
                   </button>
                 </td>
               </tr>
@@ -109,13 +95,21 @@
         </table>
       <% } else { %>
         <div class="empty-state">
-          <p>✅ جميع المحاضرات منشورة!</p>
+          <p><%= adminLocale === 'ar' ? '✅ جميع المحاضرات منشورة!' : '✅ All lectures are published!' %></p>
         </div>
       <% } %>
     </div>
-  </div>
+  </main>
 
   <script>
+    const isArabic = '<%= adminLocale %>' === 'ar';
+
+    const msgs = {
+      publishSuccess: isArabic ? 'تم نشر المحاضرة بنجاح' : 'Lecture published successfully',
+      publishFailed: isArabic ? 'فشل نشر المحاضرة' : 'Failed to publish lecture',
+      error: isArabic ? 'خطأ: ' : 'Error: '
+    };
+
     async function publishLecture(id) {
       try {
         const response = await fetch(`/admin/lectures/${id}/toggle-published`, {
@@ -126,13 +120,13 @@
         const data = await response.json();
 
         if (data.success) {
-          alert('تم نشر المحاضرة بنجاح');
+          alert(msgs.publishSuccess);
           location.reload();
         } else {
-          alert('فشل نشر المحاضرة');
+          alert(msgs.publishFailed);
         }
       } catch (error) {
-        alert('خطأ: ' + error.message);
+        alert(msgs.error + error.message);
       }
     }
   </script>

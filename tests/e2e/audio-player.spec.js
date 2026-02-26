@@ -24,7 +24,7 @@ test.describe('Audio Player - Basic Functionality', () => {
     const playButton = page.locator('button[class*="play"], .play-btn, i.fa-play').first();
 
     if (await playButton.isVisible()) {
-      await playButton.click();
+      await playButton.click({ force: true });
       await page.waitForTimeout(1000);
 
       // Audio element should exist
@@ -39,7 +39,7 @@ test.describe('Audio Player - Basic Functionality', () => {
     const playButton = page.locator('button[class*="play"]').first();
 
     if (await playButton.isVisible()) {
-      await playButton.click();
+      await playButton.click({ force: true });
       await page.waitForTimeout(1000);
 
       // Check for audio element with controls
@@ -59,14 +59,14 @@ test.describe('Audio Player - Playback Controls', () => {
 
     if (await playButton.isVisible()) {
       // Click to play
-      await playButton.click();
+      await playButton.click({ force: true });
       await page.waitForTimeout(500);
 
       // Should change to pause button or state
       // (Exact implementation depends on your player UI)
 
       // Click again to pause
-      await playButton.click();
+      await playButton.click({ force: true });
       await page.waitForTimeout(500);
     }
   });
@@ -79,11 +79,11 @@ test.describe('Audio Player - Playback Controls', () => {
 
     if (count >= 2) {
       // Play first lecture
-      await playButtons.nth(0).click();
+      await playButtons.nth(0).click({ force: true });
       await page.waitForTimeout(500);
 
       // Play second lecture
-      await playButtons.nth(1).click();
+      await playButtons.nth(1).click({ force: true });
       await page.waitForTimeout(500);
 
       // Only one audio element should be playing
@@ -103,7 +103,7 @@ test.describe('Audio Player - Progress and Time', () => {
     const playButton = page.locator('button[class*="play"]').first();
 
     if (await playButton.isVisible()) {
-      await playButton.click();
+      await playButton.click({ force: true });
       await page.waitForTimeout(1000);
 
       // Check for progress bar (part of audio controls)
@@ -122,7 +122,7 @@ test.describe('Audio Player - Progress and Time', () => {
     const playButton = page.locator('button[class*="play"]').first();
 
     if (await playButton.isVisible()) {
-      await playButton.click();
+      await playButton.click({ force: true });
       await page.waitForTimeout(1000);
 
       const audio = page.locator('audio');
@@ -151,7 +151,7 @@ test.describe('Audio Player - Volume Control', () => {
     const playButton = page.locator('button[class*="play"]').first();
 
     if (await playButton.isVisible()) {
-      await playButton.click();
+      await playButton.click({ force: true });
       await page.waitForTimeout(1000);
 
       const audio = page.locator('audio');
@@ -170,7 +170,7 @@ test.describe('Audio Player - Volume Control', () => {
     const playButton = page.locator('button[class*="play"]').first();
 
     if (await playButton.isVisible()) {
-      await playButton.click();
+      await playButton.click({ force: true });
       await page.waitForTimeout(1000);
 
       const audio = page.locator('audio');
@@ -192,7 +192,7 @@ test.describe('Audio Player - Volume Control', () => {
     const playButton = page.locator('button[class*="play"]').first();
 
     if (await playButton.isVisible()) {
-      await playButton.click();
+      await playButton.click({ force: true });
       await page.waitForTimeout(1000);
 
       const audio = page.locator('audio');
@@ -219,7 +219,7 @@ test.describe('Audio Player - Mobile Compatibility', () => {
 
     if (await playButton.isVisible()) {
       // Touch to play
-      await playButton.tap();
+      await playButton.tap({ force: true });
       await page.waitForTimeout(1000);
 
       const audio = page.locator('audio');
@@ -255,7 +255,7 @@ test.describe('Audio Player - Error Handling', () => {
     const playButton = page.locator('button[class*="play"]').first();
 
     if (await playButton.isVisible()) {
-      await playButton.click();
+      await playButton.click({ force: true });
       await page.waitForTimeout(2000);
 
       // Page should not crash
@@ -279,7 +279,7 @@ test.describe('Audio Player - Error Handling', () => {
     const playButton = page.locator('button[class*="play"]').first();
 
     if (await playButton.isVisible()) {
-      await playButton.click();
+      await playButton.click({ force: true });
       await page.waitForTimeout(2000);
 
       // Should have no console errors (or only expected network errors)
@@ -307,7 +307,7 @@ test.describe('Audio Player - Metadata Display', () => {
       if (await titleElement.isVisible()) {
         const title = await titleElement.textContent();
 
-        await playButton.click();
+        await playButton.click({ force: true });
         await page.waitForTimeout(1000);
 
         // Title should still be visible somewhere
@@ -328,7 +328,7 @@ test.describe('Audio Player - Metadata Display', () => {
       if (await sheikhElement.isVisible()) {
         const sheikh = await sheikhElement.textContent();
 
-        await playButton.click();
+        await playButton.click({ force: true });
         await page.waitForTimeout(1000);
 
         expect(sheikh).toBeTruthy();

@@ -37,6 +37,26 @@ const siteSettingsSchema = new mongoose.Schema({
     }
   },
 
+  // Homepage configuration
+  homepage: {
+    showSchedule: {
+      type: Boolean,
+      default: true
+    },
+    showSeriesTab: {
+      type: Boolean,
+      default: true
+    },
+    showStandaloneTab: {
+      type: Boolean,
+      default: true
+    },
+    showKhutbasTab: {
+      type: Boolean,
+      default: true
+    }
+  },
+
   // Cached aggregate stats (updated periodically)
   cachedStats: {
     totalPlays: {

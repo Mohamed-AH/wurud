@@ -1,88 +1,66 @@
 <!DOCTYPE html>
-<html lang="ar" dir="rtl">
+<html lang="<%= adminLocale %>" dir="<%= adminDir %>">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title><%= title %> - Duroos</title>
+  <%- include('partials/head') %>
+  <title><%= isEdit ? (adminLocale === 'ar' ? 'تعديل الشيخ' : 'Edit Sheikh') : (adminLocale === 'ar' ? 'إضافة شيخ جديد' : 'Add New Sheikh') %> - <%= t('admin_title') %></title>
   <!-- Load marked library for markdown preview -->
   <script src="https://cdn.jsdelivr.net/npm/marked@11.1.1/marked.min.js"></script>
   <style>
-    * { margin: 0; padding: 0; box-sizing: border-box; }
-    body {
-      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-      background: #f5f5f5;
-      color: #333;
-    }
-    .header {
-      background: #1A5F5A;
-      color: white;
-      padding: 16px 24px;
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
-    }
-    .header h1 { font-size: 24px; font-weight: 600; }
-    .header-nav { display: flex; align-items: center; gap: 16px; }
-    .header-nav a { color: white; text-decoration: none; opacity: 0.9; }
-    .header-nav a:hover { opacity: 1; }
-    .container { max-width: 1000px; margin: 0 auto; padding: 32px 24px; }
     .card {
       background: white;
       border-radius: 12px;
       box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
       padding: 32px;
+      max-width: 1000px;
+      margin: 0 auto;
     }
-    .form-group {
-      margin-bottom: 24px;
-    }
-    label {
-      display: block;
-      margin-bottom: 8px;
-      font-weight: 600;
-      color: #2C3E35;
-    }
+
     .label-help {
       font-size: 12px;
       color: #6c757d;
       font-weight: 400;
+    }
+
+    [dir="rtl"] .label-help {
       margin-right: 8px;
     }
-    input, textarea, select {
-      width: 100%;
-      padding: 12px;
-      border: 1px solid #ddd;
-      border-radius: 6px;
-      font-size: 14px;
-      font-family: inherit;
+
+    [dir="ltr"] .label-help {
+      margin-left: 8px;
     }
-    textarea {
-      min-height: 120px;
-      resize: vertical;
-      font-family: 'Courier New', monospace;
-      direction: rtl;
-    }
+
     .markdown-container {
       display: grid;
       grid-template-columns: 1fr 1fr;
       gap: 16px;
     }
+
+    @media (max-width: 768px) {
+      .markdown-container {
+        grid-template-columns: 1fr;
+      }
+    }
+
     .markdown-editor, .markdown-preview {
       border: 1px solid #ddd;
       border-radius: 6px;
       padding: 12px;
       min-height: 200px;
     }
+
     .markdown-editor textarea {
       border: none;
       padding: 0;
       width: 100%;
       min-height: 200px;
+      font-family: 'Courier New', monospace;
     }
+
     .markdown-preview {
       background: #f8f9fa;
       overflow-y: auto;
     }
+
     .markdown-label {
       font-size: 12px;
       font-weight: 600;
@@ -90,6 +68,7 @@
       margin-bottom: 8px;
       text-transform: uppercase;
     }
+
     .markdown-help {
       font-size: 12px;
       color: #6c757d;
@@ -98,64 +77,60 @@
       background: #f8f9fa;
       border-radius: 4px;
     }
+
     .markdown-help code {
       background: white;
       padding: 2px 6px;
       border-radius: 3px;
       font-family: 'Courier New', monospace;
     }
-    .btn {
-      padding: 12px 24px;
-      border: none;
-      border-radius: 6px;
-      font-size: 14px;
-      font-weight: 600;
-      cursor: pointer;
-      text-decoration: none;
-      display: inline-block;
-      margin-left: 8px;
-    }
-    .btn-primary {
-      background: #1A5F5A;
-      color: white;
-    }
-    .btn-primary:hover {
-      background: #145047;
-    }
-    .btn-secondary {
-      background: #6c757d;
-      color: white;
-    }
-    .btn-secondary:hover {
-      background: #5a6268;
-    }
+
     .actions {
       display: flex;
       gap: 12px;
       margin-top: 32px;
     }
+
+    [dir="rtl"] .actions {
+      flex-direction: row-reverse;
+    }
+
     .required {
       color: #dc3545;
+    }
+
+    [dir="rtl"] .required {
       margin-right: 4px;
+    }
+
+    [dir="ltr"] .required {
+      margin-left: 4px;
+    }
+
+    .btn-secondary {
+      background: #6c757d;
+      color: white;
+      padding: 12px 24px;
+      border: none;
+      border-radius: 6px;
+      text-decoration: none;
+      font-weight: 600;
+    }
+
+    .btn-secondary:hover {
+      background: #5a6268;
     }
   </style>
 </head>
 <body>
-  <div class="header">
-    <h1><%= isEdit ? '✏️ تعديل الشيخ' : '➕ إضافة شيخ جديد' %></h1>
-    <div class="header-nav">
-      <a href="/admin/dashboard">لوحة التحكم</a>
-      <a href="/admin/sheikhs">إدارة الشيوخ</a>
-      <a href="/auth/logout">خروج</a>
-    </div>
-  </div>
+  <%- include('partials/header', { activePage: 'sheikhs' }) %>
 
-  <div class="container">
+  <main class="admin-container">
     <div class="card">
       <form method="POST" action="<%= isEdit ? `/admin/sheikhs/${sheikh._id}/edit` : '/admin/sheikhs' %>">
         <div class="form-group">
           <label for="nameArabic">
-            الاسم بالعربية
+            <%= adminLocale === 'ar' ? 'الاسم بالعربية' : 'Name (Arabic)' %>
             <span class="required">*</span>
           </label>
           <input
@@ -164,39 +139,45 @@
             name="nameArabic"
             value="<%= sheikh ? sheikh.nameArabic : '' %>"
             required
-            placeholder="مثال: محمد بن عبدالوهاب"
+            placeholder="<%= adminLocale === 'ar' ? 'مثال: محمد بن عبدالوهاب' : 'Example: محمد بن عبدالوهاب' %>"
+            dir="rtl"
+            class="form-control"
           >
         </div>
 
         <div class="form-group">
-          <label for="nameEnglish">الاسم بالإنجليزية</label>
+          <label for="nameEnglish"><%= adminLocale === 'ar' ? 'الاسم بالإنجليزية' : 'Name (English)' %></label>
           <input
             type="text"
             id="nameEnglish"
             name="nameEnglish"
             value="<%= sheikh ? (sheikh.nameEnglish || '') : '' %>"
             placeholder="Example: Muhammad ibn Abd al-Wahhab"
+            dir="ltr"
+            class="form-control"
           >
         </div>
 
         <div class="form-group">
           <label for="honorific">
-            اللقب التكريمي
-            <span class="label-help">(الافتراضي: حفظه الله)</span>
+            <%= adminLocale === 'ar' ? 'اللقب التكريمي' : 'Honorific Title' %>
+            <span class="label-help">(<%= adminLocale === 'ar' ? 'الافتراضي: حفظه الله' : 'Default: حفظه الله' %>)</span>
           </label>
           <input
             type="text"
             id="honorific"
             name="honorific"
             value="<%= sheikh ? (sheikh.honorific || 'حفظه الله') : 'حفظه الله' %>"
-            placeholder="حفظه الله / رحمه الله"
+            placeholder="<%= adminLocale === 'ar' ? 'حفظه الله / رحمه الله' : 'حفظه الله / رحمه الله' %>"
+            dir="rtl"
+            class="form-control"
           >
         </div>
 
         <div class="form-group">
           <label for="photoUrl">
-            رابط الصورة
-            <span class="label-help">(اختياري)</span>
+            <%= adminLocale === 'ar' ? 'رابط الصورة' : 'Photo URL' %>
+            <span class="label-help">(<%= adminLocale === 'ar' ? 'اختياري' : 'Optional' %>)</span>
           </label>
           <input
             type="url"
@@ -204,51 +185,48 @@
             name="photoUrl"
             value="<%= sheikh ? (sheikh.photoUrl || '') : '' %>"
             placeholder="https://example.com/image.jpg"
+            dir="ltr"
+            class="form-control"
           >
         </div>
 
         <div class="form-group">
           <label>
-            نبذة عن الشيخ (عربي)
-            <span class="label-help">- يدعم تنسيق Markdown</span>
+            <%= adminLocale === 'ar' ? 'نبذة عن الشيخ (عربي)' : 'Biography (Arabic)' %>
+            <span class="label-help">- <%= adminLocale === 'ar' ? 'يدعم تنسيق Markdown' : 'Supports Markdown' %></span>
           </label>
           <div class="markdown-container">
             <div>
-              <div class="markdown-label">✍️ محرر</div>
+              <div class="markdown-label"><%= adminLocale === 'ar' ? '✍️ محرر' : '✍️ Editor' %></div>
               <div class="markdown-editor">
                 <textarea
                   id="bioArabic"
                   name="bioArabic"
                   oninput="updatePreview('bioArabic', 'bioArabicPreview')"
-                  placeholder="اكتب نبذة عن الشيخ هنا...
-
-يمكنك استخدام:
-- **نص عريض**
-- *نص مائل*
-- ### عناوين
-- قوائم مرقمة أو نقطية"
+                  placeholder="<%= adminLocale === 'ar' ? 'اكتب نبذة عن الشيخ هنا...' : 'Write a biography here...' %>"
+                  dir="rtl"
                 ><%= sheikh ? (sheikh.bioArabic || '') : '' %></textarea>
               </div>
             </div>
             <div>
-              <div class="markdown-label">👁️ معاينة</div>
+              <div class="markdown-label"><%= adminLocale === 'ar' ? '👁️ معاينة' : '👁️ Preview' %></div>
               <div class="markdown-preview" id="bioArabicPreview" dir="rtl"></div>
             </div>
           </div>
           <div class="markdown-help">
-            💡 نصائح Markdown:
-            <code>**عريض**</code>
-            <code>*مائل*</code>
-            <code>### عنوان</code>
-            <code>- قائمة</code>
-            <code>[رابط](url)</code>
+            💡 <%= adminLocale === 'ar' ? 'نصائح Markdown:' : 'Markdown tips:' %>
+            <code>**<%= adminLocale === 'ar' ? 'عريض' : 'bold' %>**</code>
+            <code>*<%= adminLocale === 'ar' ? 'مائل' : 'italic' %>*</code>
+            <code>### <%= adminLocale === 'ar' ? 'عنوان' : 'heading' %></code>
+            <code>- <%= adminLocale === 'ar' ? 'قائمة' : 'list' %></code>
+            <code>[<%= adminLocale === 'ar' ? 'رابط' : 'link' %>](url)</code>
           </div>
         </div>
 
         <div class="form-group">
           <label>
-            نبذة عن الشيخ (إنجليزي)
-            <span class="label-help">- يدعم تنسيق Markdown</span>
+            <%= adminLocale === 'ar' ? 'نبذة عن الشيخ (إنجليزي)' : 'Biography (English)' %>
+            <span class="label-help">- <%= adminLocale === 'ar' ? 'يدعم تنسيق Markdown' : 'Supports Markdown' %></span>
           </label>
           <div class="markdown-container">
             <div>
@@ -258,13 +236,7 @@
                   id="bioEnglish"
                   name="bioEnglish"
                   oninput="updatePreview('bioEnglish', 'bioEnglishPreview')"
-                  placeholder="Write a brief biography...
-
-You can use:
-- **bold text**
-- *italic text*
-- ### headings
-- numbered or bulleted lists"
+                  placeholder="Write a brief biography..."
                   dir="ltr"
                 ><%= sheikh ? (sheikh.bioEnglish || '') : '' %></textarea>
               </div>
@@ -286,13 +258,13 @@ You can use:
 
         <div class="actions">
           <button type="submit" class="btn btn-primary">
-            <%= isEdit ? '💾 حفظ التغييرات' : '➕ إضافة الشيخ' %>
+            <%= isEdit ? (adminLocale === 'ar' ? '💾 حفظ التغييرات' : '💾 Save Changes') : (adminLocale === 'ar' ? '➕ إضافة الشيخ' : '➕ Add Sheikh') %>
           </button>
-          <a href="/admin/sheikhs" class="btn btn-secondary">↩️ إلغاء</a>
+          <a href="/admin/sheikhs" class="btn-secondary"><%= adminLocale === 'ar' ? '↩️ إلغاء' : '↩️ Cancel' %></a>
         </div>
       </form>
     </div>
-  </div>
+  </main>
 
   <script>
     // Initialize previews on page load
@@ -308,7 +280,7 @@ You can use:
       if (textarea && preview) {
         const markdown = textarea.value;
         const html = marked.parse(markdown);
-        preview.innerHTML = html || '<em style="color: #999;">المعاينة ستظهر هنا...</em>';
+        preview.innerHTML = html || '<em style="color: #999;"><%= adminLocale === "ar" ? "المعاينة ستظهر هنا..." : "Preview will appear here..." %></em>';
       }
     }
   </script>

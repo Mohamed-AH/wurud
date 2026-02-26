@@ -12,8 +12,8 @@ A web platform for hosting and streaming ~160 Arabic Islamic lecture audio files
 
 ## 📌 Project State
 
-**Current Phase**: LIVE - Performance Optimized
-**Last Updated**: 2026-02-19
+**Current Phase**: LIVE - Feature Development
+**Last Updated**: 2026-02-25
 **Active Branch**: `claude/fix-homepage-tests-ovChk`
 **Live URL**: https://rasmihassan.com
 **Status**: 🚀 **PRODUCTION LIVE** - Performance optimizations complete, fonts self-hosted
@@ -191,8 +191,10 @@ All mobile issues have been fixed:
 6. ~~**3.1 Server-Side Filtering & Pagination**~~ ✅ Done - API endpoints with pagination
 7. ~~**3.5 Weekly Class Schedule**~~ ✅ Done - Add entries at /admin/schedule
 8. ~~**3.3 Performance Optimizations**~~ ✅ Done - In-memory caching, static cache headers, Cloudflare CDN guide
-9. **3.4 Admin Panel Arabic** - RTL support for admin pages (NEXT)
-10. **Test Coverage Improvements** - Focus on slugify.js, lectures API, middleware
+9. ~~**3.4 Admin Panel Arabic**~~ ✅ Done - Full bilingual support for all 18 admin templates
+10. ~~**3.16 Dynamic Series Section Management**~~ ✅ Done - Homepage sections, admin CRUD, homepage config toggles
+11. ~~**3.17 Mobile Responsiveness Fixes**~~ ✅ Done - Homepage, audio UI, lecture page responsive down to 320px
+12. **Test Coverage Improvements** - Focus on slugify.js, lectures API, middleware
 11. ~~**3.11 Hero Section Text Update**~~ ✅ Done - Updated branding to "موقع الشيخ حسن بن محمد منصور الدغريري"
 12. ~~**3.12 Related Lectures Ordering**~~ ✅ Done - Related lectures sorted by lectureNumber, category displays in Arabic
 13. ~~**3.13 Series Visibility Toggle**~~ ✅ Done - Admin toggle to show/hide series from public site
@@ -315,13 +317,30 @@ All mobile issues have been fixed:
 - Static asset caching with `immutable` directive
 - Cloudflare CDN setup guide at `docs/CLOUDFLARE_CDN_SETUP.md`
 
-#### 3.4 Admin Panel - Arabic Version ⬜ NOT STARTED
-**Priority**: MEDIUM | **Status**: Pending
+#### 3.4 Admin Panel - Arabic Version ✅ COMPLETED
+**Priority**: MEDIUM | **Status**: Done (2026-02-25)
 
-- [ ] Add RTL layout support to admin pages
-- [ ] Translate admin UI strings
-- [ ] Add language toggle to admin panel
-- [ ] Ensure form inputs work with Arabic text
+Added comprehensive Arabic (RTL) and English bilingual support to all admin panel pages.
+
+**Subtasks:**
+- [x] Add RTL layout support to admin pages (CSS `[dir="rtl"]`/`[dir="ltr"]` selectors)
+- [x] Translate admin UI strings (inline ternary with `adminLocale === 'ar'`)
+- [x] Add language toggle to admin panel (cookie-based `admin_locale` preference)
+- [x] Ensure form inputs work with Arabic text (explicit `dir` attributes)
+
+**Implementation Summary:**
+- All 18 admin templates updated with full bilingual support
+- Created `adminI18nMiddleware` in `middleware/adminI18n.js`
+- Admin header partial with language toggle dropdown
+- JavaScript `msgs` object pattern for client-side translations
+- Dynamic `<html lang="<%= adminLocale %>" dir="<%= adminDir %>">`
+- RTL/LTR CSS for tables, buttons, forms, badges, actions
+
+**Files Updated:**
+- `middleware/adminI18n.js` - Admin i18n middleware (new)
+- `views/admin/partials/head.ejs` - Shared admin head partial (new)
+- `views/admin/partials/header.ejs` - Admin header with language toggle (new)
+- All 18 admin template files in `views/admin/`
 
 #### 3.5 Weekly Class Schedule ✅ COMPLETED
 **Priority**: MEDIUM | **Status**: Done (2026-02-09)
@@ -530,6 +549,95 @@ Audited all admin routes and added missing buttons to the manage page Quick Acti
 
 **Files Updated:**
 - `views/admin/manage.ejs` - Added missing quick action buttons
+
+#### 3.16 Dynamic Series Section Management ✅ COMPLETED
+**Priority**: MEDIUM | **Status**: Done (2026-02-25)
+
+Admin-managed homepage sections for grouping series (Featured, Active, Completed, Archive, Ramadan). Replaced the original "Quick Links" concept with a full section management system.
+
+**Features Implemented:**
+- [x] ~~Section CRUD~~ ✅ Create, edit, delete sections with title AR/EN, icon, maxVisible, description
+- [x] ~~Section reordering~~ ✅ AJAX up/down arrows with bulkWrite
+- [x] ~~Series assignment~~ ✅ Assign series to sections, reorder within sections
+- [x] ~~Homepage rendering~~ ✅ Collapsible section blocks with series tables above tabs
+- [x] ~~Homepage config toggles~~ ✅ Toggle Schedule, Series Tab, Standalone Tab, Khutbas Tab
+- [x] ~~Seed script~~ ✅ Creates 5 default sections (Featured, Active, Completed, Archive, Ramadan)
+- [x] ~~Collapse state persistence~~ ✅ localStorage for section collapse state
+- [x] ~~Bilingual support~~ ✅ Full AR/EN for all admin pages and homepage sections
+
+**Data Model - Section:**
+```javascript
+{
+  title: { ar: String, en: String },
+  slug: String (unique, auto-generated),
+  icon: String (emoji),
+  displayOrder: Number,
+  isVisible: Boolean (default: true),
+  isDefault: Boolean (default: false),
+  collapsedByDefault: Boolean (default: false),
+  maxVisible: Number (default: 5),
+  description: { ar: String, en: String }
+}
+```
+
+**Series Model Extensions:**
+- `sectionId` (ObjectId ref to Section, indexed)
+- `sectionOrder` (Number, default 0)
+
+**SiteSettings Extension:**
+- `homepage.showSchedule` (Boolean, default: true)
+- `homepage.showSeriesTab` (Boolean, default: true)
+- `homepage.showStandaloneTab` (Boolean, default: true)
+- `homepage.showKhutbasTab` (Boolean, default: true)
+
+**Admin Routes:**
+- `/admin/sections` - List all sections with reorder
+- `/admin/sections/new` - Create new section
+- `/admin/sections/:id/edit` - Edit section
+- `/admin/sections/:id/series` - Manage series in section
+- `/admin/homepage-config` - Toggle homepage features
+
+**Homepage Layout Order:**
+1. Hero Section (always visible)
+2. Weekly Schedule (toggleable)
+3. Series Sections (admin-managed, collapsible)
+4. Content Tabs: Series / Standalone / Khutbas (each toggleable)
+
+**Files Created:**
+- `models/Section.js` - Section model with static methods
+- `views/admin/sections.ejs` - Section list page
+- `views/admin/section-form.ejs` - Create/edit form
+- `views/admin/section-series.ejs` - Series management within section
+- `views/admin/homepage-config.ejs` - Homepage toggle settings
+- `scripts/seed-sections.js` - Idempotent seed script
+
+**Files Modified:**
+- `models/Series.js` - Added sectionId, sectionOrder
+- `models/SiteSettings.js` - Added homepage config
+- `models/index.js` - Exported Section
+- `routes/admin/index.js` - Added ~407 lines of section/config routes
+- `routes/index.js` - Added fetchSectionsData(), homepage config integration
+- `views/public/index.ejs` - Section rendering, tab conditionals
+- `views/admin/manage.ejs` - Quick action buttons
+- `views/admin/edit-series.ejs` - Section assignment dropdown
+
+#### 3.17 Mobile Responsiveness Fixes ✅ COMPLETED
+**Priority**: MEDIUM | **Status**: Done (2026-02-26)
+
+Fixed responsive design issues for all screen sizes down to 320px (iPhone SE, Galaxy Fold, etc.).
+
+**Issues Fixed:**
+- [x] ~~Homepage layout breaks below 450px width~~ ✅ Added 480px and 360px breakpoints
+- [x] ~~Audio player UI distorted below 350px width~~ ✅ Compact controls and spacing
+
+**Breakpoints Added:**
+- `@media (max-width: 480px)` - Small phones
+- `@media (max-width: 360px)` - Very small phones
+
+**Files Updated:**
+- `views/public/index.ejs` - Homepage responsive CSS (hero, search, tabs, schedule, sections)
+- `views/public/lecture.ejs` - Lecture page responsive CSS (breadcrumb, hero, play section, buttons)
+- `public/css/audioPlayer.css` - Audio player responsive CSS (controls, buttons, progress bar)
 
 #### 3.9 Direct OCI Audio Upload ✅ COMPLETED
 **Priority**: MEDIUM | **Status**: Done (2026-02-10)

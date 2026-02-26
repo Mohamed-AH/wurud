@@ -87,22 +87,55 @@
 /* Progress Bar */
 .progress-container {
   width: 100%;
+  height: 24px;
+  cursor: pointer;
+  position: relative;
+  overflow: visible;
+  touch-action: none; /* Prevent scroll on touch */
+  display: flex;
+  align-items: center;
+}
+
+/* The visible track */
+.progress-container::before {
+  content: '';
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: 50%;
+  transform: translateY(-50%);
   height: 8px;
   background: rgba(193, 154, 107, 0.2);
   border-radius: 4px;
-  cursor: pointer;
-  position: relative;
-  overflow: hidden;
-  touch-action: none; /* Prevent scroll on touch */
+  pointer-events: none;
+}
+
+/* Expand track on hover */
+.progress-container:hover::before {
+  height: 10px;
 }
 
 .progress-bar {
-  height: 100%;
+  height: 8px;
   background: linear-gradient(90deg, #C19A6B 0%, #D4A574 100%);
   border-radius: 4px;
   width: 0%;
-  transition: width 0.1s linear;
   position: relative;
+  z-index: 1;
+}
+
+/* Expand filled bar on hover to match track */
+.progress-container:hover .progress-bar {
+  height: 10px;
+}
+
+/* Disable transition during drag for immediate feedback */
+.progress-container:not(.dragging) .progress-bar {
+  transition: width 0.1s linear, height 0.15s ease;
+}
+
+.progress-container.dragging .progress-bar {
+  transition: height 0.15s ease;
 }
 
 .progress-handle {
@@ -117,10 +150,34 @@
   border-radius: 50%;
   cursor: grab;
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+  transition: transform 0.15s ease, box-shadow 0.15s ease;
 }
 
-.progress-handle:active {
+/* Hover state - slight grow */
+.progress-container:hover .progress-handle {
+  transform: translateY(-50%) scale(1.1);
+  box-shadow: 0 3px 12px rgba(0, 0, 0, 0.4);
+}
+
+/* Active/dragging state */
+.progress-handle:active,
+.progress-container.dragging .progress-handle {
   cursor: grabbing;
+  transform: translateY(-50%) scale(1.2);
+  background: #C19A6B;
+  border-color: #FAF7F2;
+  box-shadow: 0 4px 16px rgba(193, 154, 107, 0.5);
+}
+
+/* Prevent text selection while dragging */
+body.audio-seeking {
+  user-select: none;
+  -webkit-user-select: none;
+  cursor: grabbing !important;
+}
+
+body.audio-seeking * {
+  cursor: grabbing !important;
 }
 
 /* Control Buttons */
@@ -210,11 +267,17 @@
   align-items: center;
   justify-content: center;
   background: rgba(193, 154, 107, 0.15);
+  padding: 0;
+  margin: 0;
+  line-height: 0;
+  box-sizing: border-box;
 }
 
 .download-btn svg {
-  width: 18px;
-  height: 18px;
+  width: 16px;
+  height: 16px;
+  display: block;
+  margin: auto;
 }
 
 .download-btn:hover {
@@ -444,6 +507,12 @@ html[dir="rtl"] .player-actions {
   justify-content: flex-start;
 }
 
+/* RTL: Progress bar grows from right to left */
+html[dir="rtl"] .progress-bar {
+  margin-left: auto;
+  margin-right: 0;
+}
+
 html[dir="rtl"] .progress-handle {
   right: auto;
   left: -6px;
@@ -459,5 +528,218 @@ html[dir="rtl"] .speed-menu {
   html[dir="rtl"] .speed-menu {
     left: 50%;
     transform: translateX(-50%);
+  }
+}
+
+/* Small phones (below 480px) */
+@media (max-width: 480px) {
+  .audio-player {
+    padding: 10px 12px;
+  }
+
+  .player-container {
+    gap: 10px;
+  }
+
+  .now-playing-label {
+    font-size: 10px;
+  }
+
+  .lecture-title {
+    font-size: 14px;
+  }
+
+  .sheikh-name {
+    font-size: 12px;
+  }
+
+  .time-display {
+    font-size: 12px;
+  }
+
+  .control-btn {
+    width: 32px;
+    height: 32px;
+    font-size: 12px;
+  }
+
+  .control-btn-primary {
+    width: 40px;
+    height: 40px;
+    font-size: 14px;
+  }
+
+  .skip-btn {
+    width: 36px;
+    height: 36px;
+  }
+
+  .skip-icon svg {
+    width: 14px;
+    height: 14px;
+  }
+
+  .skip-seconds {
+    font-size: 7px;
+  }
+
+  .control-btn-small {
+    width: 32px;
+    height: 32px;
+    font-size: 12px;
+  }
+
+  .player-actions {
+    gap: 8px;
+  }
+
+  #speedLabel {
+    font-size: 11px;
+  }
+
+  .progress-container {
+    height: 20px;
+  }
+
+  .progress-container::before,
+  .progress-bar {
+    height: 6px;
+  }
+
+  .progress-container:hover::before,
+  .progress-container:hover .progress-bar {
+    height: 8px;
+  }
+
+  .progress-handle {
+    width: 14px;
+    height: 14px;
+  }
+
+  .progress-container:hover .progress-handle {
+    transform: translateY(-50%) scale(1.1);
+  }
+
+  .progress-container.dragging .progress-handle {
+    transform: translateY(-50%) scale(1.2);
+  }
+}
+
+/* Very small phones (below 360px) */
+@media (max-width: 360px) {
+  .audio-player {
+    padding: 8px 10px;
+  }
+
+  .player-container {
+    gap: 8px;
+  }
+
+  .now-playing-label {
+    font-size: 9px;
+    letter-spacing: 0.5px;
+  }
+
+  .lecture-title {
+    font-size: 13px;
+    margin-bottom: 2px;
+  }
+
+  .sheikh-name {
+    font-size: 11px;
+  }
+
+  .time-display {
+    font-size: 11px;
+  }
+
+  /* Smaller control buttons */
+  .control-buttons {
+    gap: 6px;
+  }
+
+  .control-btn {
+    width: 28px;
+    height: 28px;
+    font-size: 11px;
+    border-width: 1.5px;
+  }
+
+  .control-btn-primary {
+    width: 36px;
+    height: 36px;
+    font-size: 13px;
+  }
+
+  .skip-btn {
+    width: 32px;
+    height: 32px;
+  }
+
+  .skip-icon svg {
+    width: 12px;
+    height: 12px;
+  }
+
+  .skip-seconds {
+    font-size: 6px;
+    margin-top: -1px;
+  }
+
+  .control-btn-small {
+    width: 28px;
+    height: 28px;
+    font-size: 11px;
+  }
+
+  .player-actions {
+    gap: 6px;
+  }
+
+  #speedLabel {
+    font-size: 10px;
+  }
+
+  .download-btn svg {
+    width: 12px;
+    height: 12px;
+  }
+
+  .progress-container {
+    height: 18px;
+  }
+
+  .progress-container::before,
+  .progress-bar {
+    height: 5px;
+  }
+
+  .progress-container:hover::before,
+  .progress-container:hover .progress-bar {
+    height: 7px;
+  }
+
+  .progress-handle {
+    width: 12px;
+    height: 12px;
+  }
+
+  .progress-container:hover .progress-handle {
+    transform: translateY(-50%) scale(1.15);
+  }
+
+  .progress-container.dragging .progress-handle {
+    transform: translateY(-50%) scale(1.25);
+  }
+
+  /* Speed menu adjustments */
+  .speed-menu {
+    bottom: 100px;
+    min-width: 70px;
+  }
+
+  .speed-option {
+    padding: 6px 10px;
+    font-size: 12px;
   }
 }

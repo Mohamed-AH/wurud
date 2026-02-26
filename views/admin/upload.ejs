@@ -1,54 +1,9 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="<%= adminLocale %>" dir="<%= adminDir %>">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title><%= title %> - Duroos</title>
+  <%- include('partials/head') %>
+  <title><%= t('admin_upload') %> - <%= t('admin_title') %></title>
   <style>
-    * {
-      margin: 0;
-      padding: 0;
-      box-sizing: border-box;
-    }
-
-    body {
-      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, sans-serif;
-      background: #f5f5f5;
-      color: #333;
-    }
-
-    .header {
-      background: #1A5F5A;
-      color: white;
-      padding: 16px 24px;
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
-    }
-
-    .header h1 {
-      font-size: 24px;
-      font-weight: 600;
-    }
-
-    .header a {
-      color: white;
-      text-decoration: none;
-      margin-left: 20px;
-      opacity: 0.9;
-    }
-
-    .header a:hover {
-      opacity: 1;
-    }
-
-    .container {
-      max-width: 900px;
-      margin: 0 auto;
-      padding: 32px 24px;
-    }
-
     .upload-section {
       background: white;
       border-radius: 12px;
@@ -125,46 +80,32 @@
       margin-top: 24px;
     }
 
-    .form-group {
-      display: flex;
-      flex-direction: column;
-    }
-
     .form-group.full-width {
       grid-column: 1 / -1;
     }
 
-    .form-group label {
-      font-size: 14px;
-      font-weight: 500;
-      margin-bottom: 6px;
-      color: #333;
-    }
-
-    .form-group label .required {
+    .form-group .required {
       color: #c33;
     }
 
-    .form-group input,
-    .form-group select,
-    .form-group textarea {
-      padding: 10px 12px;
-      border: 1px solid #ddd;
-      border-radius: 6px;
-      font-size: 14px;
-      font-family: inherit;
+    .form-group input[dir="rtl"],
+    .form-group textarea[dir="rtl"] {
+      text-align: right;
     }
 
-    .form-group textarea {
-      resize: vertical;
-      min-height: 80px;
+    .checkbox-group {
+      display: flex;
+      align-items: center;
+      gap: 8px;
     }
 
-    .form-group input:focus,
-    .form-group select:focus,
-    .form-group textarea:focus {
-      outline: none;
-      border-color: #1A5F5A;
+    [dir="rtl"] .checkbox-group {
+      flex-direction: row-reverse;
+    }
+
+    .checkbox-group input[type="checkbox"] {
+      width: auto;
+      margin: 0;
     }
 
     .form-actions {
@@ -173,37 +114,8 @@
       margin-top: 24px;
     }
 
-    .btn {
-      padding: 12px 24px;
-      border: none;
-      border-radius: 8px;
-      font-size: 16px;
-      font-weight: 500;
-      cursor: pointer;
-      transition: all 0.3s ease;
-    }
-
-    .btn-primary {
-      background: #1A5F5A;
-      color: white;
-    }
-
-    .btn-primary:hover:not(:disabled) {
-      background: #154A46;
-    }
-
-    .btn-primary:disabled {
-      background: #ccc;
-      cursor: not-allowed;
-    }
-
-    .btn-secondary {
-      background: #e0e0e0;
-      color: #333;
-    }
-
-    .btn-secondary:hover {
-      background: #d0d0d0;
+    [dir="rtl"] .form-actions {
+      flex-direction: row-reverse;
     }
 
     .message {
@@ -229,145 +141,122 @@
       border: 1px solid #f5c6cb;
     }
 
-    .checkbox-group {
-      display: flex;
-      align-items: center;
-      gap: 8px;
-    }
-
-    .checkbox-group input[type="checkbox"] {
-      width: auto;
-      margin: 0;
-    }
-
     @media (max-width: 768px) {
       .form-grid {
         grid-template-columns: 1fr;
-      }
-
-      .container {
-        padding: 20px 16px;
       }
     }
   </style>
 </head>
 <body>
-  <div class="header">
-    <h1>🎙️ Upload Lecture</h1>
-    <div>
-      <a href="/admin/dashboard">Dashboard</a>
-      <a href="/admin/manage">Manage</a>
-      <a href="/auth/logout">Logout</a>
-    </div>
-  </div>
+  <%- include('partials/header', { activePage: 'upload' }) %>
 
-  <div class="container">
+  <main class="admin-container">
     <div class="message" id="message"></div>
 
-    <div class="upload-section">
-      <h2>Upload Audio File</h2>
+    <section class="upload-section">
+      <h2><%= t('admin_upload_title') %></h2>
 
       <div class="drop-zone" id="dropZone">
         <div class="drop-zone-icon">🎵</div>
-        <div class="drop-zone-text">Drag and drop audio file here</div>
-        <div class="drop-zone-hint">or click to browse (MP3, M4A, WAV, OGG, FLAC - Max 60MB)</div>
+        <div class="drop-zone-text"><%= t('admin_upload_drag_drop') %></div>
+        <div class="drop-zone-hint"><%= t('admin_upload_supported') %> (<%= t('admin_upload_max_size') %>: 60MB)</div>
       </div>
 
       <input type="file" id="fileInput" class="file-input" accept="audio/*">
 
       <div class="file-info" id="fileInfo">
-        <strong>Selected file:</strong> <span id="fileName"></span><br>
-        <strong>Size:</strong> <span id="fileSize"></span>
+        <strong><%= adminLocale === 'ar' ? 'الملف المختار:' : 'Selected file:' %></strong> <span id="fileName"></span><br>
+        <strong><%= adminLocale === 'ar' ? 'الحجم:' : 'Size:' %></strong> <span id="fileSize"></span>
       </div>
 
       <form id="uploadForm">
         <div class="form-grid">
           <div class="form-group full-width">
-            <label>Arabic Title <span class="required">*</span></label>
-            <input type="text" name="titleArabic" required placeholder="عنوان المحاضرة بالعربي">
+            <label><%= t('admin_form_title_ar') %> <span class="required">*</span></label>
+            <input type="text" name="titleArabic" required placeholder="عنوان المحاضرة بالعربي" dir="rtl" class="form-control form-control-ar">
           </div>
 
           <div class="form-group full-width">
-            <label>English Title</label>
-            <input type="text" name="titleEnglish" placeholder="Lecture Title in English">
+            <label><%= t('admin_form_title_en') %></label>
+            <input type="text" name="titleEnglish" placeholder="Lecture Title in English" dir="ltr" class="form-control form-control-en">
           </div>
 
           <div class="form-group">
-            <label>Sheikh <span class="required">*</span></label>
-            <select name="sheikhId" required id="sheikhSelect">
-              <option value="">Select Sheikh...</option>
+            <label><%= t('admin_th_sheikh') %> <span class="required">*</span></label>
+            <select name="sheikhId" required id="sheikhSelect" class="form-control">
+              <option value=""><%= t('admin_form_select') %></option>
             </select>
           </div>
 
           <div class="form-group">
-            <label>Series</label>
-            <select name="seriesId" id="seriesSelect">
-              <option value="">None (Standalone Lecture)</option>
+            <label><%= t('admin_th_series') %></label>
+            <select name="seriesId" id="seriesSelect" class="form-control">
+              <option value=""><%= t('admin_form_none') %></option>
             </select>
           </div>
 
           <div class="form-group">
-            <label>Lecture Number</label>
-            <input type="number" name="lectureNumber" min="1" placeholder="1">
+            <label><%= t('admin_form_lecture_number') %></label>
+            <input type="number" name="lectureNumber" min="1" placeholder="1" class="form-control">
           </div>
 
           <div class="form-group">
-            <label>Category</label>
-            <select name="category">
-              <option value="Other">Other</option>
-              <option value="Aqeedah">Aqeedah</option>
-              <option value="Fiqh">Fiqh</option>
-              <option value="Tafsir">Tafsir</option>
-              <option value="Hadith">Hadith</option>
-              <option value="Seerah">Seerah</option>
-              <option value="Akhlaq">Akhlaq</option>
+            <label><%= t('admin_form_category') %></label>
+            <select name="category" class="form-control">
+              <option value="Other"><%= translateCategory('Other') %></option>
+              <option value="Aqeedah"><%= translateCategory('Aqeedah') %></option>
+              <option value="Fiqh"><%= translateCategory('Fiqh') %></option>
+              <option value="Tafsir"><%= translateCategory('Tafsir') %></option>
+              <option value="Hadith"><%= translateCategory('Hadith') %></option>
+              <option value="Seerah"><%= translateCategory('Seerah') %></option>
             </select>
           </div>
 
           <div class="form-group full-width">
-            <label>Arabic Description</label>
-            <textarea name="descriptionArabic" placeholder="وصف المحاضرة"></textarea>
+            <label><%= t('admin_form_description_ar') %></label>
+            <textarea name="descriptionArabic" placeholder="وصف المحاضرة" dir="rtl" class="form-control form-control-ar"></textarea>
           </div>
 
           <div class="form-group full-width">
-            <label>English Description</label>
-            <textarea name="descriptionEnglish" placeholder="Lecture description"></textarea>
+            <label><%= t('admin_form_description_en') %></label>
+            <textarea name="descriptionEnglish" placeholder="Lecture description" dir="ltr" class="form-control form-control-en"></textarea>
           </div>
 
           <div class="form-group">
-            <label>Location</label>
-            <input type="text" name="location" placeholder="مسجد الورود، جدة">
+            <label><%= t('admin_form_location') %></label>
+            <input type="text" name="location" placeholder="مسجد الورود، جدة" class="form-control">
           </div>
 
           <div class="form-group">
-            <label>Date Recorded</label>
-            <input type="date" name="dateRecorded">
+            <label><%= t('admin_form_date_recorded') %></label>
+            <input type="date" name="dateRecorded" class="form-control">
           </div>
 
           <div class="form-group">
-            <label>Date (Hijri)</label>
-            <input type="text" name="dateRecordedHijri" placeholder="١٥ رمضان ١٤٤٥">
+            <label><%= adminLocale === 'ar' ? 'التاريخ الهجري' : 'Hijri Date' %></label>
+            <input type="text" name="dateRecordedHijri" placeholder="١٥ رمضان ١٤٤٥" dir="rtl" class="form-control">
           </div>
 
           <div class="form-group">
             <div class="checkbox-group">
               <input type="checkbox" name="published" id="published">
-              <label for="published">Publish immediately</label>
+              <label for="published"><%= adminLocale === 'ar' ? 'نشر مباشرة' : 'Publish immediately' %></label>
             </div>
-            <div class="checkbox-group">
+            <div class="checkbox-group" style="margin-top: 8px;">
               <input type="checkbox" name="featured" id="featured">
-              <label for="featured">Feature on homepage</label>
+              <label for="featured"><%= adminLocale === 'ar' ? 'محاضرة مميزة' : 'Feature on homepage' %></label>
             </div>
           </div>
         </div>
 
         <div class="form-actions">
-          <button type="submit" class="btn btn-primary" id="submitBtn" disabled>Upload Lecture</button>
-          <button type="button" class="btn btn-secondary" id="resetBtn">Reset</button>
+          <button type="submit" class="btn btn-primary" id="submitBtn" disabled><%= t('admin_btn_upload') %></button>
+          <button type="button" class="btn btn-outline" id="resetBtn"><%= t('admin_btn_reset') %></button>
         </div>
       </form>
-    </div>
-  </div>
+    </section>
+  </main>
 
   <script>
     const dropZone = document.getElementById('dropZone');
@@ -382,12 +271,20 @@
     const sheikhSelect = document.getElementById('sheikhSelect');
     const seriesSelect = document.getElementById('seriesSelect');
 
+    // Translated messages
+    const msgs = {
+      uploading: '<%= t("admin_msg_uploading") %>',
+      success: '<%= t("admin_msg_saved") %>',
+      error: '<%= t("admin_msg_error") %>',
+      selectAudio: '<%= adminLocale === "ar" ? "يرجى اختيار ملف صوتي" : "Please select an audio file" %>',
+      fileTooLarge: '<%= adminLocale === "ar" ? "الملف كبير جداً. الحد الأقصى 60 ميجابايت" : "File too large. Maximum size is 60MB" %>'
+    };
+
     let selectedFile = null;
 
     // Load sheikhs and series
     async function loadData() {
       try {
-        // Load sheikhs
         const sheikhsRes = await fetch('/api/sheikhs');
         const sheikhsData = await sheikhsRes.json();
         if (sheikhsData.success) {
@@ -399,7 +296,6 @@
           });
         }
 
-        // Load series
         const seriesRes = await fetch('/api/series');
         const seriesData = await seriesRes.json();
         if (seriesData.success) {
@@ -445,15 +341,13 @@
     });
 
     function handleFile(file) {
-      // Validate file type
       if (!file.type.startsWith('audio/')) {
-        showMessage('Please select an audio file', 'error');
+        showMessage(msgs.selectAudio, 'error');
         return;
       }
 
-      // Validate file size (60MB)
       if (file.size > 60 * 1024 * 1024) {
-        showMessage('File too large. Maximum size is 60MB', 'error');
+        showMessage(msgs.fileTooLarge, 'error');
         return;
       }
 
@@ -464,19 +358,17 @@
       submitBtn.disabled = false;
     }
 
-    // Form submission
     uploadForm.addEventListener('submit', async (e) => {
       e.preventDefault();
 
       if (!selectedFile) {
-        showMessage('Please select an audio file', 'error');
+        showMessage(msgs.selectAudio, 'error');
         return;
       }
 
       const formData = new FormData();
       formData.append('audioFile', selectedFile);
 
-      // Add form fields
       const fields = new FormData(uploadForm);
       for (const [key, value] of fields) {
         if (key === 'published' || key === 'featured') {
@@ -487,7 +379,7 @@
       }
 
       submitBtn.disabled = true;
-      submitBtn.textContent = 'Uploading...';
+      submitBtn.textContent = msgs.uploading;
 
       try {
         const response = await fetch('/api/lectures', {
@@ -498,20 +390,20 @@
         const data = await response.json();
 
         if (data.success) {
-          showMessage('Lecture uploaded successfully!', 'success');
+          showMessage(msgs.success, 'success');
           resetForm();
           setTimeout(() => {
             window.location.href = '/admin/dashboard';
           }, 2000);
         } else {
-          showMessage(data.message || 'Upload failed', 'error');
+          showMessage(data.message || msgs.error, 'error');
           submitBtn.disabled = false;
-          submitBtn.textContent = 'Upload Lecture';
+          submitBtn.textContent = '<%= t("admin_btn_upload") %>';
         }
       } catch (error) {
-        showMessage('Upload error: ' + error.message, 'error');
+        showMessage(msgs.error + ': ' + error.message, 'error');
         submitBtn.disabled = false;
-        submitBtn.textContent = 'Upload Lecture';
+        submitBtn.textContent = '<%= t("admin_btn_upload") %>';
       }
     });
 
@@ -528,9 +420,7 @@
     function showMessage(text, type) {
       message.textContent = text;
       message.className = 'message show ' + type;
-      setTimeout(() => {
-        message.classList.remove('show');
-      }, 5000);
+      setTimeout(() => message.classList.remove('show'), 5000);
     }
   </script>
 </body>

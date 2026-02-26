@@ -573,6 +573,202 @@
     }
   }
 
+  /* Homepage Sections */
+  .homepage-sections {
+    max-width: 1200px;
+    margin: 0 auto var(--space-xl);
+    padding: 0 var(--space-lg);
+  }
+
+  .section-block {
+    background: white;
+    border-radius: 12px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+    margin-bottom: var(--space-lg);
+    overflow: hidden;
+    border: 1px solid #f0ebe4;
+  }
+
+  .section-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 16px 20px;
+    background: linear-gradient(135deg, #FAF7F2 0%, #F5EBE0 100%);
+    border-bottom: 2px solid var(--accent-amber);
+    cursor: pointer;
+    user-select: none;
+  }
+
+  .section-header:hover {
+    background: linear-gradient(135deg, #F5EBE0 0%, #EDE0D0 100%);
+  }
+
+  .section-header-left {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+
+  .section-icon {
+    font-size: 24px;
+  }
+
+  .section-title {
+    font-family: 'Scheherazade New', serif;
+    font-size: 22px;
+    font-weight: 700;
+    color: var(--primary-dark);
+    margin: 0;
+  }
+
+  .section-count {
+    font-size: 14px;
+    color: var(--accent-brown);
+    font-weight: 600;
+    background: white;
+    padding: 2px 10px;
+    border-radius: 12px;
+    border: 1px solid var(--accent-amber);
+  }
+
+  .section-toggle {
+    background: none;
+    border: none;
+    font-size: 18px;
+    color: var(--accent-brown);
+    cursor: pointer;
+    padding: 4px 8px;
+    transition: transform 0.3s ease;
+  }
+
+  .section-toggle.collapsed {
+    transform: rotate(180deg);
+  }
+
+  .section-content {
+    transition: max-height 0.3s ease;
+    overflow: hidden;
+  }
+
+  .section-content.collapsed {
+    max-height: 0 !important;
+  }
+
+  .section-table {
+    width: 100%;
+    border-collapse: collapse;
+  }
+
+  .section-table tr {
+    border-bottom: 1px solid #f0ebe4;
+    transition: background 0.15s;
+  }
+
+  .section-table tr:last-child {
+    border-bottom: none;
+  }
+
+  .section-table tr:hover {
+    background: #faf7f2;
+  }
+
+  .section-table td {
+    padding: 12px 16px;
+    vertical-align: middle;
+  }
+
+  .section-series-title {
+    font-family: 'Scheherazade New', serif;
+    font-size: 18px;
+    font-weight: 600;
+    color: var(--primary-dark);
+    text-decoration: none;
+    display: block;
+  }
+
+  .section-series-title:hover {
+    color: var(--accent-brown);
+    text-decoration: underline;
+  }
+
+  .section-series-subtitle {
+    font-size: 13px;
+    color: #888;
+    margin-top: 2px;
+  }
+
+  .section-lecture-count {
+    display: inline-block;
+    background: #e3f2fd;
+    color: #1565c0;
+    padding: 3px 10px;
+    border-radius: 10px;
+    font-size: 13px;
+    font-weight: 600;
+    white-space: nowrap;
+  }
+
+  .section-view-btn {
+    background: var(--accent-brown);
+    color: white;
+    padding: 6px 14px;
+    border-radius: 6px;
+    text-decoration: none;
+    font-size: 13px;
+    font-weight: 600;
+    white-space: nowrap;
+  }
+
+  .section-view-btn:hover {
+    background: #A8845C;
+  }
+
+  .section-show-more {
+    display: block;
+    width: 100%;
+    padding: 12px;
+    background: #faf7f2;
+    border: none;
+    border-top: 1px solid #f0ebe4;
+    color: var(--accent-brown);
+    font-size: 14px;
+    font-weight: 600;
+    cursor: pointer;
+    text-align: center;
+    font-family: 'Scheherazade New', serif;
+  }
+
+  .section-show-more:hover {
+    background: #f5ebe0;
+  }
+
+  @media (max-width: 768px) {
+    .homepage-sections {
+      padding: 0 var(--space-md);
+    }
+
+    .section-header {
+      padding: 12px 16px;
+    }
+
+    .section-title {
+      font-size: 18px;
+    }
+
+    .section-table td {
+      padding: 10px 12px;
+    }
+
+    .section-series-title {
+      font-size: 16px;
+    }
+
+    .section-table .hide-mobile {
+      display: none;
+    }
+  }
+
   /* Navigation Tabs */
   .nav-tabs {
     background: white;
@@ -872,6 +1068,231 @@
     }
   }
 
+  /* Small phones (below 480px) */
+  @media (max-width: 480px) {
+    .search-hero {
+      min-height: 180px;
+      padding: var(--space-md) var(--space-sm);
+    }
+
+    .search-hero-quote {
+      font-size: 17px;
+      line-height: 1.5;
+      margin-bottom: 16px;
+    }
+
+    .search-hero::before {
+      font-size: 80px;
+    }
+
+    .search-container {
+      padding: 0 4px;
+    }
+
+    .search-input {
+      font-size: 15px;
+      padding: 12px 14px;
+    }
+
+    .search-btn {
+      padding: 12px 20px;
+      font-size: 14px;
+    }
+
+    .lecture-count-badge {
+      gap: 8px;
+      margin-top: 16px;
+      padding: 12px 0;
+    }
+
+    .count-divider {
+      width: 24px;
+    }
+
+    .count-number {
+      font-size: 18px;
+    }
+
+    .count-label {
+      font-size: 12px;
+    }
+
+    /* Navigation tabs - smaller */
+    .nav-tabs-container {
+      padding: 0 8px;
+    }
+
+    .nav-tab {
+      font-size: 13px;
+      padding: 10px 8px;
+    }
+
+    /* Schedule - compact */
+    .weekly-schedule-section {
+      padding: var(--space-md);
+    }
+
+    .schedule-title {
+      font-size: 18px;
+    }
+
+    .schedule-tab {
+      padding: 6px 10px;
+      font-size: 12px;
+    }
+
+    .schedule-table th,
+    .schedule-table td {
+      padding: 6px 8px;
+      font-size: 11px;
+    }
+
+    .schedule-lesson-num {
+      font-size: 10px;
+      padding: 2px 6px;
+      min-width: 36px;
+    }
+
+    /* Sections - compact */
+    .homepage-sections {
+      padding: 0 var(--space-sm);
+    }
+
+    .section-header {
+      padding: 10px 12px;
+    }
+
+    .section-title {
+      font-size: 16px;
+    }
+
+    .section-table td {
+      padding: 8px 10px;
+    }
+
+    .section-series-title {
+      font-size: 14px;
+    }
+
+    .section-series-subtitle {
+      font-size: 11px;
+    }
+  }
+
+  /* Very small phones (below 360px) */
+  @media (max-width: 360px) {
+    .search-hero {
+      min-height: 160px;
+      padding: var(--space-sm);
+    }
+
+    .search-hero-quote {
+      font-size: 15px;
+      line-height: 1.4;
+      margin-bottom: 12px;
+    }
+
+    .search-hero::before {
+      font-size: 60px;
+    }
+
+    .search-input {
+      font-size: 14px;
+      padding: 10px 12px;
+    }
+
+    .search-btn {
+      padding: 10px 16px;
+      font-size: 13px;
+    }
+
+    .lecture-count-badge {
+      flex-direction: column;
+      gap: 4px;
+    }
+
+    .count-divider {
+      width: 40px;
+      height: 1px;
+    }
+
+    .count-number {
+      font-size: 16px;
+    }
+
+    .count-label {
+      font-size: 11px;
+    }
+
+    /* Navigation tabs - stack or scroll */
+    .nav-tabs-container {
+      padding: 0 4px;
+      overflow-x: auto;
+      -webkit-overflow-scrolling: touch;
+    }
+
+    .nav-tab {
+      font-size: 12px;
+      padding: 8px 6px;
+      white-space: nowrap;
+      flex: none;
+      min-width: auto;
+    }
+
+    /* Schedule - minimal */
+    .schedule-title {
+      font-size: 16px;
+    }
+
+    .schedule-tabs {
+      flex-wrap: wrap;
+      gap: 4px;
+    }
+
+    .schedule-tab {
+      padding: 5px 8px;
+      font-size: 11px;
+    }
+
+    .schedule-table th,
+    .schedule-table td {
+      padding: 5px 6px;
+      font-size: 10px;
+    }
+
+    .schedule-lesson-num {
+      font-size: 9px;
+      padding: 2px 4px;
+      min-width: 32px;
+    }
+
+    /* Sections - minimal */
+    .section-header {
+      padding: 8px 10px;
+    }
+
+    .section-title {
+      font-size: 14px;
+    }
+
+    .section-table td {
+      padding: 6px 8px;
+    }
+
+    .section-series-title {
+      font-size: 13px;
+    }
+
+    .section-series-subtitle {
+      font-size: 10px;
+    }
+
+    .section-show-more {
+      font-size: 12px;
+      padding: 8px;
+    }
+  }
+
   /* Skeleton loading styles */
   .series-skeleton {
     padding: 0 var(--space-lg);
@@ -941,6 +1362,7 @@
 </div>
 
 <!-- Weekly Schedule Section -->
+<% if (typeof homepageConfig === 'undefined' || homepageConfig.showSchedule !== false) { %>
 <% if (typeof weeklySchedule !== 'undefined' && weeklySchedule && weeklySchedule.length > 0) { %>
 <%
   // Split schedule into in-person and online
@@ -1095,19 +1517,146 @@ function switchScheduleTab(tab) {
 }
 </script>
 <% } %>
+<% } %>
+
+<!-- Homepage Sections -->
+<% if (typeof homepageSections !== 'undefined' && homepageSections && homepageSections.length > 0) { %>
+<div class="homepage-sections">
+  <% homepageSections.forEach(function(section) { %>
+  <div class="section-block" id="section-<%= section.slug %>">
+    <div class="section-header" onclick="toggleSection('<%= section.slug %>')">
+      <div class="section-header-left">
+        <span class="section-icon"><%= section.icon %></span>
+        <h2 class="section-title"><%= locale === 'ar' ? section.title.ar : section.title.en %></h2>
+        <span class="section-count"><%= section.totalSeriesCount %></span>
+      </div>
+      <button class="section-toggle <%= section.collapsedByDefault ? 'collapsed' : '' %>" id="toggle-<%= section.slug %>" aria-label="Toggle">&#9650;</button>
+    </div>
+    <div class="section-content <%= section.collapsedByDefault ? 'collapsed' : '' %>" id="content-<%= section.slug %>">
+      <table class="section-table">
+        <% const visibleSeries = section.series.slice(0, section.maxVisible || 5); %>
+        <% const hiddenSeries = section.series.slice(section.maxVisible || 5); %>
+        <% visibleSeries.forEach(function(s) { %>
+        <tr>
+          <td style="width:60%">
+            <a href="/series/<%= s.slug %>" class="section-series-title"><%= s.titleArabic %></a>
+            <% if (s.titleEnglish) { %>
+              <div class="section-series-subtitle"><%= s.titleEnglish %></div>
+            <% } %>
+          </td>
+          <td class="hide-mobile" style="width:20%">
+            <% if (s.sheikh) { %>
+              <span style="color:#666;font-size:14px;"><%= s.sheikh.nameArabic %></span>
+            <% } %>
+          </td>
+          <td style="width:10%;text-align:center;">
+            <span class="section-lecture-count"><%= s.lectureCount %> <%= locale === 'ar' ? 'درس' : '' %></span>
+          </td>
+          <td class="hide-mobile" style="width:10%;text-align:center;">
+            <a href="/series/<%= s.slug %>" class="section-view-btn"><%= locale === 'ar' ? 'عرض' : 'View' %></a>
+          </td>
+        </tr>
+        <% }) %>
+        <% hiddenSeries.forEach(function(s) { %>
+        <tr class="section-hidden-row" data-section="<%= section.slug %>" style="display:none;">
+          <td style="width:60%">
+            <a href="/series/<%= s.slug %>" class="section-series-title"><%= s.titleArabic %></a>
+            <% if (s.titleEnglish) { %>
+              <div class="section-series-subtitle"><%= s.titleEnglish %></div>
+            <% } %>
+          </td>
+          <td class="hide-mobile" style="width:20%">
+            <% if (s.sheikh) { %>
+              <span style="color:#666;font-size:14px;"><%= s.sheikh.nameArabic %></span>
+            <% } %>
+          </td>
+          <td style="width:10%;text-align:center;">
+            <span class="section-lecture-count"><%= s.lectureCount %> <%= locale === 'ar' ? 'درس' : '' %></span>
+          </td>
+          <td class="hide-mobile" style="width:10%;text-align:center;">
+            <a href="/series/<%= s.slug %>" class="section-view-btn"><%= locale === 'ar' ? 'عرض' : 'View' %></a>
+          </td>
+        </tr>
+        <% }) %>
+      </table>
+      <% if (hiddenSeries.length > 0) { %>
+        <button class="section-show-more" id="showmore-<%= section.slug %>" onclick="showMoreSeries('<%= section.slug %>')">
+          <%= locale === 'ar' ? 'عرض المزيد' : 'Show more' %> (<%= hiddenSeries.length %>)
+        </button>
+      <% } %>
+    </div>
+  </div>
+  <% }) %>
+</div>
+
+<script>
+function toggleSection(slug) {
+  const content = document.getElementById('content-' + slug);
+  const toggle = document.getElementById('toggle-' + slug);
+  content.classList.toggle('collapsed');
+  toggle.classList.toggle('collapsed');
+  // Persist state
+  try {
+    const state = JSON.parse(localStorage.getItem('sectionState') || '{}');
+    state[slug] = content.classList.contains('collapsed');
+    localStorage.setItem('sectionState', JSON.stringify(state));
+  } catch(e) {}
+}
+
+function showMoreSeries(slug) {
+  const rows = document.querySelectorAll('.section-hidden-row[data-section="' + slug + '"]');
+  rows.forEach(row => row.style.display = '');
+  const btn = document.getElementById('showmore-' + slug);
+  if (btn) btn.style.display = 'none';
+}
+
+// Restore collapsed state from localStorage
+(function() {
+  try {
+    const state = JSON.parse(localStorage.getItem('sectionState') || '{}');
+    Object.keys(state).forEach(slug => {
+      const content = document.getElementById('content-' + slug);
+      const toggle = document.getElementById('toggle-' + slug);
+      if (content && toggle) {
+        if (state[slug]) {
+          content.classList.add('collapsed');
+          toggle.classList.add('collapsed');
+        } else {
+          content.classList.remove('collapsed');
+          toggle.classList.remove('collapsed');
+        }
+      }
+    });
+  } catch(e) {}
+})();
+</script>
+<% } %>
 
 <!-- Navigation Tabs -->
+<%
+  const showSeriesTab = typeof homepageConfig === 'undefined' || homepageConfig.showSeriesTab !== false;
+  const showStandaloneTab = typeof homepageConfig === 'undefined' || homepageConfig.showStandaloneTab !== false;
+  const showKhutbasTab = typeof homepageConfig === 'undefined' || homepageConfig.showKhutbasTab !== false;
+  const anyTabVisible = showSeriesTab || showStandaloneTab || showKhutbasTab;
+%>
+<% if (anyTabVisible) { %>
 <div class="nav-tabs">
   <div class="nav-tabs-container">
+    <% if (showSeriesTab) { %>
     <button class="nav-tab active" id="tab-series">
       📚 السلاسل
     </button>
+    <% } %>
+    <% if (showStandaloneTab) { %>
     <button class="nav-tab" id="tab-lectures">
       🎙️ المحاضرات
     </button>
+    <% } %>
+    <% if (showKhutbasTab) { %>
     <button class="nav-tab" id="tab-khutbas">
       🕌 الخطب
     </button>
+    <% } %>
   </div>
 </div>
 
@@ -1536,6 +2085,7 @@ function switchScheduleTab(tab) {
     <% } %>
   </div>
 </div>
+<% } %><!-- end anyTabVisible -->
 
 <script>
   // Toggle series expansion

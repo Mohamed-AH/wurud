@@ -2,7 +2,11 @@ const express = require('express');
 const router = express.Router();
 const { isAdmin, isEditor, isSuperAdmin } = require('../../middleware/auth');
 const { convertToHijri } = require('../../utils/dateUtils');
+const { adminI18nMiddleware } = require('../../utils/i18n');
 const cache = require('../../utils/cache');
+
+// Apply admin i18n middleware to all admin routes
+router.use(adminI18nMiddleware);
 
 // Helper function to invalidate homepage cache after admin changes
 function invalidateHomepageCache() {
@@ -336,7 +340,7 @@ router.get('/lectures/no-audio', isAdmin, async (req, res) => {
 // @access  Private (Admin only)
 router.get('/series/:id/edit', isAdmin, async (req, res) => {
   try {
-    const { Series, Sheikh, Lecture } = require('../../models');
+    const { Series, Sheikh, Lecture, Section } = require('../../models');
 
     const series = await Series.findById(req.params.id)
       .populate('sheikhId', 'nameArabic nameEnglish')
@@ -347,6 +351,7 @@ router.get('/series/:id/edit', isAdmin, async (req, res) => {
     }
 
     const sheikhs = await Sheikh.find().sort({ nameArabic: 1 }).lean();
+    const sections = await Section.find().sort({ displayOrder: 1 }).lean();
 
     // Get lectures in this series, ordered by sortOrder
     // Use aggregation to handle null/undefined sortOrder values consistently
@@ -385,6 +390,7 @@ router.get('/series/:id/edit', isAdmin, async (req, res) => {
       user: req.user,
       series,
       sheikhs,
+      sections,
       lectures,
       success: req.query.success,
       error: req.query.error
@@ -1664,6 +1670,413 @@ router.post('/analytics/refresh-stats', isAdmin, async (req, res) => {
   } catch (error) {
     console.error('Stats refresh error:', error);
     res.redirect('/admin/analytics?error=refresh_failed');
+  }
+});
+
+// ============================================
+// SECTION MANAGEMENT ROUTES (Task 3.16)
+// ============================================
+
+// @route   GET /admin/sections
+// @desc    List all sections
+// @access  Private (Admin only)
+router.get('/sections', isAdmin, async (req, res) => {
+  try {
+    const { Section, Series } = require('../../models');
+
+    // Get all sections with series counts
+    const sections = await Section.find().sort({ displayOrder: 1 }).lean();
+
+    // Get series count for each section
+    const sectionsWithCounts = await Promise.all(
+      sections.map(async (section) => {
+        const seriesCount = await Series.countDocuments({ sectionId: section._id });
+        return { ...section, seriesCount };
+      })
+    );
+
+    // Get count of unassigned series
+    const unassignedCount = await Series.countDocuments({ sectionId: null });
+
+    res.render('admin/sections', {
+      title: 'Manage Sections',
+      user: req.user,
+      sections: sectionsWithCounts,
+      unassignedCount,
+      success: req.query.success,
+      error: req.query.error
+    });
+  } catch (error) {
+    console.error('Sections list error:', error);
+    res.status(500).send('Error loading sections');
+  }
+});
+
+// @route   GET /admin/sections/new
+// @desc    Create section form
+// @access  Private (Admin only)
+router.get('/sections/new', isAdmin, (req, res) => {
+  res.render('admin/section-form', {
+    title: 'Create Section',
+    user: req.user,
+    section: null,
+    isEdit: false
+  });
+});
+
+// @route   POST /admin/sections/new
+// @desc    Create a new section
+// @access  Private (Admin only)
+router.post('/sections/new', isAdmin, async (req, res) => {
+  try {
+    const { Section } = require('../../models');
+
+    const { titleAr, titleEn, descriptionAr, descriptionEn, icon, maxVisible, collapsedByDefault } = req.body;
+
+    // Get the highest displayOrder
+    const lastSection = await Section.findOne().sort({ displayOrder: -1 });
+    const displayOrder = lastSection ? lastSection.displayOrder + 1 : 0;
+
+    const section = new Section({
+      title: { ar: titleAr, en: titleEn },
+      description: { ar: descriptionAr, en: descriptionEn },
+      icon: icon || '📚',
+      maxVisible: parseInt(maxVisible) || 5,
+      collapsedByDefault: collapsedByDefault === 'on',
+      displayOrder
+    });
+
+    await section.save();
+    invalidateHomepageCache();
+
+    res.redirect('/admin/sections?success=section_created');
+  } catch (error) {
+    console.error('Create section error:', error);
+    res.redirect('/admin/sections?error=create_failed');
+  }
+});
+
+// @route   GET /admin/sections/:id/edit
+// @desc    Edit section form
+// @access  Private (Admin only)
+router.get('/sections/:id/edit', isAdmin, async (req, res) => {
+  try {
+    const { Section } = require('../../models');
+
+    const section = await Section.findById(req.params.id).lean();
+    if (!section) {
+      return res.redirect('/admin/sections?error=not_found');
+    }
+
+    res.render('admin/section-form', {
+      title: 'Edit Section',
+      user: req.user,
+      section,
+      isEdit: true
+    });
+  } catch (error) {
+    console.error('Edit section form error:', error);
+    res.redirect('/admin/sections?error=load_failed');
+  }
+});
+
+// @route   POST /admin/sections/:id
+// @desc    Update a section
+// @access  Private (Admin only)
+router.post('/sections/:id', isAdmin, async (req, res) => {
+  try {
+    const { Section } = require('../../models');
+
+    const { titleAr, titleEn, descriptionAr, descriptionEn, icon, maxVisible, collapsedByDefault, isVisible } = req.body;
+
+    const section = await Section.findById(req.params.id);
+    if (!section) {
+      return res.redirect('/admin/sections?error=not_found');
+    }
+
+    section.title = { ar: titleAr, en: titleEn };
+    section.description = { ar: descriptionAr, en: descriptionEn };
+    section.icon = icon || '📚';
+    section.maxVisible = parseInt(maxVisible) || 5;
+    section.collapsedByDefault = collapsedByDefault === 'on';
+    section.isVisible = isVisible === 'on';
+
+    await section.save();
+    invalidateHomepageCache();
+
+    res.redirect('/admin/sections?success=section_updated');
+  } catch (error) {
+    console.error('Update section error:', error);
+    res.redirect('/admin/sections?error=update_failed');
+  }
+});
+
+// @route   POST /admin/sections/:id/delete
+// @desc    Delete a section (reassign series to null)
+// @access  Private (Admin only)
+router.post('/sections/:id/delete', isAdmin, async (req, res) => {
+  try {
+    const { Section, Series } = require('../../models');
+
+    const section = await Section.findById(req.params.id);
+    if (!section) {
+      return res.redirect('/admin/sections?error=not_found');
+    }
+
+    // Prevent deleting default sections
+    if (section.isDefault) {
+      return res.redirect('/admin/sections?error=cannot_delete_default');
+    }
+
+    // Unassign all series from this section
+    await Series.updateMany({ sectionId: section._id }, { $set: { sectionId: null, sectionOrder: 0 } });
+
+    await Section.findByIdAndDelete(req.params.id);
+    invalidateHomepageCache();
+
+    res.redirect('/admin/sections?success=section_deleted');
+  } catch (error) {
+    console.error('Delete section error:', error);
+    res.redirect('/admin/sections?error=delete_failed');
+  }
+});
+
+// @route   POST /admin/sections/reorder
+// @desc    Reorder sections (AJAX)
+// @access  Private (Admin only)
+router.post('/sections/reorder', isAdmin, async (req, res) => {
+  try {
+    const { Section } = require('../../models');
+
+    const { order } = req.body; // Array of { id, order }
+
+    if (!Array.isArray(order)) {
+      return res.status(400).json({ success: false, message: 'Invalid order data' });
+    }
+
+    await Section.reorder(order);
+    invalidateHomepageCache();
+
+    res.json({ success: true });
+  } catch (error) {
+    console.error('Reorder sections error:', error);
+    res.status(500).json({ success: false, message: 'Reorder failed' });
+  }
+});
+
+// @route   GET /admin/sections/:id/series
+// @desc    Manage series in a section
+// @access  Private (Admin only)
+router.get('/sections/:id/series', isAdmin, async (req, res) => {
+  try {
+    const { Section, Series } = require('../../models');
+
+    const section = await Section.findById(req.params.id).lean();
+    if (!section) {
+      return res.redirect('/admin/sections?error=not_found');
+    }
+
+    // Get series in this section
+    const seriesInSection = await Series.find({ sectionId: section._id })
+      .populate('sheikhId', 'nameArabic nameEnglish')
+      .sort({ sectionOrder: 1 })
+      .lean();
+
+    // Get unassigned series for the "Add" dropdown
+    const unassignedSeries = await Series.find({ sectionId: null })
+      .populate('sheikhId', 'nameArabic nameEnglish')
+      .sort({ titleArabic: 1 })
+      .lean();
+
+    res.render('admin/section-series', {
+      title: `Manage: ${section.title.en}`,
+      user: req.user,
+      section,
+      seriesInSection,
+      unassignedSeries,
+      success: req.query.success,
+      error: req.query.error
+    });
+  } catch (error) {
+    console.error('Section series error:', error);
+    res.redirect('/admin/sections?error=load_failed');
+  }
+});
+
+// @route   POST /admin/sections/:id/series/add
+// @desc    Add a series to a section
+// @access  Private (Admin only)
+router.post('/sections/:id/series/add', isAdmin, async (req, res) => {
+  try {
+    const { Section, Series } = require('../../models');
+
+    const section = await Section.findById(req.params.id);
+    if (!section) {
+      return res.redirect('/admin/sections?error=not_found');
+    }
+
+    const { seriesId } = req.body;
+    const series = await Series.findById(seriesId);
+    if (!series) {
+      return res.redirect(`/admin/sections/${req.params.id}/series?error=series_not_found`);
+    }
+
+    // Get highest sectionOrder in this section
+    const lastSeries = await Series.findOne({ sectionId: section._id }).sort({ sectionOrder: -1 });
+    const sectionOrder = lastSeries ? lastSeries.sectionOrder + 1 : 0;
+
+    series.sectionId = section._id;
+    series.sectionOrder = sectionOrder;
+    await series.save();
+    invalidateHomepageCache();
+
+    res.redirect(`/admin/sections/${req.params.id}/series?success=series_added`);
+  } catch (error) {
+    console.error('Add series to section error:', error);
+    res.redirect(`/admin/sections/${req.params.id}/series?error=add_failed`);
+  }
+});
+
+// @route   POST /admin/sections/:id/series/:seriesId/remove
+// @desc    Remove a series from a section
+// @access  Private (Admin only)
+router.post('/sections/:id/series/:seriesId/remove', isAdmin, async (req, res) => {
+  try {
+    const { Series } = require('../../models');
+
+    await Series.findByIdAndUpdate(req.params.seriesId, {
+      $set: { sectionId: null, sectionOrder: 0 }
+    });
+    invalidateHomepageCache();
+
+    res.redirect(`/admin/sections/${req.params.id}/series?success=series_removed`);
+  } catch (error) {
+    console.error('Remove series from section error:', error);
+    res.redirect(`/admin/sections/${req.params.id}/series?error=remove_failed`);
+  }
+});
+
+// @route   POST /admin/sections/:id/series/reorder
+// @desc    Reorder series within a section (AJAX)
+// @access  Private (Admin only)
+router.post('/sections/:id/series/reorder', isAdmin, async (req, res) => {
+  try {
+    const { Series } = require('../../models');
+
+    const { order } = req.body; // Array of { id, order }
+
+    if (!Array.isArray(order)) {
+      return res.status(400).json({ success: false, message: 'Invalid order data' });
+    }
+
+    const bulkOps = order.map(({ id, order: sectionOrder }) => ({
+      updateOne: {
+        filter: { _id: id },
+        update: { $set: { sectionOrder } }
+      }
+    }));
+
+    await Series.bulkWrite(bulkOps);
+    invalidateHomepageCache();
+
+    res.json({ success: true });
+  } catch (error) {
+    console.error('Reorder series error:', error);
+    res.status(500).json({ success: false, message: 'Reorder failed' });
+  }
+});
+
+// @route   POST /admin/series/:id/assign-section
+// @desc    Assign a series to a section (from series edit page)
+// @access  Private (Admin only)
+router.post('/series/:id/assign-section', isAdmin, async (req, res) => {
+  try {
+    const { Section, Series } = require('../../models');
+
+    const series = await Series.findById(req.params.id);
+    if (!series) {
+      return res.redirect('/admin/manage?error=series_not_found');
+    }
+
+    const { sectionId } = req.body;
+
+    if (sectionId && sectionId !== '') {
+      // Verify section exists
+      const section = await Section.findById(sectionId);
+      if (!section) {
+        return res.redirect(`/admin/series/${req.params.id}/edit?error=section_not_found`);
+      }
+
+      // Get highest sectionOrder in this section
+      const lastSeries = await Series.findOne({ sectionId: section._id }).sort({ sectionOrder: -1 });
+      const sectionOrder = lastSeries ? lastSeries.sectionOrder + 1 : 0;
+
+      series.sectionId = section._id;
+      series.sectionOrder = sectionOrder;
+    } else {
+      series.sectionId = null;
+      series.sectionOrder = 0;
+    }
+
+    await series.save();
+    invalidateHomepageCache();
+
+    res.redirect(`/admin/series/${req.params.id}/edit?success=section_assigned`);
+  } catch (error) {
+    console.error('Assign section error:', error);
+    res.redirect(`/admin/series/${req.params.id}/edit?error=assign_failed`);
+  }
+});
+
+// ============================================
+// HOMEPAGE CONFIGURATION ROUTES
+// ============================================
+
+// @route   GET /admin/homepage-config
+// @desc    Homepage configuration page
+// @access  Private (Admin only)
+router.get('/homepage-config', isAdmin, async (req, res) => {
+  try {
+    const { SiteSettings } = require('../../models');
+
+    const settings = await SiteSettings.getSettings();
+
+    res.render('admin/homepage-config', {
+      title: 'Homepage Configuration',
+      user: req.user,
+      settings: settings.homepage || {},
+      success: req.query.success,
+      error: req.query.error
+    });
+  } catch (error) {
+    console.error('Homepage config error:', error);
+    res.status(500).send('Error loading homepage configuration');
+  }
+});
+
+// @route   POST /admin/homepage-config
+// @desc    Update homepage configuration
+// @access  Private (Admin only)
+router.post('/homepage-config', isAdmin, async (req, res) => {
+  try {
+    const { SiteSettings } = require('../../models');
+
+    const settings = await SiteSettings.getSettings();
+
+    settings.homepage = {
+      showSchedule: req.body.showSchedule === 'on',
+      showSeriesTab: req.body.showSeriesTab === 'on',
+      showStandaloneTab: req.body.showStandaloneTab === 'on',
+      showKhutbasTab: req.body.showKhutbasTab === 'on'
+    };
+
+    await settings.save();
+    invalidateHomepageCache();
+
+    res.redirect('/admin/homepage-config?success=settings_updated');
+  } catch (error) {
+    console.error('Homepage config update error:', error);
+    res.redirect('/admin/homepage-config?error=update_failed');
   }
 });
 
