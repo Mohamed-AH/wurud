@@ -268,14 +268,16 @@ body.audio-seeking * {
   justify-content: center;
   background: rgba(193, 154, 107, 0.15);
   padding: 0;
-  line-height: 1;
+  margin: 0;
+  line-height: 0;
+  box-sizing: border-box;
 }
 
 .download-btn svg {
   width: 16px;
   height: 16px;
   display: block;
-  flex-shrink: 0;
+  margin: auto;
 }
 
 .download-btn:hover {
