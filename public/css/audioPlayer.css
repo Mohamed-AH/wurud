@@ -267,11 +267,15 @@ body.audio-seeking * {
   align-items: center;
   justify-content: center;
   background: rgba(193, 154, 107, 0.15);
+  padding: 0;
+  line-height: 1;
 }
 
 .download-btn svg {
-  width: 18px;
-  height: 18px;
+  width: 16px;
+  height: 16px;
+  display: block;
+  flex-shrink: 0;
 }
 
 .download-btn:hover {
@@ -695,8 +699,8 @@ html[dir="rtl"] .speed-menu {
   }
 
   .download-btn svg {
-    width: 14px;
-    height: 14px;
+    width: 12px;
+    height: 12px;
   }
 
   .progress-container {
