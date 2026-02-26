@@ -92,8 +92,19 @@
   border-radius: 4px;
   cursor: pointer;
   position: relative;
-  overflow: hidden;
+  overflow: visible;
   touch-action: none; /* Prevent scroll on touch */
+  /* Larger touch target */
+  padding: 8px 0;
+  margin: -8px 0;
+  background-clip: content-box;
+}
+
+/* Expand touch target on hover */
+.progress-container:hover {
+  height: 10px;
+  padding: 7px 0;
+  margin: -7px 0;
 }
 
 .progress-bar {
@@ -101,8 +112,16 @@
   background: linear-gradient(90deg, #C19A6B 0%, #D4A574 100%);
   border-radius: 4px;
   width: 0%;
-  transition: width 0.1s linear;
   position: relative;
+}
+
+/* Disable transition during drag for immediate feedback */
+.progress-container:not(.dragging) .progress-bar {
+  transition: width 0.1s linear;
+}
+
+.progress-container.dragging .progress-bar {
+  transition: none;
 }
 
 .progress-handle {
@@ -117,10 +136,34 @@
   border-radius: 50%;
   cursor: grab;
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+  transition: transform 0.15s ease, box-shadow 0.15s ease;
 }
 
-.progress-handle:active {
+/* Hover state - slight grow */
+.progress-container:hover .progress-handle {
+  transform: translateY(-50%) scale(1.1);
+  box-shadow: 0 3px 12px rgba(0, 0, 0, 0.4);
+}
+
+/* Active/dragging state */
+.progress-handle:active,
+.progress-container.dragging .progress-handle {
   cursor: grabbing;
+  transform: translateY(-50%) scale(1.2);
+  background: #C19A6B;
+  border-color: #FAF7F2;
+  box-shadow: 0 4px 16px rgba(193, 154, 107, 0.5);
+}
+
+/* Prevent text selection while dragging */
+body.audio-seeking {
+  user-select: none;
+  -webkit-user-select: none;
+  cursor: grabbing !important;
+}
+
+body.audio-seeking * {
+  cursor: grabbing !important;
 }
 
 /* Control Buttons */
@@ -528,9 +571,23 @@ html[dir="rtl"] .speed-menu {
     font-size: 11px;
   }
 
+  .progress-container {
+    padding: 10px 0;
+    margin: -10px 0;
+  }
+
   .progress-handle {
-    width: 12px;
-    height: 12px;
+    width: 14px;
+    height: 14px;
+    right: -7px;
+  }
+
+  .progress-container:hover .progress-handle {
+    transform: translateY(-50%) scale(1.1);
+  }
+
+  .progress-container.dragging .progress-handle {
+    transform: translateY(-50%) scale(1.2);
   }
 }
 
@@ -616,12 +673,28 @@ html[dir="rtl"] .speed-menu {
 
   .progress-container {
     height: 6px;
+    padding: 10px 0;
+    margin: -10px 0;
+  }
+
+  .progress-container:hover {
+    height: 8px;
+    padding: 9px 0;
+    margin: -9px 0;
   }
 
   .progress-handle {
-    width: 10px;
-    height: 10px;
-    right: -5px;
+    width: 14px;
+    height: 14px;
+    right: -7px;
+  }
+
+  .progress-container:hover .progress-handle {
+    transform: translateY(-50%) scale(1.15);
+  }
+
+  .progress-container.dragging .progress-handle {
+    transform: translateY(-50%) scale(1.25);
   }
 
   /* Speed menu adjustments */
