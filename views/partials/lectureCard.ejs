@@ -1,5 +1,12 @@
 <div class="lecture-card">
-  <div class="lecture-icon">🎵</div>
+  <div class="lecture-icon">
+    <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+      <path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z"></path>
+      <path d="M19 10v2a7 7 0 0 1-14 0v-2"></path>
+      <line x1="12" y1="19" x2="12" y2="23"></line>
+      <line x1="8" y1="23" x2="16" y2="23"></line>
+    </svg>
+  </div>
 
   <div class="lecture-content">
     <h3 class="lecture-title">
@@ -73,8 +80,15 @@
   }
 
   .lecture-icon {
-    font-size: 32px;
+    width: 48px;
+    height: 48px;
+    border-radius: 10px;
+    background: linear-gradient(135deg, var(--accent-gold) 0%, var(--accent-amber) 100%);
+    display: flex;
+    align-items: center;
+    justify-content: center;
     flex-shrink: 0;
+    color: var(--primary-dark);
   }
 
   .lecture-content {
@@ -95,7 +109,7 @@
   }
 
   .lecture-title a:hover {
-    color: var(--primary);
+    color: var(--accent-gold);
   }
 
   .lecture-meta {
@@ -106,7 +120,7 @@
 
   .lecture-sheikh {
     font-weight: 500;
-    color: var(--primary);
+    color: var(--accent-gold);
   }
 
   .lecture-info {
@@ -142,24 +156,32 @@
     display: flex;
     align-items: center;
     justify-content: center;
-    background: var(--primary);
-    color: white;
     border-radius: 8px;
     text-decoration: none;
-    font-size: 18px;
+    font-size: 16px;
     transition: all 0.3s;
+    border: 2px solid var(--accent-gold);
+    cursor: pointer;
+  }
+
+  .btn-play {
+    background: var(--accent-gold);
+    color: var(--primary-dark);
   }
 
   .btn-play:hover {
-    background: #154A46;
+    background: var(--accent-amber);
+    transform: scale(1.05);
   }
 
   .btn-download {
-    background: var(--accent-gold);
+    background: transparent;
+    color: var(--accent-gold);
   }
 
   .btn-download:hover {
-    background: #C4A037;
+    background: var(--accent-gold);
+    color: var(--primary-dark);
   }
 
   @media (max-width: 640px) {
