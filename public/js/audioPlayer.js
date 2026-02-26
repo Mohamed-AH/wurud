@@ -166,7 +166,16 @@ class AudioPlayer {
     if (!this.audio.duration || isNaN(this.audio.duration)) return;
 
     const rect = this.progressContainer.getBoundingClientRect();
-    const percent = Math.max(0, Math.min(1, (e.clientX - rect.left) / rect.width));
+    const isRTL = document.documentElement.dir === 'rtl';
+
+    // Calculate percent - invert for RTL
+    let percent;
+    if (isRTL) {
+      percent = Math.max(0, Math.min(1, (rect.right - e.clientX) / rect.width));
+    } else {
+      percent = Math.max(0, Math.min(1, (e.clientX - rect.left) / rect.width));
+    }
+
     const newTime = percent * this.audio.duration;
 
     // Update visual immediately for smooth feedback
@@ -237,7 +246,16 @@ class AudioPlayer {
     if (!touch) return;
 
     const rect = this.progressContainer.getBoundingClientRect();
-    const percent = Math.max(0, Math.min(1, (touch.clientX - rect.left) / rect.width));
+    const isRTL = document.documentElement.dir === 'rtl';
+
+    // Calculate percent - invert for RTL
+    let percent;
+    if (isRTL) {
+      percent = Math.max(0, Math.min(1, (rect.right - touch.clientX) / rect.width));
+    } else {
+      percent = Math.max(0, Math.min(1, (touch.clientX - rect.left) / rect.width));
+    }
+
     const newTime = percent * this.audio.duration;
 
     // Update visual immediately for smooth feedback
