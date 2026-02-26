@@ -193,6 +193,13 @@
     display: flex;
     align-items: flex-start;
     gap: 16px;
+    padding: 12px;
+    border-radius: 12px;
+    transition: all 0.3s ease;
+  }
+
+  .lecture-item:hover {
+    background: rgba(193, 154, 107, 0.08);
   }
 
   .lecture-number-badge {
@@ -355,6 +362,8 @@
     background: var(--accent-gold);
     color: var(--primary-dark);
     border-color: var(--accent-gold);
+    font-weight: 700;
+    box-shadow: 0 2px 8px var(--shadow-warm);
   }
 
   .clear-sort-btn {
