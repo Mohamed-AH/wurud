@@ -161,14 +161,15 @@ Fix visual inconsistencies across the site to achieve pixel-perfect design align
 
 ## Verification Checklist
 
-- [ ] No blue elements visible on series page
-- [ ] Music icon matches gold theme
-- [ ] Filter chips have clear active state
-- [ ] Sort buttons consistent across pages
-- [ ] Badges use theme-appropriate colors
-- [ ] Consistent section spacing
-- [ ] Hover states on all interactive cards
+- [x] No blue elements visible on series page (added --primary variable)
+- [x] Microphone icon for lectures (replaced music emoji with SVG)
+- [x] Filter chips have clear active state (font-weight: 700, enhanced shadow)
+- [x] Sort buttons consistent across pages (added font-weight and shadow)
+- [x] Badges use theme-appropriate colors (sage green for "new" badge)
+- [x] Consistent section spacing (already using space-2xl/48px)
+- [x] Hover states on all interactive cards (lecture-item, related-lecture)
 
 ---
 
 *Created: 2026-02-26*
+*Completed: 2026-02-26*
