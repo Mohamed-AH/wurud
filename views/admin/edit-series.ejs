@@ -994,6 +994,13 @@
       createFailed: isArabic ? 'فشل في إنشاء السلسلة: ' : 'Failed to create series: '
     };
 
+    // Escape HTML to prevent XSS
+    function escapeHtml(text) {
+      const div = document.createElement('div');
+      div.textContent = text || '';
+      return div.innerHTML;
+    }
+
     // Section assignment
     function assignSection() {
       const select = document.getElementById('sectionSelect');
@@ -1347,17 +1354,17 @@
       }
 
       listEl.innerHTML = lectures.map(lecture => `
-        <div class="unassociated-item" data-id="${lecture._id}" data-title="${lecture.titleArabic || ''}">
+        <div class="unassociated-item" data-id="${escapeHtml(lecture._id)}" data-title="${escapeHtml(lecture.titleArabic || '')}">
           <div class="lecture-info">
-            <div class="lecture-title">${lecture.titleArabic || msgs.noTitle}</div>
+            <div class="lecture-title">${escapeHtml(lecture.titleArabic) || msgs.noTitle}</div>
             <div class="lecture-meta">
-              ${lecture.audioFileName ? '🔊 ' + lecture.audioFileName : msgs.noAudio}
+              ${lecture.audioFileName ? '🔊 ' + escapeHtml(lecture.audioFileName) : msgs.noAudio}
               ${lecture.duration ? ' | ' + formatDuration(lecture.duration) : ''}
             </div>
           </div>
           <div class="assign-form">
-            <input type="number" id="num-${lecture._id}" placeholder="#" min="1" title="${msgs.lectureNum}">
-            <button class="assign-btn" onclick="assignLecture('${lecture._id}')">
+            <input type="number" id="num-${escapeHtml(lecture._id)}" placeholder="#" min="1" title="${msgs.lectureNum}">
+            <button class="assign-btn" onclick="assignLecture('${escapeHtml(lecture._id)}')">
               ${msgs.addToSeries}
             </button>
           </div>
