@@ -1,5 +1,6 @@
 const path = require('path');
 const fs = require('fs');
+const multer = require('multer');
 
 /**
  * Validate uploaded file after Multer processing

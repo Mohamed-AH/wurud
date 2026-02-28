@@ -2,6 +2,9 @@ const express = require('express');
 const router = express.Router();
 const { Sheikh } = require('../../models');
 const { isAdminAPI } = require('../../middleware/auth');
+const { isValidObjectId } = require('../../utils/validators');
+
+const isProduction = process.env.NODE_ENV === 'production';
 
 // @route   GET /api/sheikhs
 // @desc    Get all sheikhs
@@ -21,7 +24,7 @@ router.get('/', async (req, res) => {
     res.status(500).json({
       success: false,
       message: 'Failed to fetch sheikhs',
-      error: error.message
+      error: isProduction ? undefined : error.message
     });
   }
 });
@@ -58,7 +61,7 @@ router.post('/', isAdminAPI, async (req, res) => {
     res.status(500).json({
       success: false,
       message: 'Failed to create sheikh',
-      error: error.message
+      error: isProduction ? undefined : error.message
     });
   }
 });
@@ -68,6 +71,14 @@ router.post('/', isAdminAPI, async (req, res) => {
 // @access  Private (Admin only)
 router.put('/:id', isAdminAPI, async (req, res) => {
   try {
+    // Validate ID format
+    if (!isValidObjectId(req.params.id)) {
+      return res.status(400).json({
+        success: false,
+        message: 'Invalid sheikh ID format'
+      });
+    }
+
     const { nameArabic, nameEnglish, honorific, bioArabic, bioEnglish } = req.body;
 
     const sheikh = await Sheikh.findByIdAndUpdate(
@@ -99,7 +110,7 @@ router.put('/:id', isAdminAPI, async (req, res) => {
     res.status(500).json({
       success: false,
       message: 'Failed to update sheikh',
-      error: error.message
+      error: isProduction ? undefined : error.message
     });
   }
 });
@@ -109,6 +120,14 @@ router.put('/:id', isAdminAPI, async (req, res) => {
 // @access  Private (Admin only)
 router.delete('/:id', isAdminAPI, async (req, res) => {
   try {
+    // Validate ID format
+    if (!isValidObjectId(req.params.id)) {
+      return res.status(400).json({
+        success: false,
+        message: 'Invalid sheikh ID format'
+      });
+    }
+
     const { Lecture } = require('../../models');
 
     // Check if sheikh has lectures
@@ -139,7 +158,7 @@ router.delete('/:id', isAdminAPI, async (req, res) => {
     res.status(500).json({
       success: false,
       message: 'Failed to delete sheikh',
-      error: error.message
+      error: isProduction ? undefined : error.message
     });
   }
 });

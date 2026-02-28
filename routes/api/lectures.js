@@ -8,6 +8,15 @@ const fileManager = require('../../utils/fileManager');
 const path = require('path');
 const { Lecture, Sheikh, Series } = require('../../models');
 const { convertToHijri } = require('../../utils/dateUtils');
+const {
+  lecturesQueryValidation,
+  idParamValidation,
+  verifyDurationValidation,
+  playCountValidation,
+  isValidObjectId
+} = require('../../utils/validators');
+
+const isProduction = process.env.NODE_ENV === 'production';
 
 // @route   POST /api/lectures
 // @desc    Upload a new lecture with audio file
@@ -158,7 +167,7 @@ router.post('/',
       res.status(500).json({
         success: false,
         message: 'Failed to upload lecture',
-        error: error.message
+        error: isProduction ? undefined : error.message
       });
     }
   }
@@ -167,7 +176,7 @@ router.post('/',
 // @route   GET /api/lectures
 // @desc    Get all lectures (with pagination and filters)
 // @access  Public
-router.get('/', async (req, res) => {
+router.get('/', lecturesQueryValidation, async (req, res) => {
   try {
     const {
       page = 1,
@@ -181,18 +190,23 @@ router.get('/', async (req, res) => {
       sort = '-createdAt'
     } = req.query;
 
+    // Sanitize pagination parameters (already validated by middleware)
+    const pageNum = Math.max(1, parseInt(page) || 1);
+    const limitNum = Math.min(100, Math.max(1, parseInt(limit) || 20));
+
     // Build query
     const query = {};
 
-    if (sheikhId) query.sheikhId = sheikhId;
-    if (seriesId) query.seriesId = seriesId;
+    // Only add ID filters if they're valid ObjectIds
+    if (sheikhId && isValidObjectId(sheikhId)) query.sheikhId = sheikhId;
+    if (seriesId && isValidObjectId(seriesId)) query.seriesId = seriesId;
     if (category) query.category = category;
     if (published !== undefined) query.published = published === 'true';
     if (featured !== undefined) query.featured = featured === 'true';
 
-    // Text search
-    if (search) {
-      query.$text = { $search: search };
+    // Text search (sanitized by validator)
+    if (search && search.trim()) {
+      query.$text = { $search: search.trim().substring(0, 200) };
     }
 
     // Execute query with pagination
@@ -200,8 +214,8 @@ router.get('/', async (req, res) => {
       .populate('sheikhId', 'nameArabic nameEnglish honorific')
       .populate('seriesId', 'titleArabic titleEnglish')
       .sort(sort)
-      .limit(parseInt(limit))
-      .skip((parseInt(page) - 1) * parseInt(limit))
+      .limit(limitNum)
+      .skip((pageNum - 1) * limitNum)
       .lean();
 
     // Get total count for pagination
@@ -211,10 +225,10 @@ router.get('/', async (req, res) => {
       success: true,
       lectures: lectures,
       pagination: {
-        page: parseInt(page),
-        limit: parseInt(limit),
+        page: pageNum,
+        limit: limitNum,
         total: total,
-        pages: Math.ceil(total / parseInt(limit))
+        pages: Math.ceil(total / limitNum)
       }
     });
 
@@ -223,7 +237,7 @@ router.get('/', async (req, res) => {
     res.status(500).json({
       success: false,
       message: 'Failed to fetch lectures',
-      error: error.message
+      error: isProduction ? undefined : error.message
     });
   }
 });
@@ -255,7 +269,7 @@ router.get('/:id', async (req, res) => {
     res.status(500).json({
       success: false,
       message: 'Failed to fetch lecture',
-      error: error.message
+      error: isProduction ? undefined : error.message
     });
   }
 });
@@ -335,7 +349,7 @@ router.post('/bulk-upload-audio', [isAdminAPI, upload.single('audioFile')], asyn
     res.status(500).json({
       success: false,
       message: 'Failed to upload audio file',
-      error: error.message
+      error: isProduction ? undefined : error.message
     });
   }
 });
@@ -385,7 +399,7 @@ router.put('/:id', isAdminAPI, async (req, res) => {
     res.status(500).json({
       success: false,
       message: 'Failed to update lecture',
-      error: error.message
+      error: isProduction ? undefined : error.message
     });
   }
 });
@@ -431,7 +445,7 @@ router.delete('/:id', isAdminAPI, async (req, res) => {
     res.status(500).json({
       success: false,
       message: 'Failed to delete lecture',
-      error: error.message
+      error: isProduction ? undefined : error.message
     });
   }
 });
@@ -439,19 +453,19 @@ router.delete('/:id', isAdminAPI, async (req, res) => {
 // @route   POST /api/lectures/:id/verify-duration
 // @desc    Verify and update lecture duration from client playback
 // @access  Public
-router.post('/:id/verify-duration', async (req, res) => {
+router.post('/:id/verify-duration', verifyDurationValidation, async (req, res) => {
   try {
     const { duration } = req.body;
+    const lectureId = req.params.id;
 
-    // Validate duration
-    if (!duration || typeof duration !== 'number' || duration <= 0) {
+    // Additional realistic duration validation (max 12 hours)
+    const MAX_DURATION = 12 * 60 * 60; // 12 hours in seconds
+    if (duration > MAX_DURATION) {
       return res.status(400).json({
         success: false,
-        message: 'Valid duration is required'
+        message: 'Duration exceeds maximum allowed value'
       });
     }
-
-    const lectureId = req.params.id;
     const roundedDuration = Math.round(duration);
 
     // Find the lecture
@@ -518,7 +532,7 @@ router.post('/:id/verify-duration', async (req, res) => {
     res.status(500).json({
       success: false,
       message: 'Failed to verify duration',
-      error: error.message
+      error: isProduction ? undefined : error.message
     });
   }
 });
@@ -526,7 +540,7 @@ router.post('/:id/verify-duration', async (req, res) => {
 // @route   POST /api/lectures/:id/play
 // @desc    Increment play count
 // @access  Public
-router.post('/:id/play', async (req, res) => {
+router.post('/:id/play', playCountValidation, async (req, res) => {
   try {
     const lecture = await Lecture.findByIdAndUpdate(
       req.params.id,
@@ -550,7 +564,7 @@ router.post('/:id/play', async (req, res) => {
     res.status(500).json({
       success: false,
       message: 'Failed to increment play count',
-      error: error.message
+      error: isProduction ? undefined : error.message
     });
   }
 });
