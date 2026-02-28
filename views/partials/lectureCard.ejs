@@ -50,7 +50,7 @@
 
   <div class="lecture-actions">
     <% if (lecture.audioFileName) { %>
-      <button class="btn-play" onclick="playAudio('<%= lecture._id %>', '<%= (lecture.titleArabic || '').replace(/'/g, "\\'") %>', '<%= lecture.sheikhId ? lecture.sheikhId.nameArabic.replace(/'/g, "\\'") : "" %>')" title="استماع">
+      <button class="btn-play" onclick="playAudio('<%= lecture._id %>', '<%= (lecture.titleArabic || '').replace(/'/g, "\\'") %>', '<%= lecture.sheikhId ? lecture.sheikhId.nameArabic.replace(/'/g, "\\'") : "" %>')" title="<%= typeof t === 'function' ? t('lecture_play') : 'استماع' %>">
         ▶️
       </button>
     <% } else { %>
@@ -58,7 +58,16 @@
         ▶️
       </button>
     <% } %>
-    <a href="/download/<%= lecture._id %>" class="btn-download" title="تحميل">⬇️</a>
+    <a href="/download/<%= lecture._id %>" class="btn-download" title="<%= typeof t === 'function' ? t('lecture_download') : 'تحميل' %>">⬇️</a>
+    <button class="btn-share-card" onclick="if(window.shareModule){window.shareModule.share(window.location.origin + '/lectures/<%= lecture.slug ? encodeURIComponent(lecture.slug) : lecture._id %>', '<%= (lecture.titleArabic || '').replace(/'/g, "\\'").replace(/\n/g, " ") %>')}" title="<%= typeof t === 'function' ? t('lecture_share') : 'مشاركة' %>">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+        <circle cx="18" cy="5" r="3"></circle>
+        <circle cx="6" cy="12" r="3"></circle>
+        <circle cx="18" cy="19" r="3"></circle>
+        <line x1="8.59" y1="13.51" x2="15.42" y2="17.49"></line>
+        <line x1="15.41" y1="6.51" x2="8.59" y2="10.49"></line>
+      </svg>
+    </button>
   </div>
 </div>
 
@@ -180,6 +189,26 @@
   }
 
   .btn-download:hover {
+    background: var(--accent-gold);
+    color: var(--primary-dark);
+  }
+
+  .btn-share-card {
+    width: 40px;
+    height: 40px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 8px;
+    font-size: 16px;
+    transition: all 0.3s;
+    border: 2px solid var(--accent-gold);
+    cursor: pointer;
+    background: transparent;
+    color: var(--accent-gold);
+  }
+
+  .btn-share-card:hover {
     background: var(--accent-gold);
     color: var(--primary-dark);
   }

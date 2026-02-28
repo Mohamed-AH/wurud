@@ -12,6 +12,11 @@
   <meta name="robots" content="index, follow">
   <link rel="canonical" href="https://rasmihassan.com<%= typeof canonicalPath !== 'undefined' ? canonicalPath : (typeof currentPath !== 'undefined' ? currentPath : '') %>">
 
+  <!-- Hreflang tags for internationalization -->
+  <link rel="alternate" hreflang="ar" href="https://rasmihassan.com<%= typeof currentPath !== 'undefined' ? currentPath : '' %>?lang=ar">
+  <link rel="alternate" hreflang="en" href="https://rasmihassan.com<%= typeof currentPath !== 'undefined' ? currentPath : '' %>?lang=en">
+  <link rel="alternate" hreflang="x-default" href="https://rasmihassan.com<%= typeof currentPath !== 'undefined' ? currentPath : '' %>">
+
   <!-- Open Graph / Facebook -->
   <meta property="og:type" content="website">
   <meta property="og:url" content="https://rasmihassan.com<%= typeof canonicalPath !== 'undefined' ? canonicalPath : (typeof currentPath !== 'undefined' ? currentPath : '') %>">
@@ -140,6 +145,7 @@
   <div id="mobileNavBackdrop" class="mobile-nav-backdrop"></div>
 
   <script src="/js/audioPlayer.min.js" defer></script>
+  <script src="/js/share.js" defer></script>
   <script>
     // Language Toggle Functionality
     (function() {

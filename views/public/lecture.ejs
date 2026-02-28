@@ -468,20 +468,27 @@
   <!-- Breadcrumb -->
   <nav class="breadcrumb">
     <div class="container">
-      <a href="/">الرئيسية</a>
+      <a href="/"><%= locale === 'ar' ? 'الرئيسية' : 'Home' %></a>
       <span class="separator">›</span>
-      <a href="/browse">المحاضرات</a>
+      <a href="/browse"><%= locale === 'ar' ? 'المحاضرات' : 'Lectures' %></a>
       <span class="separator">›</span>
-      <span class="current"><%= lecture.titleArabic %></span>
+      <span class="current"><%= locale === 'ar' ? lecture.titleArabic : (lecture.titleEnglish || lecture.titleArabic) %></span>
     </div>
   </nav>
 
   <!-- Hero Section -->
   <div class="lecture-hero">
     <div class="container">
-      <h1 class="lecture-title"><%= lecture.titleArabic %></h1>
-      <% if (lecture.titleEnglish) { %>
-        <h2 class="lecture-title-en"><%= lecture.titleEnglish %></h2>
+      <% if (locale === 'ar') { %>
+        <h1 class="lecture-title"><%= lecture.titleArabic %></h1>
+        <% if (lecture.titleEnglish) { %>
+          <h2 class="lecture-title-en"><%= lecture.titleEnglish %></h2>
+        <% } %>
+      <% } else { %>
+        <h1 class="lecture-title"><%= lecture.titleEnglish || lecture.titleArabic %></h1>
+        <% if (lecture.titleEnglish && lecture.titleArabic !== lecture.titleEnglish) { %>
+          <h2 class="lecture-title-en"><%= lecture.titleArabic %></h2>
+        <% } %>
       <% } %>
 
       <div class="lecture-meta">
@@ -493,8 +500,8 @@
               <circle cx="12" cy="7" r="4"></circle>
             </svg>
             <a href="/sheikhs/<%= lecture.sheikhId.slug ? encodeURIComponent(lecture.sheikhId.slug) : lecture.sheikhId._id %>">
-              <%= lecture.sheikhId.nameArabic %>
-              <% if (lecture.sheikhId.honorific) { %>
+              <%= locale === 'ar' ? lecture.sheikhId.nameArabic : (lecture.sheikhId.nameEnglish || lecture.sheikhId.nameArabic) %>
+              <% if (locale === 'ar' && lecture.sheikhId.honorific) { %>
                 <span class="honorific"><%= lecture.sheikhId.honorific %></span>
               <% } %>
             </a>
@@ -509,9 +516,9 @@
               <path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"></path>
             </svg>
             <a href="/series/<%= lecture.seriesId.slug ? encodeURIComponent(lecture.seriesId.slug) : lecture.seriesId._id %>">
-              <%= lecture.seriesId.titleArabic %>
+              <%= locale === 'ar' ? lecture.seriesId.titleArabic : (lecture.seriesId.titleEnglish || lecture.seriesId.titleArabic) %>
               <% if (lecture.lectureNumber) { %>
-                <span class="lecture-number">(الدرس <%= lecture.lectureNumber %>)</span>
+                <span class="lecture-number">(<%= locale === 'ar' ? 'الدرس' : 'Lesson' %> <%= lecture.lectureNumber %>)</span>
               <% } %>
             </a>
           </div>
@@ -519,19 +526,8 @@
 
         <!-- Category -->
         <% if (lecture.category) { %>
-          <%
-            const categoryArabic = {
-              'Tafsir': 'تفسير',
-              'Hadith': 'حديث',
-              'Fiqh': 'فقه',
-              'Aqeedah': 'عقيدة',
-              'Seerah': 'سيرة',
-              'Akhlaq': 'أخلاق',
-              'Other': 'أخرى'
-            };
-          %>
           <div class="meta-item">
-            <span class="badge"><%= locale === 'ar' ? (categoryArabic[lecture.category] || lecture.category) : lecture.category %></span>
+            <span class="badge"><%= translateCategory(lecture.category) %></span>
           </div>
         <% } %>
       </div>
@@ -547,11 +543,11 @@
           <!-- Play Section -->
           <% if (lecture.audioFileName) { %>
             <div class="play-section">
-              <button class="btn-play-large" onclick="playLecture()" title="تشغيل">
+              <button class="btn-play-large" onclick="playLecture()" title="<%= locale === 'ar' ? 'تشغيل' : 'Play' %>">
                 ▶️
               </button>
-              <div class="play-text">انقر للتشغيل في المشغل الثابت</div>
-              <div class="play-subtitle">سيظل المشغل ظاهراً أثناء تصفحك للموقع</div>
+              <div class="play-text"><%= locale === 'ar' ? 'انقر للتشغيل في المشغل الثابت' : 'Click to play in the sticky player' %></div>
+              <div class="play-subtitle"><%= locale === 'ar' ? 'سيظل المشغل ظاهراً أثناء تصفحك للموقع' : 'The player stays visible as you browse' %></div>
 
               <div class="action-buttons">
                 <a href="/download/<%= lecture._id %>" class="btn btn-download">
@@ -560,7 +556,7 @@
                     <polyline points="7 10 12 15 17 10"></polyline>
                     <line x1="12" y1="15" x2="12" y2="3"></line>
                   </svg>
-                  تحميل
+                  <%= locale === 'ar' ? 'تحميل' : 'Download' %>
                   <% if (lecture.fileSizeMB) { %>
                     <span>(<%= lecture.fileSizeMB %> MB)</span>
                   <% } %>
@@ -574,18 +570,18 @@
                     <line x1="8.59" y1="13.51" x2="15.42" y2="17.49"></line>
                     <line x1="15.41" y1="6.51" x2="8.59" y2="10.49"></line>
                   </svg>
-                  مشاركة
+                  <%= locale === 'ar' ? 'مشاركة' : 'Share' %>
                 </button>
               </div>
             </div>
           <% } else { %>
             <div class="play-section">
-              <div class="play-text">⚠️ لا يوجد ملف صوتي لهذه المحاضرة</div>
+              <div class="play-text">⚠️ <%= locale === 'ar' ? 'لا يوجد ملف صوتي لهذه المحاضرة' : 'No audio file for this lecture' %></div>
             </div>
           <% } %>
 
           <!-- Lecture Info -->
-          <h3 class="section-title">معلومات المحاضرة</h3>
+          <h3 class="section-title"><%= locale === 'ar' ? 'معلومات المحاضرة' : 'Lecture Info' %></h3>
           <div class="info-grid">
             <% if (lecture.duration) { %>
               <div class="info-item">
@@ -594,7 +590,7 @@
                   <polyline points="12 6 12 12 16 14"></polyline>
                 </svg>
                 <div>
-                  <div class="info-label">المدة</div>
+                  <div class="info-label"><%= locale === 'ar' ? 'المدة' : 'Duration' %></div>
                   <div class="info-value"><%= lecture.durationFormatted %></div>
                 </div>
               </div>
@@ -606,7 +602,7 @@
                   <polygon points="5 3 19 12 5 21 5 3"></polygon>
                 </svg>
                 <div>
-                  <div class="info-label">مرات الاستماع</div>
+                  <div class="info-label"><%= locale === 'ar' ? 'مرات الاستماع' : 'Play Count' %></div>
                   <div class="info-value"><%= lecture.playCount %></div>
                 </div>
               </div>
@@ -619,7 +615,7 @@
                   <circle cx="12" cy="10" r="3"></circle>
                 </svg>
                 <div>
-                  <div class="info-label">المكان</div>
+                  <div class="info-label"><%= locale === 'ar' ? 'المكان' : 'Location' %></div>
                   <div class="info-value"><%= lecture.location %></div>
                 </div>
               </div>
@@ -634,7 +630,7 @@
                   <line x1="3" y1="10" x2="21" y2="10"></line>
                 </svg>
                 <div>
-                  <div class="info-label">تاريخ التسجيل (هجري)</div>
+                  <div class="info-label"><%= locale === 'ar' ? 'تاريخ التسجيل (هجري)' : 'Date (Hijri)' %></div>
                   <div class="info-value">
                     <% if (lecture.dateRecordedHijri) { %>
                       <%= formatHijriDate(lecture.dateRecordedHijri) %>
@@ -648,20 +644,26 @@
           </div>
 
           <!-- Description -->
-          <% if (lecture.descriptionArabic) { %>
+          <% if (locale === 'ar' && lecture.descriptionArabic) { %>
             <div class="description-section">
-              <h3 class="section-title">الوصف</h3>
+              <h3 class="section-title"><%= locale === 'ar' ? 'الوصف' : 'Description' %></h3>
               <p class="description-text"><%= lecture.descriptionArabic %></p>
+            </div>
+          <% } else if (locale === 'en' && (lecture.descriptionEnglish || lecture.descriptionArabic)) { %>
+            <div class="description-section">
+              <h3 class="section-title">Description</h3>
+              <p class="description-text"><%= lecture.descriptionEnglish || lecture.descriptionArabic %></p>
             </div>
           <% } %>
 
           <!-- Sheikh Bio -->
-          <% if (lecture.sheikhId && lecture.sheikhId.bioArabic) { %>
+          <% if (lecture.sheikhId && (lecture.sheikhId.bioArabic || lecture.sheikhId.bioEnglish)) { %>
             <div class="description-section">
-              <h3 class="section-title">نبذة عن الشيخ</h3>
-              <p class="description-text"><%= lecture.sheikhId.bioArabic.substring(0, 300) %>...</p>
+              <h3 class="section-title"><%= locale === 'ar' ? 'نبذة عن الشيخ' : 'About the Sheikh' %></h3>
+              <% const bio = locale === 'ar' ? lecture.sheikhId.bioArabic : (lecture.sheikhId.bioEnglish || lecture.sheikhId.bioArabic); %>
+              <p class="description-text"><%= bio ? bio.substring(0, 300) + '...' : '' %></p>
               <a href="/sheikhs/<%= lecture.sheikhId.slug ? encodeURIComponent(lecture.sheikhId.slug) : lecture.sheikhId._id %>" style="color: var(--accent-gold); text-decoration: none; font-weight: 600;">
-                المزيد عن الشيخ ←
+                <%= locale === 'ar' ? 'المزيد عن الشيخ ←' : 'More about the Sheikh →' %>
               </a>
             </div>
           <% } %>
@@ -672,14 +674,14 @@
           <!-- Related Lectures -->
           <% if (relatedLectures && relatedLectures.length > 0) { %>
             <div class="sidebar-card">
-              <h3 class="sidebar-title">محاضرات ذات صلة</h3>
+              <h3 class="sidebar-title"><%= locale === 'ar' ? 'محاضرات ذات صلة' : 'Related Lectures' %></h3>
               <% relatedLectures.forEach(related => { %>
                 <a href="/lectures/<%= related.slug ? encodeURIComponent(related.slug) : related._id %>" style="text-decoration: none;">
                   <div class="related-lecture">
-                    <div class="related-lecture-title"><%= related.titleArabic %></div>
+                    <div class="related-lecture-title"><%= locale === 'ar' ? related.titleArabic : (related.titleEnglish || related.titleArabic) %></div>
                     <div class="related-lecture-meta">
                       <% if (related.sheikhId) { %>
-                        <%= related.sheikhId.nameArabic %>
+                        <%= locale === 'ar' ? related.sheikhId.nameArabic : (related.sheikhId.nameEnglish || related.sheikhId.nameArabic) %>
                       <% } %>
                       <% if (related.duration) { %>
                         • <%= related.durationFormatted %>
@@ -709,24 +711,28 @@
       });
     } else {
       console.error('❌ Audio player not initialized');
-      alert('مشغل الصوت يتم تحميله، يرجى المحاولة مرة أخرى');
+      alert('<%= locale === "ar" ? "مشغل الصوت يتم تحميله، يرجى المحاولة مرة أخرى" : "Audio player is loading, please try again" %>');
     }
   }
 
-  // Share functionality
+  // Share functionality using enhanced share module
   function shareLecture() {
     const url = window.location.href;
-    const title = '<%= lecture.titleArabic %>';
-    const text = `استمع إلى: ${title}`;
+    const title = '<%= lecture.titleArabic.replace(/'/g, "\\'").replace(/\n/g, " ") %>';
+    const text = '<%= locale === "ar" ? "استمع إلى" : "Listen to" %>: ' + title;
 
-    if (navigator.share) {
-      navigator.share({ title, text, url })
-        .catch(err => console.log('Share cancelled', err));
+    if (window.shareModule) {
+      window.shareModule.share(url, title, { text: text });
     } else {
-      // Fallback: copy to clipboard
-      navigator.clipboard.writeText(url).then(() => {
-        alert('تم نسخ الرابط!');
-      });
+      // Fallback if share module not loaded
+      if (navigator.share) {
+        navigator.share({ title, text, url })
+          .catch(err => console.log('Share cancelled', err));
+      } else {
+        navigator.clipboard.writeText(url).then(() => {
+          alert('<%= locale === "ar" ? "تم نسخ الرابط!" : "Link copied!" %>');
+        });
+      }
     }
   }
 </script>
