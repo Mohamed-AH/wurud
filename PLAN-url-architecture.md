@@ -81,10 +81,28 @@ const counterSchema = new mongoose.Schema({
 });
 ```
 
-#### 1.4 Similar Updates for Series & Sheikh Models
-- Add `shortId` to Series model
-- Add `shortId` to Sheikh model
-- Add dual slugs if needed for Series/Sheikh
+> ⚠️ **CRITICAL: Atomic Counter Updates**
+> Since MongoDB doesn't have native auto-increment, always use `findOneAndUpdate` (Mongoose) or `findAndModify` (native driver) with `$inc` to prevent race conditions. This ensures two lectures uploaded simultaneously never receive the same shortId.
+
+#### 1.4 Updates for Series & Sheikh Models
+
+**Series Model (`models/Series.js`):**
+```javascript
+shortId: { type: Number, unique: true, index: true, required: true },
+slug_en: { type: String, trim: true, index: true },
+slug_ar: { type: String, trim: true, index: true }
+```
+URL: `/series/:shortId/:slug_en/:slug_ar`
+Example: `/series/15/tajweed-rules/قواعد-التجويد`
+
+**Sheikh Model (`models/Sheikh.js`):**
+```javascript
+shortId: { type: Number, unique: true, index: true, required: true },
+slug_en: { type: String, trim: true, index: true },
+slug_ar: { type: String, trim: true, index: true }
+```
+URL: `/sheikhs/:shortId/:slug_en/:slug_ar`
+Example: `/sheikhs/3/hassan-al-daghriri/حسن-الدغريري`
 
 ---
 
@@ -113,10 +131,24 @@ function generateSlugAr(text) {
 }
 ```
 
-#### 2.2 Mandatory English Slug Logic
+#### 2.2 Auto-Generate shortId and Slugs (Pre-Save Middleware)
+
+> ⚠️ **CRITICAL: Use Atomic Operations for shortId**
+> Always use `findOneAndUpdate` with `$inc` for the counter—never fetch then increment. This prevents race conditions during simultaneous uploads.
+
 ```javascript
 // Before save middleware
 lectureSchema.pre('save', async function(next) {
+  // Auto-assign shortId using atomic counter increment
+  if (this.isNew && !this.shortId) {
+    const counter = await Counter.findOneAndUpdate(
+      { _id: 'lecture' },
+      { $inc: { seq: 1 } },
+      { new: true, upsert: true }
+    );
+    this.shortId = counter.seq;
+  }
+
   // Auto-generate slug_en if missing
   if (!this.slug_en) {
     if (this.titleEnglish) {
@@ -189,9 +221,32 @@ router.get('/lectures/:idOrSlug', async (req, res) => {
 });
 ```
 
-#### 3.2 Similar Updates for Series Routes
+#### 3.2 Series Routes
+```javascript
+// /series/:shortId/:slug_en?/:slug_ar?
+router.get('/series/:shortId/:slug_en?/:slug_ar?', async (req, res) => {
+  const series = await Series.findOne({ shortId: parseInt(req.params.shortId, 10) });
+  // ... same pattern as lectures
+});
+
+// Legacy redirect
+router.get('/series/:idOrSlug', async (req, res) => {
+  // Redirect to new format
+});
 ```
-/series/:shortId/:slug_en/:slug_ar
+
+#### 3.3 Sheikh Routes
+```javascript
+// /sheikhs/:shortId/:slug_en?/:slug_ar?
+router.get('/sheikhs/:shortId/:slug_en?/:slug_ar?', async (req, res) => {
+  const sheikh = await Sheikh.findOne({ shortId: parseInt(req.params.shortId, 10) });
+  // ... same pattern as lectures
+});
+
+// Legacy redirect
+router.get('/sheikhs/:idOrSlug', async (req, res) => {
+  // Redirect to new format
+});
 ```
 
 ---
@@ -322,53 +377,98 @@ async function migrate() {
 | File | Changes |
 |------|---------|
 | `models/Lecture.js` | Add `shortId`, `slug_en`, `slug_ar` fields + pre-save middleware |
-| `models/Series.js` | Add `shortId`, `slug_en`, `slug_ar` fields |
-| `models/Counter.js` | New file for auto-increment counter |
+| `models/Series.js` | Add `shortId`, `slug_en`, `slug_ar` fields + pre-save middleware |
+| `models/Sheikh.js` | Add `shortId`, `slug_en`, `slug_ar` fields + pre-save middleware |
+| `models/Counter.js` | New file for auto-increment counter (atomic operations) |
 | `utils/slugify.js` | Add `generateSlugEn()`, `generateSlugAr()` functions |
 | `utils/findByIdOrSlug.js` | Update to handle new shortId lookups |
-| `routes/index.js` | Add new route pattern + legacy redirect |
+| `routes/index.js` | Add new route patterns for lectures, series, sheikhs + legacy redirects |
 | `views/layout.ejs` | Enhanced OG meta tags |
 | `views/public/lecture.ejs` | Update share function + add lecture-specific OG tags |
+| `views/public/series.ejs` | Update share function for series |
+| `views/public/sheikh.ejs` | Update share function for sheikh |
 | `public/js/share.js` | Add URL construction utilities |
-| `scripts/migrate-url-architecture.js` | New migration script |
+| `scripts/migrate-url-architecture.js` | New migration script (lectures, series, sheikhs) |
+| `scripts/cleanup-legacy-slugs.js` | Final cleanup script (Phase 4 - remove old `slug` field) |
 
 ---
 
 ## Testing Checklist
 
+**Lectures:**
 - [ ] shortId auto-increments correctly for new lectures
 - [ ] slug_en is always present (never empty)
 - [ ] slug_ar preserves Arabic characters correctly
 - [ ] SEO redirects work (old URLs → new URLs with 301)
 - [ ] Legacy ObjectId URLs redirect to new format
-- [ ] Open Graph previews show correctly on WhatsApp/Facebook/Twitter
-- [ ] Share button copies clean URL
-- [ ] Sitemap generates correct new URLs
 - [ ] No duplicate shortIds after migration
-- [ ] No duplicate slugs conflict
+
+**Series:**
+- [ ] shortId auto-increments correctly for new series
+- [ ] Dual slugs generate correctly
+- [ ] `/series/:shortId/:slug_en/:slug_ar` routes work
+- [ ] Legacy series URLs redirect properly
+
+**Sheikhs:**
+- [ ] shortId auto-increments correctly for new sheikhs
+- [ ] Dual slugs generate correctly
+- [ ] `/sheikhs/:shortId/:slug_en/:slug_ar` routes work
+- [ ] Legacy sheikh URLs redirect properly
+
+**Race Condition Testing:**
+- [ ] Concurrent lecture uploads get unique shortIds (no duplicates)
+- [ ] Counter atomic increment works under load
+
+**Frontend & SEO:**
+- [ ] Open Graph previews show correctly on WhatsApp/Facebook/Twitter
+- [ ] Share button copies clean URL (all entity types)
+- [ ] Sitemap generates correct new URLs
+- [ ] URLs truncated by social media still show readable English slug
+
+---
+
+## Migration Strategy for Existing `slug` Field
+
+**Decision: Migrate and Delete (Option A)**
+
+1. **Phase 1**: Copy existing `slug` values to `slug_en` field
+2. **Phase 2**: Deploy new URL routing with legacy redirects
+3. **Phase 3**: Monitor for 2-4 weeks to ensure all legacy links are being redirected
+4. **Phase 4**: Remove `slug` field from schema and database
+
+```javascript
+// Final cleanup migration (after Phase 3 monitoring)
+await Lecture.updateMany({}, { $unset: { slug: 1 } });
+```
 
 ---
 
 ## Rollback Plan
 
-1. Keep `slug` field (don't delete immediately)
+1. Keep `slug` field during transition (don't delete until Phase 4)
 2. Add feature flag to switch between old/new routing
 3. Maintain legacy route handler for backwards compatibility
-4. Database migration is additive (doesn't delete data)
+4. Database migration is additive (doesn't delete data initially)
 
 ---
 
-## Questions to Clarify
+## Decisions (Confirmed)
 
-1. **shortId format**: Should it be numeric (`102`) or alphanumeric (`xJ9v2`)?
-   - Numeric is simpler and more memorable
-   - Alphanumeric is shorter for large datasets
+1. **shortId format**: ✅ **Numeric** (`102`)
+   - Feels like a "Lesson Number" or "Reference ID" for an educational platform
+   - Easier for users to dictate over phone or write down than alphanumeric strings
 
-2. **Series URLs**: Apply same pattern to series? `/series/:shortId/:slug_en/:slug_ar`
+2. **Series/Sheikh URLs**: ✅ **Yes, apply same pattern**
+   - Series: `/series/15/tajweed-rules/قواعد-التجويد`
+   - Sheikhs: `/sheikhs/3/hassan-al-daghriri/حسن-الدغريري`
+   - Consistency reinforces brand and makes "Copy Link" behavior predictable
 
-3. **Existing slugs**: What to do with current `slug` field?
-   - Option A: Migrate to `slug_en` and delete
-   - Option B: Keep as fallback for legacy links
+3. **Existing slugs**: ✅ **Option A (Migrate and Delete)**
+   - Migrate data to `slug_en` and eventually delete old `slug` field
+   - Keeping both creates "split-brain" syndrome for developers
+   - Phase 3.1 legacy redirect handler bridges the gap without cluttering the database
 
-4. **URL Priority**: Which comes first - English or Arabic slug?
-   - Suggested: English first (social media safe)
+4. **URL Priority**: ✅ **English First**
+   - Pattern: `/:shortId/:slug_en/:slug_ar`
+   - If social media/messaging truncates the URL, the readable English slug stays intact
+   - Avoids broken `%D8%` characters in truncated URLs
