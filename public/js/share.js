@@ -229,7 +229,13 @@
 
     if (!platform || !modal) return;
 
-    const url = modal.dataset.url;
+    // Decode URL so Arabic text appears readable in shared messages
+    let url;
+    try {
+      url = decodeURIComponent(modal.dataset.url);
+    } catch (e) {
+      url = modal.dataset.url;
+    }
     const title = modal.dataset.title;
     const shareUrl = platform.getUrl(url, title);
 
