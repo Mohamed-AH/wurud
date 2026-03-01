@@ -443,6 +443,20 @@ await Lecture.updateMany({}, { $unset: { slug: 1 } });
 
 ---
 
+## Post-Migration Considerations
+
+**Sitemap:**
+- Update `sitemap.xml` to reflect new URL structure after migration
+- Ensures Google indexes the "pretty" versions with shortId and dual slugs
+- Remove old URL patterns from sitemap once legacy redirects are stable
+
+**Analytics:**
+- URL-based page view tracking will see a "split" between old and new URLs
+- Create a filter/grouping that aggregates page views by `shortId` instead of full URL
+- Consider adding `shortId` as a custom dimension for cleaner reporting
+
+---
+
 ## Rollback Plan
 
 1. Keep `slug` field during transition (don't delete until Phase 4)
