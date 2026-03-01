@@ -1,5 +1,5 @@
 /**
- * Utility to find documents by MongoDB ObjectId or slug
+ * Utility to find documents by MongoDB ObjectId, shortId, or slug
  */
 
 const mongoose = require('mongoose');
@@ -12,6 +12,32 @@ const mongoose = require('mongoose');
 function isValidObjectId(str) {
   return mongoose.Types.ObjectId.isValid(str) &&
     String(new mongoose.Types.ObjectId(str)) === str;
+}
+
+/**
+ * Check if a string is a numeric shortId
+ * @param {string} str - String to check
+ * @returns {boolean}
+ */
+function isNumericShortId(str) {
+  return /^\d+$/.test(str);
+}
+
+/**
+ * Find a document by shortId (numeric)
+ * @param {Model} Model - Mongoose model
+ * @param {number} shortId - Numeric shortId
+ * @param {Object} populate - Optional populate options
+ * @returns {Promise<Document|null>}
+ */
+async function findByShortId(Model, shortId, populate = null) {
+  let query = Model.findOne({ shortId: parseInt(shortId, 10) });
+
+  if (populate) {
+    query = query.populate(populate);
+  }
+
+  return query.lean();
 }
 
 /**
@@ -69,8 +95,36 @@ async function findWithRedirectCheck(Model, idOrSlug, populate = null) {
   };
 }
 
+/**
+ * Build the new canonical URL path for a document
+ * Format: /:type/:shortId/:slug_en/:slug_ar
+ * @param {string} type - Entity type ('lectures', 'series', 'sheikhs')
+ * @param {Object} doc - Document with shortId, slug_en, slug_ar
+ * @returns {string} - Canonical URL path
+ */
+function buildCanonicalUrl(type, doc) {
+  if (!doc || !doc.shortId) {
+    return null;
+  }
+
+  const parts = [`/${type}`, doc.shortId];
+
+  if (doc.slug_en) {
+    parts.push(doc.slug_en);
+  }
+
+  if (doc.slug_ar) {
+    parts.push(encodeURIComponent(doc.slug_ar));
+  }
+
+  return parts.join('/');
+}
+
 module.exports = {
   isValidObjectId,
+  isNumericShortId,
   findByIdOrSlug,
-  findWithRedirectCheck
+  findByShortId,
+  findWithRedirectCheck,
+  buildCanonicalUrl
 };

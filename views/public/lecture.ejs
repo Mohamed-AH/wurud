@@ -499,7 +499,7 @@
               <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
               <circle cx="12" cy="7" r="4"></circle>
             </svg>
-            <a href="/sheikhs/<%= lecture.sheikhId.slug ? encodeURIComponent(lecture.sheikhId.slug) : lecture.sheikhId._id %>">
+            <a href="/sheikhs/<%= lecture.sheikhId.shortId ? lecture.sheikhId.shortId + '/' + (lecture.sheikhId.slug_en || '') + '/' + encodeURIComponent(lecture.sheikhId.slug_ar || '') : (lecture.sheikhId.slug ? encodeURIComponent(lecture.sheikhId.slug) : lecture.sheikhId._id) %>">
               <%= locale === 'ar' ? lecture.sheikhId.nameArabic : (lecture.sheikhId.nameEnglish || lecture.sheikhId.nameArabic) %>
               <% if (locale === 'ar' && lecture.sheikhId.honorific) { %>
                 <span class="honorific"><%= lecture.sheikhId.honorific %></span>
@@ -515,7 +515,7 @@
               <path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"></path>
               <path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"></path>
             </svg>
-            <a href="/series/<%= lecture.seriesId.slug ? encodeURIComponent(lecture.seriesId.slug) : lecture.seriesId._id %>">
+            <a href="/series/<%= lecture.seriesId.shortId ? lecture.seriesId.shortId + '/' + (lecture.seriesId.slug_en || '') + '/' + encodeURIComponent(lecture.seriesId.slug_ar || '') : (lecture.seriesId.slug ? encodeURIComponent(lecture.seriesId.slug) : lecture.seriesId._id) %>">
               <%= locale === 'ar' ? lecture.seriesId.titleArabic : (lecture.seriesId.titleEnglish || lecture.seriesId.titleArabic) %>
               <% if (lecture.lectureNumber) { %>
                 <span class="lecture-number">(<%= locale === 'ar' ? 'الدرس' : 'Lesson' %> <%= lecture.lectureNumber %>)</span>
@@ -662,7 +662,7 @@
               <h3 class="section-title"><%= locale === 'ar' ? 'نبذة عن الشيخ' : 'About the Sheikh' %></h3>
               <% const bio = locale === 'ar' ? lecture.sheikhId.bioArabic : (lecture.sheikhId.bioEnglish || lecture.sheikhId.bioArabic); %>
               <p class="description-text"><%= bio ? bio.substring(0, 300) + '...' : '' %></p>
-              <a href="/sheikhs/<%= lecture.sheikhId.slug ? encodeURIComponent(lecture.sheikhId.slug) : lecture.sheikhId._id %>" style="color: var(--accent-gold); text-decoration: none; font-weight: 600;">
+              <a href="/sheikhs/<%= lecture.sheikhId.shortId ? lecture.sheikhId.shortId + '/' + (lecture.sheikhId.slug_en || '') + '/' + encodeURIComponent(lecture.sheikhId.slug_ar || '') : (lecture.sheikhId.slug ? encodeURIComponent(lecture.sheikhId.slug) : lecture.sheikhId._id) %>" style="color: var(--accent-gold); text-decoration: none; font-weight: 600;">
                 <%= locale === 'ar' ? 'المزيد عن الشيخ ←' : 'More about the Sheikh →' %>
               </a>
             </div>
@@ -676,7 +676,7 @@
             <div class="sidebar-card">
               <h3 class="sidebar-title"><%= locale === 'ar' ? 'محاضرات ذات صلة' : 'Related Lectures' %></h3>
               <% relatedLectures.forEach(related => { %>
-                <a href="/lectures/<%= related.slug ? encodeURIComponent(related.slug) : related._id %>" style="text-decoration: none;">
+                <a href="/lectures/<%= related.shortId ? related.shortId + '/' + (related.slug_en || '') + '/' + encodeURIComponent(related.slug_ar || '') : (related.slug ? encodeURIComponent(related.slug) : related._id) %>" style="text-decoration: none;">
                   <div class="related-lecture">
                     <div class="related-lecture-title"><%= locale === 'ar' ? related.titleArabic : (related.titleEnglish || related.titleArabic) %></div>
                     <div class="related-lecture-meta">
@@ -717,7 +717,16 @@
 
   // Share functionality using enhanced share module
   function shareLecture() {
+    // Construct clean URL using new format
+    <% if (lecture.shortId) { %>
+    const shortId = '<%= lecture.shortId %>';
+    const slugEn = '<%= lecture.slug_en || "" %>';
+    const slugAr = encodeURIComponent('<%= lecture.slug_ar || "" %>');
+    const url = `${window.location.origin}/lectures/${shortId}/${slugEn}/${slugAr}`;
+    <% } else { %>
     const url = window.location.href;
+    <% } %>
+
     const title = '<%= lecture.titleArabic.replace(/'/g, "\\'").replace(/\n/g, " ") %>';
     const text = '<%= locale === "ar" ? "استمع إلى" : "Listen to" %>: ' + title;
 

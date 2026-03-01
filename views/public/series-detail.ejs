@@ -454,7 +454,7 @@
             <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
             <circle cx="12" cy="7" r="4"></circle>
           </svg>
-          <a href="/sheikhs/<%= series.sheikhId.slug ? encodeURIComponent(series.sheikhId.slug) : series.sheikhId._id %>">
+          <a href="/sheikhs/<%= series.sheikhId.shortId ? series.sheikhId.shortId + '/' + (series.sheikhId.slug_en || '') + '/' + encodeURIComponent(series.sheikhId.slug_ar || '') : (series.sheikhId.slug ? encodeURIComponent(series.sheikhId.slug) : series.sheikhId._id) %>">
             <%= locale === 'ar' ? series.sheikhId.nameArabic : (series.sheikhId.nameEnglish || series.sheikhId.nameArabic) %>
             <% if (locale === 'ar' && series.sheikhId.honorific) { %>
               <span class="honorific"><%= series.sheikhId.honorific %></span>
@@ -556,7 +556,7 @@
         <h2 class="section-title"><%= locale === 'ar' ? 'سلاسل الخطب' : 'Khutbah Series' %></h2>
         <div class="series-grid">
           <% relatedKhutbaSeries.forEach(relSeries => { %>
-            <a href="/series/<%= relSeries.slug ? encodeURIComponent(relSeries.slug) : relSeries._id %>" class="series-card">
+            <a href="/series/<%= relSeries.shortId ? relSeries.shortId + '/' + (relSeries.slug_en || '') + '/' + encodeURIComponent(relSeries.slug_ar || '') : (relSeries.slug ? encodeURIComponent(relSeries.slug) : relSeries._id) %>" class="series-card">
               <div class="series-icon">
                 <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                   <path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"></path>

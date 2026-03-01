@@ -10,7 +10,7 @@
 
   <div class="lecture-content">
     <h3 class="lecture-title">
-      <a href="/lectures/<%= lecture.slug ? encodeURIComponent(lecture.slug) : lecture._id %>"><%= lecture.titleArabic %></a>
+      <a href="/lectures/<%= lecture.shortId ? lecture.shortId + '/' + (lecture.slug_en || '') + '/' + encodeURIComponent(lecture.slug_ar || '') : (lecture.slug ? encodeURIComponent(lecture.slug) : lecture._id) %>"><%= lecture.titleArabic %></a>
     </h3>
 
     <div class="lecture-meta">
@@ -59,7 +59,7 @@
       </button>
     <% } %>
     <a href="/download/<%= lecture._id %>" class="btn-download" title="<%= typeof t === 'function' ? t('lecture_download') : 'تحميل' %>">⬇️</a>
-    <button class="btn-share-card" onclick="if(window.shareModule){window.shareModule.share(window.location.origin + '/lectures/<%= lecture.slug ? encodeURIComponent(lecture.slug) : lecture._id %>', '<%= (lecture.titleArabic || '').replace(/'/g, "\\'").replace(/\n/g, " ") %>')}" title="<%= typeof t === 'function' ? t('lecture_share') : 'مشاركة' %>">
+    <button class="btn-share-card" onclick="if(window.shareModule){window.shareModule.share(window.location.origin + '/lectures/<%= lecture.shortId ? lecture.shortId + '/' + (lecture.slug_en || '') + '/' + encodeURIComponent(lecture.slug_ar || '') : (lecture.slug ? encodeURIComponent(lecture.slug) : lecture._id) %>', '<%= (lecture.titleArabic || '').replace(/'/g, "\\'").replace(/\n/g, " ") %>')}" title="<%= typeof t === 'function' ? t('lecture_share') : 'مشاركة' %>">
       <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
         <circle cx="18" cy="5" r="3"></circle>
         <circle cx="6" cy="12" r="3"></circle>

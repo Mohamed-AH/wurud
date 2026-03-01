@@ -1,6 +1,14 @@
 const mongoose = require('mongoose');
+const Counter = require('./Counter');
+const { generateSlugEn, generateSlugAr } = require('../utils/slugify');
 
 const seriesSchema = new mongoose.Schema({
+  shortId: {
+    type: Number,
+    unique: true,
+    sparse: true,
+    index: true
+  },
   titleArabic: {
     type: String,
     required: true,
@@ -60,6 +68,16 @@ const seriesSchema = new mongoose.Schema({
     sparse: true,
     index: true
   },
+  slug_en: {
+    type: String,
+    trim: true,
+    index: true
+  },
+  slug_ar: {
+    type: String,
+    trim: true,
+    index: true
+  },
   isVisible: {
     type: Boolean,
     default: true,
@@ -86,5 +104,36 @@ seriesSchema.index({ sheikhId: 1, titleArabic: 1 }, { unique: true });
 
 // Text index for search
 seriesSchema.index({ titleArabic: 'text', titleEnglish: 'text' });
+
+// Pre-save middleware for auto-generating shortId and slugs
+seriesSchema.pre('save', async function(next) {
+  try {
+    // Auto-assign shortId using atomic counter increment
+    if (this.isNew && !this.shortId) {
+      this.shortId = await Counter.getNextSequence('series');
+    }
+
+    // Auto-generate slug_en if missing
+    if (!this.slug_en) {
+      if (this.titleEnglish) {
+        this.slug_en = generateSlugEn(this.titleEnglish);
+      } else if (this.titleArabic) {
+        this.slug_en = generateSlugEn(this.titleArabic);
+      }
+      if (!this.slug_en && this.shortId) {
+        this.slug_en = `series-${this.shortId}`;
+      }
+    }
+
+    // Auto-generate slug_ar if missing
+    if (!this.slug_ar && this.titleArabic) {
+      this.slug_ar = generateSlugAr(this.titleArabic);
+    }
+
+    next();
+  } catch (error) {
+    next(error);
+  }
+});
 
 module.exports = mongoose.model('Series', seriesSchema);
