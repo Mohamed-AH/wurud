@@ -176,12 +176,16 @@
     const urlInput = document.getElementById('shareUrlInput');
     const titlePreview = document.getElementById('shareTitlePreview');
 
-    // Store current share data
+    // Store current share data (keep encoded URL for actual sharing)
     modal.dataset.url = url;
     modal.dataset.title = title;
 
-    // Update UI
-    urlInput.value = url;
+    // Update UI - decode URL for display so Arabic text is readable
+    try {
+      urlInput.value = decodeURIComponent(url);
+    } catch (e) {
+      urlInput.value = url; // Fallback if decode fails
+    }
     titlePreview.textContent = title;
 
     // Show modal
