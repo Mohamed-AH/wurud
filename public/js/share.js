@@ -167,6 +167,25 @@
   }
 
   /**
+   * Ensure URL pathname is properly encoded (for Arabic/Unicode URLs)
+   */
+  function ensureEncodedUrl(url) {
+    try {
+      const urlObj = new URL(url);
+      // Encode each path segment to handle Arabic/Unicode characters
+      const encodedPath = urlObj.pathname
+        .split('/')
+        .map(segment => encodeURIComponent(decodeURIComponent(segment)))
+        .join('/');
+      urlObj.pathname = encodedPath;
+      return urlObj.href;
+    } catch (e) {
+      // Fallback: try to encode the whole URL
+      return encodeURI(url);
+    }
+  }
+
+  /**
    * Show the share modal
    */
   function showModal(url, title) {
@@ -176,15 +195,16 @@
     const urlInput = document.getElementById('shareUrlInput');
     const titlePreview = document.getElementById('shareTitlePreview');
 
-    // Store current share data (keep encoded URL for actual sharing)
-    modal.dataset.url = url;
+    // Ensure URL is properly encoded for sharing (WhatsApp needs encoded URLs)
+    const encodedUrl = ensureEncodedUrl(url);
+    modal.dataset.url = encodedUrl;
     modal.dataset.title = title;
 
     // Update UI - decode URL for display so Arabic text is readable
     try {
-      urlInput.value = decodeURIComponent(url);
+      urlInput.value = decodeURIComponent(encodedUrl);
     } catch (e) {
-      urlInput.value = url; // Fallback if decode fails
+      urlInput.value = encodedUrl; // Fallback if decode fails
     }
     titlePreview.textContent = title;
 
@@ -229,13 +249,9 @@
 
     if (!platform || !modal) return;
 
-    // Decode URL so Arabic text appears readable in shared messages
-    let url;
-    try {
-      url = decodeURIComponent(modal.dataset.url);
-    } catch (e) {
-      url = modal.dataset.url;
-    }
+    // Keep URL encoded so platforms recognize it as a clickable link
+    // (Decoded Arabic URLs are not recognized as links by WhatsApp, etc.)
+    const url = modal.dataset.url;
     const title = modal.dataset.title;
     const shareUrl = platform.getUrl(url, title);
 
