@@ -278,7 +278,8 @@ router.get('/', async (req, res) => {
 // @access  Public
 router.get('/browse', async (req, res) => {
   try {
-    const { search, category, sort = '-dateRecorded', fromDate, toDate } = req.query;
+    const { search, category, sort = '-dateRecorded', fromDateHijri, toDateHijri } = req.query;
+    const locale = res.locals.locale || 'ar';
 
     // Build query
     const query = { published: true };
@@ -293,22 +294,30 @@ router.get('/browse', async (req, res) => {
       query.$text = { $search: search };
     }
 
-    // Date range filter (Gregorian dates stored in dateRecorded)
-    if (fromDate || toDate) {
-      query.dateRecorded = {};
+    // Hijri date range filter (uses dateRecordedHijri field with format YYYY/MM/DD)
+    if (fromDateHijri || toDateHijri) {
+      // Normalize Arabic numerals to Western numerals for comparison
+      const normalizeHijriDate = (dateStr) => {
+        if (!dateStr) return null;
+        // Convert Arabic-Indic numerals (٠-٩) to Western numerals (0-9)
+        const normalized = dateStr.replace(/[٠-٩]/g, d => '٠١٢٣٤٥٦٧٨٩'.indexOf(d));
+        return normalized;
+      };
 
-      if (fromDate) {
-        // Start of day for fromDate
-        const from = new Date(fromDate);
-        from.setHours(0, 0, 0, 0);
-        query.dateRecorded.$gte = from;
-      }
+      const fromNorm = normalizeHijriDate(fromDateHijri);
+      const toNorm = normalizeHijriDate(toDateHijri);
 
-      if (toDate) {
-        // End of day for toDate
-        const to = new Date(toDate);
-        to.setHours(23, 59, 59, 999);
-        query.dateRecorded.$lte = to;
+      if (fromNorm || toNorm) {
+        query.dateRecordedHijri = {};
+
+        if (fromNorm) {
+          // Hijri dates are stored as YYYY/MM/DD strings - lexicographic comparison works
+          query.dateRecordedHijri.$gte = fromNorm;
+        }
+
+        if (toNorm) {
+          query.dateRecordedHijri.$lte = toNorm;
+        }
       }
     }
 
@@ -320,13 +329,13 @@ router.get('/browse', async (req, res) => {
       .lean();
 
     res.render('public/browse', {
-      title: 'جميع المحاضرات',
+      title: locale === 'ar' ? 'جميع المحاضرات' : 'All Lectures',
       lectures,
       search: search || '',
       category: category || '',
       sort: sort,
-      fromDate: fromDate || '',
-      toDate: toDate || ''
+      fromDateHijri: fromDateHijri || '',
+      toDateHijri: toDateHijri || ''
     });
   } catch (error) {
     console.error('Browse error:', error);
