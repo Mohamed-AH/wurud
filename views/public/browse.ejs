@@ -167,15 +167,15 @@
   }
 
   .pagination a:hover {
-    background: var(--primary);
-    color: white;
-    border-color: var(--primary);
+    background: var(--accent-gold);
+    color: var(--primary-dark);
+    border-color: var(--accent-gold);
   }
 
   .pagination .active {
-    background: var(--primary);
-    color: white;
-    border-color: var(--primary);
+    background: var(--accent-gold);
+    color: var(--primary-dark);
+    border-color: var(--accent-gold);
   }
 
   @media (max-width: 968px) {
@@ -195,8 +195,8 @@
 
 <div class="page-header">
   <div class="container">
-    <h1 class="page-title">جميع المحاضرات</h1>
-    <p class="page-subtitle">تصفح وابحث عن المحاضرات الإسلامية</p>
+    <h1 class="page-title"><%= locale === 'ar' ? 'جميع المحاضرات' : 'All Lectures' %></h1>
+    <p class="page-subtitle"><%= locale === 'ar' ? 'تصفح وابحث عن المحاضرات الإسلامية' : 'Browse and search Islamic lectures' %></p>
   </div>
 </div>
 
@@ -206,43 +206,52 @@
     <aside class="filters-sidebar">
       <form action="/browse" method="GET" id="filtersForm">
         <div class="filter-section">
-          <h3 class="filter-title">التصنيف</h3>
+          <h3 class="filter-title"><%= locale === 'ar' ? 'التصنيف' : 'Category' %></h3>
           <select name="category" class="filter-select">
-            <option value="">جميع التصنيفات</option>
-            <option value="Aqeedah" <%= category === 'Aqeedah' ? 'selected' : '' %>>العقيدة</option>
-            <option value="Fiqh" <%= category === 'Fiqh' ? 'selected' : '' %>>الفقه</option>
-            <option value="Tafsir" <%= category === 'Tafsir' ? 'selected' : '' %>>التفسير</option>
-            <option value="Hadith" <%= category === 'Hadith' ? 'selected' : '' %>>الحديث</option>
-            <option value="Seerah" <%= category === 'Seerah' ? 'selected' : '' %>>السيرة</option>
-            <option value="Akhlaq" <%= category === 'Akhlaq' ? 'selected' : '' %>>الأخلاق</option>
+            <option value=""><%= locale === 'ar' ? 'جميع التصنيفات' : 'All Categories' %></option>
+            <option value="Aqeedah" <%= category === 'Aqeedah' ? 'selected' : '' %>><%= locale === 'ar' ? 'العقيدة' : 'Aqeedah' %></option>
+            <option value="Fiqh" <%= category === 'Fiqh' ? 'selected' : '' %>><%= locale === 'ar' ? 'الفقه' : 'Fiqh' %></option>
+            <option value="Tafsir" <%= category === 'Tafsir' ? 'selected' : '' %>><%= locale === 'ar' ? 'التفسير' : 'Tafsir' %></option>
+            <option value="Hadith" <%= category === 'Hadith' ? 'selected' : '' %>><%= locale === 'ar' ? 'الحديث' : 'Hadith' %></option>
+            <option value="Seerah" <%= category === 'Seerah' ? 'selected' : '' %>><%= locale === 'ar' ? 'السيرة' : 'Seerah' %></option>
+            <option value="Akhlaq" <%= category === 'Akhlaq' ? 'selected' : '' %>><%= locale === 'ar' ? 'الأخلاق' : 'Akhlaq' %></option>
           </select>
         </div>
 
         <div class="filter-section">
-          <h3 class="filter-title">تاريخ التسجيل</h3>
-          <label style="font-size: 12px; color: var(--text-secondary); margin-bottom: 4px; display: block;">من تاريخ</label>
+          <h3 class="filter-title"><%= locale === 'ar' ? 'تاريخ التسجيل (هجري)' : 'Date Recorded (Hijri)' %></h3>
+          <label style="font-size: 12px; color: var(--text-secondary); margin-bottom: 4px; display: block;"><%= locale === 'ar' ? 'من تاريخ' : 'From Date' %></label>
           <input
-            type="date"
-            name="fromDate"
-            class="filter-select"
-            value="<%= fromDate %>"
+            type="text"
+            name="fromDateHijri"
+            class="filter-select hijri-input"
+            value="<%= typeof fromDateHijri !== 'undefined' ? fromDateHijri : '' %>"
+            placeholder="<%= locale === 'ar' ? '١٤٤٧/٠١/٠١' : '1447/01/01' %>"
             style="margin-bottom: 12px;"
+            pattern="[0-9٠-٩]{4}/[0-9٠-٩]{1,2}/[0-9٠-٩]{1,2}"
+            title="<%= locale === 'ar' ? 'أدخل التاريخ بصيغة: سنة/شهر/يوم' : 'Enter date as: YYYY/MM/DD' %>"
           >
-          <label style="font-size: 12px; color: var(--text-secondary); margin-bottom: 4px; display: block;">إلى تاريخ</label>
+          <label style="font-size: 12px; color: var(--text-secondary); margin-bottom: 4px; display: block;"><%= locale === 'ar' ? 'إلى تاريخ' : 'To Date' %></label>
           <input
-            type="date"
-            name="toDate"
-            class="filter-select"
-            value="<%= toDate %>"
+            type="text"
+            name="toDateHijri"
+            class="filter-select hijri-input"
+            value="<%= typeof toDateHijri !== 'undefined' ? toDateHijri : '' %>"
+            placeholder="<%= locale === 'ar' ? '١٤٤٧/١٢/٣٠' : '1447/12/30' %>"
+            pattern="[0-9٠-٩]{4}/[0-9٠-٩]{1,2}/[0-9٠-٩]{1,2}"
+            title="<%= locale === 'ar' ? 'أدخل التاريخ بصيغة: سنة/شهر/يوم' : 'Enter date as: YYYY/MM/DD' %>"
           >
+          <small style="font-size: 11px; color: var(--text-muted); display: block; margin-top: 8px;">
+            <%= locale === 'ar' ? 'صيغة التاريخ: سنة/شهر/يوم (مثال: 1447/07/15)' : 'Format: YYYY/MM/DD (e.g., 1447/07/15)' %>
+          </small>
         </div>
 
         <% if (typeof search !== 'undefined' && search) { %>
           <input type="hidden" name="search" value="<%= search %>">
         <% } %>
 
-        <button type="submit" class="filter-btn">تطبيق الفلتر</button>
-        <button type="button" class="clear-filters" onclick="window.location.href='/browse'">مسح الفلتر</button>
+        <button type="submit" class="filter-btn"><%= locale === 'ar' ? 'تطبيق الفلتر' : 'Apply Filter' %></button>
+        <button type="button" class="clear-filters" onclick="window.location.href='/browse'"><%= locale === 'ar' ? 'مسح الفلتر' : 'Clear Filter' %></button>
       </form>
     </aside>
 
@@ -250,9 +259,9 @@
     <main class="lectures-content">
       <div class="results-header">
         <span class="results-count">
-          <%= lectures.length %> محاضرة
+          <%= lectures.length %> <%= locale === 'ar' ? 'محاضرة' : 'lectures' %>
           <% if (typeof search !== 'undefined' && search) { %>
-            - نتائج البحث عن: "<%= search %>"
+            - <%= locale === 'ar' ? 'نتائج البحث عن:' : 'Search results for:' %> "<%= search %>"
           <% } %>
         </span>
       </div>
@@ -266,8 +275,8 @@
       <% } else { %>
         <div class="empty-state">
           <div class="empty-state-icon">🔍</div>
-          <h3>لم يتم العثور على محاضرات</h3>
-          <p>جرب تغيير معايير البحث أو الفلتر</p>
+          <h3><%= locale === 'ar' ? 'لم يتم العثور على محاضرات' : 'No lectures found' %></h3>
+          <p><%= locale === 'ar' ? 'جرب تغيير معايير البحث أو الفلتر' : 'Try changing your search or filter criteria' %></p>
         </div>
       <% } %>
     </main>

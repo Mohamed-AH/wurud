@@ -193,6 +193,13 @@
     display: flex;
     align-items: flex-start;
     gap: 16px;
+    padding: 12px;
+    border-radius: 12px;
+    transition: all 0.3s ease;
+  }
+
+  .lecture-item:hover {
+    background: rgba(193, 154, 107, 0.08);
   }
 
   .lecture-number-badge {
@@ -355,6 +362,8 @@
     background: var(--accent-gold);
     color: var(--primary-dark);
     border-color: var(--accent-gold);
+    font-weight: 700;
+    box-shadow: 0 2px 8px var(--shadow-warm);
   }
 
   .clear-sort-btn {
@@ -413,9 +422,9 @@
   <!-- Breadcrumb -->
   <nav class="breadcrumb">
     <div class="container">
-      <a href="/">الرئيسية</a>
+      <a href="/"><%= locale === 'ar' ? 'الرئيسية' : 'Home' %></a>
       <span class="separator">›</span>
-      <span class="current"><%= series.titleArabic %></span>
+      <span class="current"><%= locale === 'ar' ? series.titleArabic : (series.titleEnglish || series.titleArabic) %></span>
     </div>
   </nav>
 
@@ -423,12 +432,19 @@
   <div class="series-hero">
     <div class="container">
       <% if (series.category) { %>
-        <div class="series-category-badge"><%= series.category %></div>
+        <div class="series-category-badge"><%= translateCategory(series.category) %></div>
       <% } %>
 
-      <h1 class="series-title"><%= series.titleArabic %></h1>
-      <% if (series.titleEnglish) { %>
-        <h2 class="series-title-en"><%= series.titleEnglish %></h2>
+      <% if (locale === 'ar') { %>
+        <h1 class="series-title"><%= series.titleArabic %></h1>
+        <% if (series.titleEnglish) { %>
+          <h2 class="series-title-en"><%= series.titleEnglish %></h2>
+        <% } %>
+      <% } else { %>
+        <h1 class="series-title"><%= series.titleEnglish || series.titleArabic %></h1>
+        <% if (series.titleEnglish && series.titleArabic !== series.titleEnglish) { %>
+          <h2 class="series-title-en"><%= series.titleArabic %></h2>
+        <% } %>
       <% } %>
 
       <!-- Sheikh Info -->
@@ -438,9 +454,9 @@
             <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
             <circle cx="12" cy="7" r="4"></circle>
           </svg>
-          <a href="/sheikhs/<%= series.sheikhId.slug ? encodeURIComponent(series.sheikhId.slug) : series.sheikhId._id %>">
-            <%= series.sheikhId.nameArabic %>
-            <% if (series.sheikhId.honorific) { %>
+          <a href="/sheikhs/<%= series.sheikhId.shortId ? series.sheikhId.shortId + '/' + (series.sheikhId.slug_en || '') + '/' + encodeURIComponent(series.sheikhId.slug_ar || '') : (series.sheikhId.slug ? encodeURIComponent(series.sheikhId.slug) : series.sheikhId._id) %>">
+            <%= locale === 'ar' ? series.sheikhId.nameArabic : (series.sheikhId.nameEnglish || series.sheikhId.nameArabic) %>
+            <% if (locale === 'ar' && series.sheikhId.honorific) { %>
               <span class="honorific"><%= series.sheikhId.honorific %></span>
             <% } %>
           </a>
@@ -462,7 +478,7 @@
           </div>
           <div class="stat-content">
             <div class="stat-value"><%= stats.totalLectures %></div>
-            <div class="stat-label">محاضرة</div>
+            <div class="stat-label"><%= locale === 'ar' ? 'محاضرة' : 'Lectures' %></div>
           </div>
         </div>
 
@@ -474,8 +490,8 @@
             </svg>
           </div>
           <div class="stat-content">
-            <div class="stat-value"><%= stats.totalPlays.toLocaleString('ar-SA') %></div>
-            <div class="stat-label">استماع</div>
+            <div class="stat-value"><%= locale === 'ar' ? stats.totalPlays.toLocaleString('ar-SA') : stats.totalPlays.toLocaleString('en-US') %></div>
+            <div class="stat-label"><%= locale === 'ar' ? 'استماع' : 'Plays' %></div>
           </div>
         </div>
 
@@ -488,7 +504,7 @@
           </div>
           <div class="stat-content">
             <div class="stat-value"><%= Math.floor(stats.totalDuration / 3600) %></div>
-            <div class="stat-label">ساعة محتوى</div>
+            <div class="stat-label"><%= locale === 'ar' ? 'ساعة محتوى' : 'Hours' %></div>
           </div>
         </div>
 
@@ -502,7 +518,7 @@
             </div>
             <div class="stat-content">
               <div class="stat-value"><%= Math.round((stats.completeLectures / stats.totalLectures) * 100) %>%</div>
-              <div class="stat-label">مرقمة</div>
+              <div class="stat-label"><%= locale === 'ar' ? 'مرقمة' : 'Numbered' %></div>
             </div>
           </div>
         <% } %>
@@ -537,10 +553,10 @@
   <% if (relatedKhutbaSeries && relatedKhutbaSeries.length > 0) { %>
     <div class="content-section">
       <div class="container">
-        <h2 class="section-title">سلاسل الخطب</h2>
+        <h2 class="section-title"><%= locale === 'ar' ? 'سلاسل الخطب' : 'Khutbah Series' %></h2>
         <div class="series-grid">
           <% relatedKhutbaSeries.forEach(relSeries => { %>
-            <a href="/series/<%= relSeries.slug ? encodeURIComponent(relSeries.slug) : relSeries._id %>" class="series-card">
+            <a href="/series/<%= relSeries.shortId ? relSeries.shortId + '/' + (relSeries.slug_en || '') + '/' + encodeURIComponent(relSeries.slug_ar || '') : (relSeries.slug ? encodeURIComponent(relSeries.slug) : relSeries._id) %>" class="series-card">
               <div class="series-icon">
                 <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                   <path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"></path>
@@ -548,15 +564,17 @@
                 </svg>
               </div>
               <div class="series-content">
-                <h3 class="series-title"><%= relSeries.titleArabic %></h3>
-                <% if (relSeries.titleEnglish && relSeries.titleEnglish !== relSeries.titleArabic) { %>
+                <h3 class="series-title"><%= locale === 'ar' ? relSeries.titleArabic : (relSeries.titleEnglish || relSeries.titleArabic) %></h3>
+                <% if (locale === 'en' && relSeries.titleEnglish && relSeries.titleArabic !== relSeries.titleEnglish) { %>
+                  <p class="series-title-en"><%= relSeries.titleArabic %></p>
+                <% } else if (locale === 'ar' && relSeries.titleEnglish && relSeries.titleEnglish !== relSeries.titleArabic) { %>
                   <p class="series-title-en"><%= relSeries.titleEnglish %></p>
                 <% } %>
                 <div class="series-meta">
                   <% if (relSeries.category) { %>
-                    <span class="series-category"><%= relSeries.category %></span>
+                    <span class="series-category"><%= translateCategory(relSeries.category) %></span>
                   <% } %>
-                  <span class="series-count"><%= relSeries.actualLectureCount || 0 %> محاضرة</span>
+                  <span class="series-count"><%= relSeries.actualLectureCount || 0 %> <%= locale === 'ar' ? 'محاضرة' : 'lectures' %></span>
                 </div>
               </div>
             </a>
@@ -569,28 +587,28 @@
   <!-- Lectures Section -->
   <div class="content-section">
     <div class="container">
-      <h2 class="section-title"><%= relatedKhutbaSeries && relatedKhutbaSeries.length > 0 ? 'خطب متفرقة' : 'محاضرات السلسلة' %> (<%= lectures.length %>)</h2>
+      <h2 class="section-title"><%= relatedKhutbaSeries && relatedKhutbaSeries.length > 0 ? (locale === 'ar' ? 'خطب متفرقة' : 'Miscellaneous Khutbahs') : (locale === 'ar' ? 'محاضرات السلسلة' : 'Series Lectures') %> (<%= lectures.length %>)</h2>
 
       <% if (lectures && lectures.length > 0) { %>
         <!-- Sort Controls -->
         <div class="sort-controls">
-          <span class="sort-label">ترتيب:</span>
+          <span class="sort-label"><%= locale === 'ar' ? 'ترتيب:' : 'Sort:' %></span>
           <div class="sort-chips">
             <button class="sort-chip active" data-sort="order" onclick="sortLectures('order')">
-              الترتيب الأصلي
+              <%= locale === 'ar' ? 'الترتيب الأصلي' : 'Original Order' %>
             </button>
             <button class="sort-chip" data-sort="number" onclick="sortLectures('number')">
-              حسب الرقم
+              <%= locale === 'ar' ? 'حسب الرقم' : 'By Number' %>
             </button>
             <button class="sort-chip" data-sort="oldest" onclick="sortLectures('oldest')">
-              الأقدم أولاً
+              <%= locale === 'ar' ? 'الأقدم أولاً' : 'Oldest First' %>
             </button>
             <button class="sort-chip" data-sort="newest" onclick="sortLectures('newest')">
-              الأحدث أولاً
+              <%= locale === 'ar' ? 'الأحدث أولاً' : 'Newest First' %>
             </button>
           </div>
           <button class="clear-sort-btn" onclick="clearSort()" id="clearSortBtn" style="display: none;">
-            مسح ✕
+            <%= locale === 'ar' ? 'مسح' : 'Clear' %> ✕
           </button>
         </div>
 
@@ -615,7 +633,7 @@
       <% } else { %>
         <div class="empty-state">
           <div class="empty-icon">📚</div>
-          <h3>لا توجد محاضرات في هذه السلسلة حالياً</h3>
+          <h3><%= locale === 'ar' ? 'لا توجد محاضرات في هذه السلسلة حالياً' : 'No lectures in this series currently' %></h3>
         </div>
       <% } %>
     </div>

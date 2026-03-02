@@ -379,6 +379,13 @@
       verified: isArabic ? '✓ تم التحقق من الملف في السحابة' : '✓ File verified in cloud'
     };
 
+    // Escape HTML to prevent XSS
+    function escapeHtml(text) {
+      const div = document.createElement('div');
+      div.textContent = text || '';
+      return div.innerHTML;
+    }
+
     function handleFileSelect(input) {
       const file = input.files[0];
       const fileInfo = document.getElementById('fileInfo');
@@ -472,9 +479,9 @@
 
             resultDiv.innerHTML = `
               <div style="padding: 16px; background: #e8f5e9; border-radius: 8px; color: #2e7d32;">
-                <p style="margin: 0;">✓ ${response.message}</p>
+                <p style="margin: 0;">✓ ${escapeHtml(response.message)}</p>
                 <p style="margin: 8px 0 0; font-size: 14px;">
-                  <strong>${msgs.fileName}</strong> ${response.audioFileName}<br>
+                  <strong>${msgs.fileName}</strong> ${escapeHtml(response.audioFileName)}<br>
                   <strong>${msgs.size}</strong> ${(response.fileSize / (1024 * 1024)).toFixed(2)} MB
                   ${response.verified ? '<br><span style="color: #1A5F5A;">' + msgs.verified + '</span>' : ''}
                 </p>
@@ -535,7 +542,7 @@
 
       resultDiv.innerHTML = `
         <div style="padding: 16px; background: #ffebee; border-radius: 8px; color: #c62828;">
-          <p style="margin: 0;">✗ ${message}</p>
+          <p style="margin: 0;">✗ ${escapeHtml(message)}</p>
         </div>
       `;
       resultDiv.style.display = 'block';
@@ -546,10 +553,10 @@
       statusDiv.style.background = '#e8f5e9';
       statusDiv.innerHTML = `
         <p style="margin: 0; color: #2e7d32;">
-          ${msgs.audioAvailable} <strong id="currentFileName">${fileName}</strong>
+          ${msgs.audioAvailable} <strong id="currentFileName">${escapeHtml(fileName)}</strong>
         </p>
         <audio id="currentAudio" controls style="width: 100%; margin-top: 12px;">
-          <source src="${audioUrl}" type="audio/mp4">
+          <source src="${escapeHtml(audioUrl)}" type="audio/mp4">
         </audio>
         <p style="font-size: 12px; color: #666; margin-top: 8px;">
           ${msgs.duration} <span id="currentDuration">${msgs.calculating}</span>

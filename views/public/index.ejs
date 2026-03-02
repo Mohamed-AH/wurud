@@ -178,10 +178,11 @@
   }
 
   .chip.active {
-    background: #C19A6B;
-    color: #2C1810;
-    font-weight: 600;
-    box-shadow: 0 4px 8px rgba(92, 64, 51, 0.15);
+    background: var(--accent-gold);
+    color: var(--primary-dark);
+    font-weight: 700;
+    border-color: var(--accent-gold);
+    box-shadow: 0 4px 12px var(--shadow-warm);
   }
 
   .clear-filters-btn {
@@ -984,7 +985,7 @@
 
   .new-badge {
     display: inline-block;
-    background: linear-gradient(135deg, #4CAF50, #45a049);
+    background: var(--sage);
     color: white;
     font-size: 10px;
     font-weight: 700;
@@ -1369,16 +1370,50 @@
   const inPersonSchedule = weeklySchedule.filter(item => !item.location.includes('بُعد') && !item.location.includes('بعد'));
   const onlineSchedule = weeklySchedule.filter(item => item.location.includes('بُعد') || item.location.includes('بعد'));
 
-  // Day abbreviations for mobile
-  const dayShort = {
+  // Day translations - Arabic to English
+  const dayTranslations = {
+    'يومي': 'Daily', 'السبت': 'Saturday', 'الأحد': 'Sunday', 'الاثنين': 'Monday',
+    'الثلاثاء': 'Tuesday', 'الأربعاء': 'Wednesday', 'الخميس': 'Thursday', 'الجمعة': 'Friday'
+  };
+
+  // Day abbreviations for mobile (Arabic)
+  const dayShortAr = {
     'يومي': 'يومي', 'السبت': 'سبت', 'الأحد': 'أحد', 'الاثنين': 'إثن', 'الثلاثاء': 'ثلا',
     'الأربعاء': 'أرب', 'الخميس': 'خمي', 'الجمعة': 'جمع'
   };
 
+  // Day abbreviations for mobile (English)
+  const dayShortEn = {
+    'يومي': 'Daily', 'السبت': 'Sat', 'الأحد': 'Sun', 'الاثنين': 'Mon',
+    'الثلاثاء': 'Tue', 'الأربعاء': 'Wed', 'الخميس': 'Thu', 'الجمعة': 'Fri'
+  };
+
+  // Time translations for English
+  const translateTime = (time) => {
+    if (locale === 'en') {
+      return time
+        .replace('بعد صلاة الفجر', 'After Fajr')
+        .replace('بعد صلاة الظهر', 'After Dhuhr')
+        .replace('بعد صلاة العصر', 'After Asr')
+        .replace('بعد صلاة المغرب', 'After Maghrib')
+        .replace('بعد صلاة العشاء', 'After Isha')
+        .replace('خطبة الجمعة', 'Friday Khutbah')
+        .replace('الساعة ', '');
+    }
+    return time;
+  };
+
   // Time abbreviations
   const timeShort = (time) => {
+    if (locale === 'en') {
+      return translateTime(time);
+    }
     return time.replace('بعد صلاة ', '').replace('الساعة ', '').replace('خطبة ', '');
   };
+
+  // Get day for display
+  const getDay = (day) => locale === 'en' ? (dayTranslations[day] || day) : day;
+  const getDayShort = (day) => locale === 'en' ? (dayShortEn[day] || day) : (dayShortAr[day] || day);
 %>
 <section class="weekly-schedule-section">
   <div class="schedule-header">
@@ -1415,11 +1450,11 @@
           <% inPersonSchedule.forEach(function(item) { %>
           <tr>
             <td class="schedule-day-cell">
-              <span class="day-full"><%= item.dayOfWeek %></span>
-              <span class="day-short"><%= dayShort[item.dayOfWeek] || item.dayOfWeek %></span>
+              <span class="day-full"><%= getDay(item.dayOfWeek) %></span>
+              <span class="day-short"><%= getDayShort(item.dayOfWeek) %></span>
             </td>
             <td class="schedule-time-cell">
-              <span class="time-full"><%= item.time %></span>
+              <span class="time-full"><%= translateTime(item.time) %></span>
               <span class="time-short"><%= timeShort(item.time) %></span>
             </td>
             <td class="schedule-series-cell">
@@ -1468,11 +1503,11 @@
           <% onlineSchedule.forEach(function(item) { %>
           <tr>
             <td class="schedule-day-cell">
-              <span class="day-full"><%= item.dayOfWeek %></span>
-              <span class="day-short"><%= dayShort[item.dayOfWeek] || item.dayOfWeek %></span>
+              <span class="day-full"><%= getDay(item.dayOfWeek) %></span>
+              <span class="day-short"><%= getDayShort(item.dayOfWeek) %></span>
             </td>
             <td class="schedule-time-cell">
-              <span class="time-full"><%= item.time %></span>
+              <span class="time-full"><%= translateTime(item.time) %></span>
               <span class="time-short"><%= timeShort(item.time) %></span>
             </td>
             <td class="schedule-series-cell">
@@ -1539,14 +1574,14 @@ function switchScheduleTab(tab) {
         <% visibleSeries.forEach(function(s) { %>
         <tr>
           <td style="width:60%">
-            <a href="/series/<%= s.slug %>" class="section-series-title"><%= s.titleArabic %></a>
-            <% if (s.titleEnglish) { %>
-              <div class="section-series-subtitle"><%= s.titleEnglish %></div>
+            <a href="/series/<%= s.slug %>" class="section-series-title"><%= locale === 'ar' ? s.titleArabic : (s.titleEnglish || s.titleArabic) %></a>
+            <% if (locale === 'en' && s.titleArabic) { %>
+              <div class="section-series-subtitle"><%= s.titleArabic %></div>
             <% } %>
           </td>
           <td class="hide-mobile" style="width:20%">
             <% if (s.sheikh) { %>
-              <span style="color:#666;font-size:14px;"><%= s.sheikh.nameArabic %></span>
+              <span style="color:#666;font-size:14px;"><%= locale === 'ar' ? s.sheikh.nameArabic : (s.sheikh.nameEnglish || s.sheikh.nameArabic) %></span>
             <% } %>
           </td>
           <td style="width:10%;text-align:center;">
@@ -1560,14 +1595,14 @@ function switchScheduleTab(tab) {
         <% hiddenSeries.forEach(function(s) { %>
         <tr class="section-hidden-row" data-section="<%= section.slug %>" style="display:none;">
           <td style="width:60%">
-            <a href="/series/<%= s.slug %>" class="section-series-title"><%= s.titleArabic %></a>
-            <% if (s.titleEnglish) { %>
-              <div class="section-series-subtitle"><%= s.titleEnglish %></div>
+            <a href="/series/<%= s.slug %>" class="section-series-title"><%= locale === 'ar' ? s.titleArabic : (s.titleEnglish || s.titleArabic) %></a>
+            <% if (locale === 'en' && s.titleArabic) { %>
+              <div class="section-series-subtitle"><%= s.titleArabic %></div>
             <% } %>
           </td>
           <td class="hide-mobile" style="width:20%">
             <% if (s.sheikh) { %>
-              <span style="color:#666;font-size:14px;"><%= s.sheikh.nameArabic %></span>
+              <span style="color:#666;font-size:14px;"><%= locale === 'ar' ? s.sheikh.nameArabic : (s.sheikh.nameEnglish || s.sheikh.nameArabic) %></span>
             <% } %>
           </td>
           <td style="width:10%;text-align:center;">
@@ -1644,17 +1679,17 @@ function showMoreSeries(slug) {
   <div class="nav-tabs-container">
     <% if (showSeriesTab) { %>
     <button class="nav-tab active" id="tab-series">
-      📚 السلاسل
+      📚 <%= locale === 'ar' ? 'السلاسل' : 'Series' %>
     </button>
     <% } %>
     <% if (showStandaloneTab) { %>
     <button class="nav-tab" id="tab-lectures">
-      🎙️ المحاضرات
+      🎙️ <%= locale === 'ar' ? 'المحاضرات' : 'Standalone' %>
     </button>
     <% } %>
     <% if (showKhutbasTab) { %>
     <button class="nav-tab" id="tab-khutbas">
-      🕌 الخطب
+      🕌 <%= locale === 'ar' ? 'الخطب' : 'Khutbahs' %>
     </button>
     <% } %>
   </div>
@@ -1663,67 +1698,67 @@ function showMoreSeries(slug) {
 <!-- Filters -->
 <div class="filters-section">
   <div class="filter-group">
-    <span class="filter-label">التصنيف:</span>
+    <span class="filter-label"><%= locale === 'ar' ? 'التصنيف:' : 'Category:' %></span>
     <div class="filter-chips">
       <button class="chip active" data-filter="all" data-type="category">
-        الكل
+        <%= locale === 'ar' ? 'الكل' : 'All' %>
       </button>
       <button class="chip" data-filter="Fiqh" data-type="category">
-        الفقه
+        <%= locale === 'ar' ? 'الفقه' : 'Fiqh' %>
       </button>
       <button class="chip" data-filter="Aqeedah" data-type="category">
-        العقيدة
+        <%= locale === 'ar' ? 'العقيدة' : 'Aqeedah' %>
       </button>
       <button class="chip" data-filter="Tafsir" data-type="category">
-        التفسير
+        <%= locale === 'ar' ? 'التفسير' : 'Tafsir' %>
       </button>
       <button class="chip" data-filter="Hadith" data-type="category">
-        الحديث
+        <%= locale === 'ar' ? 'الحديث' : 'Hadith' %>
       </button>
       <button class="chip" data-filter="Seerah" data-type="category">
-        السيرة
+        <%= locale === 'ar' ? 'السيرة' : 'Seerah' %>
       </button>
       <button class="chip" data-filter="Other" data-type="category">
-        أخرى
+        <%= locale === 'ar' ? 'أخرى' : 'Other' %>
       </button>
     </div>
   </div>
 
   <div class="filter-group">
-    <span class="filter-label">النوع:</span>
+    <span class="filter-label"><%= locale === 'ar' ? 'النوع:' : 'Type:' %></span>
     <div class="filter-chips">
       <button class="chip active" data-filter="all" data-type="seriesType">
-        الكل
+        <%= locale === 'ar' ? 'الكل' : 'All' %>
       </button>
       <button class="chip" data-filter="online" data-type="seriesType">
-        عن بعد
+        <%= locale === 'ar' ? 'عن بعد' : 'Online' %>
       </button>
       <button class="chip" data-filter="archive-ramadan" data-type="seriesType">
-        أرشيف رمضان
+        <%= locale === 'ar' ? 'أرشيف رمضان' : 'Ramadan Archive' %>
       </button>
       <button class="chip" data-filter="archive" data-type="seriesType">
-        أرشيف
+        <%= locale === 'ar' ? 'أرشيف' : 'Archive' %>
       </button>
       <button class="chip" data-filter="masjid" data-type="seriesType">
-        جامع الورود
+        <%= locale === 'ar' ? 'جامع الورود' : 'Masjid Al-Wurud' %>
       </button>
     </div>
   </div>
 
   <div class="filter-group">
-    <span class="filter-label">الترتيب:</span>
+    <span class="filter-label"><%= locale === 'ar' ? 'الترتيب:' : 'Sort:' %></span>
     <div class="filter-chips">
       <button class="chip active" data-sort="newest">
-        الأحدث أولاً
+        <%= locale === 'ar' ? 'الأحدث أولاً' : 'Newest First' %>
       </button>
       <button class="chip" data-sort="oldest">
-        الأقدم أولاً
+        <%= locale === 'ar' ? 'الأقدم أولاً' : 'Oldest First' %>
       </button>
     </div>
   </div>
 
   <button class="clear-filters-btn" id="clearFiltersBtn" style="display: none;">
-    مسح الفلاتر ✕
+    <%= locale === 'ar' ? 'مسح الفلاتر ✕' : 'Clear Filters ✕' %>
   </button>
 </div>
 
@@ -1810,56 +1845,45 @@ function showMoreSeries(slug) {
     %>
       <div class="series-card" data-category="<%= series.category %>" data-date="<%= latestDate %>" data-hijri="<%= hijriDate %>" data-series-type="<%= seriesType %>">
         <div class="series-header" onclick="toggleSeries('<%= series._id %>')">
-          <h2 class="series-title"><%= series.titleArabic %></h2>
+          <h2 class="series-title"><%= locale === 'ar' ? series.titleArabic : (series.titleEnglish || series.titleArabic) %></h2>
 
           <div class="series-meta">
             <% if (series.originalAuthor) { %>
               <div class="series-author">
-                <span class="series-author-label">المؤلف:</span>
+                <span class="series-author-label"><%= locale === 'ar' ? 'المؤلف:' : 'Author:' %></span>
                 <%= series.originalAuthor %>
               </div>
             <% } %>
             <div class="series-sheikh">
-              الشيخ:
-              <%= series.sheikh ? series.sheikh.nameArabic : '' %>
+              <%= locale === 'ar' ? 'الشيخ:' : 'Sheikh:' %>
+              <%= series.sheikh ? (locale === 'ar' ? series.sheikh.nameArabic : (series.sheikh.nameEnglish || series.sheikh.nameArabic)) : '' %>
             </div>
           </div>
 
           <div class="series-info">
-            <span><%= series.lectureCount %> درس</span>
+            <span><%= series.lectureCount %> <%= locale === 'ar' ? 'درس' : 'lessons' %></span>
             <span class="category-badge">
-              <%
-                const categoryArabic = {
-                  'Tafsir': 'تفسير',
-                  'Hadith': 'حديث',
-                  'Fiqh': 'فقه',
-                  'Aqeedah': 'عقيدة',
-                  'Seerah': 'سيرة',
-                  'Akhlaq': 'أخلاق',
-                  'Other': 'أخرى'
-                };
-              %>
-              <%= categoryArabic[series.category] || series.category || 'أخرى' %>
+              <%= translateCategory(series.category) %>
             </span>
           </div>
 
           <button class="expand-btn" id="btn-<%= series._id %>">
-            عرض الدروس ▼
+            <%= locale === 'ar' ? 'عرض الدروس ▼' : 'Show Lessons ▼' %>
           </button>
         </div>
 
         <div class="episodes-list" id="episodes-<%= series._id %>">
           <!-- Sort controls for lectures within this series -->
           <div style="padding: 12px; background: #f8f9fa; border-bottom: 1px solid #e9ecef; display: flex; gap: 8px; align-items: center;">
-            <span style="font-size: 13px; font-weight: 600; color: #666;">ترتيب الدروس:</span>
+            <span style="font-size: 13px; font-weight: 600; color: #666;"><%= locale === 'ar' ? 'ترتيب الدروس:' : 'Sort:' %></span>
             <button class="chip" onclick="sortSeriesLectures('<%= series._id %>', 'number'); event.stopPropagation();" style="padding: 4px 12px; font-size: 12px;">
-              حسب الرقم
+              <%= locale === 'ar' ? 'حسب الرقم' : 'By Number' %>
             </button>
             <button class="chip" onclick="sortSeriesLectures('<%= series._id %>', 'oldest'); event.stopPropagation();" style="padding: 4px 12px; font-size: 12px;">
-              الأقدم أولاً
+              <%= locale === 'ar' ? 'الأقدم أولاً' : 'Oldest First' %>
             </button>
             <button class="chip" onclick="sortSeriesLectures('<%= series._id %>', 'newest'); event.stopPropagation();" style="padding: 4px 12px; font-size: 12px;">
-              الأحدث أولاً
+              <%= locale === 'ar' ? 'الأحدث أولاً' : 'Newest First' %>
             </button>
           </div>
 
@@ -1869,7 +1893,7 @@ function showMoreSeries(slug) {
               <div class="episode-header">
                 <div class="episode-number"><%= index + 1 %></div>
                 <div class="episode-title">
-                  <%= lecture.titleArabic %>
+                  <%= locale === 'ar' ? lecture.titleArabic : (lecture.titleEnglish || lecture.titleArabic) %>
                 </div>
               </div>
               <div class="episode-meta">
@@ -1901,10 +1925,10 @@ function showMoreSeries(slug) {
     <div class="empty-state">
       <div class="empty-icon">📚</div>
       <h3 class="empty-title">
-        لا توجد محاضرات
+        <%= locale === 'ar' ? 'لا توجد محاضرات' : 'No lectures found' %>
       </h3>
       <p class="empty-text">
-        جرب بحثاً آخر
+        <%= locale === 'ar' ? 'جرب بحثاً آخر' : 'Try another search' %>
       </p>
     </div>
   <% } %>
@@ -1930,10 +1954,10 @@ function showMoreSeries(slug) {
       %>
         <div class="series-card" data-date="<%= lectureDate %>" data-hijri="<%= hijriDate %>">
           <div class="series-header">
-            <h2 class="series-title"><%= lecture.titleArabic %></h2>
+            <h2 class="series-title"><%= locale === 'ar' ? lecture.titleArabic : (lecture.titleEnglish || lecture.titleArabic) %></h2>
             <div class="series-meta">
               <div class="series-sheikh">
-                الشيخ: <%= lecture.sheikhId ? lecture.sheikhId.nameArabic : '' %>
+                <%= locale === 'ar' ? 'الشيخ:' : 'Sheikh:' %> <%= lecture.sheikhId ? (locale === 'ar' ? lecture.sheikhId.nameArabic : (lecture.sheikhId.nameEnglish || lecture.sheikhId.nameArabic)) : '' %>
               </div>
             </div>
             <div class="series-info">
@@ -1947,10 +1971,10 @@ function showMoreSeries(slug) {
             <div class="episode-actions" style="margin-top: 16px;">
               <% if (lecture.audioFileName) { %>
                 <button class="btn-play" onclick="playAudio('<%= lecture._id %>', '<%= lecture.titleArabic.replace(/'/g, "\\'") %>', '<%= lecture.sheikhId ? lecture.sheikhId.nameArabic.replace(/'/g, "\\'") : "" %>')">
-                  ▶ تشغيل
+                  ▶ <%= locale === 'ar' ? 'تشغيل' : 'Play' %>
                 </button>
                 <a href="/download/<%= lecture._id %>" class="btn-download">
-                  ⬇ تحميل
+                  ⬇ <%= locale === 'ar' ? 'تحميل' : 'Download' %>
                 </a>
               <% } %>
             </div>
@@ -1960,7 +1984,7 @@ function showMoreSeries(slug) {
     <% } else { %>
       <div class="empty-state">
         <div class="empty-icon">🎙️</div>
-        <h3 class="empty-title">لا توجد محاضرات منفصلة</h3>
+        <h3 class="empty-title"><%= locale === 'ar' ? 'لا توجد محاضرات منفصلة' : 'No standalone lectures' %></h3>
       </div>
     <% } %>
   </div>
@@ -2013,31 +2037,31 @@ function showMoreSeries(slug) {
       %>
         <div class="series-card" data-category="<%= series.category %>" data-date="<%= latestDate %>" data-hijri="<%= hijriDate %>">
           <div class="series-header" onclick="toggleKhutba('<%= series._id %>')">
-            <h2 class="series-title"><%= series.titleArabic %></h2>
+            <h2 class="series-title"><%= locale === 'ar' ? series.titleArabic : (series.titleEnglish || series.titleArabic) %></h2>
             <div class="series-meta">
               <div class="series-sheikh">
-                الشيخ: <%= series.sheikh ? series.sheikh.nameArabic : '' %>
+                <%= locale === 'ar' ? 'الشيخ:' : 'Sheikh:' %> <%= series.sheikh ? (locale === 'ar' ? series.sheikh.nameArabic : (series.sheikh.nameEnglish || series.sheikh.nameArabic)) : '' %>
               </div>
             </div>
             <div class="series-info">
-              <span><%= series.lectureCount %> خطبة</span>
+              <span><%= series.lectureCount %> <%= locale === 'ar' ? 'خطبة' : 'khutbahs' %></span>
             </div>
             <button class="expand-btn" id="khutba-btn-<%= series._id %>">
-              عرض الخطب ▼
+              <%= locale === 'ar' ? 'عرض الخطب ▼' : 'Show Khutbahs ▼' %>
             </button>
           </div>
           <div class="episodes-list" id="khutba-episodes-<%= series._id %>">
             <!-- Sort controls for khutbas within this series -->
             <div style="padding: 12px; background: #f8f9fa; border-bottom: 1px solid #e9ecef; display: flex; gap: 8px; align-items: center;">
-              <span style="font-size: 13px; font-weight: 600; color: #666;">ترتيب الخطب:</span>
+              <span style="font-size: 13px; font-weight: 600; color: #666;"><%= locale === 'ar' ? 'ترتيب الخطب:' : 'Sort:' %></span>
               <button class="chip" onclick="sortSeriesLectures('khutba-<%= series._id %>', 'number'); event.stopPropagation();" style="padding: 4px 12px; font-size: 12px;">
-                حسب الرقم
+                <%= locale === 'ar' ? 'حسب الرقم' : 'By Number' %>
               </button>
               <button class="chip" onclick="sortSeriesLectures('khutba-<%= series._id %>', 'oldest'); event.stopPropagation();" style="padding: 4px 12px; font-size: 12px;">
-                الأقدم أولاً
+                <%= locale === 'ar' ? 'الأقدم أولاً' : 'Oldest First' %>
               </button>
               <button class="chip" onclick="sortSeriesLectures('khutba-<%= series._id %>', 'newest'); event.stopPropagation();" style="padding: 4px 12px; font-size: 12px;">
-                الأحدث أولاً
+                <%= locale === 'ar' ? 'الأحدث أولاً' : 'Newest First' %>
               </button>
             </div>
 
@@ -2047,7 +2071,7 @@ function showMoreSeries(slug) {
                 <div class="episode-item" data-lecture-number="<%= index + 1 %>" data-date="<%= lecture.dateRecorded ? new Date(lecture.dateRecorded).getTime() : 0 %>">
                   <div class="episode-header">
                     <div class="episode-number"><%= index + 1 %></div>
-                    <div class="episode-title"><%= lecture.titleArabic %></div>
+                    <div class="episode-title"><%= locale === 'ar' ? lecture.titleArabic : (lecture.titleEnglish || lecture.titleArabic) %></div>
                   </div>
                   <div class="episode-meta">
                     <% if (lecture.duration && lecture.duration > 0) { %>
@@ -2088,6 +2112,9 @@ function showMoreSeries(slug) {
 <% } %><!-- end anyTabVisible -->
 
 <script>
+  // Locale for JavaScript
+  const currentLocale = '<%= locale %>';
+
   // Toggle series expansion
   function toggleSeries(seriesId) {
     const episodesList = document.getElementById('episodes-' + seriesId);
@@ -2099,9 +2126,9 @@ function showMoreSeries(slug) {
     btn.classList.toggle('expanded');
 
     if (episodesList.classList.contains('show')) {
-      btn.textContent = 'إخفاء الدروس ▲';
+      btn.textContent = currentLocale === 'ar' ? 'إخفاء الدروس ▲' : 'Hide Lessons ▲';
     } else {
-      btn.textContent = 'عرض الدروس ▼';
+      btn.textContent = currentLocale === 'ar' ? 'عرض الدروس ▼' : 'Show Lessons ▼';
     }
   }
 
@@ -2116,9 +2143,9 @@ function showMoreSeries(slug) {
     btn.classList.toggle('expanded');
 
     if (episodesList.classList.contains('show')) {
-      btn.textContent = 'إخفاء الخطب ▲';
+      btn.textContent = currentLocale === 'ar' ? 'إخفاء الخطب ▲' : 'Hide Khutbahs ▲';
     } else {
-      btn.textContent = 'عرض الخطب ▼';
+      btn.textContent = currentLocale === 'ar' ? 'عرض الخطب ▼' : 'Show Khutbahs ▼';
     }
   }
 
@@ -2131,7 +2158,7 @@ function showMoreSeries(slug) {
         sheikh: sheikh || ''
       });
     } else {
-      alert('جاري تحميل المشغل، يرجى المحاولة مرة أخرى.');
+      alert(currentLocale === 'ar' ? 'جاري تحميل المشغل، يرجى المحاولة مرة أخرى.' : 'Loading audio player, please try again.');
     }
   }
 

@@ -371,6 +371,13 @@
       errorLoading: '<%= adminLocale === "ar" ? "خطأ في تحميل المحاضرات" : "Error loading lectures" %>'
     };
 
+    // Escape HTML to prevent XSS
+    function escapeHtml(text) {
+      const div = document.createElement('div');
+      div.textContent = text || '';
+      return div.innerHTML;
+    }
+
     // Load statistics and lectures
     async function loadData() {
       try {
@@ -430,9 +437,9 @@
 
       tbody.innerHTML = lectures.map(lecture => `
         <tr>
-          <td>${lecture.titleArabic || '-'}</td>
-          <td>${lecture.sheikhId?.nameArabic || '-'}</td>
-          <td>${lecture.seriesId?.titleArabic || '-'}</td>
+          <td>${escapeHtml(lecture.titleArabic) || '-'}</td>
+          <td>${escapeHtml(lecture.sheikhId?.nameArabic) || '-'}</td>
+          <td>${escapeHtml(lecture.seriesId?.titleArabic) || '-'}</td>
           <td>
             <span class="status-badge status-missing">${msgs.missingAudio}</span>
           </td>
@@ -506,14 +513,14 @@
         return `
           <div class="match-item ${matchedLecture ? 'matched' : ''}" data-index="${index}">
             <div>
-              <div class="file-name">${file.name}</div>
+              <div class="file-name">${escapeHtml(file.name)}</div>
               <div style="font-size: 12px; color: #999;">${(file.size / (1024 * 1024)).toFixed(2)} MB</div>
             </div>
             <select class="lecture-select" data-file-index="${index}">
               <option value="">${msgs.selectLecture}</option>
               ${lecturesWithoutAudio.map(lecture => `
-                <option value="${lecture._id}" ${matchedLecture && matchedLecture._id === lecture._id ? 'selected' : ''}>
-                  ${lecture.titleArabic} - ${lecture.sheikhId?.nameArabic || ''}
+                <option value="${escapeHtml(lecture._id)}" ${matchedLecture && matchedLecture._id === lecture._id ? 'selected' : ''}>
+                  ${escapeHtml(lecture.titleArabic)} - ${escapeHtml(lecture.sheikhId?.nameArabic) || ''}
                 </option>
               `).join('')}
             </select>

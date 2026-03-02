@@ -1,6 +1,14 @@
 const mongoose = require('mongoose');
+const Counter = require('./Counter');
+const { generateSlugEn, generateSlugAr } = require('../utils/slugify');
 
 const lectureSchema = new mongoose.Schema({
+  shortId: {
+    type: Number,
+    unique: true,
+    sparse: true,
+    index: true
+  },
   audioFileName: {
     type: String,
     trim: true
@@ -121,6 +129,16 @@ const lectureSchema = new mongoose.Schema({
     unique: true,
     sparse: true, // Allow multiple null values
     index: true
+  },
+  slug_en: {
+    type: String,
+    trim: true,
+    index: true
+  },
+  slug_ar: {
+    type: String,
+    trim: true,
+    index: true
   }
 }, {
   timestamps: true
@@ -171,5 +189,38 @@ lectureSchema.methods.incrementDownloadCount = async function() {
 // Ensure virtuals are included in JSON
 lectureSchema.set('toJSON', { virtuals: true });
 lectureSchema.set('toObject', { virtuals: true });
+
+// Pre-save middleware for auto-generating shortId and slugs
+lectureSchema.pre('save', async function(next) {
+  try {
+    // Auto-assign shortId using atomic counter increment
+    if (this.isNew && !this.shortId) {
+      this.shortId = await Counter.getNextSequence('lecture');
+    }
+
+    // Auto-generate slug_en if missing
+    if (!this.slug_en) {
+      if (this.titleEnglish) {
+        this.slug_en = generateSlugEn(this.titleEnglish);
+      } else if (this.titleArabic) {
+        // Fallback: transliterate Arabic title
+        this.slug_en = generateSlugEn(this.titleArabic);
+      }
+      // Ultimate fallback: use shortId
+      if (!this.slug_en && this.shortId) {
+        this.slug_en = `lecture-${this.shortId}`;
+      }
+    }
+
+    // Auto-generate slug_ar if missing
+    if (!this.slug_ar && this.titleArabic) {
+      this.slug_ar = generateSlugAr(this.titleArabic);
+    }
+
+    next();
+  } catch (error) {
+    next(error);
+  }
+});
 
 module.exports = mongoose.model('Lecture', lectureSchema);

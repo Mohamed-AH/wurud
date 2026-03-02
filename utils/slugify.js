@@ -1,34 +1,171 @@
 /**
  * Arabic-friendly slug generation utility
  *
- * Creates URL-safe slugs that preserve Arabic characters.
- * Arabic characters are valid in URLs when properly encoded.
+ * Creates URL-safe slugs by transliterating Arabic to Latin characters.
+ * This ensures URLs remain human-readable when shared/copied.
  */
+
+/**
+ * Arabic to Latin transliteration map
+ * Based on simplified practical romanization for URLs
+ */
+const ARABIC_TO_LATIN = {
+  // Letters
+  'ا': 'a', 'أ': 'a', 'إ': 'i', 'آ': 'a',
+  'ب': 'b',
+  'ت': 't',
+  'ث': 'th',
+  'ج': 'j',
+  'ح': 'h',
+  'خ': 'kh',
+  'د': 'd',
+  'ذ': 'dh',
+  'ر': 'r',
+  'ز': 'z',
+  'س': 's',
+  'ش': 'sh',
+  'ص': 's',
+  'ض': 'd',
+  'ط': 't',
+  'ظ': 'z',
+  'ع': 'a',
+  'غ': 'gh',
+  'ف': 'f',
+  'ق': 'q',
+  'ك': 'k',
+  'ل': 'l',
+  'م': 'm',
+  'ن': 'n',
+  'ه': 'h',
+  'و': 'w',
+  'ي': 'y',
+  'ى': 'a',
+  'ة': 'a',
+  'ء': '',
+  'ئ': 'y',
+  'ؤ': 'w',
+  // Diacritics (tashkeel) - remove them
+  '\u064B': '', // fathatan
+  '\u064C': '', // dammatan
+  '\u064D': '', // kasratan
+  '\u064E': '', // fatha
+  '\u064F': '', // damma
+  '\u0650': '', // kasra
+  '\u0651': '', // shadda
+  '\u0652': '', // sukun
+  // Common Arabic punctuation
+  '،': '',
+  '؛': '',
+  '؟': '',
+};
+
+/**
+ * Transliterate Arabic text to Latin characters
+ * @param {string} text - Arabic text
+ * @returns {string} - Romanized text
+ */
+function transliterateArabic(text) {
+  if (!text) return '';
+
+  let result = '';
+  const chars = [...text]; // Handle Unicode properly
+
+  for (let i = 0; i < chars.length; i++) {
+    const char = chars[i];
+
+    // Handle "ال" (definite article) specially
+    if (char === 'ا' && chars[i + 1] === 'ل') {
+      // Check for sun letters that assimilate the "l"
+      const nextLetter = chars[i + 2];
+      const sunLetters = 'تثدذرزسشصضطظنل';
+      if (nextLetter && sunLetters.includes(nextLetter)) {
+        result += 'a';
+        i++; // Skip the ل
+        continue;
+      }
+      result += 'al';
+      i++; // Skip the ل
+      continue;
+    }
+
+    if (char in ARABIC_TO_LATIN) {
+      result += ARABIC_TO_LATIN[char];
+    } else {
+      result += char;
+    }
+  }
+
+  return result;
+}
 
 /**
  * Generate a slug from Arabic or English text
  * @param {string} text - The text to slugify
- * @returns {string} - URL-safe slug
+ * @returns {string} - URL-safe slug (Latin characters only)
  */
 function generateSlug(text) {
+  if (!text) return '';
+
+  // First transliterate Arabic to Latin
+  let slug = transliterateArabic(text.toString().trim());
+
+  return slug
+    // Normalize Unicode characters
+    .normalize('NFKC')
+    // Replace multiple spaces/underscores with single hyphen
+    .replace(/[\s_]+/g, '-')
+    // Keep only alphanumeric and hyphens
+    .replace(/[^a-zA-Z0-9-]/g, '')
+    // Remove multiple consecutive hyphens
+    .replace(/-+/g, '-')
+    // Remove leading/trailing hyphens
+    .replace(/^-+|-+$/g, '')
+    // Lowercase
+    .toLowerCase();
+}
+
+/**
+ * Generate English slug (transliterated from Arabic or from English text)
+ * Used for the slug_en field in the new URL architecture
+ * @param {string} text - Arabic or English text
+ * @returns {string} - URL-safe English slug
+ */
+function generateSlugEn(text) {
+  if (!text) return '';
+
+  // Transliterate Arabic to Latin first
+  let slug = transliterateArabic(text.toString().trim());
+
+  return slug
+    .normalize('NFKC')
+    .toLowerCase()
+    .replace(/[\s_]+/g, '-')
+    .replace(/[^a-z0-9-]/g, '')
+    .replace(/-+/g, '-')
+    .replace(/^-|-$/g, '');
+}
+
+/**
+ * Generate Arabic slug (kebab-case Arabic)
+ * Used for the slug_ar field in the new URL architecture
+ * Preserves Arabic characters, numbers, and hyphens
+ * @param {string} text - Arabic text
+ * @returns {string} - Arabic slug with hyphens instead of spaces
+ */
+function generateSlugAr(text) {
   if (!text) return '';
 
   return text
     .toString()
     .trim()
-    // Normalize Unicode characters
-    .normalize('NFKC')
-    // Replace multiple spaces/underscores with single hyphen
-    .replace(/[\s_]+/g, '-')
-    // Remove characters that are problematic in URLs
-    // Keep: Arabic letters, English letters, numbers, hyphens
-    .replace(/[^\u0600-\u06FF\u0750-\u077Fa-zA-Z0-9-]/g, '')
+    // Replace spaces with hyphens
+    .replace(/\s+/g, '-')
+    // Keep only Arabic characters (main range + extended), numbers, and hyphens
+    .replace(/[^\u0600-\u06FF\u0750-\u077F0-9-]/g, '')
     // Remove multiple consecutive hyphens
     .replace(/-+/g, '-')
     // Remove leading/trailing hyphens
-    .replace(/^-+|-+$/g, '')
-    // Lowercase English characters (Arabic doesn't have case)
-    .toLowerCase();
+    .replace(/^-|-$/g, '');
 }
 
 /**
@@ -101,8 +238,11 @@ function generateSheikhSlug(sheikh) {
 
 module.exports = {
   generateSlug,
+  generateSlugEn,
+  generateSlugAr,
   generateUniqueSlug,
   generateLectureSlug,
   generateSeriesSlug,
-  generateSheikhSlug
+  generateSheikhSlug,
+  transliterateArabic
 };

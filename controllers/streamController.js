@@ -5,6 +5,9 @@ const { Lecture } = require('../models');
 const { getFilePath, fileExists } = require('../utils/fileManager');
 const { getMimeType, handleRangeRequest } = require('../middleware/streamHandler');
 const { getPublicUrl, isConfigured: isOciConfigured } = require('../utils/ociStorage');
+const { isValidObjectId } = require('../utils/validators');
+
+const isProduction = process.env.NODE_ENV === 'production';
 
 /**
  * Generate a clean download filename from lecture metadata
@@ -81,6 +84,14 @@ const streamAudio = async (req, res) => {
   try {
     const lectureId = req.params.id;
 
+    // Validate ID format
+    if (!isValidObjectId(lectureId)) {
+      return res.status(400).json({
+        success: false,
+        message: 'Invalid lecture ID format'
+      });
+    }
+
     // Find lecture
     const lecture = await Lecture.findById(lectureId);
 
@@ -156,7 +167,7 @@ const streamAudio = async (req, res) => {
     res.status(500).json({
       success: false,
       message: 'Failed to stream audio',
-      error: error.message
+      error: isProduction ? undefined : error.message
     });
   }
 };
@@ -169,6 +180,14 @@ const streamAudio = async (req, res) => {
 const downloadAudio = async (req, res) => {
   try {
     const lectureId = req.params.id;
+
+    // Validate ID format
+    if (!isValidObjectId(lectureId)) {
+      return res.status(400).json({
+        success: false,
+        message: 'Invalid lecture ID format'
+      });
+    }
 
     // Find lecture
     const lecture = await Lecture.findById(lectureId)
@@ -261,7 +280,7 @@ const downloadAudio = async (req, res) => {
     res.status(500).json({
       success: false,
       message: 'Failed to download audio',
-      error: error.message
+      error: isProduction ? undefined : error.message
     });
   }
 };
@@ -273,6 +292,14 @@ const downloadAudio = async (req, res) => {
 const getStreamInfo = async (req, res) => {
   try {
     const lectureId = req.params.id;
+
+    // Validate ID format
+    if (!isValidObjectId(lectureId)) {
+      return res.status(400).json({
+        success: false,
+        message: 'Invalid lecture ID format'
+      });
+    }
 
     const lecture = await Lecture.findById(lectureId)
       .populate('sheikhId', 'nameArabic nameEnglish')
@@ -324,7 +351,7 @@ const getStreamInfo = async (req, res) => {
     res.status(500).json({
       success: false,
       message: 'Failed to get stream info',
-      error: error.message
+      error: isProduction ? undefined : error.message
     });
   }
 };

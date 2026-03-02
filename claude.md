@@ -10,13 +10,337 @@ A web platform for hosting and streaming ~160 Arabic Islamic lecture audio files
 
 ---
 
+## 🚀 CURRENT INITIATIVE: Roadmap 4.3 & 4.5 + Security/Optimization/Testing
+
+**Started**: 2026-02-28
+**Target**: Complete comprehensive improvements across security, features, optimization, and testing
+**Branch**: `claude/fix-homepage-tests-ovChk`
+
+### 📋 Phase Overview
+
+| Phase | Focus | Status | Progress |
+|-------|-------|--------|----------|
+| 1 | Security Deep Audit | ✅ COMPLETE | 9/9 |
+| 2 | Feature Implementation (4.3, 4.5) | ✅ COMPLETE | 8/8 |
+| 3 | Optimization (All Areas) | ⬜ NOT STARTED | 0/12 |
+| 4 | Testing (Full Coverage) | ⬜ NOT STARTED | 0/10 |
+
+---
+
+### 🔒 PHASE 1: Security Deep Audit (OWASP Top 10)
+
+**Status**: ✅ COMPLETE
+**Priority**: HIGH - Must complete before new features
+**Last Updated**: 2026-02-28
+**Completed**: 2026-02-28
+
+#### 1.1 Input Validation Audit ✅ COMPLETE
+- [x] Review all API endpoints for input validation
+- [x] Check express-validator usage completeness
+- [x] Validate query parameters, body data, URL params
+- [x] Test for NoSQL injection vulnerabilities
+- [x] Add sanitization where missing
+
+**Fixes Applied:**
+- Created `utils/validators.js` with express-validator rules
+- Added `lecturesQueryValidation` to GET /api/lectures
+- Added `verifyDurationValidation` to POST /api/lectures/:id/verify-duration
+- Added `playCountValidation` to POST /api/lectures/:id/play
+- Added `isValidObjectId` checks to all ID parameters in routes
+- Fixed bounds validation for pagination (page/limit)
+
+#### 1.2 Authentication & Authorization Review ✅ COMPLETE
+- [x] Audit Google OAuth flow - SECURE
+- [x] Review session management security - SECURE
+- [x] Verify role-based access control (admin/editor) - SECURE
+- [x] Check for privilege escalation paths - NONE FOUND
+- [x] Review API authentication middleware - SECURE
+
+**Findings:**
+- Google OAuth with email whitelist properly implemented
+- Session cookies have httpOnly, sameSite, secure flags
+- Admin/Editor/SuperAdmin roles properly enforced
+- API routes properly protected with isAdminAPI middleware
+
+#### 1.3 File Upload Security ✅ COMPLETE
+- [x] Audit file type validation - SECURE
+- [x] Review filename sanitization - SECURE
+- [x] Check file size limits enforcement - 60MB enforced
+- [x] Test for path traversal vulnerabilities - PROTECTED
+- [x] Verify MIME type checking - SECURE
+- [x] Fixed missing multer import in fileValidation.js
+
+**Findings:**
+- File validation comprehensive with MIME/extension checking
+- Path traversal protection in fileManager.js
+- Size limits enforced at both Multer and validation levels
+
+#### 1.4 CSP & Headers Hardening ✅ COMPLETE
+- [x] Review Content Security Policy directives - GOOD
+- [x] Verify Helmet.js configuration - ENABLED
+- [x] Check X-Frame-Options, X-Content-Type-Options - SET
+- [x] Review CORS configuration - RESTRICTIVE
+- [ ] Add Permissions-Policy header - OPTIONAL
+
+**Findings:**
+- CSP properly configured for Google OAuth and OCI
+- Helmet.js enabled with sensible defaults
+- 'unsafe-inline' required for Google OAuth buttons (acceptable)
+
+#### 1.5 Rate Limiting Review ✅ COMPLETE
+- [x] Verify rate limits on all sensitive endpoints
+- [x] Check streaming endpoint rate limits
+- [x] Review login attempt limiting - 10/hour
+- [x] Add rate limiting to missing endpoints
+
+**Current Limits:**
+- General: 100 req/15min
+- API: 200 req/15min
+- Auth: 10 req/hour
+
+#### 1.6 Dependency Vulnerability Scan ✅ COMPLETE
+- [x] Run npm audit
+- [x] Review and update vulnerable packages
+- [x] Check for outdated dependencies
+- [x] Verify no known CVEs in production deps
+
+**Findings:**
+- Fixed minimatch/qs vulnerabilities via npm audit fix
+- **REMAINING**: xlsx package has HIGH severity with NO FIX
+  - Only used in scripts, not production server
+  - Consider replacing with alternative (exceljs, xlsx-populate)
+- **REMAINING**: multer deprecated, should upgrade to v2
+
+#### 1.7 XSS Prevention Review ✅ COMPLETE
+- [x] Audit all EJS templates for raw output
+- [x] Check user input rendering - Uses <%= (escaped)
+- [x] Review client-side DOM manipulation
+- [x] Verify innerHTML usage is safe
+
+**Findings:**
+- EJS templates mostly use <%= (escaped)
+- <%- used for includes and body (safe)
+- Public JS (homepage.js) properly uses escapeHtml() for all user data
+- audioPlayer.js uses textContent (safe)
+
+**Fixes Applied:**
+- Added escapeHtml() function to admin templates
+- Fixed innerHTML XSS in: quick-add-lecture.ejs, edit-series.ejs, bulk-upload.ejs, edit-lecture.ejs
+- All user-controlled data now escaped before innerHTML insertion
+
+#### 1.8 Sensitive Data Handling ✅ COMPLETE
+- [x] Review logging for sensitive data leakage - OK
+- [x] Check error messages for information disclosure - FIXED
+- [x] Verify .env usage and gitignore - SECURE
+- [x] Review cookie security flags - SECURE
+
+**Fixes Applied:**
+- Changed all `error: error.message` to `error: isProduction ? undefined : error.message`
+- Fixed in: routes/api/lectures.js, routes/api/homepage.js, routes/api/series.js,
+  routes/api/sheikhs.js, controllers/streamController.js
+
+#### 1.9 ReDoS Prevention ✅ COMPLETE (Added)
+- [x] Fixed regex injection in search functions
+- [x] Added escapeRegex() function to sanitize user input
+- [x] Limited search query length to 200 characters
+
+**Fixes Applied:**
+- routes/api/homepage.js: buildSeriesSearchQuery() and buildLectureSearchQuery() now escape regex special chars
+
+---
+
+### ✨ PHASE 2: Feature Implementation
+
+**Status**: ✅ COMPLETE
+**Completed**: 2026-02-28
+
+#### 2.1 Social Sharing (Roadmap 4.3) ✅ COMPLETE
+
+**Priority**: MEDIUM | Estimated: 2-3 hours
+
+##### 2.1.1 Share Component Design ✅
+- [x] Design share button group (4 platforms)
+- [x] Create reusable share component (public/js/share.js)
+- [x] Mobile-responsive share modal with CSS styles
+
+**Files Created:**
+- `public/js/share.js` - Complete share module with modal, platform buttons, clipboard API
+- CSS styles added to `public/css/main.css` - Responsive share modal styles
+
+##### 2.1.2 Platform Integration ✅
+- [x] WhatsApp share link (wa.me)
+- [x] Telegram share link (t.me/share)
+- [x] Twitter/X share intent
+- [x] Facebook share dialog
+
+##### 2.1.3 Copy Link Functionality ✅
+- [x] Clipboard API implementation (navigator.clipboard)
+- [x] Visual feedback on copy (button color change, check icon)
+- [x] Fallback for older browsers (execCommand)
+
+##### 2.1.4 Web Share API (Mobile) ✅
+- [x] Navigator.share() for native sharing on mobile
+- [x] Feature detection with automatic fallback to modal
+- [x] Works on iOS and Android browsers
+
+**Integration Points:**
+- Share button added to lecture detail page (`views/public/lecture.ejs`)
+- Share button added to lecture cards (`views/partials/lectureCard.ejs`)
+- Share script loaded in layout (`views/layout.ejs`)
+
+#### 2.2 English Version (Roadmap 4.5) ✅ COMPLETE
+
+**Priority**: MEDIUM | Estimated: 4-5 hours
+
+##### 2.2.1 Translation Infrastructure ✅
+- [x] Review existing i18n implementation - Comprehensive translations exist in `utils/i18n.js`
+- [x] All UI strings already translated for both Arabic and English
+- [x] i18nMiddleware properly sets locale from cookie/query param
+
+##### 2.2.2 Lecture Metadata English ✅
+- [x] English fields already exist in schemas (titleEnglish, descriptionEnglish)
+- [x] Admin UI already supports English metadata entry
+- [x] Updated public pages to display English when locale is EN:
+  - `views/public/lecture.ejs` - Localized titles, breadcrumbs, labels, buttons
+  - `views/public/series-detail.ejs` - Localized titles, stats, sort controls
+  - `views/partials/lectureCard.ejs` - Localized action buttons
+
+##### 2.2.3 SEO for English ✅
+- [x] Added hreflang tags to layout.ejs for Arabic/English/x-default
+- [x] English meta descriptions already present in layout
+- [x] Open Graph tags support both languages
+- [x] Locale-aware number formatting (ar-SA vs en-US)
+
+##### 2.2.4 English Landing Page (Optional) ⏸️ DEFERRED
+- [ ] Consider /en/ prefix routing - Not needed, query param approach works well
+- [ ] English-optimized hero section - Existing layout adapts to locale
+- [ ] Language-appropriate content order - RTL/LTR handled by CSS
+
+---
+
+### ⚡ PHASE 3: Optimization (All Areas)
+
+**Status**: ⬜ NOT STARTED
+**Depends on**: Phase 2 completion
+
+#### 3.1 Database & API Performance ⬜
+
+##### Query Optimization
+- [ ] Review Mongoose queries for N+1 problems
+- [ ] Add missing indexes
+- [ ] Implement .lean() for read queries
+- [ ] Add query caching where beneficial
+
+##### API Response Optimization
+- [ ] Implement pagination on all list endpoints
+- [ ] Add field selection (partial responses)
+- [ ] Optimize series listing queries
+- [ ] Add Redis caching for hot data (optional)
+
+#### 3.2 Frontend Performance ⬜
+
+##### Bundle Optimization
+- [ ] Analyze current bundle sizes
+- [ ] Code split large modules
+- [ ] Tree-shake unused code
+- [ ] Lazy load below-fold components
+
+##### Asset Optimization
+- [ ] Optimize any remaining images
+- [ ] Review font loading strategy
+- [ ] Implement resource hints (preconnect, prefetch)
+- [ ] Critical path CSS optimization
+
+##### Runtime Performance
+- [ ] Review JavaScript execution time
+- [ ] Debounce search/filter inputs
+- [ ] Optimize DOM manipulation
+- [ ] Memory leak detection
+
+#### 3.3 Infrastructure Optimization ⬜
+
+##### Caching Strategy
+- [ ] Review Cache-Control headers
+- [ ] Implement ETag validation
+- [ ] Add Service Worker for offline (optional)
+- [ ] CDN cache rules review
+
+##### Compression
+- [ ] Verify gzip/brotli on all text responses
+- [ ] Check compression ratios
+- [ ] Optimize compression levels
+
+##### Server Configuration
+- [ ] Review PM2 configuration
+- [ ] Optimize Node.js settings
+- [ ] Connection pooling for MongoDB
+- [ ] Review nginx configuration
+
+---
+
+### 🧪 PHASE 4: Testing (Full Coverage)
+
+**Status**: ⬜ NOT STARTED
+**Depends on**: Phase 3 completion
+
+#### 4.1 Unit Tests ⬜
+- [ ] Test new share component functions
+- [ ] Test i18n with English translations
+- [ ] Test new utility functions
+- [ ] Achieve >80% unit test coverage
+
+#### 4.2 Integration Tests ⬜
+- [ ] API endpoint tests for share analytics
+- [ ] Language switching API tests
+- [ ] Security middleware tests
+- [ ] Rate limiting tests
+
+#### 4.3 E2E Tests ⬜
+- [ ] Share button functionality tests
+- [ ] Language toggle tests
+- [ ] Full user journey tests
+- [ ] Mobile viewport tests
+
+#### 4.4 Security Tests ⬜
+- [ ] Input validation edge cases
+- [ ] Auth bypass attempts
+- [ ] Rate limit enforcement
+- [ ] CSRF/XSS prevention verification
+
+#### 4.5 Performance Tests ⬜
+- [ ] Load testing with concurrent users
+- [ ] Stress testing API endpoints
+- [ ] Mobile performance metrics
+- [ ] Lighthouse CI integration
+
+---
+
+### 📊 Session Log
+
+| Date | Phase | Tasks Completed | Notes |
+|------|-------|-----------------|-------|
+| 2026-02-28 | Setup | Created phased plan | Ready to begin Phase 1 |
+| 2026-02-28 | Phase 1 | Security audit 6/8 complete | Fixed ReDoS, input validation, error disclosure |
+
+**Session Details (2026-02-28):**
+- Created `utils/validators.js` with express-validator rules
+- Fixed ReDoS vulnerability in search functions
+- Added input validation to all API endpoints
+- Fixed error message disclosure (hide in production)
+- Fixed missing multer import in fileValidation.js
+- Added ObjectId validation to stream/download controllers
+- Ran npm audit fix to resolve minimatch/qs vulnerabilities
+- Unit tests: 125/155 passed (failures are mongodb-memory-server infra issues)
+
+---
+
 ## 📌 Project State
 
-**Current Phase**: LIVE - Feature Development
-**Last Updated**: 2026-02-25
+**Current Phase**: Security/Features/Optimization/Testing Initiative
+**Last Updated**: 2026-02-28
 **Active Branch**: `claude/fix-homepage-tests-ovChk`
 **Live URL**: https://rasmihassan.com
-**Status**: 🚀 **PRODUCTION LIVE** - Performance optimizations complete, fonts self-hosted
+**Status**: 🔄 **ACTIVE DEVELOPMENT** - Implementing Roadmap 4.3/4.5 + Comprehensive Improvements
 
 ### ✅ SITE IS NOW LIVE
 

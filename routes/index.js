@@ -278,7 +278,8 @@ router.get('/', async (req, res) => {
 // @access  Public
 router.get('/browse', async (req, res) => {
   try {
-    const { search, category, sort = '-dateRecorded', fromDate, toDate } = req.query;
+    const { search, category, sort = '-dateRecorded', fromDateHijri, toDateHijri } = req.query;
+    const locale = res.locals.locale || 'ar';
 
     // Build query
     const query = { published: true };
@@ -293,22 +294,30 @@ router.get('/browse', async (req, res) => {
       query.$text = { $search: search };
     }
 
-    // Date range filter (Gregorian dates stored in dateRecorded)
-    if (fromDate || toDate) {
-      query.dateRecorded = {};
+    // Hijri date range filter (uses dateRecordedHijri field with format YYYY/MM/DD)
+    if (fromDateHijri || toDateHijri) {
+      // Normalize Arabic numerals to Western numerals for comparison
+      const normalizeHijriDate = (dateStr) => {
+        if (!dateStr) return null;
+        // Convert Arabic-Indic numerals (٠-٩) to Western numerals (0-9)
+        const normalized = dateStr.replace(/[٠-٩]/g, d => '٠١٢٣٤٥٦٧٨٩'.indexOf(d));
+        return normalized;
+      };
 
-      if (fromDate) {
-        // Start of day for fromDate
-        const from = new Date(fromDate);
-        from.setHours(0, 0, 0, 0);
-        query.dateRecorded.$gte = from;
-      }
+      const fromNorm = normalizeHijriDate(fromDateHijri);
+      const toNorm = normalizeHijriDate(toDateHijri);
 
-      if (toDate) {
-        // End of day for toDate
-        const to = new Date(toDate);
-        to.setHours(23, 59, 59, 999);
-        query.dateRecorded.$lte = to;
+      if (fromNorm || toNorm) {
+        query.dateRecordedHijri = {};
+
+        if (fromNorm) {
+          // Hijri dates are stored as YYYY/MM/DD strings - lexicographic comparison works
+          query.dateRecordedHijri.$gte = fromNorm;
+        }
+
+        if (toNorm) {
+          query.dateRecordedHijri.$lte = toNorm;
+        }
       }
     }
 
@@ -320,13 +329,13 @@ router.get('/browse', async (req, res) => {
       .lean();
 
     res.render('public/browse', {
-      title: 'جميع المحاضرات',
+      title: locale === 'ar' ? 'جميع المحاضرات' : 'All Lectures',
       lectures,
       search: search || '',
       category: category || '',
       sort: sort,
-      fromDate: fromDate || '',
-      toDate: toDate || ''
+      fromDateHijri: fromDateHijri || '',
+      toDateHijri: toDateHijri || ''
     });
   } catch (error) {
     console.error('Browse error:', error);
@@ -334,15 +343,74 @@ router.get('/browse', async (req, res) => {
   }
 });
 
+// @route   GET /lectures/:shortId/:slug_en?/:slug_ar?
+// @desc    Single lecture detail page (new URL format with shortId)
+// @access  Public
+router.get('/lectures/:shortId(\\d+)/:slug_en?/:slug_ar?', async (req, res) => {
+  try {
+    const { findByShortId, buildCanonicalUrl } = require('../utils/findByIdOrSlug');
+    const { shortId, slug_en, slug_ar } = req.params;
+
+    // Query by shortId only (numeric, indexed, fast)
+    const lecture = await findByShortId(Lecture, shortId, [
+      { path: 'sheikhId', select: 'nameArabic nameEnglish honorific bioArabic bioEnglish slug shortId slug_en slug_ar' },
+      { path: 'seriesId', select: 'titleArabic titleEnglish descriptionArabic descriptionEnglish category slug shortId slug_en slug_ar' }
+    ]);
+
+    if (!lecture || !lecture.published) {
+      return res.status(404).send('Lecture not found');
+    }
+
+    // SEO Redirect: if slugs don't match current values, 301 redirect to canonical URL
+    const correctSlugEn = lecture.slug_en || '';
+    const correctSlugAr = lecture.slug_ar || '';
+    const providedSlugAr = slug_ar ? decodeURIComponent(slug_ar) : '';
+
+    if (slug_en !== correctSlugEn || providedSlugAr !== correctSlugAr) {
+      const canonicalUrl = buildCanonicalUrl('lectures', lecture);
+      if (canonicalUrl) {
+        return res.redirect(301, canonicalUrl);
+      }
+    }
+
+    // Get related lectures from the same series only, sorted by lectureNumber
+    let relatedLectures = [];
+
+    if (lecture.seriesId) {
+      relatedLectures = await Lecture.find({
+        _id: { $ne: lecture._id },
+        seriesId: lecture.seriesId._id,
+        published: true
+      })
+        .sort({ lectureNumber: 1, dateRecorded: 1, createdAt: 1 })
+        .populate('sheikhId', 'nameArabic nameEnglish honorific shortId slug_en slug_ar')
+        .populate('seriesId', 'titleArabic titleEnglish shortId slug_en slug_ar')
+        .lean();
+    }
+
+    const canonicalPath = buildCanonicalUrl('lectures', lecture);
+
+    res.render('public/lecture', {
+      title: lecture.titleArabic,
+      lecture,
+      relatedLectures,
+      canonicalPath: canonicalPath || `/lectures/${lecture._id}`
+    });
+  } catch (error) {
+    console.error('Lecture detail error:', error);
+    res.status(500).send('Error loading lecture');
+  }
+});
+
 // @route   GET /lectures/:idOrSlug
-// @desc    Single lecture detail page (supports both ObjectId and slug)
+// @desc    Legacy lecture route - redirects to new URL format
 // @access  Public
 router.get('/lectures/:idOrSlug', async (req, res) => {
   try {
-    const { findWithRedirectCheck } = require('../utils/findByIdOrSlug');
+    const { findWithRedirectCheck, buildCanonicalUrl } = require('../utils/findByIdOrSlug');
 
     // Get lecture by ID or slug
-    const { doc: lecture, shouldRedirect, canonicalSlug } = await findWithRedirectCheck(
+    const { doc: lecture } = await findWithRedirectCheck(
       Lecture,
       req.params.idOrSlug,
       [
@@ -355,12 +423,15 @@ router.get('/lectures/:idOrSlug', async (req, res) => {
       return res.status(404).send('Lecture not found');
     }
 
-    // 301 redirect to canonical slug URL for SEO
-    if (shouldRedirect && canonicalSlug) {
-      return res.redirect(301, '/lectures/' + encodeURIComponent(canonicalSlug));
+    // 301 redirect to new URL format if shortId exists
+    if (lecture.shortId) {
+      const newUrl = buildCanonicalUrl('lectures', lecture);
+      if (newUrl) {
+        return res.redirect(301, newUrl);
+      }
     }
 
-    // Get related lectures from the same series only, sorted by lectureNumber
+    // Fallback: render page if no shortId yet (during migration)
     let relatedLectures = [];
 
     if (lecture.seriesId) {
@@ -406,26 +477,31 @@ router.get('/sheikhs', async (req, res) => {
   }
 });
 
-// @route   GET /sheikhs/:idOrSlug
-// @desc    Single sheikh profile page (supports both ObjectId and slug)
+// @route   GET /sheikhs/:shortId/:slug_en?/:slug_ar?
+// @desc    Single sheikh profile page (new URL format with shortId)
 // @access  Public
-router.get('/sheikhs/:idOrSlug', async (req, res) => {
+router.get('/sheikhs/:shortId(\\d+)/:slug_en?/:slug_ar?', async (req, res) => {
   try {
-    const { findWithRedirectCheck } = require('../utils/findByIdOrSlug');
+    const { findByShortId, buildCanonicalUrl } = require('../utils/findByIdOrSlug');
+    const { shortId, slug_en, slug_ar } = req.params;
 
-    // Get sheikh by ID or slug
-    const { doc: sheikh, shouldRedirect, canonicalSlug } = await findWithRedirectCheck(
-      Sheikh,
-      req.params.idOrSlug
-    );
+    // Query by shortId only (numeric, indexed, fast)
+    const sheikh = await findByShortId(Sheikh, shortId);
 
     if (!sheikh) {
       return res.status(404).send('Sheikh not found');
     }
 
-    // 301 redirect to canonical slug URL for SEO
-    if (shouldRedirect && canonicalSlug) {
-      return res.redirect(301, '/sheikhs/' + encodeURIComponent(canonicalSlug));
+    // SEO Redirect: if slugs don't match current values, 301 redirect to canonical URL
+    const correctSlugEn = sheikh.slug_en || '';
+    const correctSlugAr = sheikh.slug_ar || '';
+    const providedSlugAr = slug_ar ? decodeURIComponent(slug_ar) : '';
+
+    if (slug_en !== correctSlugEn || providedSlugAr !== correctSlugAr) {
+      const canonicalUrl = buildCanonicalUrl('sheikhs', sheikh);
+      if (canonicalUrl) {
+        return res.redirect(301, canonicalUrl);
+      }
     }
 
     // Get all lectures by this sheikh
@@ -434,8 +510,8 @@ router.get('/sheikhs/:idOrSlug', async (req, res) => {
       published: true
     })
       .sort({ createdAt: -1 })
-      .populate('sheikhId', 'nameArabic nameEnglish honorific slug')
-      .populate('seriesId', 'titleArabic titleEnglish slug')
+      .populate('sheikhId', 'nameArabic nameEnglish honorific shortId slug_en slug_ar')
+      .populate('seriesId', 'titleArabic titleEnglish shortId slug_en slug_ar')
       .lean();
 
     // Calculate statistics
@@ -446,6 +522,67 @@ router.get('/sheikhs/:idOrSlug', async (req, res) => {
     };
 
     // Get visible series by this sheikh
+    const series = await Series.find({ sheikhId: sheikh._id, isVisible: { $ne: false } })
+      .sort({ titleArabic: 1 })
+      .lean();
+
+    const canonicalPath = buildCanonicalUrl('sheikhs', sheikh);
+
+    res.render('public/sheikh', {
+      title: sheikh.nameArabic,
+      sheikh,
+      lectures,
+      series,
+      stats,
+      canonicalPath: canonicalPath || `/sheikhs/${sheikh._id}`
+    });
+  } catch (error) {
+    console.error('Sheikh profile error:', error);
+    res.status(500).send('Error loading sheikh profile');
+  }
+});
+
+// @route   GET /sheikhs/:idOrSlug
+// @desc    Legacy sheikh route - redirects to new URL format
+// @access  Public
+router.get('/sheikhs/:idOrSlug', async (req, res) => {
+  try {
+    const { findWithRedirectCheck, buildCanonicalUrl } = require('../utils/findByIdOrSlug');
+
+    // Get sheikh by ID or slug
+    const { doc: sheikh } = await findWithRedirectCheck(
+      Sheikh,
+      req.params.idOrSlug
+    );
+
+    if (!sheikh) {
+      return res.status(404).send('Sheikh not found');
+    }
+
+    // 301 redirect to new URL format if shortId exists
+    if (sheikh.shortId) {
+      const newUrl = buildCanonicalUrl('sheikhs', sheikh);
+      if (newUrl) {
+        return res.redirect(301, newUrl);
+      }
+    }
+
+    // Fallback: render page if no shortId yet (during migration)
+    const lectures = await Lecture.find({
+      sheikhId: sheikh._id,
+      published: true
+    })
+      .sort({ createdAt: -1 })
+      .populate('sheikhId', 'nameArabic nameEnglish honorific slug')
+      .populate('seriesId', 'titleArabic titleEnglish slug')
+      .lean();
+
+    const stats = {
+      totalLectures: lectures.length,
+      totalPlays: lectures.reduce((sum, lecture) => sum + (lecture.playCount || 0), 0),
+      totalDuration: lectures.reduce((sum, lecture) => sum + (lecture.duration || 0), 0)
+    };
+
     const series = await Series.find({ sheikhId: sheikh._id, isVisible: { $ne: false } })
       .sort({ titleArabic: 1 })
       .lean();
@@ -485,18 +622,17 @@ router.get('/series', async (req, res) => {
   }
 });
 
-// @route   GET /series/:idOrSlug
-// @desc    Single series profile page (supports both ObjectId and slug)
+// @route   GET /series/:shortId/:slug_en?/:slug_ar?
+// @desc    Single series profile page (new URL format with shortId)
 // @access  Public
-router.get('/series/:idOrSlug', async (req, res) => {
+router.get('/series/:shortId(\\d+)/:slug_en?/:slug_ar?', async (req, res) => {
   try {
-    const { findWithRedirectCheck } = require('../utils/findByIdOrSlug');
+    const { findByShortId, buildCanonicalUrl } = require('../utils/findByIdOrSlug');
+    const { shortId, slug_en, slug_ar } = req.params;
 
-    // Get series by ID or slug
-    const { doc: series, shouldRedirect, canonicalSlug } = await findWithRedirectCheck(
-      Series,
-      req.params.idOrSlug,
-      { path: 'sheikhId', select: 'nameArabic nameEnglish honorific bioArabic bioEnglish slug' }
+    // Query by shortId only (numeric, indexed, fast)
+    const series = await findByShortId(Series, shortId,
+      { path: 'sheikhId', select: 'nameArabic nameEnglish honorific bioArabic bioEnglish shortId slug_en slug_ar' }
     );
 
     // Return 404 if series not found or if hidden
@@ -504,13 +640,19 @@ router.get('/series/:idOrSlug', async (req, res) => {
       return res.status(404).send('Series not found');
     }
 
-    // 301 redirect to canonical slug URL for SEO
-    if (shouldRedirect && canonicalSlug) {
-      return res.redirect(301, '/series/' + encodeURIComponent(canonicalSlug));
+    // SEO Redirect: if slugs don't match current values, 301 redirect to canonical URL
+    const correctSlugEn = series.slug_en || '';
+    const correctSlugAr = series.slug_ar || '';
+    const providedSlugAr = slug_ar ? decodeURIComponent(slug_ar) : '';
+
+    if (slug_en !== correctSlugEn || providedSlugAr !== correctSlugAr) {
+      const canonicalUrl = buildCanonicalUrl('series', series);
+      if (canonicalUrl) {
+        return res.redirect(301, canonicalUrl);
+      }
     }
 
     // Get all lectures in this series (ordered by sortOrder, then lecture number)
-    // Use aggregation to handle null/undefined sortOrder values consistently
     const mongoose = require('mongoose');
     const lectures = await Lecture.aggregate([
       {
@@ -521,7 +663,6 @@ router.get('/series/:idOrSlug', async (req, res) => {
       },
       {
         $addFields: {
-          // Treat null/undefined sortOrder as very high number so they appear last
           effectiveSortOrder: { $ifNull: ['$sortOrder', 999999] }
         }
       },
@@ -561,18 +702,124 @@ router.get('/series/:idOrSlug', async (req, res) => {
     // For consolidated Khutba series, also find related multi-lecture Khutba series
     let relatedKhutbaSeries = [];
     if (series.titleArabic === 'خطب الجمعة') {
-      // Find multi-lecture Khutba series (with underscores or spaces)
-      // Match patterns like "خطبة_الجمعة - X" or "خطبة الجمعة - X"
       relatedKhutbaSeries = await Series.find({
         sheikhId: series.sheikhId._id,
         titleArabic: {
           $regex: 'خطبة.*جمعة',
           $options: 'i'
         },
-        _id: { $ne: series._id } // Exclude current series
+        _id: { $ne: series._id }
       }).lean();
 
-      // For each related series, get actual lecture count
+      for (const relSeries of relatedKhutbaSeries) {
+        const count = await Lecture.countDocuments({
+          seriesId: relSeries._id,
+          published: true
+        });
+        relSeries.actualLectureCount = count;
+      }
+    }
+
+    const canonicalPath = buildCanonicalUrl('series', series);
+
+    res.render('public/series-detail', {
+      title: series.titleArabic,
+      series,
+      lectures,
+      stats,
+      relatedKhutbaSeries,
+      canonicalPath: canonicalPath || `/series/${series._id}`
+    });
+  } catch (error) {
+    console.error('Series profile error:', error);
+    res.status(500).send('Error loading series profile');
+  }
+});
+
+// @route   GET /series/:idOrSlug
+// @desc    Legacy series route - redirects to new URL format
+// @access  Public
+router.get('/series/:idOrSlug', async (req, res) => {
+  try {
+    const { findWithRedirectCheck, buildCanonicalUrl } = require('../utils/findByIdOrSlug');
+
+    // Get series by ID or slug
+    const { doc: series } = await findWithRedirectCheck(
+      Series,
+      req.params.idOrSlug,
+      { path: 'sheikhId', select: 'nameArabic nameEnglish honorific bioArabic bioEnglish slug' }
+    );
+
+    // Return 404 if series not found or if hidden
+    if (!series || series.isVisible === false) {
+      return res.status(404).send('Series not found');
+    }
+
+    // 301 redirect to new URL format if shortId exists
+    if (series.shortId) {
+      const newUrl = buildCanonicalUrl('series', series);
+      if (newUrl) {
+        return res.redirect(301, newUrl);
+      }
+    }
+
+    // Fallback: render page if no shortId yet (during migration)
+    const mongoose = require('mongoose');
+    const lectures = await Lecture.aggregate([
+      {
+        $match: {
+          seriesId: series._id,
+          published: true
+        }
+      },
+      {
+        $addFields: {
+          effectiveSortOrder: { $ifNull: ['$sortOrder', 999999] }
+        }
+      },
+      {
+        $sort: {
+          effectiveSortOrder: 1,
+          lectureNumber: 1,
+          createdAt: 1
+        }
+      },
+      {
+        $lookup: {
+          from: 'sheikhs',
+          localField: 'sheikhId',
+          foreignField: '_id',
+          as: 'sheikhData'
+        }
+      },
+      {
+        $addFields: {
+          sheikhId: { $arrayElemAt: ['$sheikhData', 0] }
+        }
+      },
+      {
+        $unset: ['sheikhData', 'effectiveSortOrder']
+      }
+    ]);
+
+    const stats = {
+      totalLectures: lectures.length,
+      totalPlays: lectures.reduce((sum, lecture) => sum + (lecture.playCount || 0), 0),
+      totalDuration: lectures.reduce((sum, lecture) => sum + (lecture.duration || 0), 0),
+      completeLectures: lectures.filter(l => l.lectureNumber).length
+    };
+
+    let relatedKhutbaSeries = [];
+    if (series.titleArabic === 'خطب الجمعة') {
+      relatedKhutbaSeries = await Series.find({
+        sheikhId: series.sheikhId._id,
+        titleArabic: {
+          $regex: 'خطبة.*جمعة',
+          $options: 'i'
+        },
+        _id: { $ne: series._id }
+      }).lean();
+
       for (const relSeries of relatedKhutbaSeries) {
         const count = await Lecture.countDocuments({
           seriesId: relSeries._id,
@@ -596,23 +843,40 @@ router.get('/series/:idOrSlug', async (req, res) => {
   }
 });
 
+// Helper function to build sitemap URL for an entity
+function buildSitemapUrl(type, doc) {
+  // Use new URL format if shortId exists
+  if (doc.shortId) {
+    let url = `/${type}/${doc.shortId}`;
+    if (doc.slug_en) {
+      url += `/${doc.slug_en}`;
+    }
+    if (doc.slug_ar) {
+      url += `/${encodeURIComponent(doc.slug_ar)}`;
+    }
+    return url;
+  }
+  // Fallback to legacy format
+  return `/${type}/${doc.slug ? encodeURIComponent(doc.slug) : doc._id}`;
+}
+
 // Helper function to generate sitemap XML (for caching)
 async function generateSitemap() {
   const baseUrl = 'https://rasmihassan.com';
 
-  // Get all published lectures (include slug for SEO-friendly URLs)
+  // Get all published lectures (include new fields for URL generation)
   const lectures = await Lecture.find({ published: true })
-    .select('_id slug updatedAt')
+    .select('_id slug shortId slug_en slug_ar updatedAt')
     .lean();
 
   // Get all visible series (exclude hidden ones)
   const series = await Series.find({ isVisible: { $ne: false } })
-    .select('_id slug updatedAt')
+    .select('_id slug shortId slug_en slug_ar updatedAt')
     .lean();
 
   // Get all sheikhs
   const sheikhs = await Sheikh.find()
-    .select('_id slug updatedAt')
+    .select('_id slug shortId slug_en slug_ar updatedAt')
     .lean();
 
   let xml = `<?xml version="1.0" encoding="UTF-8"?>
@@ -640,12 +904,12 @@ async function generateSitemap() {
   </url>
 `;
 
-  // Add lectures (use slug if available, otherwise ID)
+  // Add lectures (use new URL format if shortId exists)
   for (const lecture of lectures) {
     const lastmod = lecture.updatedAt ? new Date(lecture.updatedAt).toISOString().split('T')[0] : '';
-    const lectureUrl = lecture.slug ? encodeURIComponent(lecture.slug) : lecture._id;
+    const lectureUrl = buildSitemapUrl('lectures', lecture);
     xml += `  <url>
-    <loc>${baseUrl}/lectures/${lectureUrl}</loc>
+    <loc>${baseUrl}${lectureUrl}</loc>
     ${lastmod ? `<lastmod>${lastmod}</lastmod>` : ''}
     <changefreq>monthly</changefreq>
     <priority>0.7</priority>
@@ -653,12 +917,12 @@ async function generateSitemap() {
 `;
   }
 
-  // Add series (use slug if available, otherwise ID)
+  // Add series (use new URL format if shortId exists)
   for (const s of series) {
     const lastmod = s.updatedAt ? new Date(s.updatedAt).toISOString().split('T')[0] : '';
-    const seriesUrl = s.slug ? encodeURIComponent(s.slug) : s._id;
+    const seriesUrl = buildSitemapUrl('series', s);
     xml += `  <url>
-    <loc>${baseUrl}/series/${seriesUrl}</loc>
+    <loc>${baseUrl}${seriesUrl}</loc>
     ${lastmod ? `<lastmod>${lastmod}</lastmod>` : ''}
     <changefreq>weekly</changefreq>
     <priority>0.8</priority>
@@ -666,12 +930,12 @@ async function generateSitemap() {
 `;
   }
 
-  // Add sheikhs (use slug if available, otherwise ID)
+  // Add sheikhs (use new URL format if shortId exists)
   for (const sheikh of sheikhs) {
     const lastmod = sheikh.updatedAt ? new Date(sheikh.updatedAt).toISOString().split('T')[0] : '';
-    const sheikhUrl = sheikh.slug ? encodeURIComponent(sheikh.slug) : sheikh._id;
+    const sheikhUrl = buildSitemapUrl('sheikhs', sheikh);
     xml += `  <url>
-    <loc>${baseUrl}/sheikhs/${sheikhUrl}</loc>
+    <loc>${baseUrl}${sheikhUrl}</loc>
     ${lastmod ? `<lastmod>${lastmod}</lastmod>` : ''}
     <changefreq>monthly</changefreq>
     <priority>0.8</priority>

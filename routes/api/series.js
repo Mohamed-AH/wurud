@@ -2,6 +2,9 @@ const express = require('express');
 const router = express.Router();
 const { Series } = require('../../models');
 const { isAdminAPI } = require('../../middleware/auth');
+const { isValidObjectId } = require('../../utils/validators');
+
+const isProduction = process.env.NODE_ENV === 'production';
 
 // @route   GET /api/series/export
 // @desc    Export all series to CSV
@@ -43,7 +46,7 @@ router.get('/export', async (req, res) => {
     res.status(500).json({
       success: false,
       message: 'Failed to export series',
-      error: error.message
+      error: isProduction ? undefined : error.message
     });
   }
 });
@@ -74,7 +77,7 @@ router.get('/', async (req, res) => {
     res.status(500).json({
       success: false,
       message: 'Failed to fetch series',
-      error: error.message
+      error: isProduction ? undefined : error.message
     });
   }
 });
@@ -132,7 +135,7 @@ router.post('/', isAdminAPI, async (req, res) => {
     res.status(500).json({
       success: false,
       message: 'Failed to create series',
-      error: error.message
+      error: isProduction ? undefined : error.message
     });
   }
 });
@@ -142,6 +145,14 @@ router.post('/', isAdminAPI, async (req, res) => {
 // @access  Private (Admin only)
 router.put('/:id', isAdminAPI, async (req, res) => {
   try {
+    // Validate ID format
+    if (!isValidObjectId(req.params.id)) {
+      return res.status(400).json({
+        success: false,
+        message: 'Invalid series ID format'
+      });
+    }
+
     const {
       titleArabic,
       titleEnglish,
@@ -183,7 +194,7 @@ router.put('/:id', isAdminAPI, async (req, res) => {
     res.status(500).json({
       success: false,
       message: 'Failed to update series',
-      error: error.message
+      error: isProduction ? undefined : error.message
     });
   }
 });
@@ -193,6 +204,14 @@ router.put('/:id', isAdminAPI, async (req, res) => {
 // @access  Private (Admin only)
 router.delete('/:id', isAdminAPI, async (req, res) => {
   try {
+    // Validate ID format
+    if (!isValidObjectId(req.params.id)) {
+      return res.status(400).json({
+        success: false,
+        message: 'Invalid series ID format'
+      });
+    }
+
     const { Lecture } = require('../../models');
 
     // Check if series has lectures
@@ -223,7 +242,7 @@ router.delete('/:id', isAdminAPI, async (req, res) => {
     res.status(500).json({
       success: false,
       message: 'Failed to delete series',
-      error: error.message
+      error: isProduction ? undefined : error.message
     });
   }
 });

@@ -230,9 +230,15 @@
   </main>
 
   <script>
-    const seriesTitle = '<%= series.titleArabic %>';
+    const seriesTitle = '<%- JSON.stringify(series.titleArabic || "").slice(1, -1) %>';
     const isArabic = '<%= adminLocale %>' === 'ar';
     const lectureLabel = isArabic ? 'الدرس' : 'Lecture';
+
+    function escapeHtml(text) {
+      const div = document.createElement('div');
+      div.textContent = text;
+      return div.innerHTML;
+    }
 
     function updatePreview() {
       const lectureNumber = document.getElementById('lectureNumber').value;
@@ -243,7 +249,7 @@
         preview += ' - ' + titleSuffix;
       }
 
-      document.getElementById('titlePreview').innerHTML = '<strong>' + preview + '</strong>';
+      document.getElementById('titlePreview').innerHTML = '<strong>' + escapeHtml(preview) + '</strong>';
     }
   </script>
 </body>

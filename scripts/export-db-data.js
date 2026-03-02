@@ -11,6 +11,7 @@
  *   --env FILE     Path to .env file (default: .env)
  *   --output FILE  Output file path (required)
  *   --format       Output format: txt (default) or json
+ *   --all          Export all fields (default: only essential fields)
  */
 
 const fs = require('fs');
@@ -23,6 +24,7 @@ const outputIndex = args.indexOf('--output');
 const outputFile = outputIndex !== -1 ? args[outputIndex + 1] : null;
 const formatIndex = args.indexOf('--format');
 const format = formatIndex !== -1 ? args[formatIndex + 1] : 'txt';
+const exportAll = args.includes('--all');
 
 if (!outputFile) {
   console.error('❌ Error: --output FILE is required');
@@ -41,6 +43,7 @@ const mongoose = require('mongoose');
 const Lecture = require('../models/Lecture');
 const Series = require('../models/Series');
 const Sheikh = require('../models/Sheikh');
+const Section = require('../models/Section');
 
 async function exportData() {
   console.log('\n📦 Database Export Script');
@@ -54,25 +57,33 @@ async function exportData() {
   // Fetch all data
   console.log('📥 Fetching data...');
 
-  const [series, lectures, sheikhs] = await Promise.all([
-    Series.find().lean(),
-    Lecture.find().populate('seriesId', 'titleArabic slug').lean(),
-    Sheikh.find().lean()
+  const [series, lectures, sheikhs, sections] = await Promise.all([
+    Series.find().populate('sectionId').lean(),
+    Lecture.find().populate('seriesId', 'titleArabic slug').populate('sheikhId', 'nameArabic slug').lean(),
+    Sheikh.find().lean(),
+    Section.find().lean()
   ]);
 
   console.log(`   Series: ${series.length}`);
   console.log(`   Lectures: ${lectures.length}`);
   console.log(`   Sheikhs: ${sheikhs.length}`);
+  console.log(`   Sections: ${sections.length}`);
+  if (exportAll) {
+    console.log('   Mode: Exporting ALL fields');
+  }
 
   if (format === 'json') {
-    // JSON format
+    // JSON format - always exports all fields
     const data = {
       exportDate: new Date().toISOString(),
+      exportAll: true,
       stats: {
         series: series.length,
         lectures: lectures.length,
-        sheikhs: sheikhs.length
+        sheikhs: sheikhs.length,
+        sections: sections.length
       },
+      sections,
       sheikhs,
       series,
       lectures
@@ -84,6 +95,7 @@ async function exportData() {
 
     output.push('='.repeat(80));
     output.push('DATABASE EXPORT - ' + new Date().toISOString());
+    output.push('Mode: ' + (exportAll ? 'FULL EXPORT (all fields)' : 'Essential fields only'));
     output.push('='.repeat(80));
     output.push('');
 
@@ -96,11 +108,54 @@ async function exportData() {
 
     for (const sheikh of sheikhs) {
       output.push(`ID: ${sheikh._id}`);
+      if (exportAll) output.push(`Short ID: ${sheikh.shortId || '-'}`);
       output.push(`Name (AR): ${sheikh.nameArabic}`);
       output.push(`Name (EN): ${sheikh.nameEnglish || '-'}`);
+      if (exportAll) output.push(`Honorific: ${sheikh.honorific || '-'}`);
       output.push(`Slug: ${sheikh.slug}`);
-      output.push(`Bio: ${(sheikh.bio || '').substring(0, 100)}...`);
+      if (exportAll) {
+        output.push(`Slug (EN): ${sheikh.slug_en || '-'}`);
+        output.push(`Slug (AR): ${sheikh.slug_ar || '-'}`);
+        output.push(`Bio (AR): ${sheikh.bioArabic || '-'}`);
+        output.push(`Bio (EN): ${sheikh.bioEnglish || '-'}`);
+        output.push(`Photo URL: ${sheikh.photoUrl || '-'}`);
+        output.push(`Lecture Count: ${sheikh.lectureCount || 0}`);
+        output.push(`Created: ${sheikh.createdAt || '-'}`);
+        output.push(`Updated: ${sheikh.updatedAt || '-'}`);
+      } else {
+        output.push(`Bio: ${(sheikh.bioArabic || '').substring(0, 100)}${(sheikh.bioArabic || '').length > 100 ? '...' : ''}`);
+      }
       output.push('-'.repeat(40));
+    }
+
+    // ========== SECTIONS ==========
+    if (exportAll && sections.length > 0) {
+      output.push('');
+      output.push('█'.repeat(80));
+      output.push('SECTIONS');
+      output.push('█'.repeat(80));
+      output.push('');
+
+      // Sort by displayOrder
+      const sortedSections = [...sections].sort((a, b) => (a.displayOrder || 0) - (b.displayOrder || 0));
+
+      for (const section of sortedSections) {
+        output.push(`ID: ${section._id}`);
+        output.push(`Title (AR): ${section.title?.ar || '-'}`);
+        output.push(`Title (EN): ${section.title?.en || '-'}`);
+        output.push(`Slug: ${section.slug || '-'}`);
+        output.push(`Description (AR): ${section.description?.ar || '-'}`);
+        output.push(`Description (EN): ${section.description?.en || '-'}`);
+        output.push(`Icon: ${section.icon || '-'}`);
+        output.push(`Display Order: ${section.displayOrder || 0}`);
+        output.push(`Is Visible: ${section.isVisible !== false ? 'Yes' : 'No'}`);
+        output.push(`Is Default: ${section.isDefault ? 'Yes' : 'No'}`);
+        output.push(`Collapsed By Default: ${section.collapsedByDefault ? 'Yes' : 'No'}`);
+        output.push(`Max Visible: ${section.maxVisible || 5}`);
+        output.push(`Created: ${section.createdAt || '-'}`);
+        output.push(`Updated: ${section.updatedAt || '-'}`);
+        output.push('-'.repeat(40));
+      }
     }
 
     // ========== SERIES ==========
@@ -117,12 +172,32 @@ async function exportData() {
 
     for (const s of seriesSorted) {
       output.push(`ID: ${s._id}`);
+      if (exportAll) output.push(`Short ID: ${s.shortId || '-'}`);
       output.push(`Title (AR): ${s.titleArabic}`);
       output.push(`Title (EN): ${s.titleEnglish || '-'}`);
       output.push(`Slug: ${s.slug}`);
+      if (exportAll) {
+        output.push(`Slug (EN): ${s.slug_en || '-'}`);
+        output.push(`Slug (AR): ${s.slug_ar || '-'}`);
+        output.push(`Description (AR): ${s.descriptionArabic || '-'}`);
+        output.push(`Description (EN): ${s.descriptionEnglish || '-'}`);
+      }
       output.push(`Category: ${s.category || '-'}`);
+      if (exportAll) {
+        output.push(`Tags: ${(s.tags || []).join(', ') || '-'}`);
+        output.push(`Book Title: ${s.bookTitle || '-'}`);
+        output.push(`Book Author: ${s.bookAuthor || '-'}`);
+      }
       output.push(`Lecture Count: ${s.lectureCount || 0}`);
       output.push(`Sheikh: ${s.sheikhId || '-'}`);
+      if (exportAll) {
+        output.push(`Thumbnail URL: ${s.thumbnailUrl || '-'}`);
+        output.push(`Is Visible: ${s.isVisible !== false ? 'Yes' : 'No'}`);
+        output.push(`Section: ${s.sectionId?.title?.en || s.sectionId?.slug || s.sectionId || '-'}`);
+        output.push(`Section Order: ${s.sectionOrder || 0}`);
+        output.push(`Created: ${s.createdAt || '-'}`);
+        output.push(`Updated: ${s.updatedAt || '-'}`);
+      }
       output.push('-'.repeat(40));
     }
 
@@ -168,12 +243,42 @@ async function exportData() {
         output.push('');
         output.push(`  Lecture #${lec.lectureNumber || '?'}`);
         output.push(`  ID: ${lec._id}`);
+        if (exportAll) output.push(`  Short ID: ${lec.shortId || '-'}`);
         output.push(`  Title (AR): ${lec.titleArabic}`);
         output.push(`  Title (EN): ${lec.titleEnglish || '-'}`);
+        if (exportAll) {
+          output.push(`  Description (AR): ${lec.descriptionArabic || '-'}`);
+          output.push(`  Description (EN): ${lec.descriptionEnglish || '-'}`);
+        }
         output.push(`  Slug: ${lec.slug}`);
+        if (exportAll) {
+          output.push(`  Slug (EN): ${lec.slug_en || '-'}`);
+          output.push(`  Slug (AR): ${lec.slug_ar || '-'}`);
+        }
         output.push(`  Audio: ${lec.audioFileName || 'NO AUDIO'}`);
+        if (exportAll) {
+          output.push(`  Audio URL: ${lec.audioUrl || '-'}`);
+        }
         output.push(`  Duration: ${lec.duration || 0}s`);
         output.push(`  Duration Verified: ${lec.durationVerified ? 'Yes' : 'No'}`);
+        if (exportAll) {
+          output.push(`  File Size: ${lec.fileSize || 0} bytes`);
+          output.push(`  Sort Order: ${lec.sortOrder || 0}`);
+          output.push(`  Location: ${lec.location || '-'}`);
+          output.push(`  Category: ${lec.category || '-'}`);
+          output.push(`  Tags: ${(lec.tags || []).join(', ') || '-'}`);
+          output.push(`  Sheikh: ${lec.sheikhId?.nameArabic || lec.sheikhId || '-'}`);
+          output.push(`  Date Recorded: ${lec.dateRecorded || '-'}`);
+          output.push(`  Date Recorded (Hijri): ${lec.dateRecordedHijri || '-'}`);
+          output.push(`  Published: ${lec.published ? 'Yes' : 'No'}`);
+          output.push(`  Featured: ${lec.featured ? 'Yes' : 'No'}`);
+          output.push(`  Play Count: ${lec.playCount || 0}`);
+          output.push(`  Download Count: ${lec.downloadCount || 0}`);
+          if (lec.metadata && Object.keys(lec.metadata).length > 0) {
+            output.push(`  Metadata: ${JSON.stringify(lec.metadata)}`);
+          }
+          output.push(`  Updated: ${lec.updatedAt || '-'}`);
+        }
         output.push(`  Created: ${lec.createdAt || '-'}`);
 
         // Check for potential issues
@@ -203,9 +308,22 @@ async function exportData() {
       for (const lec of noSeriesLectures) {
         output.push('');
         output.push(`  ID: ${lec._id}`);
+        if (exportAll) output.push(`  Short ID: ${lec.shortId || '-'}`);
         output.push(`  Title (AR): ${lec.titleArabic}`);
+        output.push(`  Title (EN): ${lec.titleEnglish || '-'}`);
         output.push(`  Slug: ${lec.slug}`);
+        if (exportAll) {
+          output.push(`  Slug (EN): ${lec.slug_en || '-'}`);
+          output.push(`  Slug (AR): ${lec.slug_ar || '-'}`);
+        }
         output.push(`  Audio: ${lec.audioFileName || 'NO AUDIO'}`);
+        if (exportAll) {
+          output.push(`  Audio URL: ${lec.audioUrl || '-'}`);
+          output.push(`  Duration: ${lec.duration || 0}s`);
+          output.push(`  Sheikh: ${lec.sheikhId?.nameArabic || lec.sheikhId || '-'}`);
+          output.push(`  Published: ${lec.published ? 'Yes' : 'No'}`);
+          output.push(`  Created: ${lec.createdAt || '-'}`);
+        }
         output.push(`  ⚠️ NO SERIES ASSIGNED`);
         output.push('  ' + '-'.repeat(38));
       }
@@ -271,6 +389,26 @@ async function exportData() {
 
     // Lectures without series
     output.push(`📊 Lectures without series: ${noSeriesLectures.length}`);
+
+    if (exportAll) {
+      // Additional stats when exporting all
+      const unpublished = lectures.filter(l => !l.published);
+      output.push(`📊 Unpublished lectures: ${unpublished.length}`);
+
+      const featured = lectures.filter(l => l.featured);
+      output.push(`📊 Featured lectures: ${featured.length}`);
+
+      const noShortId = lectures.filter(l => !l.shortId);
+      output.push(`📊 Lectures without shortId: ${noShortId.length}`);
+
+      const hiddenSeries = series.filter(s => s.isVisible === false);
+      output.push(`📊 Hidden series: ${hiddenSeries.length}`);
+
+      const seriesWithSection = series.filter(s => s.sectionId);
+      output.push(`📊 Series with section assigned: ${seriesWithSection.length}`);
+
+      output.push(`📊 Total sections: ${sections.length}`);
+    }
 
     output.push('');
     output.push('='.repeat(80));

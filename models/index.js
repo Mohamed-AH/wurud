@@ -7,5 +7,6 @@ module.exports = {
   Admin: require('./Admin'),
   Schedule: require('./Schedule'),
   SiteSettings: require('./SiteSettings'),
-  PageView: require('./PageView')
+  PageView: require('./PageView'),
+  Counter: require('./Counter')
 };

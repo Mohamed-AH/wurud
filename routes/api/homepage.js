@@ -3,6 +3,8 @@ const router = express.Router();
 const { Lecture, Series } = require('../../models');
 const cache = require('../../utils/cache');
 
+const isProduction = process.env.NODE_ENV === 'production';
+
 // Cache TTL for API endpoints (in seconds)
 const API_CACHE_TTL = 300; // 5 minutes
 
@@ -43,11 +45,21 @@ function isKhutbaSeries(series) {
   return title.includes('خطب') || title.includes('خطبة');
 }
 
-// Helper: Build search query for series
-function buildSeriesSearchQuery(search) {
-  if (!search) return {};
+// Helper: Escape regex special characters to prevent ReDoS attacks
+function escapeRegex(string) {
+  if (!string || typeof string !== 'string') return '';
+  return string.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+}
 
-  const searchRegex = new RegExp(search, 'i');
+// Helper: Build search query for series (sanitized against ReDoS)
+function buildSeriesSearchQuery(search) {
+  if (!search || typeof search !== 'string') return {};
+
+  // Limit search length to prevent abuse
+  const sanitizedSearch = escapeRegex(search.substring(0, 200).trim());
+  if (!sanitizedSearch) return {};
+
+  const searchRegex = new RegExp(sanitizedSearch, 'i');
   return {
     $or: [
       { titleArabic: searchRegex },
@@ -57,11 +69,15 @@ function buildSeriesSearchQuery(search) {
   };
 }
 
-// Helper: Build search query for lectures
+// Helper: Build search query for lectures (sanitized against ReDoS)
 function buildLectureSearchQuery(search) {
-  if (!search) return {};
+  if (!search || typeof search !== 'string') return {};
 
-  const searchRegex = new RegExp(search, 'i');
+  // Limit search length to prevent abuse
+  const sanitizedSearch = escapeRegex(search.substring(0, 200).trim());
+  if (!sanitizedSearch) return {};
+
+  const searchRegex = new RegExp(sanitizedSearch, 'i');
   return {
     $or: [
       { titleArabic: searchRegex },
@@ -212,7 +228,7 @@ router.get('/series', async (req, res) => {
     res.status(500).json({
       success: false,
       message: 'Failed to fetch series',
-      error: error.message
+      error: isProduction ? undefined : error.message
     });
   }
 });
@@ -327,7 +343,7 @@ router.get('/standalone', async (req, res) => {
     res.status(500).json({
       success: false,
       message: 'Failed to fetch standalone lectures',
-      error: error.message
+      error: isProduction ? undefined : error.message
     });
   }
 });
@@ -453,7 +469,7 @@ router.get('/khutbas', async (req, res) => {
     res.status(500).json({
       success: false,
       message: 'Failed to fetch khutbas',
-      error: error.message
+      error: isProduction ? undefined : error.message
     });
   }
 });
@@ -558,7 +574,7 @@ router.get('/stats', async (req, res) => {
     res.status(500).json({
       success: false,
       message: 'Failed to fetch stats',
-      error: error.message
+      error: isProduction ? undefined : error.message
     });
   }
 });
