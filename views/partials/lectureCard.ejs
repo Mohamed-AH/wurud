@@ -10,14 +10,14 @@
 
   <div class="lecture-content">
     <h3 class="lecture-title">
-      <a href="/lectures/<%= lecture.shortId ? lecture.shortId + '/' + (lecture.slug_en || '') + '/' + encodeURIComponent(lecture.slug_ar || '') : (lecture.slug ? encodeURIComponent(lecture.slug) : lecture._id) %>"><%= lecture.titleArabic %></a>
+      <a href="/lectures/<%= lecture.shortId ? lecture.shortId + '/' + (lecture.slug_en || '') + '/' + encodeURIComponent(lecture.slug_ar || '') : (lecture.slug ? encodeURIComponent(lecture.slug) : lecture._id) %>"><%= locale === 'ar' ? lecture.titleArabic : (lecture.titleEnglish || lecture.titleArabic) %></a>
     </h3>
 
     <div class="lecture-meta">
       <span class="lecture-sheikh">
         <% if (lecture.sheikhId) { %>
-          <%= lecture.sheikhId.nameArabic %>
-          <% if (lecture.sheikhId.honorific) { %>
+          <%= locale === 'ar' ? lecture.sheikhId.nameArabic : (lecture.sheikhId.nameEnglish || lecture.sheikhId.nameArabic) %>
+          <% if (lecture.sheikhId.honorific && locale === 'ar') { %>
             <%= lecture.sheikhId.honorific %>
           <% } %>
         <% } %>
@@ -25,7 +25,7 @@
 
       <% if (lecture.seriesId) { %>
         <span class="lecture-divider">•</span>
-        <span class="lecture-series"><%= lecture.seriesId.titleArabic %></span>
+        <span class="lecture-series"><%= locale === 'ar' ? lecture.seriesId.titleArabic : (lecture.seriesId.titleEnglish || lecture.seriesId.titleArabic) %></span>
       <% } %>
     </div>
 
@@ -34,10 +34,10 @@
         <span class="lecture-duration">⏱️ <%= lecture.durationFormatted %></span>
         <span class="lecture-divider">•</span>
       <% } %>
-      <span class="lecture-plays">▶️ <%= lecture.playCount %> مرة</span>
+      <span class="lecture-plays">▶️ <%= lecture.playCount %> <%= locale === 'ar' ? 'مرة' : 'plays' %></span>
       <% if (lecture.dateRecordedHijri) { %>
         <span class="lecture-divider">•</span>
-        <span class="lecture-date" title="تاريخ التسجيل (هجري)">
+        <span class="lecture-date" title="<%= locale === 'ar' ? 'تاريخ التسجيل (هجري)' : 'Recording Date (Hijri)' %>">
           📅 <%= formatHijriDate(lecture.dateRecordedHijri) %>
         </span>
       <% } %>
@@ -50,16 +50,19 @@
 
   <div class="lecture-actions">
     <% if (lecture.audioFileName) { %>
-      <button class="btn-play" onclick="playAudio('<%= lecture._id %>', '<%= (lecture.titleArabic || '').replace(/'/g, "\\'") %>', '<%= lecture.sheikhId ? lecture.sheikhId.nameArabic.replace(/'/g, "\\'") : "" %>')" title="<%= typeof t === 'function' ? t('lecture_play') : 'استماع' %>">
+      <% const displayTitle = locale === 'ar' ? (lecture.titleArabic || '') : (lecture.titleEnglish || lecture.titleArabic || ''); %>
+      <% const displaySheikh = lecture.sheikhId ? (locale === 'ar' ? lecture.sheikhId.nameArabic : (lecture.sheikhId.nameEnglish || lecture.sheikhId.nameArabic)) : ''; %>
+      <button class="btn-play" onclick="playAudio('<%= lecture._id %>', '<%= displayTitle.replace(/'/g, "\\'") %>', '<%= displaySheikh.replace(/'/g, "\\'") %>')" title="<%= typeof t === 'function' ? t('lecture_play') : (locale === 'ar' ? 'استماع' : 'Play') %>">
         ▶️
       </button>
     <% } else { %>
-      <button class="btn-play" disabled style="opacity: 0.5; cursor: not-allowed;" title="لا يوجد ملف صوتي">
+      <button class="btn-play" disabled style="opacity: 0.5; cursor: not-allowed;" title="<%= locale === 'ar' ? 'لا يوجد ملف صوتي' : 'No audio file' %>">
         ▶️
       </button>
     <% } %>
-    <a href="/download/<%= lecture._id %>" class="btn-download" title="<%= typeof t === 'function' ? t('lecture_download') : 'تحميل' %>">⬇️</a>
-    <button class="btn-share-card" onclick="if(window.shareModule){window.shareModule.share(window.location.origin + '/lectures/<%= lecture.shortId ? lecture.shortId + '/' + (lecture.slug_en || '') + '/' + encodeURIComponent(lecture.slug_ar || '') : (lecture.slug ? encodeURIComponent(lecture.slug) : lecture._id) %>', '<%= (lecture.titleArabic || '').replace(/'/g, "\\'").replace(/\n/g, " ") %>')}" title="<%= typeof t === 'function' ? t('lecture_share') : 'مشاركة' %>">
+    <a href="/download/<%= lecture._id %>" class="btn-download" title="<%= typeof t === 'function' ? t('lecture_download') : (locale === 'ar' ? 'تحميل' : 'Download') %>">⬇️</a>
+    <% const shareTitle = locale === 'ar' ? (lecture.titleArabic || '') : (lecture.titleEnglish || lecture.titleArabic || ''); %>
+    <button class="btn-share-card" onclick="if(window.shareModule){window.shareModule.share(window.location.origin + '/lectures/<%= lecture.shortId ? lecture.shortId + '/' + (lecture.slug_en || '') + '/' + encodeURIComponent(lecture.slug_ar || '') : (lecture.slug ? encodeURIComponent(lecture.slug) : lecture._id) %>', '<%= shareTitle.replace(/'/g, "\\'").replace(/\n/g, " ") %>')}" title="<%= typeof t === 'function' ? t('lecture_share') : (locale === 'ar' ? 'مشاركة' : 'Share') %>">
       <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
         <circle cx="18" cy="5" r="3"></circle>
         <circle cx="6" cy="12" r="3"></circle>
