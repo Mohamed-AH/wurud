@@ -633,12 +633,18 @@
     const toggleFn = isKhutba ? 'toggleKhutba' : 'toggleSeries';
     const btnText = isKhutba ? t('showKhutbahs') : t('showLessons');
 
-    const sheikhName = series.sheikh?.nameArabic || '';
+    const locale = getLocale();
+    const sheikhName = locale === 'ar'
+      ? (series.sheikh?.nameArabic || '')
+      : (series.sheikh?.nameEnglish || series.sheikh?.nameArabic || '');
+    const seriesTitle = locale === 'ar'
+      ? (series.titleArabic || '')
+      : (series.titleEnglish || series.titleArabic || '');
     const categoryLabel = translateCategory(series.category);
 
     div.innerHTML = `
       <div class="series-header" onclick="${toggleFn}('${series._id}')">
-        <h2 class="series-title">${escapeHtml(series.titleArabic || '')}</h2>
+        <h2 class="series-title">${escapeHtml(seriesTitle)}</h2>
 
         <div class="series-meta">
           ${series.originalAuthor ? `
@@ -688,6 +694,7 @@
    * Create episode HTML for a lecture within a series
    */
   function createEpisodeHtml(lecture, index, sheikhName) {
+    const locale = getLocale();
     const duration = lecture.duration && lecture.duration > 0
       ? `⏱️ ${Math.floor(lecture.duration / 60)}:${String(lecture.duration % 60).padStart(2, '0')}`
       : '';
@@ -697,14 +704,17 @@
       : '';
 
     const lectureDate = lecture.dateRecorded ? new Date(lecture.dateRecorded).getTime() : 0;
-    const titleEscaped = escapeHtml(lecture.titleArabic || '').replace(/'/g, "\\'");
+    const lectureTitle = locale === 'ar'
+      ? (lecture.titleArabic || '')
+      : (lecture.titleEnglish || lecture.titleArabic || '');
+    const titleEscaped = escapeHtml(lectureTitle).replace(/'/g, "\\'");
     const sheikhEscaped = escapeHtml(sheikhName).replace(/'/g, "\\'");
 
     return `
       <div class="episode-item" data-lecture-number="${index + 1}" data-date="${lectureDate}">
         <div class="episode-header">
           <div class="episode-number">${index + 1}</div>
-          <div class="episode-title">${escapeHtml(lecture.titleArabic || '')}</div>
+          <div class="episode-title">${escapeHtml(lectureTitle)}</div>
         </div>
         <div class="episode-meta">
           ${duration ? `<span>${duration}</span>` : ''}
@@ -729,13 +739,19 @@
   function createStandaloneLectureCard(lecture) {
     const div = document.createElement('div');
     div.className = 'series-card';
+    const locale = getLocale();
 
     const lectureDate = lecture.dateRecorded ? new Date(lecture.dateRecorded).getTime() :
       (lecture.createdAt ? new Date(lecture.createdAt).getTime() : Date.now());
     div.dataset.date = lectureDate;
     div.dataset.hijri = lecture.dateRecordedHijri || '';
 
-    const sheikhName = lecture.sheikhId?.nameArabic || '';
+    const sheikhName = locale === 'ar'
+      ? (lecture.sheikhId?.nameArabic || '')
+      : (lecture.sheikhId?.nameEnglish || lecture.sheikhId?.nameArabic || '');
+    const lectureTitle = locale === 'ar'
+      ? (lecture.titleArabic || '')
+      : (lecture.titleEnglish || lecture.titleArabic || '');
     const duration = lecture.duration && lecture.duration > 0
       ? `⏱️ ${Math.floor(lecture.duration / 60)}:${String(lecture.duration % 60).padStart(2, '0')}`
       : '';
@@ -743,12 +759,12 @@
       ? `📅 ${formatHijriDate(lecture.dateRecordedHijri)}`
       : '';
 
-    const titleEscaped = escapeHtml(lecture.titleArabic || '').replace(/'/g, "\\'");
+    const titleEscaped = escapeHtml(lectureTitle).replace(/'/g, "\\'");
     const sheikhEscaped = escapeHtml(sheikhName).replace(/'/g, "\\'");
 
     div.innerHTML = `
       <div class="series-header">
-        <h2 class="series-title">${escapeHtml(lecture.titleArabic || '')}</h2>
+        <h2 class="series-title">${escapeHtml(lectureTitle)}</h2>
         <div class="series-meta">
           <div class="series-sheikh">
             ${t('sheikh')} ${escapeHtml(sheikhName)}
@@ -801,9 +817,13 @@
   function formatHijriDate(dateStr) {
     if (!dateStr) return '';
 
-    // Convert to Arabic numerals
-    const arabicNumerals = ['٠', '١', '٢', '٣', '٤', '٥', '٦', '٧', '٨', '٩'];
-    return dateStr.replace(/[0-9]/g, d => arabicNumerals[parseInt(d)]);
+    const locale = getLocale();
+    // Only convert to Arabic numerals for Arabic locale
+    if (locale === 'ar') {
+      const arabicNumerals = ['٠', '١', '٢', '٣', '٤', '٥', '٦', '٧', '٨', '٩'];
+      return dateStr.replace(/[0-9]/g, d => arabicNumerals[parseInt(d)]);
+    }
+    return dateStr;
   }
 
   /**
