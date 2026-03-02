@@ -269,7 +269,7 @@
       <% if (lectures && lectures.length > 0) { %>
         <div class="lectures-grid">
           <% lectures.forEach(lecture => { %>
-            <%- include('../partials/lectureCard', { lecture }) %>
+            <%- include('../partials/lectureCard', { lecture, locale }) %>
           <% }) %>
         </div>
       <% } else { %>

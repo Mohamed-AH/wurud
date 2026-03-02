@@ -1783,7 +1783,7 @@ function showMoreSeries(slug) {
         <div class="skeleton-line"></div>
         <div class="skeleton-line short"></div>
       </div>
-      <p style="text-align: center; color: var(--text-muted); padding: 20px;">جاري تحميل السلاسل...</p>
+      <p style="text-align: center; color: var(--text-muted); padding: 20px;"><%= locale === 'ar' ? 'جاري تحميل السلاسل...' : 'Loading series...' %></p>
     </div>
   <% } else if (seriesList && seriesList.length > 0) { %>
     <% seriesList.forEach(series => {
