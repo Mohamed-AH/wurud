@@ -30,15 +30,87 @@
   };
 
   // Category translations
-  const categoryArabic = {
-    'Tafsir': 'تفسير',
-    'Hadith': 'حديث',
-    'Fiqh': 'فقه',
-    'Aqeedah': 'عقيدة',
-    'Seerah': 'سيرة',
-    'Akhlaq': 'أخلاق',
-    'Other': 'أخرى'
+  const categoryTranslations = {
+    ar: {
+      'Tafsir': 'تفسير',
+      'Hadith': 'حديث',
+      'Fiqh': 'فقه',
+      'Aqeedah': 'عقيدة',
+      'Seerah': 'سيرة',
+      'Akhlaq': 'أخلاق',
+      'Other': 'أخرى'
+    },
+    en: {
+      'Tafsir': 'Tafsir',
+      'Hadith': 'Hadith',
+      'Fiqh': 'Fiqh',
+      'Aqeedah': 'Aqeedah',
+      'Seerah': 'Seerah',
+      'Akhlaq': 'Akhlaq',
+      'Other': 'Other'
+    }
   };
+
+  // Get category translation
+  function translateCategory(category) {
+    const locale = getLocale();
+    return categoryTranslations[locale]?.[category] || categoryTranslations['en'][category] || category;
+  }
+
+  // Get current locale (defined in index.ejs template)
+  function getLocale() {
+    return typeof currentLocale !== 'undefined' ? currentLocale : 'ar';
+  }
+
+  // Localized strings
+  const strings = {
+    ar: {
+      loadMore: 'تحميل المزيد',
+      loading: 'جاري التحميل...',
+      play: 'تشغيل',
+      download: 'تحميل',
+      sheikh: 'الشيخ:',
+      author: 'المؤلف:',
+      lesson: 'درس',
+      lessons: 'درس',
+      showLessons: 'عرض الدروس ▼',
+      showKhutbahs: 'عرض الخطب ▼',
+      sortLessons: 'ترتيب الدروس:',
+      byNumber: 'حسب الرقم',
+      oldestFirst: 'الأقدم أولاً',
+      newestFirst: 'الأحدث أولاً',
+      noSeries: 'لا توجد سلاسل',
+      noKhutbahs: 'لا توجد خطب',
+      noLectures: 'لا توجد محاضرات',
+      tryAnotherSearch: 'جرب بحثاً آخر'
+    },
+    en: {
+      loadMore: 'Load More',
+      loading: 'Loading...',
+      play: 'Play',
+      download: 'Download',
+      sheikh: 'Sheikh:',
+      author: 'Author:',
+      lesson: 'lesson',
+      lessons: 'lessons',
+      showLessons: 'Show Lessons ▼',
+      showKhutbahs: 'Show Khutbahs ▼',
+      sortLessons: 'Sort lessons:',
+      byNumber: 'By Number',
+      oldestFirst: 'Oldest First',
+      newestFirst: 'Newest First',
+      noSeries: 'No series found',
+      noKhutbahs: 'No khutbahs found',
+      noLectures: 'No lectures found',
+      tryAnotherSearch: 'Try another search'
+    }
+  };
+
+  // Get localized string
+  function t(key) {
+    const locale = getLocale();
+    return strings[locale]?.[key] || strings['ar'][key] || key;
+  }
 
   // DOM elements
   let seriesContainer, standaloneContainer, khutbasContainer;
@@ -161,7 +233,7 @@
   function createLoadMoreButton() {
     loadMoreBtn = document.createElement('button');
     loadMoreBtn.className = 'load-more-btn';
-    loadMoreBtn.innerHTML = 'تحميل المزيد';
+    loadMoreBtn.innerHTML = t('loadMore');
     loadMoreBtn.style.cssText = `
       display: none;
       width: 100%;
@@ -192,7 +264,7 @@
           <circle cx="12" cy="12" r="10" stroke="currentColor" stroke-width="2" fill="none" opacity="0.3"/>
           <path d="M12 2a10 10 0 0 1 10 10" stroke="currentColor" stroke-width="2" fill="none"/>
         </svg>
-        <span>جاري التحميل...</span>
+        <span>${t('loading')}</span>
       </div>
     `;
     loadingIndicator.style.display = 'none';
@@ -493,7 +565,7 @@
     }
 
     if (seriesList.length === 0 && replace) {
-      seriesContainer.innerHTML = renderEmptyState('السلاسل');
+      seriesContainer.innerHTML = renderEmptyState('series');
       return;
     }
 
@@ -514,7 +586,7 @@
     }
 
     if (seriesList.length === 0 && replace) {
-      khutbasContainer.innerHTML = renderEmptyState('الخطب');
+      khutbasContainer.innerHTML = renderEmptyState('khutbas');
       return;
     }
 
@@ -535,7 +607,7 @@
     }
 
     if (lectures.length === 0 && replace) {
-      standaloneContainer.innerHTML = renderEmptyState('المحاضرات');
+      standaloneContainer.innerHTML = renderEmptyState('standalone');
       return;
     }
 
@@ -559,10 +631,10 @@
     const episodesId = isKhutba ? `khutba-episodes-${series._id}` : `episodes-${series._id}`;
     const btnId = isKhutba ? `khutba-btn-${series._id}` : `btn-${series._id}`;
     const toggleFn = isKhutba ? 'toggleKhutba' : 'toggleSeries';
-    const btnText = isKhutba ? 'عرض الخطب ▼' : 'عرض الدروس ▼';
+    const btnText = isKhutba ? t('showKhutbahs') : t('showLessons');
 
     const sheikhName = series.sheikh?.nameArabic || '';
-    const categoryLabel = categoryArabic[series.category] || series.category || 'أخرى';
+    const categoryLabel = translateCategory(series.category);
 
     div.innerHTML = `
       <div class="series-header" onclick="${toggleFn}('${series._id}')">
@@ -571,17 +643,17 @@
         <div class="series-meta">
           ${series.originalAuthor ? `
             <div class="series-author">
-              <span class="series-author-label">المؤلف:</span>
+              <span class="series-author-label">${t('author')}</span>
               ${escapeHtml(series.originalAuthor)}
             </div>
           ` : ''}
           <div class="series-sheikh">
-            الشيخ: ${escapeHtml(sheikhName)}
+            ${t('sheikh')} ${escapeHtml(sheikhName)}
           </div>
         </div>
 
         <div class="series-info">
-          <span>${series.lectureCount || 0} درس</span>
+          <span>${series.lectureCount || 0} ${t('lesson')}</span>
           <span class="category-badge">${categoryLabel}</span>
         </div>
 
@@ -592,15 +664,15 @@
 
       <div class="episodes-list" id="${episodesId}">
         <div style="padding: 12px; background: #f8f9fa; border-bottom: 1px solid #e9ecef; display: flex; gap: 8px; align-items: center;">
-          <span style="font-size: 13px; font-weight: 600; color: #666;">ترتيب الدروس:</span>
+          <span style="font-size: 13px; font-weight: 600; color: #666;">${t('sortLessons')}</span>
           <button class="chip" onclick="sortSeriesLectures('${seriesIdPrefix}${series._id}', 'number'); event.stopPropagation();" style="padding: 4px 12px; font-size: 12px;">
-            حسب الرقم
+            ${t('byNumber')}
           </button>
           <button class="chip" onclick="sortSeriesLectures('${seriesIdPrefix}${series._id}', 'oldest'); event.stopPropagation();" style="padding: 4px 12px; font-size: 12px;">
-            الأقدم أولاً
+            ${t('oldestFirst')}
           </button>
           <button class="chip" onclick="sortSeriesLectures('${seriesIdPrefix}${series._id}', 'newest'); event.stopPropagation();" style="padding: 4px 12px; font-size: 12px;">
-            الأحدث أولاً
+            ${t('newestFirst')}
           </button>
         </div>
         <div class="episodes-container">
@@ -641,10 +713,10 @@
         </div>
         <div class="episode-actions">
           <button class="btn-play" onclick="playAudio('${lecture._id}', '${titleEscaped}', '${sheikhEscaped}')">
-            ▶ تشغيل
+            ▶ ${t('play')}
           </button>
           <a href="/download/${lecture._id}" class="btn-download">
-            ⬇ تحميل
+            ⬇ ${t('download')}
           </a>
         </div>
       </div>
@@ -679,7 +751,7 @@
         <h2 class="series-title">${escapeHtml(lecture.titleArabic || '')}</h2>
         <div class="series-meta">
           <div class="series-sheikh">
-            الشيخ: ${escapeHtml(sheikhName)}
+            ${t('sheikh')} ${escapeHtml(sheikhName)}
           </div>
         </div>
         <div class="series-info">
@@ -689,10 +761,10 @@
         <div class="episode-actions" style="margin-top: 16px;">
           ${lecture.audioFileName || lecture.audioUrl ? `
             <button class="btn-play" onclick="playAudio('${lecture._id}', '${titleEscaped}', '${sheikhEscaped}')">
-              ▶ تشغيل
+              ▶ ${t('play')}
             </button>
             <a href="/download/${lecture._id}" class="btn-download">
-              ⬇ تحميل
+              ⬇ ${t('download')}
             </a>
           ` : ''}
         </div>
@@ -705,12 +777,20 @@
   /**
    * Render empty state
    */
-  function renderEmptyState(tabName) {
+  function renderEmptyState(tabType) {
+    const emptyMessages = {
+      series: { ar: 'لا توجد سلاسل', en: 'No series found' },
+      khutbas: { ar: 'لا توجد خطب', en: 'No khutbahs found' },
+      standalone: { ar: 'لا توجد محاضرات', en: 'No lectures found' }
+    };
+    const locale = getLocale();
+    const emptyMsg = emptyMessages[tabType]?.[locale] || emptyMessages[tabType]?.['ar'] || tabType;
+
     return `
       <div class="empty-state">
         <div class="empty-icon">📚</div>
-        <h3 class="empty-title">لا توجد ${tabName}</h3>
-        <p class="empty-text">جرب بحثاً آخر</p>
+        <h3 class="empty-title">${emptyMsg}</h3>
+        <p class="empty-text">${t('tryAnotherSearch')}</p>
       </div>
     `;
   }
