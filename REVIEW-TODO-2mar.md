@@ -244,4 +244,51 @@
 
 ---
 
+## Automated Migration Scripts
+
+Migration scripts have been created to automate the English translation fixes:
+
+### Prerequisites
+1. Create a `.env` file with your MongoDB connection string:
+   ```
+   MONGODB_URI=mongodb+srv://user:pass@cluster.mongodb.net/duroos
+   ```
+
+### Running Individual Phases
+```bash
+# Phase 1: Fix Sheikh Record (nameEnglish, slug_en)
+node scripts/fix-en-translations-phase1.js
+
+# Phase 3: Fix Series Records (titleEnglish, slug_en)
+node scripts/fix-en-translations-phase3.js
+
+# Phase 4: Fix Lecture Records (titleEnglish, slug_en)
+node scripts/fix-en-translations-phase4.js
+
+# Phase 5: Verify all translations
+node scripts/fix-en-translations-phase5-verify.js
+```
+
+### Running All Phases
+```bash
+# Run all phases in sequence
+node scripts/fix-en-translations-all.js
+```
+
+### Script Details
+
+| Script | Purpose | Records Affected |
+|--------|---------|------------------|
+| phase1 | Sheikh name & slug | 1 record |
+| phase3 | Series titles & slugs | ~30 records |
+| phase4 | Lecture titles & slugs | ~349 records |
+| phase5 | Verification only | Read-only check |
+
+### Important Notes
+- **Run Phase 3 before Phase 4** - Lectures derive their English titles from Series
+- Phase 5 will report any remaining issues after running the fixes
+- All scripts are idempotent - safe to run multiple times
+
+---
+
 *Last Updated: 2026-03-02*
