@@ -6,7 +6,7 @@
  * - slug_en: Arabic characters → Latin transliteration
  * - descriptionEnglish: Stub descriptions → Full English (where applicable)
  *
- * Run: node scripts/fix-en-translations-phase3.js
+ * Run: node scripts/fix-en-translations-phase3.js [--dry-run]
  * Requires: .env file with MONGODB_URI
  */
 
@@ -15,6 +15,7 @@ const { Series } = require('../models');
 require('dotenv').config();
 
 const MONGODB_URI = process.env.MONGODB_URI;
+const DRY_RUN = process.argv.includes('--dry-run');
 
 // Series translations mapping by shortId
 // Based on REVIEW-TODO-2mar.md
@@ -154,8 +155,9 @@ async function fixSeriesRecords() {
     await mongoose.connect(MONGODB_URI);
     console.log('✅ Connected to MongoDB\n');
     console.log('═'.repeat(80));
-    console.log('PHASE 3: FIX SERIES RECORDS - ENGLISH TRANSLATIONS');
+    console.log('PHASE 3: FIX SERIES RECORDS - ENGLISH TRANSLATIONS' + (DRY_RUN ? ' [DRY RUN]' : ''));
     console.log('═'.repeat(80));
+    if (DRY_RUN) console.log('⚠️  DRY RUN MODE - No changes will be made\n');
     console.log();
 
     const allSeries = await Series.find({}).sort({ shortId: 1 });
@@ -191,8 +193,10 @@ async function fixSeriesRecords() {
 
       if (Object.keys(updates).length > 0) {
         try {
-          await Series.updateOne({ _id: series._id }, { $set: updates });
-          console.log(`✅ Series #${series.shortId} "${series.titleArabic}"`);
+          if (!DRY_RUN) {
+            await Series.updateOne({ _id: series._id }, { $set: updates });
+          }
+          console.log(`${DRY_RUN ? '🔍' : '✅'} Series #${series.shortId} "${series.titleArabic}"`);
           changes.forEach(c => console.log(`   ${c}`));
           console.log();
           updatedCount++;
@@ -208,9 +212,9 @@ async function fixSeriesRecords() {
 
     console.log();
     console.log('═'.repeat(80));
-    console.log('PHASE 3 SUMMARY');
+    console.log('PHASE 3 SUMMARY' + (DRY_RUN ? ' [DRY RUN]' : ''));
     console.log('═'.repeat(80));
-    console.log(`   Updated: ${updatedCount} series`);
+    console.log(`   ${DRY_RUN ? 'Would update' : 'Updated'}: ${updatedCount} series`);
     console.log(`   Skipped: ${skippedCount} series`);
     console.log(`   Errors:  ${errors.length}`);
 
@@ -219,6 +223,7 @@ async function fixSeriesRecords() {
       errors.forEach(e => console.log(`   - Series #${e.shortId}: ${e.error}`));
     }
 
+    if (DRY_RUN) console.log('\nRun without --dry-run to apply changes.');
     console.log();
     process.exit(0);
   } catch (error) {

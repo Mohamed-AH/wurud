@@ -5,7 +5,7 @@
  * 1. nameEnglish: Arabic text → English text
  * 2. slug_en: Arabic characters → Latin transliteration
  *
- * Run: node scripts/fix-en-translations-phase1.js
+ * Run: node scripts/fix-en-translations-phase1.js [--dry-run]
  * Requires: .env file with MONGODB_URI
  */
 
@@ -14,6 +14,7 @@ const { Sheikh } = require('../models');
 require('dotenv').config();
 
 const MONGODB_URI = process.env.MONGODB_URI;
+const DRY_RUN = process.argv.includes('--dry-run');
 
 async function fixSheikhRecord() {
   try {
@@ -27,8 +28,9 @@ async function fixSheikhRecord() {
     await mongoose.connect(MONGODB_URI);
     console.log('✅ Connected to MongoDB\n');
     console.log('═'.repeat(80));
-    console.log('PHASE 1: FIX SHEIKH RECORD');
+    console.log('PHASE 1: FIX SHEIKH RECORD' + (DRY_RUN ? ' [DRY RUN]' : ''));
     console.log('═'.repeat(80));
+    if (DRY_RUN) console.log('⚠️  DRY RUN MODE - No changes will be made\n');
     console.log();
 
     const sheikh = await Sheikh.findOne({});
@@ -84,23 +86,28 @@ async function fixSheikhRecord() {
 
     // Apply updates
     if (Object.keys(updates).length > 0) {
-      await Sheikh.updateOne({ _id: sheikh._id }, { $set: updates });
-      console.log('✅ Sheikh record updated successfully!\n');
+      if (DRY_RUN) {
+        console.log('🔍 DRY RUN - Would update 1 record\n');
+      } else {
+        await Sheikh.updateOne({ _id: sheikh._id }, { $set: updates });
+        console.log('✅ Sheikh record updated successfully!\n');
 
-      // Verify
-      const updated = await Sheikh.findById(sheikh._id);
-      console.log('📋 VERIFIED STATE:');
-      console.log('─'.repeat(60));
-      console.log(`   Name (AR): ${updated.nameArabic}`);
-      console.log(`   Name (EN): ${updated.nameEnglish}`);
-      console.log(`   Slug (EN): ${updated.slug_en}`);
-      console.log(`   Slug (AR): ${updated.slug_ar}`);
-      console.log();
+        // Verify
+        const updated = await Sheikh.findById(sheikh._id);
+        console.log('📋 VERIFIED STATE:');
+        console.log('─'.repeat(60));
+        console.log(`   Name (AR): ${updated.nameArabic}`);
+        console.log(`   Name (EN): ${updated.nameEnglish}`);
+        console.log(`   Slug (EN): ${updated.slug_en}`);
+        console.log(`   Slug (AR): ${updated.slug_ar}`);
+        console.log();
+      }
     }
 
     console.log('═'.repeat(80));
-    console.log('PHASE 1 COMPLETE');
+    console.log('PHASE 1 COMPLETE' + (DRY_RUN ? ' [DRY RUN]' : ''));
     console.log('═'.repeat(80));
+    if (DRY_RUN) console.log('\nRun without --dry-run to apply changes.');
 
     process.exit(0);
   } catch (error) {

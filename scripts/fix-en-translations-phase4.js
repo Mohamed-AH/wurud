@@ -5,7 +5,7 @@
  * - titleEnglish: Generate from Series titleEnglish + lecture number
  * - slug_en: Generate Latin slug from lecture number and series slug
  *
- * Run: node scripts/fix-en-translations-phase4.js
+ * Run: node scripts/fix-en-translations-phase4.js [--dry-run]
  * Requires: .env file with MONGODB_URI
  *           Phase 3 must be run first (Series need English titles)
  */
@@ -15,6 +15,7 @@ const { Lecture, Series } = require('../models');
 require('dotenv').config();
 
 const MONGODB_URI = process.env.MONGODB_URI;
+const DRY_RUN = process.argv.includes('--dry-run');
 
 // Arabic ordinal numbers mapping
 const ARABIC_ORDINALS = {
@@ -65,8 +66,9 @@ async function fixLectureRecords() {
     await mongoose.connect(MONGODB_URI);
     console.log('✅ Connected to MongoDB\n');
     console.log('═'.repeat(80));
-    console.log('PHASE 4: FIX LECTURE RECORDS - ENGLISH TRANSLATIONS');
+    console.log('PHASE 4: FIX LECTURE RECORDS - ENGLISH TRANSLATIONS' + (DRY_RUN ? ' [DRY RUN]' : ''));
     console.log('═'.repeat(80));
+    if (DRY_RUN) console.log('⚠️  DRY RUN MODE - No changes will be made\n');
     console.log();
 
     // First, get all series with their English titles
@@ -167,36 +169,42 @@ async function fixLectureRecords() {
 
       if (bulkOps.length > 0) {
         try {
-          await Lecture.bulkWrite(bulkOps);
-          process.stdout.write(`\r   Processed batch ${batchIndex + 1}/${batches.length} (${updatedCount} updated, ${skippedCount} skipped)`);
+          if (!DRY_RUN) {
+            await Lecture.bulkWrite(bulkOps);
+          }
+          process.stdout.write(`\r   Processed batch ${batchIndex + 1}/${batches.length} (${updatedCount} ${DRY_RUN ? 'to update' : 'updated'}, ${skippedCount} skipped)`);
         } catch (err) {
           console.log(`\n❌ Error in batch ${batchIndex + 1}: ${err.message}`);
           errorCount += bulkOps.length;
         }
       } else {
-        process.stdout.write(`\r   Processed batch ${batchIndex + 1}/${batches.length} (${updatedCount} updated, ${skippedCount} skipped)`);
+        process.stdout.write(`\r   Processed batch ${batchIndex + 1}/${batches.length} (${updatedCount} ${DRY_RUN ? 'to update' : 'updated'}, ${skippedCount} skipped)`);
       }
     }
 
     console.log('\n');
     console.log('═'.repeat(80));
-    console.log('PHASE 4 SUMMARY');
+    console.log('PHASE 4 SUMMARY' + (DRY_RUN ? ' [DRY RUN]' : ''));
     console.log('═'.repeat(80));
     console.log(`   Total lectures:     ${allLectures.length}`);
-    console.log(`   Updated:            ${updatedCount}`);
+    console.log(`   ${DRY_RUN ? 'Would update' : 'Updated'}:       ${updatedCount}`);
     console.log(`   Skipped (correct):  ${skippedCount}`);
     console.log(`   Standalone:         ${noSeriesCount}`);
     console.log(`   Errors:             ${errorCount}`);
     console.log();
 
-    // Verify a sample
-    console.log('Sample verification (first 5 updated lectures):');
-    console.log('─'.repeat(60));
-    const sampleLectures = await Lecture.find({}).limit(5).populate('seriesId').lean();
-    for (const lec of sampleLectures) {
-      console.log(`   #${lec.shortId} "${lec.titleEnglish}"`);
-      console.log(`   slug_en: ${lec.slug_en}`);
-      console.log();
+    if (!DRY_RUN) {
+      // Verify a sample
+      console.log('Sample verification (first 5 updated lectures):');
+      console.log('─'.repeat(60));
+      const sampleLectures = await Lecture.find({}).limit(5).populate('seriesId').lean();
+      for (const lec of sampleLectures) {
+        console.log(`   #${lec.shortId} "${lec.titleEnglish}"`);
+        console.log(`   slug_en: ${lec.slug_en}`);
+        console.log();
+      }
+    } else {
+      console.log('Run without --dry-run to apply changes.\n');
     }
 
     process.exit(0);
