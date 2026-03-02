@@ -99,7 +99,17 @@ function loadTranslations(filePath) {
   }
 }
 
-// List lectures needing translation
+// Check if translation looks problematic
+function needsReview(titleArabic, titleEnglish, slug_en) {
+  if (!titleEnglish) return 'missing';
+  if (hasArabic(titleEnglish)) return 'has Arabic';
+  if (titleEnglish === titleArabic) return 'same as Arabic';
+  if (hasArabic(slug_en)) return 'slug has Arabic';
+  if (!slug_en) return 'slug missing';
+  return null;
+}
+
+// List all lectures in series
 async function listLectures(series) {
   console.log('═'.repeat(80));
   console.log(`LECTURES IN: ${series.titleArabic}`);
@@ -115,38 +125,35 @@ async function listLectures(series) {
     return;
   }
 
-  let needsTranslation = 0;
   const translationTemplate = {};
+  let flaggedCount = 0;
 
-  console.log('Lectures needing English title translation:\n');
+  console.log('All lectures in this series:\n');
 
   for (const lecture of lectures) {
-    const needsEnTitle = !lecture.titleEnglish || hasArabic(lecture.titleEnglish);
-    const needsSlug = !lecture.slug_en || hasArabic(lecture.slug_en);
+    const issue = needsReview(lecture.titleArabic, lecture.titleEnglish, lecture.slug_en);
+    const flag = issue ? `⚠️  [${issue}]` : '✓';
 
-    if (needsEnTitle || needsSlug) {
-      needsTranslation++;
-      console.log(`  ${lecture.shortId}. ${lecture.titleArabic}`);
-      console.log(`     Current EN: ${lecture.titleEnglish || '(missing)'}`);
-      console.log(`     slug_en: ${lecture.slug_en || '(missing)'}`);
-      console.log();
+    if (issue) flaggedCount++;
 
-      // Build template
-      translationTemplate[lecture.shortId] = `TRANSLATE: ${lecture.titleArabic}`;
-    }
+    console.log(`  ${lecture.shortId}. ${lecture.titleArabic}`);
+    console.log(`     EN: ${lecture.titleEnglish || '(missing)'} ${flag}`);
+    console.log(`     slug_en: ${lecture.slug_en || '(missing)'}`);
+    console.log();
+
+    // Include ALL lectures in template so user can review/fix any
+    translationTemplate[lecture.shortId] = lecture.titleEnglish || `TRANSLATE: ${lecture.titleArabic}`;
   }
 
   console.log('-'.repeat(80));
-  console.log(`Total: ${lectures.length} lectures, ${needsTranslation} need translation`);
+  console.log(`Total: ${lectures.length} lectures, ${flaggedCount} flagged for review`);
   console.log();
 
-  if (needsTranslation > 0) {
-    console.log('📋 JSON template for translations file:\n');
-    console.log(JSON.stringify(translationTemplate, null, 2));
-    console.log();
-    console.log('Save this to a JSON file (e.g., translations.json), replace the values,');
-    console.log('then run: node scripts/translate-series-lectures.js ' + series.shortId + ' --file translations.json');
-  }
+  console.log('📋 JSON template (all lectures - edit the ones you want to fix):\n');
+  console.log(JSON.stringify(translationTemplate, null, 2));
+  console.log();
+  console.log('Save to a file, edit translations, then run:');
+  console.log(`  node scripts/translate-series-lectures.js ${series.shortId} --file translations.json --dry-run`);
 }
 
 // Apply translations
@@ -171,7 +178,14 @@ async function applyTranslations(series, translations) {
                          translations[String(lecture.shortId)] ||
                          translations[String(lecture.lectureNumber)];
 
+    // Skip if no translation provided or still has TRANSLATE: prefix
     if (!englishTitle || englishTitle.startsWith('TRANSLATE:')) {
+      skipped++;
+      continue;
+    }
+
+    // Skip if translation is same as current (no change needed)
+    if (englishTitle === lecture.titleEnglish) {
       skipped++;
       continue;
     }
@@ -179,16 +193,14 @@ async function applyTranslations(series, translations) {
     const updates = {};
     const changes = [];
 
-    // Update titleEnglish
-    if (!lecture.titleEnglish || hasArabic(lecture.titleEnglish)) {
-      updates.titleEnglish = englishTitle;
-      changes.push(`titleEnglish: "${lecture.titleEnglish || '-'}" → "${englishTitle}"`);
-    }
+    // Always update titleEnglish if translation differs from current
+    updates.titleEnglish = englishTitle;
+    changes.push(`titleEnglish: "${lecture.titleEnglish || '-'}" → "${englishTitle}"`);
 
-    // Update slug_en
-    if (!lecture.slug_en || hasArabic(lecture.slug_en)) {
-      const baseSlug = generateSlugEn(englishTitle);
-      const uniqueSlug = await generateUniqueSlug(baseSlug, lecture._id);
+    // Regenerate slug_en based on new English title
+    const baseSlug = generateSlugEn(englishTitle);
+    const uniqueSlug = await generateUniqueSlug(baseSlug, lecture._id);
+    if (uniqueSlug !== lecture.slug_en) {
       updates.slug_en = uniqueSlug;
       changes.push(`slug_en: "${lecture.slug_en || '-'}" → "${uniqueSlug}"`);
     }
