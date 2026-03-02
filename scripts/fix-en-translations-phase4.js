@@ -99,10 +99,34 @@ async function fixLectureRecords() {
     const allLectures = await Lecture.find({}).sort({ seriesId: 1, lectureNumber: 1 });
     console.log(`Found ${allLectures.length} lecture records.\n`);
 
+    // Build a set of existing slugs for duplicate detection
+    const existingSlugs = new Set();
+    for (const lec of allLectures) {
+      if (lec.slug_en && !hasArabic(lec.slug_en)) {
+        existingSlugs.add(lec.slug_en);
+      }
+    }
+
+    // Track slugs we're assigning in this run to avoid duplicates
+    const assignedSlugs = new Set();
+
+    // Helper to get a unique slug
+    function getUniqueSlug(baseSlug, shortId) {
+      if (!existingSlugs.has(baseSlug) && !assignedSlugs.has(baseSlug)) {
+        assignedSlugs.add(baseSlug);
+        return baseSlug;
+      }
+      // Slug already exists, append shortId to make it unique
+      const uniqueSlug = `${baseSlug}-${shortId}`;
+      assignedSlugs.add(uniqueSlug);
+      return uniqueSlug;
+    }
+
     let updatedCount = 0;
     let skippedCount = 0;
     let errorCount = 0;
     let noSeriesCount = 0;
+    let duplicatesFixed = 0;
 
     // Process in batches
     const BATCH_SIZE = 50;
@@ -137,9 +161,27 @@ async function fixLectureRecords() {
 
           // Check slug_en
           if (hasArabic(lecture.slug_en) || !lecture.slug_en) {
-            const newSlug = generateEnglishSlug(seriesInfo.slug_en, lectureNum);
-            if (newSlug) {
-              updates.slug_en = newSlug;
+            const baseSlug = generateEnglishSlug(seriesInfo.slug_en, lectureNum);
+            if (baseSlug) {
+              updates.slug_en = getUniqueSlug(baseSlug, lecture.shortId);
+              if (updates.slug_en !== baseSlug) {
+                duplicatesFixed++;
+              }
+            }
+          } else {
+            // Existing slug - check if it's a duplicate and needs fixing
+            const currentSlug = lecture.slug_en;
+            if (assignedSlugs.has(currentSlug)) {
+              // This slug was already assigned to another lecture - fix it
+              const baseSlug = generateEnglishSlug(seriesInfo.slug_en, lectureNum);
+              if (baseSlug) {
+                updates.slug_en = `${baseSlug}-${lecture.shortId}`;
+                assignedSlugs.add(updates.slug_en);
+                duplicatesFixed++;
+              }
+            } else {
+              // Mark this slug as used
+              assignedSlugs.add(currentSlug);
             }
           }
         } else {
@@ -172,13 +214,13 @@ async function fixLectureRecords() {
           if (!DRY_RUN) {
             await Lecture.bulkWrite(bulkOps);
           }
-          process.stdout.write(`\r   Processed batch ${batchIndex + 1}/${batches.length} (${updatedCount} ${DRY_RUN ? 'to update' : 'updated'}, ${skippedCount} skipped)`);
+          process.stdout.write(`\r   Processed batch ${batchIndex + 1}/${batches.length} (${updatedCount} ${DRY_RUN ? 'to update' : 'updated'}, ${skippedCount} skipped, ${duplicatesFixed} duplicates fixed)`);
         } catch (err) {
           console.log(`\n❌ Error in batch ${batchIndex + 1}: ${err.message}`);
           errorCount += bulkOps.length;
         }
       } else {
-        process.stdout.write(`\r   Processed batch ${batchIndex + 1}/${batches.length} (${updatedCount} ${DRY_RUN ? 'to update' : 'updated'}, ${skippedCount} skipped)`);
+        process.stdout.write(`\r   Processed batch ${batchIndex + 1}/${batches.length} (${updatedCount} ${DRY_RUN ? 'to update' : 'updated'}, ${skippedCount} skipped, ${duplicatesFixed} duplicates fixed)`);
       }
     }
 
@@ -189,6 +231,7 @@ async function fixLectureRecords() {
     console.log(`   Total lectures:     ${allLectures.length}`);
     console.log(`   ${DRY_RUN ? 'Would update' : 'Updated'}:       ${updatedCount}`);
     console.log(`   Skipped (correct):  ${skippedCount}`);
+    console.log(`   Duplicates fixed:   ${duplicatesFixed}`);
     console.log(`   Standalone:         ${noSeriesCount}`);
     console.log(`   Errors:             ${errorCount}`);
     console.log();
