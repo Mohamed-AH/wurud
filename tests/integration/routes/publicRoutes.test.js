@@ -245,6 +245,7 @@ describe('Public Routes Integration Tests', () => {
 
       const response = await request(app)
         .get(`/lectures/${lecture._id}`)
+        .redirects(1)
         .expect(200);
 
       expect(response.body._view).toBe('public/lecture');
@@ -292,6 +293,7 @@ describe('Public Routes Integration Tests', () => {
 
       const response = await request(app)
         .get(`/lectures/${lecture._id}`)
+        .redirects(1)
         .expect(200);
 
       expect(response.body.relatedLectures).toHaveLength(1);
@@ -330,6 +332,7 @@ describe('Public Routes Integration Tests', () => {
 
       const response = await request(app)
         .get(`/sheikhs/${sheikh._id}`)
+        .redirects(1)
         .expect(200);
 
       expect(response.body._view).toBe('public/sheikh');
@@ -382,6 +385,7 @@ describe('Public Routes Integration Tests', () => {
 
       const response = await request(app)
         .get(`/series/${series._id}`)
+        .redirects(1)
         .expect(200);
 
       expect(response.body._view).toBe('public/series-detail');
