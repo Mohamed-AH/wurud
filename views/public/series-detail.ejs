@@ -6,9 +6,12 @@
     overflow-x: hidden;
   }
 
-  /* Ensure all containers respect viewport width */
+  /* Ensure all containers have proper width */
   .series-detail-page .container {
-    max-width: 100%;
+    max-width: 1400px;
+    width: 100%;
+    margin: 0 auto;
+    padding: 0 32px;
     box-sizing: border-box;
   }
 
@@ -401,6 +404,30 @@
 
   .clear-sort-btn:hover {
     background: #c82333;
+  }
+
+  /* Large desktop (1200px and above) - ensure wide layout */
+  @media (min-width: 1200px) {
+    .series-detail-page .container {
+      max-width: 1400px;
+      padding: 0 48px;
+    }
+
+    .lectures-list {
+      max-width: 100%;
+    }
+
+    .lecture-item {
+      padding: 16px;
+    }
+  }
+
+  /* Medium desktop (1024px to 1199px) */
+  @media (min-width: 1024px) and (max-width: 1199px) {
+    .series-detail-page .container {
+      max-width: 100%;
+      padding: 0 40px;
+    }
   }
 
   /* Tablet (768px and below) */
