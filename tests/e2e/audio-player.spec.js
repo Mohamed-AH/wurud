@@ -27,9 +27,9 @@ test.describe('Audio Player - Basic Functionality', () => {
       await playButton.click({ force: true });
       await page.waitForTimeout(1000);
 
-      // Audio element should exist
+      // Audio element should exist (note: audio elements are hidden by default)
       const audio = page.locator('audio');
-      await expect(audio).toBeVisible();
+      await expect(audio).toBeAttached();
     }
   });
 
@@ -210,9 +210,14 @@ test.describe('Audio Player - Volume Control', () => {
 });
 
 test.describe('Audio Player - Mobile Compatibility', () => {
-  test('should work on mobile devices', async ({ page }) => {
-    // Set mobile viewport
-    await page.setViewportSize({ width: 375, height: 667 });
+  test('should work on mobile devices', async ({ browser }) => {
+    // Create a context with touch support for mobile simulation
+    const context = await browser.newContext({
+      viewport: { width: 375, height: 667 },
+      hasTouch: true
+    });
+    const page = await context.newPage();
+
     await page.goto('/');
 
     const playButton = page.locator('button[class*="play"]').first();
@@ -222,11 +227,12 @@ test.describe('Audio Player - Mobile Compatibility', () => {
       await playButton.tap({ force: true });
       await page.waitForTimeout(1000);
 
+      // Audio element should exist (note: audio elements are hidden by default)
       const audio = page.locator('audio');
-      if (await audio.isVisible()) {
-        await expect(audio).toBeVisible();
-      }
+      await expect(audio).toBeAttached();
     }
+
+    await context.close();
   });
 
   test('should have touch-friendly controls on mobile', async ({ page }) => {
