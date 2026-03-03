@@ -574,6 +574,64 @@
       font-size: 12px;
     }
   }
+
+  /* Container responsive padding */
+  @media (max-width: 480px) {
+    .series-detail-page .container {
+      padding: 0 16px;
+    }
+  }
+
+  @media (max-width: 360px) {
+    .series-detail-page .container {
+      padding: 0 12px;
+    }
+  }
+
+  /* Lecture item stacking on small screens */
+  @media (max-width: 480px) {
+    .lecture-item {
+      flex-direction: column;
+      align-items: center;
+      text-align: center;
+    }
+
+    .lecture-item-content {
+      width: 100%;
+    }
+  }
+
+  /* Series grid cards - ensure they don't overflow */
+  @media (max-width: 480px) {
+    .series-card {
+      flex-direction: column;
+      text-align: center;
+    }
+
+    .series-icon {
+      margin: 0 auto 12px;
+    }
+
+    .series-meta {
+      justify-content: center;
+    }
+  }
+
+  /* Stat cards - horizontal scroll prevention */
+  .stats-grid {
+    overflow-x: hidden;
+  }
+
+  @media (max-width: 480px) {
+    .stat-card {
+      flex-direction: column;
+      text-align: center;
+    }
+
+    .stat-icon {
+      margin-bottom: 12px;
+    }
+  }
 </style>
 
 <div class="series-detail-page">
