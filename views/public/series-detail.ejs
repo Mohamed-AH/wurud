@@ -402,6 +402,7 @@
     background: #c82333;
   }
 
+  /* Tablet (768px and below) */
   @media (max-width: 768px) {
     .series-hero {
       padding: 32px 0;
@@ -416,11 +417,16 @@
     }
 
     .stats-grid {
-      grid-template-columns: 1fr;
+      grid-template-columns: repeat(2, 1fr);
     }
 
     .series-grid {
       grid-template-columns: 1fr;
+    }
+
+    .lecture-item {
+      padding: 8px;
+      gap: 12px;
     }
 
     .lecture-number-badge {
@@ -432,6 +438,7 @@
     .sort-controls {
       flex-direction: column;
       align-items: flex-start;
+      padding: 14px;
     }
 
     .sort-chips {
@@ -456,21 +463,32 @@
     .description-card, .bio-card {
       padding: 20px;
     }
+
+    .content-section {
+      padding: 32px 0;
+    }
   }
 
   /* Small phones (below 480px) */
   @media (max-width: 480px) {
+    .series-detail-page .container {
+      padding-left: 12px;
+      padding-right: 12px;
+    }
+
     .series-hero {
-      padding: 24px 0;
+      padding: 20px 0;
     }
 
     .series-title {
-      font-size: 26px;
+      font-size: 24px;
       margin-bottom: 8px;
+      line-height: 1.4;
+      word-wrap: break-word;
     }
 
     .series-title-en {
-      font-size: 16px;
+      font-size: 15px;
       margin-bottom: 16px;
     }
 
@@ -480,11 +498,21 @@
     }
 
     .series-sheikh {
-      font-size: 15px;
+      font-size: 14px;
+      flex-wrap: wrap;
+    }
+
+    .stats-section {
+      padding: 24px 0;
+    }
+
+    .stats-grid {
+      grid-template-columns: 1fr;
+      gap: 12px;
     }
 
     .stat-card {
-      padding: 16px;
+      padding: 14px;
       gap: 12px;
     }
 
@@ -499,70 +527,146 @@
     }
 
     .stat-value {
-      font-size: 26px;
+      font-size: 24px;
     }
 
     .stat-label {
       font-size: 13px;
     }
 
+    .content-section {
+      padding: 24px 0;
+    }
+
     .section-title {
-      font-size: 20px;
+      font-size: 18px;
+      margin-bottom: 16px;
+      padding-bottom: 8px;
     }
 
     .description-card, .bio-card {
-      padding: 16px;
+      padding: 14px;
     }
 
     .description-text, .bio-text {
-      font-size: 16px;
+      font-size: 15px;
+      line-height: 1.7;
+    }
+
+    /* Lecture list items */
+    .lectures-list {
+      gap: 12px;
     }
 
     .lecture-item {
-      padding: 8px;
-      gap: 10px;
+      padding: 4px;
+      gap: 8px;
+      flex-direction: row;
+      align-items: flex-start;
     }
 
     .lecture-number-badge {
-      width: 36px;
-      height: 36px;
-      font-size: 16px;
+      width: 32px;
+      height: 32px;
+      font-size: 14px;
+      margin-top: 4px;
     }
 
+    .lecture-item-content {
+      flex: 1;
+      min-width: 0;
+      width: calc(100% - 44px);
+    }
+
+    /* Sort controls */
     .sort-controls {
-      padding: 12px;
+      padding: 10px;
+      gap: 8px;
+      margin-bottom: 16px;
     }
 
-    .sort-chip {
-      padding: 6px 12px;
+    .sort-label {
       font-size: 13px;
     }
 
+    .sort-chips {
+      gap: 6px;
+    }
+
+    .sort-chip {
+      padding: 6px 10px;
+      font-size: 12px;
+    }
+
+    .clear-sort-btn {
+      padding: 6px 12px;
+      font-size: 12px;
+    }
+
     .breadcrumb {
-      padding: 12px 0;
+      padding: 10px 0;
     }
 
     .breadcrumb .container {
       font-size: 12px;
     }
+
+    /* Related series grid */
+    .series-grid {
+      gap: 12px;
+    }
+
+    .series-card {
+      padding: 14px;
+      gap: 12px;
+    }
+
+    .series-icon {
+      width: 40px;
+      height: 40px;
+    }
+
+    .series-icon svg {
+      width: 28px;
+      height: 28px;
+    }
+
+    .series-content .series-title {
+      font-size: 16px;
+    }
+
+    .series-content .series-title-en {
+      font-size: 12px;
+    }
+
+    .series-meta {
+      font-size: 12px;
+      gap: 8px;
+    }
   }
 
   /* Very small phones (below 360px) */
   @media (max-width: 360px) {
+    .series-detail-page .container {
+      padding-left: 8px;
+      padding-right: 8px;
+    }
+
     .series-hero {
-      padding: 20px 0;
+      padding: 16px 0;
     }
 
     .series-title {
-      font-size: 22px;
+      font-size: 20px;
     }
 
     .series-title-en {
-      font-size: 14px;
+      font-size: 13px;
     }
 
     .stat-card {
       padding: 12px;
+      gap: 10px;
     }
 
     .stat-icon {
@@ -570,102 +674,68 @@
       height: 40px;
     }
 
+    .stat-icon svg {
+      width: 22px;
+      height: 22px;
+    }
+
     .stat-value {
       font-size: 22px;
     }
 
+    .stat-label {
+      font-size: 12px;
+    }
+
     .section-title {
-      font-size: 18px;
+      font-size: 16px;
+    }
+
+    .description-card, .bio-card {
+      padding: 12px;
     }
 
     .description-text, .bio-text {
-      font-size: 15px;
-    }
-
-    .lecture-number-badge {
-      width: 32px;
-      height: 32px;
       font-size: 14px;
     }
 
-    .sort-chip {
-      padding: 5px 10px;
-      font-size: 12px;
-    }
-  }
-
-  /* Container responsive padding */
-  @media (max-width: 480px) {
-    .series-detail-page .container {
-      padding: 0 16px;
-    }
-  }
-
-  @media (max-width: 360px) {
-    .series-detail-page .container {
-      padding: 0 12px;
-    }
-  }
-
-  /* Lecture item stacking on small screens */
-  @media (max-width: 480px) {
     .lecture-item {
-      flex-direction: column;
-      align-items: center;
-      text-align: center;
-      width: 100%;
-      max-width: 100%;
+      padding: 2px;
+      gap: 6px;
+    }
+
+    .lecture-number-badge {
+      width: 28px;
+      height: 28px;
+      font-size: 12px;
     }
 
     .lecture-item-content {
-      width: 100%;
-      max-width: 100%;
+      width: calc(100% - 38px);
     }
 
-    /* Force lecture card to respect container width */
-    .lecture-item .lecture-card {
-      max-width: 100%;
-      width: 100%;
-      box-sizing: border-box;
+    .sort-controls {
+      padding: 8px;
     }
 
-    /* Stack lecture card elements on very small screens */
-    .lecture-item .lecture-card .lecture-actions {
-      flex-wrap: wrap;
-      justify-content: center;
-      gap: 6px;
+    .sort-chip {
+      padding: 5px 8px;
+      font-size: 11px;
     }
-  }
 
-  /* Series grid cards - ensure they don't overflow */
-  @media (max-width: 480px) {
     .series-card {
+      padding: 12px;
       flex-direction: column;
       text-align: center;
     }
 
     .series-icon {
-      margin: 0 auto 12px;
+      margin: 0 auto 8px;
     }
 
     .series-meta {
       justify-content: center;
-    }
-  }
-
-  /* Stat cards - horizontal scroll prevention */
-  .stats-grid {
-    overflow-x: hidden;
-  }
-
-  @media (max-width: 480px) {
-    .stat-card {
-      flex-direction: column;
-      text-align: center;
-    }
-
-    .stat-icon {
-      margin-bottom: 12px;
+      flex-wrap: wrap;
     }
   }
 </style>
