@@ -2,6 +2,14 @@
   /* Brown/Gold Design for Series Detail Page */
   .series-detail-page {
     padding: 0;
+    max-width: 100%;
+    overflow-x: hidden;
+  }
+
+  /* Ensure all containers respect viewport width */
+  .series-detail-page .container {
+    max-width: 100%;
+    box-sizing: border-box;
   }
 
   .breadcrumb {
@@ -187,6 +195,8 @@
   .lectures-list {
     display: grid;
     gap: 16px;
+    max-width: 100%;
+    overflow-x: hidden;
   }
 
   .lecture-item {
@@ -196,6 +206,15 @@
     padding: 12px;
     border-radius: 12px;
     transition: all 0.3s ease;
+    max-width: 100%;
+    box-sizing: border-box;
+  }
+
+  .lecture-item-content {
+    flex: 1;
+    min-width: 0;
+    max-width: 100%;
+    overflow: hidden;
   }
 
   .lecture-item:hover {
@@ -384,8 +403,16 @@
   }
 
   @media (max-width: 768px) {
+    .series-hero {
+      padding: 32px 0;
+    }
+
     .series-title {
       font-size: 32px;
+    }
+
+    .series-title-en {
+      font-size: 18px;
     }
 
     .stats-grid {
@@ -414,6 +441,231 @@
     .clear-sort-btn {
       margin-right: 0;
       margin-top: 8px;
+    }
+
+    .breadcrumb .container {
+      flex-wrap: wrap;
+      gap: 4px;
+      font-size: 13px;
+    }
+
+    .section-title {
+      font-size: 22px;
+    }
+
+    .description-card, .bio-card {
+      padding: 20px;
+    }
+  }
+
+  /* Small phones (below 480px) */
+  @media (max-width: 480px) {
+    .series-hero {
+      padding: 24px 0;
+    }
+
+    .series-title {
+      font-size: 26px;
+      margin-bottom: 8px;
+    }
+
+    .series-title-en {
+      font-size: 16px;
+      margin-bottom: 16px;
+    }
+
+    .series-category-badge {
+      font-size: 12px;
+      padding: 4px 12px;
+    }
+
+    .series-sheikh {
+      font-size: 15px;
+    }
+
+    .stat-card {
+      padding: 16px;
+      gap: 12px;
+    }
+
+    .stat-icon {
+      width: 44px;
+      height: 44px;
+    }
+
+    .stat-icon svg {
+      width: 24px;
+      height: 24px;
+    }
+
+    .stat-value {
+      font-size: 26px;
+    }
+
+    .stat-label {
+      font-size: 13px;
+    }
+
+    .section-title {
+      font-size: 20px;
+    }
+
+    .description-card, .bio-card {
+      padding: 16px;
+    }
+
+    .description-text, .bio-text {
+      font-size: 16px;
+    }
+
+    .lecture-item {
+      padding: 8px;
+      gap: 10px;
+    }
+
+    .lecture-number-badge {
+      width: 36px;
+      height: 36px;
+      font-size: 16px;
+    }
+
+    .sort-controls {
+      padding: 12px;
+    }
+
+    .sort-chip {
+      padding: 6px 12px;
+      font-size: 13px;
+    }
+
+    .breadcrumb {
+      padding: 12px 0;
+    }
+
+    .breadcrumb .container {
+      font-size: 12px;
+    }
+  }
+
+  /* Very small phones (below 360px) */
+  @media (max-width: 360px) {
+    .series-hero {
+      padding: 20px 0;
+    }
+
+    .series-title {
+      font-size: 22px;
+    }
+
+    .series-title-en {
+      font-size: 14px;
+    }
+
+    .stat-card {
+      padding: 12px;
+    }
+
+    .stat-icon {
+      width: 40px;
+      height: 40px;
+    }
+
+    .stat-value {
+      font-size: 22px;
+    }
+
+    .section-title {
+      font-size: 18px;
+    }
+
+    .description-text, .bio-text {
+      font-size: 15px;
+    }
+
+    .lecture-number-badge {
+      width: 32px;
+      height: 32px;
+      font-size: 14px;
+    }
+
+    .sort-chip {
+      padding: 5px 10px;
+      font-size: 12px;
+    }
+  }
+
+  /* Container responsive padding */
+  @media (max-width: 480px) {
+    .series-detail-page .container {
+      padding: 0 16px;
+    }
+  }
+
+  @media (max-width: 360px) {
+    .series-detail-page .container {
+      padding: 0 12px;
+    }
+  }
+
+  /* Lecture item stacking on small screens */
+  @media (max-width: 480px) {
+    .lecture-item {
+      flex-direction: column;
+      align-items: center;
+      text-align: center;
+      width: 100%;
+      max-width: 100%;
+    }
+
+    .lecture-item-content {
+      width: 100%;
+      max-width: 100%;
+    }
+
+    /* Force lecture card to respect container width */
+    .lecture-item .lecture-card {
+      max-width: 100%;
+      width: 100%;
+      box-sizing: border-box;
+    }
+
+    /* Stack lecture card elements on very small screens */
+    .lecture-item .lecture-card .lecture-actions {
+      flex-wrap: wrap;
+      justify-content: center;
+      gap: 6px;
+    }
+  }
+
+  /* Series grid cards - ensure they don't overflow */
+  @media (max-width: 480px) {
+    .series-card {
+      flex-direction: column;
+      text-align: center;
+    }
+
+    .series-icon {
+      margin: 0 auto 12px;
+    }
+
+    .series-meta {
+      justify-content: center;
+    }
+  }
+
+  /* Stat cards - horizontal scroll prevention */
+  .stats-grid {
+    overflow-x: hidden;
+  }
+
+  @media (max-width: 480px) {
+    .stat-card {
+      flex-direction: column;
+      text-align: center;
+    }
+
+    .stat-icon {
+      margin-bottom: 12px;
     }
   }
 </style>
