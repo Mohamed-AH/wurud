@@ -93,6 +93,8 @@
     const modal = document.createElement('div');
     modal.id = 'shareModal';
     modal.className = 'share-modal';
+    // Set inline styles to ensure modal is hidden before CSS loads (prevents flash)
+    modal.style.cssText = 'opacity: 0; visibility: hidden; display: none;';
     modal.setAttribute('role', 'dialog');
     modal.setAttribute('aria-modal', 'true');
     modal.setAttribute('aria-labelledby', 'shareModalTitle');
@@ -208,7 +210,8 @@
     }
     titlePreview.textContent = title;
 
-    // Show modal
+    // Show modal - reset inline styles and add active class
+    modal.style.cssText = '';  // Clear inline styles so CSS takes over
     modal.classList.add('active');
     document.body.style.overflow = 'hidden';
 
