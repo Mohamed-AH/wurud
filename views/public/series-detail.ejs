@@ -2,6 +2,14 @@
   /* Brown/Gold Design for Series Detail Page */
   .series-detail-page {
     padding: 0;
+    max-width: 100%;
+    overflow-x: hidden;
+  }
+
+  /* Ensure all containers respect viewport width */
+  .series-detail-page .container {
+    max-width: 100%;
+    box-sizing: border-box;
   }
 
   .breadcrumb {
@@ -187,6 +195,8 @@
   .lectures-list {
     display: grid;
     gap: 16px;
+    max-width: 100%;
+    overflow-x: hidden;
   }
 
   .lecture-item {
@@ -196,6 +206,15 @@
     padding: 12px;
     border-radius: 12px;
     transition: all 0.3s ease;
+    max-width: 100%;
+    box-sizing: border-box;
+  }
+
+  .lecture-item-content {
+    flex: 1;
+    min-width: 0;
+    max-width: 100%;
+    overflow: hidden;
   }
 
   .lecture-item:hover {
@@ -594,10 +613,27 @@
       flex-direction: column;
       align-items: center;
       text-align: center;
+      width: 100%;
+      max-width: 100%;
     }
 
     .lecture-item-content {
       width: 100%;
+      max-width: 100%;
+    }
+
+    /* Force lecture card to respect container width */
+    .lecture-item .lecture-card {
+      max-width: 100%;
+      width: 100%;
+      box-sizing: border-box;
+    }
+
+    /* Stack lecture card elements on very small screens */
+    .lecture-item .lecture-card .lecture-actions {
+      flex-wrap: wrap;
+      justify-content: center;
+      gap: 6px;
     }
   }
 

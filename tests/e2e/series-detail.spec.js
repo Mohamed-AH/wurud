@@ -230,6 +230,55 @@ test.describe('Series Detail Page - Responsive Design', () => {
 });
 
 test.describe('Series Detail Page - Lecture Cards', () => {
+  test('should not have horizontal overflow on mobile viewports', async ({ page }) => {
+    const viewports = [
+      { width: 320, height: 568, name: '320px' },
+      { width: 375, height: 667, name: '375px' },
+      { width: 414, height: 896, name: '414px' },
+    ];
+
+    for (const viewport of viewports) {
+      await page.setViewportSize({ width: viewport.width, height: viewport.height });
+      await page.goto('/');
+
+      // Navigate to series detail
+      const seriesTab = page.locator('#tab-series');
+      await seriesTab.scrollIntoViewIfNeeded();
+      await seriesTab.click();
+      await page.waitForTimeout(300);
+
+      const seriesLink = page.locator('#content-series .series-title a').first();
+      if (await seriesLink.isVisible()) {
+        await seriesLink.click();
+        await page.waitForTimeout(500);
+
+        // Check document scroll width doesn't exceed viewport
+        const bodyWidth = await page.evaluate(() => document.body.scrollWidth);
+        const viewportWidth = await page.evaluate(() => window.innerWidth);
+        expect(bodyWidth, `No horizontal overflow at ${viewport.name}`).toBeLessThanOrEqual(viewportWidth + 5);
+
+        // Check lecture cards don't overflow
+        const lectureCard = page.locator('.lecture-card').first();
+        if (await lectureCard.isVisible()) {
+          const cardBox = await lectureCard.boundingBox();
+          expect(cardBox.x, `Card not cut off left at ${viewport.name}`).toBeGreaterThanOrEqual(0);
+          expect(cardBox.x + cardBox.width, `Card not cut off right at ${viewport.name}`).toBeLessThanOrEqual(viewportWidth + 5);
+        }
+
+        // Check action buttons are visible and not cut off
+        const actionBtns = page.locator('.lecture-actions .btn-play, .lecture-actions .btn-download, .lecture-actions .btn-share-card');
+        const btnCount = await actionBtns.count();
+        for (let i = 0; i < Math.min(btnCount, 3); i++) {
+          const btn = actionBtns.nth(i);
+          if (await btn.isVisible()) {
+            const btnBox = await btn.boundingBox();
+            expect(btnBox.x + btnBox.width, `Action button ${i} not cut off at ${viewport.name}`).toBeLessThanOrEqual(viewportWidth + 5);
+          }
+        }
+      }
+    }
+  });
+
   test('should display lecture cards properly on mobile', async ({ page }) => {
     await page.setViewportSize({ width: 375, height: 667 });
     await page.goto('/');
