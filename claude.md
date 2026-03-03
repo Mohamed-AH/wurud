@@ -23,7 +23,7 @@ A web platform for hosting and streaming ~160 Arabic Islamic lecture audio files
 | 1 | Security Deep Audit | ✅ COMPLETE | 9/9 |
 | 2 | Feature Implementation (4.3, 4.5) | ✅ COMPLETE | 8/8 |
 | 3 | Optimization (All Areas) | ⬜ NOT STARTED | 0/12 |
-| 4 | Testing (Full Coverage) | ⬜ NOT STARTED | 0/10 |
+| 4 | Testing (Full Coverage) | 🔄 IN PROGRESS | 0/5 phases planned |
 
 ---
 
@@ -280,38 +280,303 @@ A web platform for hosting and streaming ~160 Arabic Islamic lecture audio files
 
 ### 🧪 PHASE 4: Testing (Full Coverage)
 
-**Status**: ⬜ NOT STARTED
-**Depends on**: Phase 3 completion
+**Status**: 🔄 IN PROGRESS
+**Started**: 2026-03-03
+**Target**: >80% statement coverage (currently ~47%)
 
-#### 4.1 Unit Tests ⬜
-- [ ] Test new share component functions
-- [ ] Test i18n with English translations
-- [ ] Test new utility functions
-- [ ] Achieve >80% unit test coverage
+#### 📊 Current Coverage Analysis (2026-03-03)
 
-#### 4.2 Integration Tests ⬜
-- [ ] API endpoint tests for share analytics
-- [ ] Language switching API tests
-- [ ] Security middleware tests
-- [ ] Rate limiting tests
+| Area | Statements | Branches | Status |
+|------|------------|----------|--------|
+| **Overall** | 47.42% | 39.72% | ⚠️ Needs improvement |
+| models/ | 66.85% | 46.07% | ⚠️ Moderate |
+| routes/ | 53.54% | 44.26% | ⚠️ Needs work |
+| routes/admin/ | 29.52% | 23.93% | ❌ Low |
+| routes/api/ | 58.15% | 50.55% | ⚠️ Moderate |
+| utils/ | 55.48% | 45.18% | ⚠️ Needs work |
+| middleware/ | ~15% | ~0% | ❌ Critical |
+| controllers/ | ~45% | ~35% | ⚠️ Needs work |
 
-#### 4.3 E2E Tests ⬜
-- [ ] Share button functionality tests
-- [ ] Language toggle tests
-- [ ] Full user journey tests
-- [ ] Mobile viewport tests
+---
 
-#### 4.4 Security Tests ⬜
-- [ ] Input validation edge cases
-- [ ] Auth bypass attempts
-- [ ] Rate limit enforcement
-- [ ] CSRF/XSS prevention verification
+#### 🚨 4.1 Critical Priority - Zero Coverage Files
 
-#### 4.5 Performance Tests ⬜
-- [ ] Load testing with concurrent users
-- [ ] Stress testing API endpoints
-- [ ] Mobile performance metrics
-- [ ] Lighthouse CI integration
+**Target**: Get all 0% files to >70% coverage
+**Estimated Tests**: ~50 new tests
+
+##### 4.1.1 Middleware Tests ⬜
+- [ ] `middleware/streamHandler.js` (0% → 80%)
+  - Test `handleRangeRequest` with no range header (full file)
+  - Test `handleRangeRequest` with valid range header (partial content)
+  - Test `handleRangeRequest` with invalid range (416 response)
+  - Test `handleRangeRequest` with missing filePath/stat (500 error)
+  - Test `getMimeType` for all audio formats
+  - Test `setCacheHeaders` sets correct headers
+  - Test `preventCache` sets no-cache headers
+  - **File**: `tests/unit/middleware/streamHandler.test.js`
+
+##### 4.1.2 Auth Routes Tests ⬜
+- [ ] `routes/auth.js` (0% → 80%)
+  - Test GET /auth/google initiates OAuth
+  - Test GET /auth/google/callback success redirect
+  - Test GET /auth/google/callback failure redirect
+  - Test GET /auth/logout destroys session
+  - Test GET /auth/status authenticated response
+  - Test GET /auth/status unauthenticated response
+  - **File**: `tests/unit/routes/auth.test.js`
+
+##### 4.1.3 Stream/Download Routes Tests ⬜
+- [ ] `routes/stream.js` (0% → 80%)
+  - Test streaming endpoint with valid lecture ID
+  - Test streaming with invalid ID returns 400
+  - Test streaming with non-existent lecture returns 404
+  - **File**: `tests/unit/routes/stream.test.js`
+
+- [ ] `routes/download.js` (0% → 80%)
+  - Test download endpoint with valid lecture
+  - Test download with OCI storage
+  - Test download error handling
+  - **File**: `tests/unit/routes/download.test.js`
+
+##### 4.1.4 Sheikh API Tests ⬜
+- [ ] `routes/api/sheikhs.js` (0% → 80%)
+  - Test GET /api/sheikhs returns all sheikhs
+  - Test POST /api/sheikhs creates sheikh (admin)
+  - Test POST /api/sheikhs requires nameArabic
+  - Test PUT /api/sheikhs/:id updates sheikh
+  - Test PUT /api/sheikhs/:id validates ObjectId
+  - Test DELETE /api/sheikhs/:id deletes sheikh
+  - Test DELETE /api/sheikhs/:id prevents deletion with lectures
+  - **File**: `tests/unit/api/sheikhs.test.js`
+
+---
+
+#### ⚠️ 4.2 High Priority - Low Coverage Files (<30%)
+
+**Target**: Improve from <30% to >70% coverage
+**Estimated Tests**: ~80 new tests
+
+##### 4.2.1 File Validation Middleware (10% → 80%) ⬜
+- [ ] `middleware/fileValidation.js`
+  - Test `validateUploadedFile` with no file
+  - Test `validateUploadedFile` with file too large
+  - Test `validateUploadedFile` with file too small
+  - Test `validateUploadedFile` with MIME type mismatch
+  - Test `validateUploadedFile` with path traversal attempt
+  - Test `validateUploadedFiles` with multiple files
+  - Test `handleMulterError` for LIMIT_FILE_SIZE
+  - Test `handleMulterError` for LIMIT_FILE_COUNT
+  - **File**: `tests/unit/middleware/fileValidation.test.js`
+
+##### 4.2.2 Date Utils (10% → 90%) ⬜
+- [ ] `utils/dateUtils.js`
+  - Test `convertToHijri` with valid Gregorian date
+  - Test `convertToHijri` with null/undefined
+  - Test `convertToHijri` with invalid date
+  - Test `ensureHijriDate` with missing dateRecorded
+  - Test `ensureHijriDate` with existing Hijri date
+  - Test `ensureHijriDate` auto-converts when missing
+  - **File**: `tests/unit/utils/dateUtils.test.js`
+
+##### 4.2.3 File Manager (11% → 70%) ⬜
+- [ ] `utils/fileManager.js`
+  - Test file path generation
+  - Test file existence checks
+  - Test directory creation
+  - Test file deletion
+  - Test error handling for missing files
+  - **File**: `tests/unit/utils/fileManager.test.js`
+
+##### 4.2.4 Audio Metadata (16% → 70%) ⬜
+- [ ] `utils/audioMetadata.js`
+  - Test duration extraction from audio files
+  - Test metadata parsing
+  - Test error handling for corrupt files
+  - Test supported format detection
+  - **File**: `tests/unit/utils/audioMetadata.test.js`
+
+##### 4.2.5 Lectures API (26% → 80%) ⬜
+- [ ] `routes/api/lectures.js`
+  - Test GET /api/lectures pagination
+  - Test GET /api/lectures filtering by series
+  - Test GET /api/lectures search functionality
+  - Test GET /api/lectures/:id by ID
+  - Test GET /api/lectures/:id by slug
+  - Test POST /api/lectures creation (admin)
+  - Test PUT /api/lectures/:id update (admin)
+  - Test DELETE /api/lectures/:id (admin)
+  - Test error cases and validation
+  - **File**: `tests/integration/api/lectures.test.js` (enhance existing)
+
+##### 4.2.6 Admin Routes (29% → 60%) ⬜
+- [ ] `routes/admin/index.js`
+  - Test dashboard route renders
+  - Test lecture management routes
+  - Test series management routes
+  - Test schedule management routes
+  - Test analytics routes
+  - Test upload routes
+  - Test section management routes
+  - Test error handling
+  - **File**: `tests/integration/routes/admin.test.js` (enhance existing)
+
+---
+
+#### 📈 4.3 Medium Priority - Moderate Coverage (30-60%)
+
+**Target**: Improve to >80% coverage
+**Estimated Tests**: ~60 new tests
+
+##### 4.3.1 Models Tests ⬜
+- [ ] `models/PageView.js` (34% → 80%)
+  - Test schema validation
+  - Test static methods (getViews, recordView)
+  - Test aggregation queries
+  - **File**: `tests/unit/models/pageView.test.js`
+
+- [ ] `models/Section.js` (38% → 80%)
+  - Test schema validation
+  - Test CRUD operations
+  - Test ordering logic
+  - **File**: `tests/unit/models/section.test.js`
+
+- [ ] `models/SiteSettings.js` (61% → 85%)
+  - Test singleton pattern
+  - Test default values
+  - Test update operations
+  - **File**: `tests/unit/models/siteSettings.test.js`
+
+- [ ] `models/Lecture.js` (65% → 85%)
+  - Test virtual fields
+  - Test pre-save hooks
+  - Test slug generation
+  - **File**: `tests/unit/models/lecture.test.js` (enhance existing)
+
+##### 4.3.2 Controller Tests ⬜
+- [ ] `controllers/analytics.js` (44% → 80%)
+  - Test page view recording
+  - Test analytics aggregation
+  - Test date range queries
+  - Test export functionality
+  - **File**: `tests/unit/controllers/analytics.test.js`
+
+##### 4.3.3 Utility Tests ⬜
+- [ ] `utils/slugify.js` (54% → 90%)
+  - Test `transliterateArabic` with various inputs
+  - Test `generateSlug` with Arabic text
+  - Test `generateSlug` with English text
+  - Test `generateSlugEn` function
+  - Test `generateSlugAr` function
+  - Test `generateUniqueSlug` with collisions
+  - Test `generateLectureSlug` with/without series
+  - Test `generateSeriesSlug`
+  - Test `generateSheikhSlug` removes honorifics
+  - **File**: `tests/unit/utils/slugify.test.js`
+
+- [ ] `utils/cache.js` (66% → 90%)
+  - Test cache set/get operations
+  - Test TTL expiration
+  - Test cache invalidation
+  - Test cache stats
+  - **File**: `tests/unit/utils/cache.test.js`
+
+- [ ] `utils/validators.js` (50% → 85%)
+  - Test ObjectId validation
+  - Test input sanitization
+  - Test pagination validators
+  - Test search query validation
+  - **File**: `tests/unit/utils/validators.test.js`
+
+---
+
+#### 🔒 4.4 Security Tests
+
+**Target**: Comprehensive security test coverage
+
+##### 4.4.1 Authentication Tests ⬜
+- [ ] Test protected routes require auth
+- [ ] Test admin-only routes check role
+- [ ] Test session expiration handling
+- [ ] Test CSRF protection
+- **File**: `tests/security/auth.test.js`
+
+##### 4.4.2 Input Validation Tests ⬜
+- [ ] Test SQL/NoSQL injection attempts
+- [ ] Test XSS payload filtering
+- [ ] Test path traversal prevention
+- [ ] Test file upload restrictions
+- **File**: `tests/security/validation.test.js`
+
+##### 4.4.3 Rate Limiting Tests ⬜
+- [ ] Test API rate limit enforcement
+- [ ] Test auth endpoint rate limiting
+- [ ] Test rate limit reset
+- **File**: `tests/security/rateLimit.test.js`
+
+---
+
+#### 🎭 4.5 E2E Tests (Playwright)
+
+**Target**: Critical user journeys covered
+
+##### 4.5.1 Public Site Tests ⬜
+- [ ] Homepage loads correctly
+- [ ] Series browsing works
+- [ ] Lecture playback works
+- [ ] Search functionality works
+- [ ] Language switching works
+- [ ] Mobile responsiveness
+- **File**: `tests/e2e/public.spec.js`
+
+##### 4.5.2 Admin Panel Tests ⬜
+- [ ] Login flow works
+- [ ] Dashboard displays stats
+- [ ] CRUD operations work
+- [ ] File upload works
+- **File**: `tests/e2e/admin.spec.js`
+
+---
+
+#### 📋 Testing Checklist
+
+| Phase | Scope | Tests | Coverage Target | Status |
+|-------|-------|-------|-----------------|--------|
+| 4.1 | Zero coverage files | ~50 | >70% | ⬜ |
+| 4.2 | Low coverage (<30%) | ~80 | >70% | ⬜ |
+| 4.3 | Moderate coverage | ~60 | >80% | ⬜ |
+| 4.4 | Security tests | ~20 | N/A | ⬜ |
+| 4.5 | E2E tests | ~15 | N/A | ⬜ |
+| **Total** | **Full Suite** | **~225** | **>80%** | ⬜ |
+
+---
+
+#### 🛠️ Test Infrastructure
+
+**Existing Setup:**
+- Jest for unit/integration tests
+- Supertest for HTTP testing
+- mongodb-memory-server for DB mocking
+- Playwright for E2E tests
+
+**Test Commands:**
+```bash
+npm test                    # Run all tests
+npm run test:coverage       # Run with coverage report
+npm run test:watch          # Watch mode
+npx playwright test         # E2E tests
+```
+
+**Coverage Thresholds (jest.config.js):**
+```javascript
+coverageThreshold: {
+  global: {
+    statements: 80,
+    branches: 70,
+    functions: 80,
+    lines: 80
+  }
+}
+```
 
 ---
 
@@ -321,6 +586,15 @@ A web platform for hosting and streaming ~160 Arabic Islamic lecture audio files
 |------|-------|-----------------|-------|
 | 2026-02-28 | Setup | Created phased plan | Ready to begin Phase 1 |
 | 2026-02-28 | Phase 1 | Security audit 6/8 complete | Fixed ReDoS, input validation, error disclosure |
+| 2026-03-03 | Phase 4 | Test coverage plan created | Comprehensive plan for >80% coverage |
+
+**Session Details (2026-03-03):**
+- Analyzed current test coverage: 47.42% statements, 39.72% branches
+- Identified 5 files with 0% coverage (critical priority)
+- Identified 6 files with <30% coverage (high priority)
+- Created comprehensive Phase 4 test plan with ~225 new tests
+- Organized tests into 5 sub-phases: Critical, High, Medium, Security, E2E
+- Target: Achieve >80% statement coverage
 
 **Session Details (2026-02-28):**
 - Created `utils/validators.js` with express-validator rules
@@ -488,22 +762,43 @@ All mobile issues have been fixed:
 
 ## 📋 ROADMAP (Prioritized To-Do List)
 
-### 📊 Test Coverage Summary (2026-02-09)
-**Overall: 46.99% statements | 39.88% branches | 213 tests passing**
+### 📊 Test Coverage Summary (2026-03-03)
+**Overall: 47.42% statements | 39.72% branches | 273 tests passing**
+**Target: >80% statements | >70% branches**
 
-| Area | Coverage | Status |
-|------|----------|--------|
-| models/ | 72.91% | ✅ Good |
-| utils/i18n.js | 97.91% | ✅ Excellent |
-| utils/ociStorage.js | 97% | ✅ Excellent |
-| utils/findByIdOrSlug.js | 93.33% | ✅ Excellent |
-| routes/admin/ | 75.79% | ✅ Good |
-| routes/index.js | 75.67% | ✅ Good |
-| routes/api/series.js | 83.87% | ✅ Good |
-| routes/api/lectures.js | 28.14% | ⚠️ Needs work |
-| utils/slugify.js | 0% | ❌ No tests |
-| config/*.js | 0-7% | ❌ Low (integration) |
-| middleware/ | 20% | ⚠️ Needs work |
+| Area | Statements | Branches | Status |
+|------|------------|----------|--------|
+| utils/i18n.js | 92.95% | 87.5% | ✅ Excellent |
+| utils/ociStorage.js | 96.84% | 89.18% | ✅ Excellent |
+| utils/findByIdOrSlug.js | 89.28% | 80% | ✅ Excellent |
+| routes/api/homepage.js | 93.44% | 80% | ✅ Excellent |
+| models/Sheikh.js | 96.15% | 78.26% | ✅ Excellent |
+| models/Series.js | 90.9% | 66.66% | ✅ Good |
+| routes/api/series.js | 82.35% | 69.64% | ✅ Good |
+| models/Admin.js | 80% | 50% | ✅ Good |
+| models/Schedule.js | 71.42% | 100% | ✅ Good |
+| utils/cache.js | 66.66% | 42.85% | ⚠️ Needs work |
+| models/Lecture.js | 65.85% | 70% | ⚠️ Needs work |
+| models/SiteSettings.js | 61.11% | 18.18% | ⚠️ Needs work |
+| routes/index.js | 59.28% | 45.76% | ⚠️ Needs work |
+| utils/slugify.js | 54% | 54.16% | ⚠️ Needs work |
+| utils/validators.js | 50% | 5% | ⚠️ Needs work |
+| controllers/analytics.js | 44.61% | 34.69% | ⚠️ Needs work |
+| models/Section.js | 38.09% | 0% | ❌ Low |
+| models/PageView.js | 34.48% | 0% | ❌ Low |
+| routes/admin/index.js | 29.52% | 23.93% | ❌ Low |
+| routes/api/lectures.js | 26.19% | 16.26% | ❌ Low |
+| utils/audioMetadata.js | 16.27% | 0% | ❌ Critical |
+| utils/fileManager.js | 11.01% | 0% | ❌ Critical |
+| utils/dateUtils.js | 10.52% | 0% | ❌ Critical |
+| middleware/fileValidation.js | 10.44% | 0% | ❌ Critical |
+| middleware/streamHandler.js | 0% | 0% | ❌ Critical |
+| routes/auth.js | 0% | 0% | ❌ Critical |
+| routes/stream.js | 0% | 0% | ❌ Critical |
+| routes/download.js | 0% | 0% | ❌ Critical |
+| routes/api/sheikhs.js | 0% | 0% | ❌ Critical |
+
+**See Phase 4 for detailed test improvement plan.**
 
 ### 🎯 Next Steps (Prioritized)
 
