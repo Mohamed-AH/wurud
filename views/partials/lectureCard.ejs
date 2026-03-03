@@ -109,6 +109,10 @@
   .lecture-content {
     flex: 1;
     min-width: 0;
+    max-width: 100%;
+    overflow: hidden;
+    word-wrap: break-word;
+    overflow-wrap: break-word;
   }
 
   .lecture-title {
@@ -121,6 +125,8 @@
     color: var(--text-primary);
     text-decoration: none;
     transition: color 0.3s;
+    word-wrap: break-word;
+    overflow-wrap: break-word;
   }
 
   .lecture-title a:hover {
@@ -254,11 +260,16 @@
     .lecture-content {
       width: 100%;
       max-width: 100%;
+      overflow: hidden;
+      word-wrap: break-word;
+      overflow-wrap: break-word;
     }
 
     .lecture-title {
       font-size: 15px;
       line-height: 1.4;
+      word-wrap: break-word;
+      overflow-wrap: break-word;
     }
 
     .lecture-meta {
@@ -271,9 +282,11 @@
 
     .lecture-actions {
       width: 100%;
+      max-width: 100%;
       justify-content: flex-start;
       gap: 8px;
       margin-top: 4px;
+      flex-wrap: wrap;
     }
 
     .btn-play,

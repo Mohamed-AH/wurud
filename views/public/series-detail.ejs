@@ -195,8 +195,10 @@
   .lectures-list {
     display: grid;
     gap: 16px;
+    width: 100%;
     max-width: 100%;
     overflow-x: hidden;
+    box-sizing: border-box;
   }
 
   .lecture-item {
@@ -206,8 +208,10 @@
     padding: 12px;
     border-radius: 12px;
     transition: all 0.3s ease;
+    width: 100%;
     max-width: 100%;
     box-sizing: border-box;
+    overflow: hidden;
   }
 
   .lecture-item-content {
@@ -215,6 +219,7 @@
     min-width: 0;
     max-width: 100%;
     overflow: hidden;
+    box-sizing: border-box;
   }
 
   .lecture-item:hover {
@@ -241,10 +246,6 @@
     background: transparent;
     border: 2px dashed var(--accent-amber);
     color: var(--text-muted);
-  }
-
-  .lecture-item-content {
-    flex: 1;
   }
 
   .series-grid {
@@ -575,7 +576,17 @@
     .lecture-item-content {
       flex: 1;
       min-width: 0;
-      width: calc(100% - 44px);
+      max-width: calc(100% - 44px);
+      width: 100%;
+      overflow: hidden;
+      box-sizing: border-box;
+    }
+
+    .lecture-item-content .lecture-card {
+      max-width: 100%;
+      width: 100%;
+      overflow: hidden;
+      box-sizing: border-box;
     }
 
     /* Sort controls */
@@ -711,7 +722,15 @@
     }
 
     .lecture-item-content {
-      width: calc(100% - 38px);
+      max-width: calc(100% - 38px);
+      width: 100%;
+      overflow: hidden;
+    }
+
+    .lecture-item-content .lecture-card {
+      max-width: 100%;
+      width: 100%;
+      overflow: hidden;
     }
 
     .sort-controls {
