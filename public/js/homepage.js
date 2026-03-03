@@ -190,14 +190,28 @@
    * Update UI elements to match current state
    */
   function updateUIFromState() {
-    // Update tab
-    document.querySelectorAll('.nav-tab').forEach(tab => tab.classList.remove('active'));
+    // Update tab - only modify classes if they differ from current state
+    // This prevents the flash caused by removing and re-adding the same class
     const activeTab = document.getElementById('tab-' + state.tab);
-    if (activeTab) activeTab.classList.add('active');
-
-    document.querySelectorAll('.tab-content').forEach(content => content.classList.remove('active'));
     const activeContent = document.getElementById('content-' + state.tab);
-    if (activeContent) activeContent.classList.add('active');
+
+    document.querySelectorAll('.nav-tab').forEach(tab => {
+      const shouldBeActive = tab === activeTab;
+      if (shouldBeActive && !tab.classList.contains('active')) {
+        tab.classList.add('active');
+      } else if (!shouldBeActive && tab.classList.contains('active')) {
+        tab.classList.remove('active');
+      }
+    });
+
+    document.querySelectorAll('.tab-content').forEach(content => {
+      const shouldBeActive = content === activeContent;
+      if (shouldBeActive && !content.classList.contains('active')) {
+        content.classList.add('active');
+      } else if (!shouldBeActive && content.classList.contains('active')) {
+        content.classList.remove('active');
+      }
+    });
 
     // Update category chips
     document.querySelectorAll('.chip[data-type="category"]').forEach(chip => {
