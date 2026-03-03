@@ -1678,17 +1678,17 @@ function showMoreSeries(slug) {
 <div class="nav-tabs">
   <div class="nav-tabs-container">
     <% if (showSeriesTab) { %>
-    <button class="nav-tab active" id="tab-series">
+    <button class="nav-tab<%= activeTab === 'series' ? ' active' : '' %>" id="tab-series">
       📚 <%= locale === 'ar' ? 'السلاسل' : 'Series' %>
     </button>
     <% } %>
     <% if (showStandaloneTab) { %>
-    <button class="nav-tab" id="tab-lectures">
+    <button class="nav-tab<%= activeTab === 'lectures' ? ' active' : '' %>" id="tab-lectures">
       🎙️ <%= locale === 'ar' ? 'المحاضرات' : 'Standalone' %>
     </button>
     <% } %>
     <% if (showKhutbasTab) { %>
-    <button class="nav-tab" id="tab-khutbas">
+    <button class="nav-tab<%= activeTab === 'khutbas' ? ' active' : '' %>" id="tab-khutbas">
       🕌 <%= locale === 'ar' ? 'الخطب' : 'Khutbahs' %>
     </button>
     <% } %>
@@ -1763,7 +1763,7 @@ function showMoreSeries(slug) {
 </div>
 
 <!-- Series Tab Content -->
-<div id="content-series" class="tab-content active">
+<div id="content-series" class="tab-content<%= activeTab === 'series' ? ' active' : '' %>">
 <div class="series-list">
   <% if (typeof lazyLoadSeries !== 'undefined' && lazyLoadSeries) { %>
     <!-- Loading skeleton - series will be loaded via API -->
@@ -1936,7 +1936,7 @@ function showMoreSeries(slug) {
 </div>
 
 <!-- Lectures Tab Content -->
-<div id="content-lectures" class="tab-content">
+<div id="content-lectures" class="tab-content<%= activeTab === 'lectures' ? ' active' : '' %>">
   <div class="series-list">
     <% if (standaloneLectures && standaloneLectures.length > 0) { %>
       <% standaloneLectures.forEach(lecture => {
@@ -1991,7 +1991,7 @@ function showMoreSeries(slug) {
 </div>
 
 <!-- Khutbas Tab Content -->
-<div id="content-khutbas" class="tab-content">
+<div id="content-khutbas" class="tab-content<%= activeTab === 'khutbas' ? ' active' : '' %>">
   <div class="series-list">
     <% if (khutbaSeries && khutbaSeries.length > 0) { %>
       <% khutbaSeries.forEach(series => {

@@ -255,6 +255,10 @@ router.get('/', async (req, res) => {
       console.error('Failed to get site settings:', err.message);
     }
 
+    // Get active tab from URL query parameter (default to 'series')
+    const validTabs = ['series', 'lectures', 'khutbas'];
+    const activeTab = validTabs.includes(req.query.tab) ? req.query.tab : 'series';
+
     res.render('public/index', {
       title: 'المكتبة الصوتية',
       seriesList: [],           // Empty - loaded via API
@@ -265,7 +269,8 @@ router.get('/', async (req, res) => {
       homepageSections,
       homepageConfig,
       showPublicStats,
-      lazyLoadSeries: true      // Flag for template to show loading state
+      lazyLoadSeries: true,     // Flag for template to show loading state
+      activeTab                 // Pass active tab for server-side rendering
     });
   } catch (error) {
     console.error('Homepage error:', error);
