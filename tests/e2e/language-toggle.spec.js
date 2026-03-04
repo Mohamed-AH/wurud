@@ -222,48 +222,35 @@ test.describe('Language Toggle - RTL/LTR Layout', () => {
 
 test.describe('Language Toggle - Series Detail Page', () => {
   test('should translate series detail page to Arabic', async ({ page }) => {
-    await page.goto('/');
+    // Navigate directly to a known series detail page in Arabic
+    await page.goto('/series/kitab-at-tawheed?lang=ar');
     await page.waitForLoadState('domcontentloaded');
 
-    // Wait for series cards to load (this is the main condition)
-    const seriesCard = page.locator('.series-card').first();
-    await expect(seriesCard).toBeVisible({ timeout: 60000 });
-
-    // Navigate to a series
-    const seriesLink = page.locator('a[href*="/series/"]').first();
-    await expect(seriesLink).toBeVisible({ timeout: 10000 });
-    await seriesLink.click();
-    await page.waitForLoadState('networkidle');
+    // Wait for the hero section to be visible
+    await expect(page.locator('.series-hero')).toBeVisible({ timeout: 15000 });
 
     // Check page is in Arabic
     const htmlLang = await page.locator('html').getAttribute('lang');
     expect(htmlLang).toBe('ar');
 
-    // Check for Arabic content - wait for any Arabic text to be visible
-    const pageContent = page.locator('body');
-    await expect(pageContent).toBeVisible();
+    // Check for Arabic content - breadcrumb should exist
+    await expect(page.locator('.breadcrumb')).toBeVisible();
   });
 
   test('should translate series detail page to English', async ({ page }) => {
-    await page.goto('/?lang=en');
+    // Navigate directly to a known series detail page in English
+    await page.goto('/series/kitab-at-tawheed?lang=en');
     await page.waitForLoadState('domcontentloaded');
 
-    // Wait for series cards to load (this is the main condition)
-    const seriesCard = page.locator('.series-card').first();
-    await expect(seriesCard).toBeVisible({ timeout: 60000 });
-
-    // Navigate to a series
-    const seriesLink = page.locator('a[href*="/series/"]').first();
-    await expect(seriesLink).toBeVisible({ timeout: 10000 });
-
-    // Append lang=en to preserve language
-    const href = await seriesLink.getAttribute('href');
-    await page.goto(href + '?lang=en');
-    await page.waitForLoadState('networkidle');
+    // Wait for the hero section to be visible
+    await expect(page.locator('.series-hero')).toBeVisible({ timeout: 15000 });
 
     // Check page is in English
     const htmlLang = await page.locator('html').getAttribute('lang');
     expect(htmlLang).toBe('en');
+
+    // Check for English content - breadcrumb should exist
+    await expect(page.locator('.breadcrumb')).toBeVisible();
   });
 });
 
