@@ -139,37 +139,43 @@ async function collectPlaywrightFailures() {
   console.log('\n🎭 Running Playwright tests...\n');
 
   const playwrightResultsFile = path.join(RESULTS_DIR, 'playwright-results.json');
-  let jsonOutput = '';
+
+  // Remove old results file if it exists
+  if (fs.existsSync(playwrightResultsFile)) {
+    fs.unlinkSync(playwrightResultsFile);
+  }
 
   try {
-    // Run Playwright with JSON reporter (cross-platform)
-    jsonOutput = execSync(
+    // Run Playwright with JSON reporter, outputting to file via env var
+    // This avoids issues with global setup console output mixing with JSON
+    execSync(
       `npx playwright test --reporter=json`,
       {
         cwd: path.join(__dirname, '..'),
         encoding: 'utf-8',
         timeout: 600000, // 10 minutes
-        maxBuffer: 50 * 1024 * 1024
+        maxBuffer: 50 * 1024 * 1024,
+        stdio: 'inherit', // Show test output in console
+        env: {
+          ...process.env,
+          PLAYWRIGHT_JSON_OUTPUT_NAME: playwrightResultsFile
+        }
       }
     );
   } catch (error) {
     // Playwright exits with non-zero if tests fail
-    jsonOutput = error.stdout || '';
     console.log('Playwright finished (some tests may have failed)');
   }
 
-  // Save the JSON output
-  if (jsonOutput && jsonOutput.trim()) {
-    fs.writeFileSync(playwrightResultsFile, jsonOutput);
-  }
-
-  if (!jsonOutput || !jsonOutput.trim()) {
+  // Read the JSON results from file
+  if (!fs.existsSync(playwrightResultsFile)) {
     console.log('⚠️  No Playwright results generated');
     return { failed: [], passed: [], total: 0 };
   }
 
   let results;
   try {
+    const jsonOutput = fs.readFileSync(playwrightResultsFile, 'utf-8');
     results = JSON.parse(jsonOutput);
 
     const failedTests = [];
