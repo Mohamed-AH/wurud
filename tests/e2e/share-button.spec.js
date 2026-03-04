@@ -127,13 +127,18 @@ test.describe('Share Button - Copy Link', () => {
     await page.goto('/');
     await page.waitForLoadState('networkidle');
 
+    // Wait for share module to be initialized
+    await page.waitForFunction(() => {
+      return window.shareModule && typeof window.shareModule.share === 'function';
+    }, { timeout: 10000 });
+
     // Open share modal via JavaScript
     await page.evaluate(() => {
-      if (window.shareModule && typeof window.shareModule.share === 'function') {
-        window.shareModule.share(window.location.href, document.title);
-      }
+      window.shareModule.share(window.location.href, document.title);
     });
-    await page.waitForTimeout(500);
+
+    // Wait for modal to become active
+    await expect(page.locator('#shareModal.active')).toBeVisible({ timeout: 5000 });
 
     // Check URL input contains a URL
     const urlInput = page.locator('#shareUrlInput');

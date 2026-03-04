@@ -268,22 +268,27 @@ test.describe('Homepage - Search Functionality', () => {
     const searchInput = page.locator('#searchInput');
     await expect(searchInput).toBeVisible({ timeout: 10000 });
 
-    // Wait for initial content to load
+    // Wait for initial content to load in the active series tab
     await page.waitForFunction(() => {
-      const cards = document.querySelectorAll('.series-card');
+      const cards = document.querySelectorAll('#content-series .series-card');
       return cards.length > 0;
     }, { timeout: 30000 });
 
-    // Type and then clear
-    await searchInput.fill('test');
-    await page.waitForTimeout(800);
+    // Get initial card count
+    const initialCount = await page.locator('#content-series .series-card').count();
+
+    // Type search query (use Arabic text that exists in test data)
+    await searchInput.fill('التوحيد');
+    await page.waitForTimeout(1000);
+
+    // Clear the search
     await searchInput.clear();
 
-    // Wait for cards to reappear after clearing search
-    await page.waitForFunction(() => {
-      const cards = document.querySelectorAll('.series-card');
-      return cards.length > 0;
-    }, { timeout: 30000 });
+    // Wait for original cards to reappear after clearing search
+    await page.waitForFunction((expectedCount) => {
+      const cards = document.querySelectorAll('#content-series .series-card');
+      return cards.length >= expectedCount;
+    }, initialCount, { timeout: 30000 });
   });
 });
 
@@ -341,10 +346,12 @@ test.describe('Homepage - Series Expansion', () => {
     const episodesList = page.locator('#content-series .episodes-list.show').first();
     await expect(episodesList).toBeVisible({ timeout: 10000 });
 
-    // Check for sorting buttons inside episodes
+    // Wait for sorting buttons inside episodes to be visible
     const sortButtons = episodesList.locator('.chip');
-    const count = await sortButtons.count();
+    await expect(sortButtons.first()).toBeVisible({ timeout: 10000 });
 
+    // Check for sorting buttons inside episodes
+    const count = await sortButtons.count();
     expect(count).toBeGreaterThan(0);
   });
 
@@ -378,8 +385,10 @@ test.describe('Homepage - Series Expansion', () => {
     const episodesList = page.locator('#content-series .episodes-list.show').first();
     await expect(episodesList).toBeVisible({ timeout: 10000 });
 
-    // Click "حسب الرقم" (Sort by number) - English: "By Number"
+    // Wait for sort buttons to be visible inside the expanded episodes list
     const sortByNumber = page.locator('.episodes-list.show button:has-text("حسب الرقم"), .episodes-list.show button:has-text("By Number")').first();
+    await expect(sortByNumber).toBeVisible({ timeout: 10000 });
+
     if (await sortByNumber.isVisible()) {
       await sortByNumber.scrollIntoViewIfNeeded();
       await sortByNumber.click();
