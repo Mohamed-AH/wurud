@@ -10,16 +10,16 @@ describe('DateUtils Utility', () => {
     it('should convert a valid Date object to Hijri', () => {
       // January 1, 2024 is approximately 19 Jumada al-Thani 1445
       const result = convertToHijri(new Date('2024-01-01'));
-      // moment-hijri returns Western numerals in format YYYY/MM/DD
-      expect(result).toMatch(/^\d{4}\/\d{2}\/\d{2}$/);
-      // Check for year 1445
-      expect(result).toMatch(/^1445\//);
+      // moment-hijri may return Arabic (٠-٩) or Western (0-9) numerals
+      expect(result).toMatch(/^[0-9٠-٩]{4}\/[0-9٠-٩]{2}\/[0-9٠-٩]{2}$/);
+      // Check for year 1445 (Arabic ١٤٤٥ or Western 1445)
+      expect(result).toMatch(/^(1445|١٤٤٥)\//);
     });
 
     it('should convert a valid date string to Hijri', () => {
       const result = convertToHijri('2024-06-15');
-      // moment-hijri returns Western numerals in format YYYY/MM/DD
-      expect(result).toMatch(/^\d{4}\/\d{2}\/\d{2}$/);
+      // moment-hijri may return Arabic (٠-٩) or Western (0-9) numerals
+      expect(result).toMatch(/^[0-9٠-٩]{4}\/[0-9٠-٩]{2}\/[0-9٠-٩]{2}$/);
     });
 
     it('should return null for null input', () => {
@@ -56,19 +56,20 @@ describe('DateUtils Utility', () => {
     it('should format output as YYYY/MM/DD', () => {
       const result = convertToHijri('2024-03-15');
 
-      // Check format: 4 digits, slash, 2 digits, slash, 2 digits
+      // Check format: 4 chars, slash, 2 chars, slash, 2 chars
+      // moment-hijri may return Arabic (٠-٩) or Western (0-9) numerals
       const parts = result.split('/');
       expect(parts).toHaveLength(3);
-      expect(parts[0]).toMatch(/^\d{4}$/); // Year
-      expect(parts[1]).toMatch(/^\d{2}$/); // Month (padded)
-      expect(parts[2]).toMatch(/^\d{2}$/); // Day (padded)
+      expect(parts[0]).toMatch(/^[0-9٠-٩]{4}$/); // Year
+      expect(parts[1]).toMatch(/^[0-9٠-٩]{2}$/); // Month (padded)
+      expect(parts[2]).toMatch(/^[0-9٠-٩]{2}$/); // Day (padded)
     });
 
     it('should handle ISO format dates', () => {
       const result = convertToHijri('2024-01-15T12:00:00.000Z');
       expect(result).toBeTruthy();
-      // moment-hijri returns Western numerals in format YYYY/MM/DD
-      expect(result).toMatch(/^\d{4}\/\d{2}\/\d{2}$/);
+      // moment-hijri may return Arabic (٠-٩) or Western (0-9) numerals
+      expect(result).toMatch(/^[0-9٠-٩]{4}\/[0-9٠-٩]{2}\/[0-9٠-٩]{2}$/);
     });
 
     it('should handle Date objects with time', () => {
@@ -88,8 +89,8 @@ describe('DateUtils Utility', () => {
       const result = ensureHijriDate(lectureData);
 
       expect(result.dateRecordedHijri).toBeTruthy();
-      // moment-hijri returns Western numerals in format YYYY/MM/DD
-      expect(result.dateRecordedHijri).toMatch(/^\d{4}\/\d{2}\/\d{2}$/);
+      // moment-hijri may return Arabic (٠-٩) or Western (0-9) numerals
+      expect(result.dateRecordedHijri).toMatch(/^[0-9٠-٩]{4}\/[0-9٠-٩]{2}\/[0-9٠-٩]{2}$/);
     });
 
     it('should not overwrite existing Hijri date', () => {
