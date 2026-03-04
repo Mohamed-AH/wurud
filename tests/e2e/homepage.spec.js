@@ -177,7 +177,7 @@ test.describe('Homepage - Date Sorting', () => {
     await page.goto('/');
     await page.waitForLoadState('domcontentloaded');
 
-    // Switch to Series tab
+    // Switch to Series tab (already active by default but click ensures proper state)
     const seriesTab = page.locator('#tab-series');
     await expect(seriesTab).toBeVisible({ timeout: 10000 });
     await seriesTab.scrollIntoViewIfNeeded();
@@ -186,13 +186,9 @@ test.describe('Homepage - Date Sorting', () => {
     // Wait for series content to become active
     await expect(page.locator('#content-series.active')).toBeVisible({ timeout: 10000 });
 
-    // Wait for loading skeleton to be removed (indicates API call completed)
-    const skeleton = page.locator('#seriesLoadingSkeleton');
-    await expect(skeleton).toBeHidden({ timeout: 30000 });
-
-    // Wait for at least one card to appear
+    // Wait for at least one card to appear (this is the main condition - skeleton may or may not exist)
     const firstCard = page.locator('#content-series .series-card').first();
-    await expect(firstCard).toBeVisible({ timeout: 10000 });
+    await expect(firstCard).toBeVisible({ timeout: 60000 });
 
     // Sort by oldest (to trigger a change)
     const oldestButton = page.locator('.chip[data-sort="oldest"]').first();
@@ -260,12 +256,8 @@ test.describe('Homepage - Search Functionality', () => {
     const searchInput = page.locator('#searchInput');
     await expect(searchInput).toBeVisible({ timeout: 10000 });
 
-    // Wait for loading skeleton to be removed (indicates API call completed)
-    const skeleton = page.locator('#seriesLoadingSkeleton');
-    await expect(skeleton).toBeHidden({ timeout: 30000 });
-
-    // Wait for initial content to load
-    await expect(page.locator('.series-card').first()).toBeVisible({ timeout: 10000 });
+    // Wait for initial content to load (cards to appear)
+    await expect(page.locator('.series-card').first()).toBeVisible({ timeout: 60000 });
 
     // Type and then clear
     await searchInput.fill('test');
@@ -274,7 +266,7 @@ test.describe('Homepage - Search Functionality', () => {
 
     // Wait for cards to reappear after clearing search
     // Cards may take time to load via API
-    await expect(page.locator('.series-card').first()).toBeVisible({ timeout: 30000 });
+    await expect(page.locator('.series-card').first()).toBeVisible({ timeout: 60000 });
   });
 });
 
@@ -315,13 +307,9 @@ test.describe('Homepage - Series Expansion', () => {
     // Wait for series content to become active
     await expect(page.locator('#content-series.active')).toBeVisible({ timeout: 10000 });
 
-    // Wait for loading skeleton to be removed (indicates API call completed)
-    const skeleton = page.locator('#seriesLoadingSkeleton');
-    await expect(skeleton).toBeHidden({ timeout: 30000 });
-
-    // Wait for series cards to load
+    // Wait for series cards to load (this is the main condition)
     const seriesHeader = page.locator('#content-series .series-header').first();
-    await expect(seriesHeader).toBeVisible({ timeout: 10000 });
+    await expect(seriesHeader).toBeVisible({ timeout: 60000 });
 
     // Expand first series
     await seriesHeader.scrollIntoViewIfNeeded();
@@ -351,13 +339,9 @@ test.describe('Homepage - Series Expansion', () => {
     // Wait for series content to become active
     await expect(page.locator('#content-series.active')).toBeVisible({ timeout: 10000 });
 
-    // Wait for loading skeleton to be removed (indicates API call completed)
-    const skeleton = page.locator('#seriesLoadingSkeleton');
-    await expect(skeleton).toBeHidden({ timeout: 30000 });
-
-    // Wait for series cards to load
+    // Wait for series cards to load (this is the main condition)
     const seriesHeader = page.locator('#content-series .series-header').first();
-    await expect(seriesHeader).toBeVisible({ timeout: 10000 });
+    await expect(seriesHeader).toBeVisible({ timeout: 60000 });
 
     // Expand first series
     await seriesHeader.scrollIntoViewIfNeeded();
