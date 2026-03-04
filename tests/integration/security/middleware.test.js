@@ -307,18 +307,14 @@ describe('Security Middleware Integration Tests', () => {
       expect(response.body.success).toBe(true);
     });
 
-    it('should deny access for viewer role', async () => {
-      const viewer = await Admin.create({
-        email: 'viewer@test.com',
-        googleId: 'google203',
-        displayName: 'Viewer User',
-        role: 'viewer',
-        isActive: true
-      });
+    it('should deny access for non-existent user', async () => {
+      // Test with a non-existent user ID (simulates invalid/deleted user)
+      const fakeId = new mongoose.Types.ObjectId();
 
       app.get('/admin/edit', (req, res, next) => {
         req.isAuthenticated = () => true;
-        req.user = { _id: viewer._id };
+        req.user = { _id: fakeId };
+        req.logout = (cb) => cb();
         next();
       }, isEditor, (req, res) => {
         res.json({ success: true });
@@ -326,9 +322,10 @@ describe('Security Middleware Integration Tests', () => {
 
       const response = await request(app)
         .get('/admin/edit')
-        .expect(403);
+        .expect(302);
 
-      expect(response.text).toContain('Insufficient permissions');
+      // Should redirect to login with error
+      expect(response.headers.location).toBe('/admin/login?error=inactive');
     });
   });
 

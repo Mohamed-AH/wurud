@@ -25,9 +25,21 @@ const handleValidationErrors = (req, res, next) => {
 
 /**
  * Validate MongoDB ObjectId
+ * Returns true only for valid 24-character hex strings or ObjectId instances
  */
 const isValidObjectId = (value) => {
-  return mongoose.Types.ObjectId.isValid(value);
+  // Reject null, undefined, objects, and arrays explicitly
+  if (value === null || value === undefined) return false;
+  if (typeof value === 'object' && !(value instanceof mongoose.Types.ObjectId)) {
+    return false;
+  }
+  // For ObjectId instances
+  if (value instanceof mongoose.Types.ObjectId) return true;
+  // For strings, check format
+  if (typeof value === 'string') {
+    return /^[0-9a-fA-F]{24}$/.test(value);
+  }
+  return false;
 };
 
 /**
