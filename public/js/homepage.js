@@ -656,9 +656,11 @@
       : (series.titleEnglish || series.titleArabic || '');
     const categoryLabel = translateCategory(series.category);
 
+    const seriesUrl = series.slug ? `/series/${encodeURIComponent(series.slug)}` : `/series/${series._id}`;
+
     div.innerHTML = `
       <div class="series-header" onclick="${toggleFn}('${series._id}')">
-        <h2 class="series-title">${escapeHtml(seriesTitle)}</h2>
+        <h2 class="series-title"><a href="${seriesUrl}" onclick="event.stopPropagation()">${escapeHtml(seriesTitle)}</a></h2>
 
         <div class="series-meta">
           ${series.originalAuthor ? `
