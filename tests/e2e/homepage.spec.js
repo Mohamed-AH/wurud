@@ -19,10 +19,11 @@ test.describe('Homepage - Basic Functionality', () => {
 
   test('should display search functionality', async ({ page }) => {
     await page.goto('/');
+    await page.waitForLoadState('domcontentloaded');
 
-    // Check search input is present
-    const searchInput = page.locator('input[type="search"], input[placeholder*="بحث"]');
-    await expect(searchInput).toBeVisible();
+    // Check search input is present (uses id="searchInput" or class="search-input")
+    const searchInput = page.locator('#searchInput, .search-input');
+    await expect(searchInput).toBeVisible({ timeout: 10000 });
   });
 
   test('should display filter chips', async ({ page }) => {
@@ -77,22 +78,26 @@ test.describe('Homepage - Tab Switching', () => {
 
   test('should switch back to Lectures tab', async ({ page }) => {
     await page.goto('/');
+    await page.waitForLoadState('domcontentloaded');
+
+    // Wait for tabs to be visible
+    const seriesTab = page.locator('#tab-series');
+    await expect(seriesTab).toBeVisible({ timeout: 10000 });
 
     // Switch to Series
-    const seriesTab = page.locator('#tab-series');
     await seriesTab.scrollIntoViewIfNeeded();
     await seriesTab.click();
-    await page.waitForTimeout(300);
+
+    // Wait for series content to be active
+    await expect(page.locator('#content-series.active')).toBeVisible({ timeout: 10000 });
 
     // Switch back to Lectures
     const lecturesTab = page.locator('#tab-lectures');
     await lecturesTab.scrollIntoViewIfNeeded();
     await lecturesTab.click();
-    await page.waitForTimeout(300);
 
     // Verify Lectures tab content is active
-    const lecturesContent = page.locator('#content-lectures.active');
-    await expect(lecturesContent).toBeVisible();
+    await expect(page.locator('#content-lectures.active')).toBeVisible({ timeout: 10000 });
   });
 });
 
@@ -329,30 +334,23 @@ test.describe('Homepage - Series Expansion', () => {
     // Wait for series content to become active
     await expect(page.locator('#content-series.active')).toBeVisible({ timeout: 10000 });
 
-    // Wait for series cards to load
-    await page.waitForFunction(() => {
-      const cards = document.querySelectorAll('#content-series .series-card');
-      return cards.length > 0;
-    }, { timeout: 30000 });
+    // Wait for series cards to load via API
+    const seriesCard = page.locator('#content-series .series-card').first();
+    await expect(seriesCard).toBeVisible({ timeout: 30000 });
 
-    const seriesHeader = page.locator('#content-series .series-header').first();
-    await expect(seriesHeader).toBeVisible({ timeout: 10000 });
+    // Find and click the expand button directly
+    const expandBtn = page.locator('#content-series .expand-btn').first();
+    await expect(expandBtn).toBeVisible({ timeout: 10000 });
+    await expandBtn.scrollIntoViewIfNeeded();
+    await expandBtn.click();
 
-    // Expand first series
-    await seriesHeader.scrollIntoViewIfNeeded();
-    await seriesHeader.click();
-
-    // Wait for episodes list to expand
+    // Wait for episodes list to expand (the .show class is added)
     const episodesList = page.locator('#content-series .episodes-list.show').first();
     await expect(episodesList).toBeVisible({ timeout: 10000 });
 
-    // Wait for sorting buttons inside episodes to be visible
-    const sortButtons = episodesList.locator('.chip');
-    await expect(sortButtons.first()).toBeVisible({ timeout: 10000 });
-
-    // Check for sorting buttons inside episodes
-    const count = await sortButtons.count();
-    expect(count).toBeGreaterThan(0);
+    // Look for sort buttons by text content (more reliable across locales)
+    const sortByNumberBtn = episodesList.locator('button:has-text("حسب الرقم"), button:has-text("By Number")').first();
+    await expect(sortByNumberBtn).toBeVisible({ timeout: 10000 });
   });
 
   test('should sort lectures within series by number', async ({ page }) => {
@@ -368,35 +366,29 @@ test.describe('Homepage - Series Expansion', () => {
     // Wait for series content to become active
     await expect(page.locator('#content-series.active')).toBeVisible({ timeout: 10000 });
 
-    // Wait for series cards to load
-    await page.waitForFunction(() => {
-      const cards = document.querySelectorAll('#content-series .series-card');
-      return cards.length > 0;
-    }, { timeout: 30000 });
+    // Wait for series cards to load via API
+    const seriesCard = page.locator('#content-series .series-card').first();
+    await expect(seriesCard).toBeVisible({ timeout: 30000 });
 
-    const seriesHeader = page.locator('#content-series .series-header').first();
-    await expect(seriesHeader).toBeVisible({ timeout: 10000 });
-
-    // Expand first series
-    await seriesHeader.scrollIntoViewIfNeeded();
-    await seriesHeader.click();
+    // Find and click the expand button directly
+    const expandBtn = page.locator('#content-series .expand-btn').first();
+    await expect(expandBtn).toBeVisible({ timeout: 10000 });
+    await expandBtn.scrollIntoViewIfNeeded();
+    await expandBtn.click();
 
     // Wait for episodes list to expand
     const episodesList = page.locator('#content-series .episodes-list.show').first();
     await expect(episodesList).toBeVisible({ timeout: 10000 });
 
-    // Wait for sort buttons to be visible inside the expanded episodes list
-    const sortByNumber = page.locator('.episodes-list.show button:has-text("حسب الرقم"), .episodes-list.show button:has-text("By Number")').first();
+    // Click sort by number button
+    const sortByNumber = episodesList.locator('button:has-text("حسب الرقم"), button:has-text("By Number")').first();
     await expect(sortByNumber).toBeVisible({ timeout: 10000 });
+    await sortByNumber.scrollIntoViewIfNeeded();
+    await sortByNumber.click();
 
-    if (await sortByNumber.isVisible()) {
-      await sortByNumber.scrollIntoViewIfNeeded();
-      await sortByNumber.click();
-
-      // Episodes should still be visible
-      const episodes = page.locator('.episode-item');
-      await expect(episodes.first()).toBeVisible({ timeout: 5000 });
-    }
+    // Episodes should still be visible after sorting
+    const episodes = episodesList.locator('.episode-item');
+    await expect(episodes.first()).toBeVisible({ timeout: 5000 });
   });
 });
 
