@@ -184,18 +184,36 @@ describe('Lecture Model', () => {
 
   describe('Population', () => {
     it('should populate sheikh reference', async () => {
+      // Create a unique sheikh for this test to avoid conflicts in CI
+      const uniqueName = `Test Sheikh ${Date.now()}`;
       const sheikh = await Sheikh.create({
-        nameArabic: 'Test Sheikh'
+        nameArabic: uniqueName
       });
+
+      // Verify sheikh was created and persisted
+      expect(sheikh._id).toBeDefined();
+      const verifySheikhExists = await Sheikh.findById(sheikh._id);
+      expect(verifySheikhExists).not.toBeNull();
 
       const lecture = await Lecture.create({
         titleArabic: 'Test Lecture',
         sheikhId: sheikh._id
       });
 
+      // Verify lecture was created with correct sheikhId
+      expect(lecture.sheikhId.toString()).toBe(sheikh._id.toString());
+
       const populatedLecture = await Lecture.findById(lecture._id).populate('sheikhId');
 
-      expect(populatedLecture.sheikhId.nameArabic).toBe('Test Sheikh');
+      // Verify population worked - the sheikh should still exist
+      expect(populatedLecture).not.toBeNull();
+      if (populatedLecture.sheikhId === null) {
+        // Debug: Check if sheikh was deleted during test
+        const sheikhAfterPopulate = await Sheikh.findById(sheikh._id);
+        console.log('Sheikh after populate:', sheikhAfterPopulate);
+      }
+      expect(populatedLecture.sheikhId).not.toBeNull();
+      expect(populatedLecture.sheikhId.nameArabic).toBe(uniqueName);
     });
   });
 });
