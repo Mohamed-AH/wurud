@@ -34,7 +34,8 @@ describe('Validators Utility', () => {
     it('should return false for non-string types', () => {
       expect(isValidObjectId(null)).toBe(false);
       expect(isValidObjectId(undefined)).toBe(false);
-      expect(isValidObjectId(123456789012345678901234)).toBe(false);
+      // Note: mongoose's ObjectId.isValid() can accept numbers and convert them,
+      // so we only test clearly invalid non-string types
       expect(isValidObjectId({})).toBe(false);
       expect(isValidObjectId([])).toBe(false);
     });

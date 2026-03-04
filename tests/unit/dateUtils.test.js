@@ -10,12 +10,15 @@ describe('DateUtils Utility', () => {
     it('should convert a valid Date object to Hijri', () => {
       // January 1, 2024 is approximately 19 Jumada al-Thani 1445
       const result = convertToHijri(new Date('2024-01-01'));
+      // moment-hijri returns Western numerals in format YYYY/MM/DD
       expect(result).toMatch(/^\d{4}\/\d{2}\/\d{2}$/);
-      expect(result).toContain('1445');
+      // Check for year 1445
+      expect(result).toMatch(/^1445\//);
     });
 
     it('should convert a valid date string to Hijri', () => {
       const result = convertToHijri('2024-06-15');
+      // moment-hijri returns Western numerals in format YYYY/MM/DD
       expect(result).toMatch(/^\d{4}\/\d{2}\/\d{2}$/);
     });
 
@@ -64,6 +67,7 @@ describe('DateUtils Utility', () => {
     it('should handle ISO format dates', () => {
       const result = convertToHijri('2024-01-15T12:00:00.000Z');
       expect(result).toBeTruthy();
+      // moment-hijri returns Western numerals in format YYYY/MM/DD
       expect(result).toMatch(/^\d{4}\/\d{2}\/\d{2}$/);
     });
 
@@ -84,6 +88,7 @@ describe('DateUtils Utility', () => {
       const result = ensureHijriDate(lectureData);
 
       expect(result.dateRecordedHijri).toBeTruthy();
+      // moment-hijri returns Western numerals in format YYYY/MM/DD
       expect(result.dateRecordedHijri).toMatch(/^\d{4}\/\d{2}\/\d{2}$/);
     });
 

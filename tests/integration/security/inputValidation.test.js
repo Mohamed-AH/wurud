@@ -214,15 +214,16 @@ describe('Input Validation Security Tests', () => {
   });
 
   describe('ObjectId Validation', () => {
-    it('should reject invalid ObjectId format', async () => {
+    it('should reject invalid ObjectId and slug format', async () => {
       const { idParamValidation } = require('../../../utils/validators');
 
       app.get('/api/lectures/:id', idParamValidation, async (req, res) => {
         res.json({ success: true });
       });
 
+      // Use special characters that are invalid for both ObjectId and slug formats
       const response = await request(app)
-        .get('/api/lectures/invalid-id')
+        .get('/api/lectures/invalid@id!#$%')
         .expect(400);
 
       expect(response.body.success).toBe(false);
