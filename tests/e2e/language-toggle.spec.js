@@ -48,18 +48,21 @@ test.describe('Language Toggle - Basic Functionality', () => {
   test('should switch back to Arabic when clicking Arabic toggle', async ({ page }) => {
     // Start in English
     await page.goto('/?lang=en');
+    await page.waitForLoadState('domcontentloaded');
 
     // The language toggle button shows "عربي" when in English mode
     const langToggle = page.locator('#langToggle');
-    await expect(langToggle).toBeVisible();
+    await expect(langToggle).toBeVisible({ timeout: 10000 });
 
     // Click to switch to Arabic
     await langToggle.click();
-    await page.waitForLoadState('networkidle');
 
-    // Check that page is now in Arabic
-    const htmlLang = await page.locator('html').getAttribute('lang');
-    expect(htmlLang).toBe('ar');
+    // Wait for language change by checking the html lang attribute
+    await expect(page.locator('html')).toHaveAttribute('lang', 'ar', { timeout: 10000 });
+
+    // Verify RTL direction is set
+    const htmlDir = await page.locator('html').getAttribute('dir');
+    expect(htmlDir).toBe('rtl');
   });
 });
 

@@ -103,6 +103,7 @@ async function globalSetup() {
     category: 'Aqeedah',
     bookTitle: 'كتاب التوحيد',
     bookAuthor: 'محمد بن عبد الوهاب',
+    slug: 'kitab-at-tawheed',
   });
 
   // Create regular series (Fiqh)
@@ -114,6 +115,7 @@ async function globalSetup() {
     category: 'Fiqh',
     bookTitle: 'عمدة الأحكام',
     bookAuthor: 'عبدالغني المقدسي',
+    slug: 'umdat-al-ahkam',
   });
 
   // Create khutba series (identified by title containing خطب)
@@ -124,6 +126,7 @@ async function globalSetup() {
     sheikhId: sheikh1._id,
     category: 'Other',
     tags: ['khutba'],
+    slug: 'friday-sermons',
   });
 
   // Create Hadith series
@@ -135,6 +138,7 @@ async function globalSetup() {
     category: 'Hadith',
     bookTitle: 'الأربعين النووية',
     bookAuthor: 'الإمام النووي',
+    slug: '40-hadith-nawawi',
   });
 
   // Create lectures for series1 (Aqeedah)
