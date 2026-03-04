@@ -158,24 +158,26 @@ test.describe('Series Detail Page - Responsive Design', () => {
   test('should work on very small mobile viewport (320px)', async ({ page }) => {
     await page.setViewportSize({ width: 320, height: 568 });
     await page.goto('/');
-    await page.waitForLoadState('networkidle');
+    await page.waitForLoadState('domcontentloaded');
 
     // Navigate to series detail
     const seriesTab = page.locator('#tab-series');
+    await expect(seriesTab).toBeVisible({ timeout: 10000 });
     await seriesTab.scrollIntoViewIfNeeded();
     await seriesTab.click();
-    await page.waitForTimeout(1000);
 
-    // Wait for series cards to load
+    // Wait for series content to become active
+    await expect(page.locator('#content-series.active')).toBeVisible({ timeout: 10000 });
+
+    // Wait for series cards to load - use longer timeout for slow mobile rendering
     const seriesLink = page.locator('#content-series .series-title a').first();
-    await expect(seriesLink).toBeVisible({ timeout: 15000 });
+    await expect(seriesLink).toBeVisible({ timeout: 30000 });
 
     await seriesLink.click();
-    await page.waitForLoadState('networkidle');
-    await page.waitForTimeout(1000);
+    await page.waitForLoadState('domcontentloaded');
 
     // Content should still be visible and not overflow
-    await expect(page.locator('.series-hero')).toBeVisible({ timeout: 10000 });
+    await expect(page.locator('.series-hero')).toBeVisible({ timeout: 15000 });
 
     // Sort chips should wrap properly
     const sortChips = page.locator('.sort-chips');
@@ -237,23 +239,25 @@ test.describe('Series Detail Page - Lecture Cards', () => {
     // Test with a single viewport to reduce flakiness
     await page.setViewportSize({ width: 375, height: 667 });
     await page.goto('/');
-    await page.waitForLoadState('networkidle');
+    await page.waitForLoadState('domcontentloaded');
 
     // Navigate to series detail
     const seriesTab = page.locator('#tab-series');
+    await expect(seriesTab).toBeVisible({ timeout: 10000 });
     await seriesTab.scrollIntoViewIfNeeded();
     await seriesTab.click();
-    await page.waitForTimeout(1000);
+
+    // Wait for series content to become active
+    await expect(page.locator('#content-series.active')).toBeVisible({ timeout: 10000 });
 
     const seriesLink = page.locator('#content-series .series-title a').first();
-    await expect(seriesLink).toBeVisible({ timeout: 15000 });
+    await expect(seriesLink).toBeVisible({ timeout: 30000 });
 
     await seriesLink.click();
-    await page.waitForLoadState('networkidle');
-    await page.waitForTimeout(1000);
+    await page.waitForLoadState('domcontentloaded');
 
     // Wait for hero section to be visible
-    await expect(page.locator('.series-hero')).toBeVisible({ timeout: 10000 });
+    await expect(page.locator('.series-hero')).toBeVisible({ timeout: 15000 });
 
     // Check document scroll width doesn't exceed viewport
     const bodyWidth = await page.evaluate(() => document.body.scrollWidth);
@@ -305,23 +309,25 @@ test.describe('Series Detail Page - Lecture Cards', () => {
     // Test with mobile viewport
     await page.setViewportSize({ width: 375, height: 667 });
     await page.goto('/');
-    await page.waitForLoadState('networkidle');
+    await page.waitForLoadState('domcontentloaded');
 
     // Navigate to series detail
     const seriesTab = page.locator('#tab-series');
+    await expect(seriesTab).toBeVisible({ timeout: 10000 });
     await seriesTab.scrollIntoViewIfNeeded();
     await seriesTab.click();
-    await page.waitForTimeout(1000);
+
+    // Wait for series content to become active
+    await expect(page.locator('#content-series.active')).toBeVisible({ timeout: 10000 });
 
     const seriesLink = page.locator('#content-series .series-title a').first();
-    await expect(seriesLink).toBeVisible({ timeout: 15000 });
+    await expect(seriesLink).toBeVisible({ timeout: 30000 });
 
     await seriesLink.click();
-    await page.waitForLoadState('networkidle');
-    await page.waitForTimeout(1000);
+    await page.waitForLoadState('domcontentloaded');
 
     // Wait for page to load
-    await expect(page.locator('.series-hero')).toBeVisible({ timeout: 10000 });
+    await expect(page.locator('.series-hero')).toBeVisible({ timeout: 15000 });
 
     const playBtn = page.locator('.btn-play').first();
     if (await playBtn.count() > 0 && await playBtn.isVisible()) {
