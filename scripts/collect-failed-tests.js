@@ -33,46 +33,65 @@ async function collectJestFailures() {
   let jsonOutput = '';
 
   try {
-    // Run Jest with JSON reporter - capture output to file
-    jsonOutput = execSync(
-      `npx jest --json --runInBand 2>&1`,
+    // Run Jest with JSON output to file (cross-platform)
+    execSync(
+      `npx jest --json --outputFile="${jestResultsFile}" --runInBand`,
       {
         cwd: path.join(__dirname, '..'),
         encoding: 'utf-8',
         timeout: 300000, // 5 minutes
-        maxBuffer: 50 * 1024 * 1024 // 50MB buffer
+        maxBuffer: 50 * 1024 * 1024, // 50MB buffer
+        stdio: 'inherit' // Show test output in console
       }
     );
   } catch (error) {
     // Jest exits with non-zero if tests fail, which is expected
-    // The JSON output should still be in error.stdout or error.output
-    console.log('Jest finished with failures (expected if tests fail)');
-    jsonOutput = error.stdout || error.output?.join('') || '';
+    console.log('Jest finished (some tests may have failed)');
   }
 
-  // Extract JSON from output (may have non-JSON content before/after)
+  // Read the JSON results file
   let results = null;
 
-  // Try to parse the whole output as JSON first
-  try {
-    results = JSON.parse(jsonOutput);
-  } catch (e) {
-    // Try to find JSON in the output
-    const jsonMatch = jsonOutput.match(/\{[\s\S]*"testResults"[\s\S]*\}/);
-    if (jsonMatch) {
-      try {
-        results = JSON.parse(jsonMatch[0]);
-      } catch (e2) {
-        console.log('⚠️  Could not parse Jest JSON output');
+  if (fs.existsSync(jestResultsFile)) {
+    try {
+      const content = fs.readFileSync(jestResultsFile, 'utf-8');
+      results = JSON.parse(content);
+    } catch (e) {
+      console.log('⚠️  Could not parse Jest JSON output file');
+    }
+  } else {
+    // Fallback: try running with stdout capture
+    try {
+      jsonOutput = execSync(
+        `npx jest --json --runInBand`,
+        {
+          cwd: path.join(__dirname, '..'),
+          encoding: 'utf-8',
+          timeout: 300000,
+          maxBuffer: 50 * 1024 * 1024
+        }
+      );
+    } catch (error) {
+      jsonOutput = error.stdout || '';
+    }
+
+    // Try to find JSON in the output (it's at the end after test results)
+    if (jsonOutput) {
+      // Find the last occurrence of a JSON object with testResults
+      const jsonStart = jsonOutput.lastIndexOf('{"numFailedTestSuites"');
+      if (jsonStart !== -1) {
+        try {
+          results = JSON.parse(jsonOutput.substring(jsonStart));
+          fs.writeFileSync(jestResultsFile, JSON.stringify(results, null, 2));
+        } catch (e) {
+          console.log('⚠️  Could not parse Jest JSON from stdout');
+        }
       }
     }
   }
 
-  if (results) {
-    // Save the results for future reference
-    fs.writeFileSync(jestResultsFile, JSON.stringify(results, null, 2));
-  } else {
-    console.log('⚠️  No Jest results found in output');
+  if (!results) {
+    console.log('⚠️  No Jest results found');
     return { failed: [], passed: [], total: 0 };
   }
 
@@ -120,33 +139,38 @@ async function collectPlaywrightFailures() {
   console.log('\n🎭 Running Playwright tests...\n');
 
   const playwrightResultsFile = path.join(RESULTS_DIR, 'playwright-results.json');
+  let jsonOutput = '';
 
   try {
-    // Run Playwright with JSON reporter
-    execSync(
-      `npx playwright test --reporter=json 2>/dev/null | tee "${playwrightResultsFile}" || true`,
+    // Run Playwright with JSON reporter (cross-platform)
+    jsonOutput = execSync(
+      `npx playwright test --reporter=json`,
       {
         cwd: path.join(__dirname, '..'),
-        stdio: 'inherit',
-        timeout: 600000 // 10 minutes
+        encoding: 'utf-8',
+        timeout: 600000, // 10 minutes
+        maxBuffer: 50 * 1024 * 1024
       }
     );
   } catch (error) {
-    // Playwright may exit with non-zero if tests fail
+    // Playwright exits with non-zero if tests fail
+    jsonOutput = error.stdout || '';
+    console.log('Playwright finished (some tests may have failed)');
   }
 
-  if (!fs.existsSync(playwrightResultsFile)) {
-    console.log('⚠️  No Playwright results file generated');
+  // Save the JSON output
+  if (jsonOutput && jsonOutput.trim()) {
+    fs.writeFileSync(playwrightResultsFile, jsonOutput);
+  }
+
+  if (!jsonOutput || !jsonOutput.trim()) {
+    console.log('⚠️  No Playwright results generated');
     return { failed: [], passed: [], total: 0 };
   }
 
+  let results;
   try {
-    const content = fs.readFileSync(playwrightResultsFile, 'utf-8');
-    if (!content.trim()) {
-      return { failed: [], passed: [], total: 0 };
-    }
-
-    const results = JSON.parse(content);
+    results = JSON.parse(jsonOutput);
 
     const failedTests = [];
     const passedTests = [];
