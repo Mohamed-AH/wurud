@@ -157,26 +157,11 @@ test.describe('Series Detail Page - Responsive Design', () => {
 
   test('should work on very small mobile viewport (320px)', async ({ page }) => {
     await page.setViewportSize({ width: 320, height: 568 });
-    await page.goto('/');
+    // Navigate directly to series detail page using known test slug
+    await page.goto('/series/kitab-at-tawheed');
     await page.waitForLoadState('domcontentloaded');
 
-    // Navigate to series detail
-    const seriesTab = page.locator('#tab-series');
-    await expect(seriesTab).toBeVisible({ timeout: 10000 });
-    await seriesTab.scrollIntoViewIfNeeded();
-    await seriesTab.click();
-
-    // Wait for series content to become active
-    await expect(page.locator('#content-series.active')).toBeVisible({ timeout: 10000 });
-
-    // Wait for series cards to load - use longer timeout for slow mobile rendering
-    const seriesLink = page.locator('#content-series .series-title a').first();
-    await expect(seriesLink).toBeVisible({ timeout: 30000 });
-
-    await seriesLink.click();
-    await page.waitForLoadState('domcontentloaded');
-
-    // Content should still be visible and not overflow
+    // Content should be visible and not overflow
     await expect(page.locator('.series-hero')).toBeVisible({ timeout: 15000 });
 
     // Sort chips should wrap properly
@@ -238,22 +223,8 @@ test.describe('Series Detail Page - Lecture Cards', () => {
   test('should not have horizontal overflow on mobile viewports', async ({ page }) => {
     // Test with a single viewport to reduce flakiness
     await page.setViewportSize({ width: 375, height: 667 });
-    await page.goto('/');
-    await page.waitForLoadState('domcontentloaded');
-
-    // Navigate to series detail
-    const seriesTab = page.locator('#tab-series');
-    await expect(seriesTab).toBeVisible({ timeout: 10000 });
-    await seriesTab.scrollIntoViewIfNeeded();
-    await seriesTab.click();
-
-    // Wait for series content to become active
-    await expect(page.locator('#content-series.active')).toBeVisible({ timeout: 10000 });
-
-    const seriesLink = page.locator('#content-series .series-title a').first();
-    await expect(seriesLink).toBeVisible({ timeout: 30000 });
-
-    await seriesLink.click();
+    // Navigate directly to series detail page using known test slug
+    await page.goto('/series/kitab-at-tawheed');
     await page.waitForLoadState('domcontentloaded');
 
     // Wait for hero section to be visible
@@ -308,22 +279,8 @@ test.describe('Series Detail Page - Lecture Cards', () => {
   test('should have accessible action buttons on all screen sizes', async ({ page }) => {
     // Test with mobile viewport
     await page.setViewportSize({ width: 375, height: 667 });
-    await page.goto('/');
-    await page.waitForLoadState('domcontentloaded');
-
-    // Navigate to series detail
-    const seriesTab = page.locator('#tab-series');
-    await expect(seriesTab).toBeVisible({ timeout: 10000 });
-    await seriesTab.scrollIntoViewIfNeeded();
-    await seriesTab.click();
-
-    // Wait for series content to become active
-    await expect(page.locator('#content-series.active')).toBeVisible({ timeout: 10000 });
-
-    const seriesLink = page.locator('#content-series .series-title a').first();
-    await expect(seriesLink).toBeVisible({ timeout: 30000 });
-
-    await seriesLink.click();
+    // Navigate directly to series detail page using known test slug
+    await page.goto('/series/kitab-at-tawheed');
     await page.waitForLoadState('domcontentloaded');
 
     // Wait for page to load
