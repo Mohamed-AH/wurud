@@ -34,13 +34,27 @@ async function globalSetup() {
 
       mongoUri = mongoServer.getUri();
       console.log(`E2E global setup: MongoDB Memory Server started at ${mongoUri}`);
-    } catch (error) {
-      console.error('E2E global setup: Failed to start MongoDB Memory Server:', error.message);
-      console.error('Please either:');
-      console.error('  1. Set MONGODB_URI environment variable');
-      console.error('  2. Run MongoDB locally on port 27017');
-      console.error('  3. Fix mongodb-memory-server binary download issues');
-      throw error;
+    } catch (memoryServerError) {
+      console.warn('E2E global setup: MongoDB Memory Server failed:', memoryServerError.message);
+      console.log('E2E global setup: Attempting to connect to local MongoDB on port 27017...');
+
+      // Fallback to local MongoDB if memory server fails
+      mongoUri = 'mongodb://localhost:27017/wurud_test';
+
+      // Test the connection before proceeding
+      try {
+        const testMongoose = require('mongoose');
+        await testMongoose.connect(mongoUri, { serverSelectionTimeoutMS: 5000 });
+        await testMongoose.disconnect();
+        console.log(`E2E global setup: Using local MongoDB at ${mongoUri}`);
+      } catch (localMongoError) {
+        console.error('E2E global setup: Could not connect to local MongoDB either.');
+        console.error('Please either:');
+        console.error('  1. Set MONGODB_URI environment variable');
+        console.error('  2. Run MongoDB locally on port 27017');
+        console.error('  3. Install mongodb-memory-server binary (run: npx mongodb-memory-server-core --help)');
+        throw new Error('No MongoDB available for E2E tests');
+      }
     }
   }
 
