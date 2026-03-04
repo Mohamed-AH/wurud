@@ -7,89 +7,61 @@ const { test, expect } = require('@playwright/test');
 
 test.describe('Series Detail Page - Basic Functionality', () => {
   test('should load series detail page from homepage', async ({ page }) => {
-    await page.goto('/');
+    // Navigate directly to a known series detail page
+    await page.goto('/series/kitab-at-tawheed');
+    await page.waitForLoadState('domcontentloaded');
 
-    // Switch to Series tab
-    const seriesTab = page.locator('#tab-series');
-    await seriesTab.scrollIntoViewIfNeeded();
-    await seriesTab.click();
-    await page.waitForTimeout(300);
+    // Should be on series-detail page
+    await expect(page).toHaveURL(/\/series\//);
 
-    // Find and click on a series link (series title link)
-    const seriesLink = page.locator('#content-series .series-title a').first();
-    if (await seriesLink.isVisible()) {
-      await seriesLink.click();
-      await page.waitForTimeout(500);
+    // Breadcrumb should be visible
+    await expect(page.locator('.breadcrumb')).toBeVisible({ timeout: 15000 });
 
-      // Should navigate to series-detail page
-      await expect(page).toHaveURL(/\/series\//);
+    // Hero section should be visible
+    await expect(page.locator('.series-hero')).toBeVisible();
 
-      // Breadcrumb should be visible
-      await expect(page.locator('.breadcrumb')).toBeVisible();
-
-      // Hero section should be visible
-      await expect(page.locator('.series-hero')).toBeVisible();
-
-      // Stats section should be visible
-      await expect(page.locator('.stats-section')).toBeVisible();
-    }
+    // Stats section should be visible
+    await expect(page.locator('.stats-section')).toBeVisible();
   });
 
   test('should display series information correctly', async ({ page }) => {
-    await page.goto('/');
+    // Navigate directly to a known series detail page
+    await page.goto('/series/kitab-at-tawheed');
+    await page.waitForLoadState('domcontentloaded');
 
-    // Navigate to a series detail page
-    const seriesTab = page.locator('#tab-series');
-    await seriesTab.scrollIntoViewIfNeeded();
-    await seriesTab.click();
-    await page.waitForTimeout(300);
+    // Series title should be visible in hero
+    await expect(page.locator('.series-hero h1.series-title')).toBeVisible({ timeout: 15000 });
 
-    const seriesLink = page.locator('#content-series .series-title a').first();
-    if (await seriesLink.isVisible()) {
-      await seriesLink.click();
-      await page.waitForTimeout(500);
+    // Stats cards should be present
+    const statCards = page.locator('.stat-card');
+    expect(await statCards.count()).toBeGreaterThanOrEqual(2);
 
-      // Series title should be visible in hero
-      await expect(page.locator('.series-hero h1.series-title')).toBeVisible();
-
-      // Stats cards should be present
-      const statCards = page.locator('.stat-card');
-      expect(await statCards.count()).toBeGreaterThanOrEqual(2);
-
-      // Lectures section should exist
-      await expect(page.locator('.lectures-list, .empty-state')).toBeVisible();
-    }
+    // Lectures section should exist
+    await expect(page.locator('.lectures-list, .empty-state')).toBeVisible();
   });
 
   test('should have working sort controls', async ({ page }) => {
-    await page.goto('/');
+    // Navigate directly to a known series detail page
+    await page.goto('/series/kitab-at-tawheed');
+    await page.waitForLoadState('domcontentloaded');
 
-    // Navigate to a series detail page
-    const seriesTab = page.locator('#tab-series');
-    await seriesTab.scrollIntoViewIfNeeded();
-    await seriesTab.click();
-    await page.waitForTimeout(300);
+    // Wait for hero to be visible
+    await expect(page.locator('.series-hero')).toBeVisible({ timeout: 15000 });
 
-    const seriesLink = page.locator('#content-series .series-title a').first();
-    if (await seriesLink.isVisible()) {
-      await seriesLink.click();
-      await page.waitForTimeout(500);
+    // Sort controls should be visible if lectures exist
+    const sortControls = page.locator('.sort-controls');
+    if (await sortControls.isVisible()) {
+      // Click on a sort chip
+      const sortByNumber = page.locator('.sort-chip[data-sort="number"]');
+      if (await sortByNumber.isVisible()) {
+        await sortByNumber.click();
+        await page.waitForTimeout(300);
 
-      // Sort controls should be visible if lectures exist
-      const sortControls = page.locator('.sort-controls');
-      if (await sortControls.isVisible()) {
-        // Click on a sort chip
-        const sortByNumber = page.locator('.sort-chip[data-sort="number"]');
-        if (await sortByNumber.isVisible()) {
-          await sortByNumber.click();
-          await page.waitForTimeout(300);
+        // Sort chip should be active
+        await expect(sortByNumber).toHaveClass(/active/);
 
-          // Sort chip should be active
-          await expect(sortByNumber).toHaveClass(/active/);
-
-          // Clear button should be visible
-          await expect(page.locator('#clearSortBtn')).toBeVisible();
-        }
+        // Clear button should be visible
+        await expect(page.locator('#clearSortBtn')).toBeVisible();
       }
     }
   });
@@ -98,60 +70,40 @@ test.describe('Series Detail Page - Basic Functionality', () => {
 test.describe('Series Detail Page - Responsive Design', () => {
   test('should work on mobile viewport (375px)', async ({ page }) => {
     await page.setViewportSize({ width: 375, height: 667 });
-    await page.goto('/');
+    // Navigate directly to series detail page
+    await page.goto('/series/kitab-at-tawheed');
+    await page.waitForLoadState('domcontentloaded');
 
-    // Navigate to series detail
-    const seriesTab = page.locator('#tab-series');
-    await seriesTab.scrollIntoViewIfNeeded();
-    await seriesTab.click();
-    await page.waitForTimeout(300);
+    // Hero should be visible
+    await expect(page.locator('.series-hero')).toBeVisible({ timeout: 15000 });
 
-    const seriesLink = page.locator('#content-series .series-title a').first();
-    if (await seriesLink.isVisible()) {
-      await seriesLink.click();
-      await page.waitForTimeout(500);
+    // Stats should stack vertically on mobile
+    const statsGrid = page.locator('.stats-grid');
+    await expect(statsGrid).toBeVisible();
 
-      // Hero should be visible
-      await expect(page.locator('.series-hero')).toBeVisible();
+    // Breadcrumb should be readable
+    await expect(page.locator('.breadcrumb')).toBeVisible();
 
-      // Stats should stack vertically on mobile
-      const statsGrid = page.locator('.stats-grid');
-      await expect(statsGrid).toBeVisible();
-
-      // Breadcrumb should be readable
-      await expect(page.locator('.breadcrumb')).toBeVisible();
-
-      // No horizontal overflow
-      const bodyWidth = await page.evaluate(() => document.body.scrollWidth);
-      const viewportWidth = await page.evaluate(() => window.innerWidth);
-      expect(bodyWidth).toBeLessThanOrEqual(viewportWidth + 5); // Allow small tolerance
-    }
+    // No horizontal overflow
+    const bodyWidth = await page.evaluate(() => document.body.scrollWidth);
+    const viewportWidth = await page.evaluate(() => window.innerWidth);
+    expect(bodyWidth).toBeLessThanOrEqual(viewportWidth + 5); // Allow small tolerance
   });
 
   test('should work on small mobile viewport (360px)', async ({ page }) => {
     await page.setViewportSize({ width: 360, height: 640 });
-    await page.goto('/');
+    // Navigate directly to series detail page
+    await page.goto('/series/kitab-at-tawheed');
+    await page.waitForLoadState('domcontentloaded');
 
-    // Navigate to series detail
-    const seriesTab = page.locator('#tab-series');
-    await seriesTab.scrollIntoViewIfNeeded();
-    await seriesTab.click();
-    await page.waitForTimeout(300);
+    // All sections should be visible and properly sized
+    await expect(page.locator('.series-hero')).toBeVisible({ timeout: 15000 });
+    await expect(page.locator('.stats-section')).toBeVisible();
 
-    const seriesLink = page.locator('#content-series .series-title a').first();
-    if (await seriesLink.isVisible()) {
-      await seriesLink.click();
-      await page.waitForTimeout(500);
-
-      // All sections should be visible and properly sized
-      await expect(page.locator('.series-hero')).toBeVisible();
-      await expect(page.locator('.stats-section')).toBeVisible();
-
-      // Lecture items should be readable
-      const lectureItems = page.locator('.lecture-item');
-      if (await lectureItems.count() > 0) {
-        await expect(lectureItems.first()).toBeVisible();
-      }
+    // Lecture items should be readable
+    const lectureItems = page.locator('.lecture-item');
+    if (await lectureItems.count() > 0) {
+      await expect(lectureItems.first()).toBeVisible();
     }
   });
 
@@ -173,49 +125,29 @@ test.describe('Series Detail Page - Responsive Design', () => {
 
   test('should work on tablet viewport (768px)', async ({ page }) => {
     await page.setViewportSize({ width: 768, height: 1024 });
-    await page.goto('/');
+    // Navigate directly to series detail page
+    await page.goto('/series/kitab-at-tawheed');
+    await page.waitForLoadState('domcontentloaded');
 
-    // Navigate to series detail
-    const seriesTab = page.locator('#tab-series');
-    await seriesTab.scrollIntoViewIfNeeded();
-    await seriesTab.click();
-    await page.waitForTimeout(300);
+    // All elements should be visible
+    await expect(page.locator('.series-hero')).toBeVisible({ timeout: 15000 });
+    await expect(page.locator('.stats-section')).toBeVisible();
+    await expect(page.locator('.breadcrumb')).toBeVisible();
 
-    const seriesLink = page.locator('#content-series .series-title a').first();
-    if (await seriesLink.isVisible()) {
-      await seriesLink.click();
-      await page.waitForTimeout(500);
-
-      // All elements should be visible
-      await expect(page.locator('.series-hero')).toBeVisible();
-      await expect(page.locator('.stats-section')).toBeVisible();
-      await expect(page.locator('.breadcrumb')).toBeVisible();
-
-      // Stats grid should display properly
-      const statsGrid = page.locator('.stats-grid');
-      await expect(statsGrid).toBeVisible();
-    }
+    // Stats grid should display properly
+    const statsGrid = page.locator('.stats-grid');
+    await expect(statsGrid).toBeVisible();
   });
 
   test('should work on large tablet viewport (1024px)', async ({ page }) => {
     await page.setViewportSize({ width: 1024, height: 768 });
-    await page.goto('/');
+    // Navigate directly to series detail page
+    await page.goto('/series/kitab-at-tawheed');
+    await page.waitForLoadState('domcontentloaded');
 
-    // Navigate to series detail
-    const seriesTab = page.locator('#tab-series');
-    await seriesTab.scrollIntoViewIfNeeded();
-    await seriesTab.click();
-    await page.waitForTimeout(300);
-
-    const seriesLink = page.locator('#content-series .series-title a').first();
-    if (await seriesLink.isVisible()) {
-      await seriesLink.click();
-      await page.waitForTimeout(500);
-
-      // All elements should be fully visible
-      await expect(page.locator('.series-hero')).toBeVisible();
-      await expect(page.locator('.stats-section')).toBeVisible();
-    }
+    // All elements should be fully visible
+    await expect(page.locator('.series-hero')).toBeVisible({ timeout: 15000 });
+    await expect(page.locator('.stats-section')).toBeVisible();
   });
 });
 
@@ -248,31 +180,24 @@ test.describe('Series Detail Page - Lecture Cards', () => {
 
   test('should display lecture cards properly on mobile', async ({ page }) => {
     await page.setViewportSize({ width: 375, height: 667 });
-    await page.goto('/');
+    // Navigate directly to series detail page
+    await page.goto('/series/kitab-at-tawheed');
+    await page.waitForLoadState('domcontentloaded');
 
-    // Navigate to series detail
-    const seriesTab = page.locator('#tab-series');
-    await seriesTab.scrollIntoViewIfNeeded();
-    await seriesTab.click();
-    await page.waitForTimeout(300);
+    // Wait for hero section
+    await expect(page.locator('.series-hero')).toBeVisible({ timeout: 15000 });
 
-    const seriesLink = page.locator('#content-series .series-title a').first();
-    if (await seriesLink.isVisible()) {
-      await seriesLink.click();
-      await page.waitForTimeout(500);
+    // Lecture cards should be visible
+    const lectureCards = page.locator('.lecture-card');
+    if (await lectureCards.count() > 0) {
+      await expect(lectureCards.first()).toBeVisible();
 
-      // Lecture cards should be visible
-      const lectureCards = page.locator('.lecture-card');
-      if (await lectureCards.count() > 0) {
-        await expect(lectureCards.first()).toBeVisible();
+      // Play and download buttons should be accessible
+      const playBtn = page.locator('.btn-play').first();
+      const downloadBtn = page.locator('.btn-download').first();
 
-        // Play and download buttons should be accessible
-        const playBtn = page.locator('.btn-play').first();
-        const downloadBtn = page.locator('.btn-download').first();
-
-        await expect(playBtn).toBeVisible();
-        await expect(downloadBtn).toBeVisible();
-      }
+      await expect(playBtn).toBeVisible();
+      await expect(downloadBtn).toBeVisible();
     }
   });
 

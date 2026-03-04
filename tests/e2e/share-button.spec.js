@@ -31,98 +31,121 @@ test.describe('Share Button - Modal Functionality', () => {
 
   test('should display all social sharing platforms', async ({ page }) => {
     await page.goto('/');
+    await page.waitForLoadState('networkidle');
 
-    // Open share modal
-    const shareButton = page.locator('.share-btn, [onclick*="share"]').first();
+    // Open share modal via JavaScript since share buttons are inside lecture cards
+    await page.evaluate(() => {
+      if (window.shareModule && typeof window.shareModule.share === 'function') {
+        window.shareModule.share(window.location.href, document.title);
+      }
+    });
+    await page.waitForTimeout(500);
 
-    if (await shareButton.isVisible()) {
-      await shareButton.click();
-      await page.waitForTimeout(300);
-
-      // Check for social platform buttons
-      await expect(page.locator('[data-platform="whatsapp"]')).toBeVisible();
-      await expect(page.locator('[data-platform="telegram"]')).toBeVisible();
-      await expect(page.locator('[data-platform="twitter"]')).toBeVisible();
-      await expect(page.locator('[data-platform="facebook"]')).toBeVisible();
-    }
+    // Check for social platform buttons
+    await expect(page.locator('[data-platform="whatsapp"]')).toBeVisible();
+    await expect(page.locator('[data-platform="telegram"]')).toBeVisible();
+    await expect(page.locator('[data-platform="twitter"]')).toBeVisible();
+    await expect(page.locator('[data-platform="facebook"]')).toBeVisible();
   });
 
   test('should close share modal when clicking close button', async ({ page }) => {
     await page.goto('/');
+    await page.waitForLoadState('networkidle');
 
-    const shareButton = page.locator('.share-btn, [onclick*="share"]').first();
+    // Open share modal via JavaScript
+    await page.evaluate(() => {
+      if (window.shareModule && typeof window.shareModule.share === 'function') {
+        window.shareModule.share(window.location.href, document.title);
+      }
+    });
+    await page.waitForTimeout(500);
 
-    if (await shareButton.isVisible()) {
-      await shareButton.click();
-      await page.waitForTimeout(300);
+    // Verify modal is open
+    const shareModal = page.locator('#shareModal');
+    await expect(shareModal).toHaveClass(/active/, { timeout: 5000 });
 
-      // Click close button
-      const closeButton = page.locator('.share-modal-close, [onclick*="close"]');
-      await closeButton.click();
-      await page.waitForTimeout(300);
+    // Click close button
+    const closeButton = page.locator('.share-modal-close');
+    await closeButton.click();
+    await page.waitForTimeout(300);
 
-      // Modal should be hidden
-      const shareModal = page.locator('#shareModal.active, .share-modal.active');
-      await expect(shareModal).not.toBeVisible();
-    }
+    // Modal should be hidden
+    await expect(shareModal).not.toHaveClass(/active/);
   });
 
   test('should close share modal when clicking backdrop', async ({ page }) => {
     await page.goto('/');
+    await page.waitForLoadState('networkidle');
 
-    const shareButton = page.locator('.share-btn, [onclick*="share"]').first();
+    // Open share modal via JavaScript
+    await page.evaluate(() => {
+      if (window.shareModule && typeof window.shareModule.share === 'function') {
+        window.shareModule.share(window.location.href, document.title);
+      }
+    });
+    await page.waitForTimeout(500);
 
-    if (await shareButton.isVisible()) {
-      await shareButton.click();
-      await page.waitForTimeout(300);
+    // Verify modal is open
+    const shareModal = page.locator('#shareModal');
+    await expect(shareModal).toHaveClass(/active/, { timeout: 5000 });
 
-      // Click backdrop
-      const backdrop = page.locator('.share-modal-backdrop');
-      await backdrop.click();
-      await page.waitForTimeout(300);
+    // Click backdrop (click at the edge of viewport)
+    await page.mouse.click(10, 10);
+    await page.waitForTimeout(300);
 
-      // Modal should be hidden
-      const shareModal = page.locator('#shareModal.active');
-      await expect(shareModal).not.toBeVisible();
-    }
+    // Modal should be hidden
+    await expect(shareModal).not.toHaveClass(/active/);
   });
 
   test('should close share modal when pressing Escape', async ({ page }) => {
     await page.goto('/');
+    await page.waitForLoadState('networkidle');
 
-    const shareButton = page.locator('.share-btn, [onclick*="share"]').first();
+    // Open share modal via JavaScript
+    await page.evaluate(() => {
+      if (window.shareModule && typeof window.shareModule.share === 'function') {
+        window.shareModule.share(window.location.href, document.title);
+      }
+    });
+    await page.waitForTimeout(500);
 
-    if (await shareButton.isVisible()) {
-      await shareButton.click();
-      await page.waitForTimeout(300);
+    // Verify modal is open
+    const shareModal = page.locator('#shareModal');
+    await expect(shareModal).toHaveClass(/active/, { timeout: 5000 });
 
-      // Press Escape
-      await page.keyboard.press('Escape');
-      await page.waitForTimeout(300);
+    // Press Escape
+    await page.keyboard.press('Escape');
+    await page.waitForTimeout(300);
 
-      // Modal should be hidden
-      const shareModal = page.locator('#shareModal.active');
-      await expect(shareModal).not.toBeVisible();
-    }
+    // Modal should be hidden
+    await expect(shareModal).not.toHaveClass(/active/);
   });
 });
 
 test.describe('Share Button - Copy Link', () => {
   test('should display URL in copy input field', async ({ page }) => {
     await page.goto('/');
+    await page.waitForLoadState('networkidle');
 
-    const shareButton = page.locator('.share-btn, [onclick*="share"]').first();
+    // Wait for share module to be initialized
+    await page.waitForFunction(() => {
+      return window.shareModule && typeof window.shareModule.share === 'function';
+    }, { timeout: 10000 });
 
-    if (await shareButton.isVisible()) {
-      await shareButton.click();
-      await page.waitForTimeout(300);
+    // Open share modal via JavaScript
+    await page.evaluate(() => {
+      window.shareModule.share(window.location.href, document.title);
+    });
 
-      // Check URL input contains a URL
-      const urlInput = page.locator('#shareUrlInput, .share-copy-input');
-      const inputValue = await urlInput.inputValue();
+    // Wait for modal to become active
+    await expect(page.locator('#shareModal.active')).toBeVisible({ timeout: 5000 });
 
-      expect(inputValue).toContain('http');
-    }
+    // Check URL input contains a URL
+    const urlInput = page.locator('#shareUrlInput');
+    await expect(urlInput).toBeVisible({ timeout: 5000 });
+    const inputValue = await urlInput.inputValue();
+
+    expect(inputValue).toContain('http');
   });
 
   test('should show copied feedback when clicking copy button', async ({ page, browserName }) => {
@@ -198,27 +221,21 @@ test.describe('Share Button - Copy Link', () => {
 
 test.describe('Share Button - Series Detail Page', () => {
   test('should open share modal on series detail page', async ({ page }) => {
-    await page.goto('/');
+    // Navigate directly to a known series detail page
+    await page.goto('/series/kitab-at-tawheed');
+    await page.waitForLoadState('networkidle');
 
-    // Navigate to a series detail page
-    const seriesLink = page.locator('a[href*="/series/"]').first();
-
-    if (await seriesLink.isVisible()) {
-      await seriesLink.click();
-      await page.waitForLoadState('networkidle');
-
-      // Find and click share button on series detail page
-      const shareButton = page.locator('.share-btn, [onclick*="share"], button:has-text("مشاركة")').first();
-
-      if (await shareButton.isVisible()) {
-        await shareButton.click();
-        await page.waitForTimeout(300);
-
-        // Modal should be visible
-        const shareModal = page.locator('#shareModal, .share-modal');
-        await expect(shareModal).toBeVisible();
+    // Open share modal via JavaScript
+    await page.evaluate(() => {
+      if (window.shareModule && typeof window.shareModule.share === 'function') {
+        window.shareModule.share(window.location.href, document.title);
       }
-    }
+    });
+    await page.waitForTimeout(500);
+
+    // Modal should be visible
+    const shareModal = page.locator('#shareModal');
+    await expect(shareModal).toHaveClass(/active/, { timeout: 5000 });
   });
 });
 
@@ -226,118 +243,136 @@ test.describe('Share Button - Mobile Viewport', () => {
   test('should work correctly on mobile viewport', async ({ page }) => {
     await page.setViewportSize({ width: 375, height: 667 });
     await page.goto('/');
+    await page.waitForLoadState('networkidle');
 
-    // Wait for content to load
+    // Open share modal via JavaScript
+    await page.evaluate(() => {
+      if (window.shareModule && typeof window.shareModule.share === 'function') {
+        window.shareModule.share(window.location.href, document.title);
+      }
+    });
     await page.waitForTimeout(500);
 
-    // Find share button (may be in a different position on mobile)
-    const shareButton = page.locator('.share-btn, [onclick*="share"]').first();
+    // Modal should be visible and properly sized for mobile
+    const shareModal = page.locator('#shareModal');
+    await expect(shareModal).toHaveClass(/active/, { timeout: 5000 });
 
-    if (await shareButton.isVisible()) {
-      await shareButton.click();
-      await page.waitForTimeout(300);
-
-      // Modal should be visible and properly sized for mobile
-      const shareModal = page.locator('#shareModal, .share-modal');
-      await expect(shareModal).toBeVisible();
-
-      // Modal content should be visible
-      const modalContent = page.locator('.share-modal-content');
-      await expect(modalContent).toBeVisible();
-    }
+    // Modal content should be visible
+    const modalContent = page.locator('.share-modal-content');
+    await expect(modalContent).toBeVisible();
   });
 
   test('should display share platforms in proper layout on mobile', async ({ page }) => {
     await page.setViewportSize({ width: 375, height: 667 });
     await page.goto('/');
+    await page.waitForLoadState('networkidle');
 
-    const shareButton = page.locator('.share-btn').first();
+    // Open share modal via JavaScript
+    await page.evaluate(() => {
+      if (window.shareModule && typeof window.shareModule.share === 'function') {
+        window.shareModule.share(window.location.href, document.title);
+      }
+    });
+    await page.waitForTimeout(500);
 
-    if (await shareButton.isVisible()) {
-      await shareButton.click();
-      await page.waitForTimeout(300);
+    // All platform buttons should be visible
+    const platformButtons = page.locator('.share-platform-btn');
+    const count = await platformButtons.count();
 
-      // All platform buttons should be visible
-      const platformButtons = page.locator('.share-platform-btn');
-      const count = await platformButtons.count();
-
-      expect(count).toBe(4); // WhatsApp, Telegram, Twitter, Facebook
-    }
+    expect(count).toBe(4); // WhatsApp, Telegram, Twitter, Facebook
   });
 });
 
 test.describe('Share Button - RTL Support', () => {
   test('should display modal correctly in RTL mode (Arabic)', async ({ page }) => {
     await page.goto('/?lang=ar');
+    await page.waitForLoadState('networkidle');
 
-    const shareButton = page.locator('.share-btn').first();
+    // Open share modal via JavaScript
+    await page.evaluate(() => {
+      if (window.shareModule && typeof window.shareModule.share === 'function') {
+        window.shareModule.share(window.location.href, document.title);
+      }
+    });
+    await page.waitForTimeout(500);
 
-    if (await shareButton.isVisible()) {
-      await shareButton.click();
-      await page.waitForTimeout(300);
+    // Check modal is open
+    const shareModal = page.locator('#shareModal');
+    await expect(shareModal).toHaveClass(/active/, { timeout: 5000 });
 
-      // Check modal direction is RTL
-      const modalContent = page.locator('.share-modal-content');
-      const dir = await modalContent.getAttribute('dir');
+    // Check modal direction is RTL
+    const modalContent = page.locator('.share-modal-content');
+    const dir = await modalContent.getAttribute('dir');
 
-      expect(dir).toBe('rtl');
+    expect(dir).toBe('rtl');
 
-      // Arabic text should be visible
-      const titlePreview = page.locator('#shareTitlePreview');
-      await expect(titlePreview).toBeVisible();
-    }
+    // Title preview should be visible
+    const titlePreview = page.locator('#shareTitlePreview');
+    await expect(titlePreview).toBeVisible();
   });
 
   test('should display modal correctly in LTR mode (English)', async ({ page }) => {
     await page.goto('/?lang=en');
+    await page.waitForLoadState('networkidle');
 
-    const shareButton = page.locator('.share-btn').first();
+    // Open share modal via JavaScript
+    await page.evaluate(() => {
+      if (window.shareModule && typeof window.shareModule.share === 'function') {
+        window.shareModule.share(window.location.href, document.title);
+      }
+    });
+    await page.waitForTimeout(500);
 
-    if (await shareButton.isVisible()) {
-      await shareButton.click();
-      await page.waitForTimeout(300);
+    // Check modal is open
+    const shareModal = page.locator('#shareModal');
+    await expect(shareModal).toHaveClass(/active/, { timeout: 5000 });
 
-      // Check modal direction is LTR
-      const modalContent = page.locator('.share-modal-content');
-      const dir = await modalContent.getAttribute('dir');
+    // Check modal direction is LTR
+    const modalContent = page.locator('.share-modal-content');
+    const dir = await modalContent.getAttribute('dir');
 
-      expect(dir).toBe('ltr');
-    }
+    expect(dir).toBe('ltr');
   });
 });
 
 test.describe('Share Button - Social Platform Links', () => {
   test('should generate correct WhatsApp share URL', async ({ page }) => {
     await page.goto('/');
+    await page.waitForLoadState('networkidle');
 
-    const shareButton = page.locator('.share-btn').first();
+    // Open share modal via JavaScript
+    await page.evaluate(() => {
+      if (window.shareModule && typeof window.shareModule.share === 'function') {
+        window.shareModule.share(window.location.href, document.title);
+      }
+    });
+    await page.waitForTimeout(500);
 
-    if (await shareButton.isVisible()) {
-      await shareButton.click();
-      await page.waitForTimeout(300);
+    // Get WhatsApp button
+    const whatsappButton = page.locator('[data-platform="whatsapp"]');
+    await expect(whatsappButton).toBeVisible({ timeout: 5000 });
 
-      // Get WhatsApp button
-      const whatsappButton = page.locator('[data-platform="whatsapp"]');
-
-      // Check onclick contains WhatsApp URL pattern
-      const onclick = await whatsappButton.getAttribute('onclick');
-      expect(onclick).toContain('whatsapp');
-    }
+    // Check onclick contains WhatsApp URL pattern
+    const onclick = await whatsappButton.getAttribute('onclick');
+    expect(onclick).toContain('whatsapp');
   });
 
   test('should generate correct Telegram share URL', async ({ page }) => {
     await page.goto('/');
+    await page.waitForLoadState('networkidle');
 
-    const shareButton = page.locator('.share-btn').first();
+    // Open share modal via JavaScript
+    await page.evaluate(() => {
+      if (window.shareModule && typeof window.shareModule.share === 'function') {
+        window.shareModule.share(window.location.href, document.title);
+      }
+    });
+    await page.waitForTimeout(500);
 
-    if (await shareButton.isVisible()) {
-      await shareButton.click();
-      await page.waitForTimeout(300);
+    const telegramButton = page.locator('[data-platform="telegram"]');
+    await expect(telegramButton).toBeVisible({ timeout: 5000 });
+    const onclick = await telegramButton.getAttribute('onclick');
 
-      const telegramButton = page.locator('[data-platform="telegram"]');
-      const onclick = await telegramButton.getAttribute('onclick');
-
-      expect(onclick).toContain('telegram');
-    }
+    expect(onclick).toContain('telegram');
   });
 });

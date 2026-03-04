@@ -432,7 +432,9 @@ router.get('/lectures/:idOrSlug', async (req, res) => {
     if (lecture.shortId) {
       const newUrl = buildCanonicalUrl('lectures', lecture);
       if (newUrl) {
-        return res.redirect(301, newUrl);
+        // Preserve query parameters (like ?lang=en) in redirect
+        const queryString = Object.keys(req.query).length > 0 ? '?' + new URLSearchParams(req.query).toString() : '';
+        return res.redirect(301, newUrl + queryString);
       }
     }
 
@@ -568,7 +570,9 @@ router.get('/sheikhs/:idOrSlug', async (req, res) => {
     if (sheikh.shortId) {
       const newUrl = buildCanonicalUrl('sheikhs', sheikh);
       if (newUrl) {
-        return res.redirect(301, newUrl);
+        // Preserve query parameters (like ?lang=en) in redirect
+        const queryString = Object.keys(req.query).length > 0 ? '?' + new URLSearchParams(req.query).toString() : '';
+        return res.redirect(301, newUrl + queryString);
       }
     }
 
@@ -764,7 +768,9 @@ router.get('/series/:idOrSlug', async (req, res) => {
     if (series.shortId) {
       const newUrl = buildCanonicalUrl('series', series);
       if (newUrl) {
-        return res.redirect(301, newUrl);
+        // Preserve query parameters (like ?lang=en) in redirect
+        const queryString = Object.keys(req.query).length > 0 ? '?' + new URLSearchParams(req.query).toString() : '';
+        return res.redirect(301, newUrl + queryString);
       }
     }
 
