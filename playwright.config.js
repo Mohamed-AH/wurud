@@ -29,8 +29,10 @@ module.exports = defineConfig({
   // Retry on CI only
   retries: isCI ? 2 : 0,
 
-  // Opt out of parallel tests on CI for stability, use sharding instead
-  workers: isCI ? 2 : undefined,
+  // Limit workers to avoid resource contention and timeouts
+  // CI: 2 workers for sharding stability
+  // Local: 4 workers to balance speed with stability (especially for mobile emulation)
+  workers: isCI ? 2 : 4,
 
   // Reporter to use
   reporter: isCI
