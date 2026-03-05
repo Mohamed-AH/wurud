@@ -63,6 +63,7 @@ describe('Storage Configuration', () => {
       delete process.env.UPLOAD_DIR;
       fs.existsSync.mockReturnValue(false);
 
+      jest.resetModules();
       require('../../config/storage');
 
       expect(fs.mkdirSync).toHaveBeenCalledWith('./uploads', { recursive: true });
