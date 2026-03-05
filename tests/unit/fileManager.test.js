@@ -6,6 +6,9 @@
 const path = require('path');
 const fs = require('fs');
 
+// Store original path.resolve
+const originalPathResolve = path.resolve.bind(path);
+
 // Mock the storage config
 jest.mock('../../config/storage', () => ({
   uploadDir: '/tmp/test-uploads'
@@ -35,17 +38,35 @@ describe('File Manager Utility', () => {
 
   afterEach(() => {
     jest.restoreAllMocks();
+    // Restore original path.resolve
+    path.resolve = originalPathResolve;
   });
+
+  // Helper to mock path.resolve for security check to pass
+  const mockPathResolveForSuccess = () => {
+    path.resolve = (p) => {
+      // Normalize the path and ensure consistent forward slashes
+      const normalized = p.replace(/\\/g, '/');
+      // Return the same format for both paths so startsWith check works
+      return normalized;
+    };
+  };
+
+  // Helper to mock path.resolve for path traversal test
+  const mockPathResolveForTraversal = () => {
+    path.resolve = (p) => {
+      if (p.includes('..')) {
+        return '/etc/passwd';
+      }
+      return '/tmp/test-uploads';
+    };
+  };
 
   describe('deleteFile()', () => {
     it('should delete existing file successfully', () => {
       jest.spyOn(fs, 'existsSync').mockReturnValue(true);
       jest.spyOn(fs, 'unlinkSync').mockImplementation(() => {});
-      // Mock resolve to return paths that pass security check
-      jest.spyOn(path, 'resolve').mockImplementation((p) => {
-        if (p === uploadDir) return '/absolute/tmp/test-uploads';
-        return '/absolute' + p;
-      });
+      mockPathResolveForSuccess();
 
       const result = deleteFile('test-audio.mp3');
 
@@ -59,10 +80,7 @@ describe('File Manager Utility', () => {
     });
 
     it('should return false if file does not exist', () => {
-      jest.spyOn(path, 'resolve').mockImplementation((p) => {
-        if (p === uploadDir) return '/absolute/tmp/test-uploads';
-        return '/absolute' + p;
-      });
+      mockPathResolveForSuccess();
       jest.spyOn(fs, 'existsSync').mockReturnValue(false);
 
       const result = deleteFile('nonexistent.mp3');
@@ -71,13 +89,7 @@ describe('File Manager Utility', () => {
     });
 
     it('should prevent path traversal attacks', () => {
-      jest.spyOn(path, 'resolve').mockImplementation((p) => {
-        if (p.includes('..')) {
-          return '/etc/passwd';
-        }
-        if (p === uploadDir) return '/tmp/test-uploads';
-        return '/tmp/test-uploads/' + p;
-      });
+      mockPathResolveForTraversal();
 
       const result = deleteFile('../../../etc/passwd');
 
@@ -89,10 +101,7 @@ describe('File Manager Utility', () => {
       jest.spyOn(fs, 'unlinkSync').mockImplementation(() => {
         throw new Error('Permission denied');
       });
-      jest.spyOn(path, 'resolve').mockImplementation((p) => {
-        if (p === uploadDir) return '/absolute/tmp/test-uploads';
-        return '/absolute' + p;
-      });
+      mockPathResolveForSuccess();
 
       const result = deleteFile('test.mp3');
 
@@ -104,10 +113,7 @@ describe('File Manager Utility', () => {
     it('should delete multiple files successfully', () => {
       jest.spyOn(fs, 'existsSync').mockReturnValue(true);
       jest.spyOn(fs, 'unlinkSync').mockImplementation(() => {});
-      jest.spyOn(path, 'resolve').mockImplementation((p) => {
-        if (p === uploadDir) return '/absolute/tmp/test-uploads';
-        return '/absolute' + p;
-      });
+      mockPathResolveForSuccess();
 
       const result = deleteMultipleFiles(['file1.mp3', 'file2.mp3', 'file3.mp3']);
 
@@ -119,13 +125,11 @@ describe('File Manager Utility', () => {
     });
 
     it('should track failed deletions', () => {
-      jest.spyOn(path, 'resolve').mockImplementation((p) => {
-        if (p === uploadDir) return '/absolute/tmp/test-uploads';
-        return '/absolute' + p;
-      });
+      mockPathResolveForSuccess();
+      // First and third files exist, second doesn't
       jest.spyOn(fs, 'existsSync')
         .mockReturnValueOnce(true)
-        .mockReturnValueOnce(false) // second file doesn't exist
+        .mockReturnValueOnce(false)
         .mockReturnValueOnce(true);
       jest.spyOn(fs, 'unlinkSync').mockImplementation(() => {});
 
@@ -365,10 +369,7 @@ describe('File Manager Utility', () => {
       jest.spyOn(fs, 'readdirSync').mockReturnValue(['file1.mp3', 'orphan.mp3']);
       jest.spyOn(fs, 'statSync').mockReturnValue({ isFile: () => true });
       jest.spyOn(fs, 'unlinkSync').mockImplementation(() => {});
-      jest.spyOn(path, 'resolve').mockImplementation((p) => {
-        if (p === uploadDir) return '/absolute/tmp/test-uploads';
-        return '/absolute' + p;
-      });
+      mockPathResolveForSuccess();
       mockLectureModel.find.mockReturnValue({
         lean: () => Promise.resolve([{ audioFileName: 'file1.mp3' }])
       });
@@ -395,12 +396,9 @@ describe('File Manager Utility', () => {
     });
 
     it('should handle errors gracefully', async () => {
-      // Mock findOrphanedFiles to throw by making readdirSync throw
-      // but since findOrphanedFiles catches and returns [], we need to mock differently
       jest.spyOn(fs, 'existsSync').mockReturnValue(true);
       jest.spyOn(fs, 'readdirSync').mockReturnValue(['orphan.mp3']);
       jest.spyOn(fs, 'statSync').mockReturnValue({ isFile: () => true });
-      // Make the Lecture model throw
       mockLectureModel.find.mockReturnValue({
         lean: () => Promise.reject(new Error('Database error'))
       });
@@ -419,10 +417,7 @@ describe('File Manager Utility', () => {
         .mockReturnValueOnce(true)  // source exists
         .mockReturnValueOnce(false); // destination doesn't exist
       jest.spyOn(fs, 'renameSync').mockImplementation(() => {});
-      jest.spyOn(path, 'resolve').mockImplementation((p) => {
-        if (p === uploadDir) return '/absolute/tmp/test-uploads';
-        return '/absolute' + p;
-      });
+      mockPathResolveForSuccess();
 
       const result = moveFile('old.mp3', 'new.mp3');
 
@@ -431,8 +426,8 @@ describe('File Manager Utility', () => {
     });
 
     it('should return false if source file does not exist', () => {
+      mockPathResolveForSuccess();
       jest.spyOn(fs, 'existsSync').mockReturnValue(false);
-      jest.spyOn(path, 'resolve').mockImplementation((p) => p);
 
       const result = moveFile('nonexistent.mp3', 'new.mp3');
 
@@ -440,8 +435,8 @@ describe('File Manager Utility', () => {
     });
 
     it('should return false if destination already exists', () => {
+      mockPathResolveForSuccess();
       jest.spyOn(fs, 'existsSync').mockReturnValue(true); // both exist
-      jest.spyOn(path, 'resolve').mockImplementation((p) => p);
 
       const result = moveFile('old.mp3', 'existing.mp3');
 
@@ -449,12 +444,7 @@ describe('File Manager Utility', () => {
     });
 
     it('should prevent path traversal for source', () => {
-      jest.spyOn(path, 'resolve').mockImplementation((p) => {
-        if (p.includes('..')) {
-          return '/etc/passwd';
-        }
-        return p;
-      });
+      mockPathResolveForTraversal();
 
       const result = moveFile('../../../etc/passwd', 'new.mp3');
 
@@ -462,12 +452,7 @@ describe('File Manager Utility', () => {
     });
 
     it('should prevent path traversal for destination', () => {
-      jest.spyOn(path, 'resolve').mockImplementation((p) => {
-        if (p.includes('..')) {
-          return '/etc/passwd';
-        }
-        return p;
-      });
+      mockPathResolveForTraversal();
 
       const result = moveFile('old.mp3', '../../../etc/passwd');
 
@@ -481,7 +466,7 @@ describe('File Manager Utility', () => {
       jest.spyOn(fs, 'renameSync').mockImplementation(() => {
         throw new Error('Permission denied');
       });
-      jest.spyOn(path, 'resolve').mockImplementation((p) => p);
+      mockPathResolveForSuccess();
 
       const result = moveFile('old.mp3', 'new.mp3');
 
