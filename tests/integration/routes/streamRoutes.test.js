@@ -71,12 +71,9 @@ describe('Stream and Download Routes', () => {
           .get(`/stream/${lectureId}`)
           .expect(200);
 
-        expect(streamAudio).toHaveBeenCalledWith(
-          expect.objectContaining({
-            params: { id: lectureId }
-          }),
-          expect.any(Object)
-        );
+        expect(streamAudio).toHaveBeenCalled();
+        const callArgs = streamAudio.mock.calls[0];
+        expect(callArgs[0].params.id).toBe(lectureId);
       });
     });
 
@@ -116,12 +113,9 @@ describe('Stream and Download Routes', () => {
           .get(`/download/${lectureId}`)
           .expect(200);
 
-        expect(downloadAudio).toHaveBeenCalledWith(
-          expect.objectContaining({
-            params: { id: lectureId }
-          }),
-          expect.any(Object)
-        );
+        expect(downloadAudio).toHaveBeenCalled();
+        const callArgs = downloadAudio.mock.calls[0];
+        expect(callArgs[0].params.id).toBe(lectureId);
       });
     });
   });

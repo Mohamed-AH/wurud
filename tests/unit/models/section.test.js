@@ -56,7 +56,7 @@ describe('Section Model', () => {
       await expect(section.save()).rejects.toThrow();
     });
 
-    it('should fail validation without slug', async () => {
+    it('should auto-generate slug from English title if not provided', async () => {
       const section = new Section({
         title: {
           ar: 'القسم',
@@ -64,7 +64,8 @@ describe('Section Model', () => {
         }
       });
 
-      await expect(section.save()).rejects.toThrow();
+      await section.validate();
+      expect(section.slug).toBe('section');
     });
 
     it('should enforce unique slug', async () => {

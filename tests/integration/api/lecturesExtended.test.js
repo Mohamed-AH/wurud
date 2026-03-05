@@ -512,39 +512,22 @@ describe('Lecture API Extended Tests', () => {
       expect(response.body.pagination.pages).toBe(3);
     });
 
-    it('should enforce maximum limit of 100', async () => {
-      const sheikh = await Sheikh.create({
-        nameArabic: 'الشيخ زيد'
-      });
-
-      await Lecture.create({
-        titleArabic: 'محاضرة',
-        sheikhId: sheikh._id
-      });
-
+    it('should reject limit over 100 with validation error', async () => {
       const response = await request(app)
         .get('/api/lectures?limit=500')
-        .expect(200);
+        .expect(400);
 
-      expect(response.body.pagination.limit).toBe(100);
+      expect(response.body.success).toBe(false);
+      expect(response.body.message).toBe('Validation failed');
     });
 
-    it('should ignore invalid sheikhId', async () => {
-      const sheikh = await Sheikh.create({
-        nameArabic: 'الشيخ بكر'
-      });
-
-      await Lecture.create({
-        titleArabic: 'محاضرة',
-        sheikhId: sheikh._id
-      });
-
+    it('should reject invalid sheikhId with validation error', async () => {
       const response = await request(app)
         .get('/api/lectures?sheikhId=invalid')
-        .expect(200);
+        .expect(400);
 
-      // Should return all lectures since invalid ID is ignored
-      expect(response.body.lectures).toHaveLength(1);
+      expect(response.body.success).toBe(false);
+      expect(response.body.message).toBe('Validation failed');
     });
   });
 });

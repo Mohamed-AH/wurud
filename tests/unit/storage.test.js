@@ -63,7 +63,6 @@ describe('Storage Configuration', () => {
       delete process.env.UPLOAD_DIR;
       fs.existsSync.mockReturnValue(false);
 
-      jest.resetModules();
       require('../../config/storage');
 
       expect(fs.mkdirSync).toHaveBeenCalledWith('./uploads', { recursive: true });
@@ -101,8 +100,8 @@ describe('Storage Configuration', () => {
   describe('Storage Filename Generation', () => {
     it('should generate unique filename with timestamp', () => {
       fs.existsSync.mockReturnValue(true);
-      jest.resetModules();
 
+      require('../../config/storage');
       const multer = require('multer');
 
       // Get the storage config that was passed to diskStorage
@@ -123,8 +122,8 @@ describe('Storage Configuration', () => {
 
     it('should sanitize special characters from filename', () => {
       fs.existsSync.mockReturnValue(true);
-      jest.resetModules();
 
+      require('../../config/storage');
       const multer = require('multer');
       const storageConfig = multer.diskStorage.mock.calls[0][0];
 
@@ -143,8 +142,8 @@ describe('Storage Configuration', () => {
 
     it('should preserve Arabic characters in filename', () => {
       fs.existsSync.mockReturnValue(true);
-      jest.resetModules();
 
+      require('../../config/storage');
       const multer = require('multer');
       const storageConfig = multer.diskStorage.mock.calls[0][0];
 
@@ -161,8 +160,8 @@ describe('Storage Configuration', () => {
 
     it('should truncate long filenames', () => {
       fs.existsSync.mockReturnValue(true);
-      jest.resetModules();
 
+      require('../../config/storage');
       const multer = require('multer');
       const storageConfig = multer.diskStorage.mock.calls[0][0];
 
@@ -182,8 +181,8 @@ describe('Storage Configuration', () => {
     it('should set correct destination', () => {
       delete process.env.UPLOAD_DIR;
       fs.existsSync.mockReturnValue(true);
-      jest.resetModules();
 
+      require('../../config/storage');
       const multer = require('multer');
       const storageConfig = multer.diskStorage.mock.calls[0][0];
 
