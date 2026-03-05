@@ -18,6 +18,14 @@ describe('SiteSettings Model', () => {
     await testDb.disconnect();
   });
 
+  beforeEach(async () => {
+    // Clean up before each test to ensure test isolation
+    await SiteSettings.deleteMany({});
+    await Lecture.deleteMany({});
+    await PageView.deleteMany({});
+    await Sheikh.deleteMany({});
+  });
+
   afterEach(async () => {
     await SiteSettings.deleteMany({});
     await Lecture.deleteMany({});
