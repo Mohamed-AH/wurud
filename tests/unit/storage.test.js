@@ -61,12 +61,14 @@ describe('Storage Configuration', () => {
 
     it('should create upload directory if it does not exist', () => {
       delete process.env.UPLOAD_DIR;
-      fs.existsSync.mockReturnValue(false);
 
-      jest.resetModules();
+      // Get fresh fs mock after module reset and set return value
+      const freshFs = require('fs');
+      freshFs.existsSync.mockReturnValue(false);
+
       require('../../config/storage');
 
-      expect(fs.mkdirSync).toHaveBeenCalledWith('./uploads', { recursive: true });
+      expect(freshFs.mkdirSync).toHaveBeenCalledWith('./uploads', { recursive: true });
     });
 
     it('should not create directory if it exists', () => {
