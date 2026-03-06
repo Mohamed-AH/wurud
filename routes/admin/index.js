@@ -335,6 +335,73 @@ router.get('/lectures/no-audio', isAdmin, async (req, res) => {
   }
 });
 
+// @route   GET /admin/series/new
+// @desc    Create new series page
+// @access  Private (Admin only)
+router.get('/series/new', isAdmin, async (req, res) => {
+  try {
+    const { Sheikh, Section } = require('../../models');
+
+    const sheikhs = await Sheikh.find().sort({ nameArabic: 1 }).lean();
+    const sections = await Section.find().sort({ displayOrder: 1 }).lean();
+
+    res.render('admin/series-form', {
+      title: 'Add New Series',
+      user: req.user,
+      series: null,
+      sheikhs,
+      sections,
+      isEdit: false
+    });
+  } catch (error) {
+    console.error('New series page error:', error);
+    res.status(500).send('Error loading new series form');
+  }
+});
+
+// @route   POST /admin/series/new
+// @desc    Create new series
+// @access  Private (Admin only)
+router.post('/series/new', isAdmin, async (req, res) => {
+  try {
+    const { Series } = require('../../models');
+
+    const {
+      titleArabic,
+      titleEnglish,
+      descriptionArabic,
+      descriptionEnglish,
+      sheikhId,
+      category,
+      bookTitle,
+      bookAuthor,
+      isVisible,
+      sectionId
+    } = req.body;
+
+    const series = new Series({
+      titleArabic,
+      titleEnglish: titleEnglish || undefined,
+      descriptionArabic: descriptionArabic || undefined,
+      descriptionEnglish: descriptionEnglish || undefined,
+      sheikhId,
+      category: category || 'Other',
+      bookTitle: bookTitle || undefined,
+      bookAuthor: bookAuthor || undefined,
+      isVisible: isVisible === 'true' || isVisible === true,
+      sectionId: sectionId || null
+    });
+
+    await series.save();
+    invalidateHomepageCache();
+
+    res.redirect(`/admin/series/${series._id}/edit`);
+  } catch (error) {
+    console.error('Create series error:', error);
+    res.status(500).send('Error creating series: ' + error.message);
+  }
+});
+
 // @route   GET /admin/series/:id/edit
 // @desc    Edit series page
 // @access  Private (Admin only)
