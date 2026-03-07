@@ -804,8 +804,8 @@ describe('Lecture API Extended Tests', () => {
         })
         .expect(200);
 
-      // fileManager.fileManager.deleteFile should have been called with old filename
-      expect(fileManager.fileManager?.deleteFile || fileManager.deleteFile).toHaveBeenCalled();
+      // fileManager.deleteFile should have been called with old filename
+      expect(fileManager.deleteFile).toHaveBeenCalled();
     });
   });
 });

@@ -308,7 +308,7 @@ router.post('/bulk-upload-audio', [isAdminAPI, upload.single('audioFile')], asyn
 
     if (!lecture) {
       // Clean up uploaded file
-      await fileManager.fileManager.deleteFile(req.file.filename);
+      fileManager.deleteFile(req.file.filename);
       return res.status(404).json({
         success: false,
         message: 'Lecture not found'
@@ -317,7 +317,7 @@ router.post('/bulk-upload-audio', [isAdminAPI, upload.single('audioFile')], asyn
 
     // If lecture already has audio, delete the old file
     if (lecture.audioFileName) {
-      await fileManager.fileManager.deleteFile(lecture.audioFileName);
+      fileManager.deleteFile(lecture.audioFileName);
     }
 
     // Extract audio metadata
@@ -343,7 +343,7 @@ router.post('/bulk-upload-audio', [isAdminAPI, upload.single('audioFile')], asyn
 
     // Clean up uploaded file on error
     if (req.file) {
-      await fileManager.fileManager.deleteFile(req.file.filename);
+      fileManager.deleteFile(req.file.filename);
     }
 
     res.status(500).json({
