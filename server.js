@@ -4,6 +4,7 @@ const path = require('path');
 const helmet = require('helmet');
 const compression = require('compression');
 const session = require('express-session');
+const MongoStore = require('connect-mongo');
 const cookieParser = require('cookie-parser');
 const expressLayouts = require('express-ejs-layouts');
 const rateLimit = require('express-rate-limit');
@@ -89,12 +90,20 @@ app.use(compression());
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
-// Session middleware
+// Session middleware with MongoDB store (saves RAM on free tier)
 app.use(session({
   secret: process.env.SESSION_SECRET || (isProduction ? undefined : 'dev-secret-local-only'),
   resave: false,
   saveUninitialized: false,
   name: 'wurud.sid', // Custom session name (avoid default 'connect.sid')
+  store: process.env.MONGODB_URI ? MongoStore.create({
+    mongoUrl: process.env.MONGODB_URI,
+    touchAfter: 24 * 3600, // Lazy update: only update session once per 24 hours unless data changes
+    ttl: 7 * 24 * 60 * 60, // Session TTL: 7 days (matches cookie maxAge)
+    crypto: {
+      secret: process.env.SESSION_SECRET || 'dev-secret-local-only'
+    }
+  }) : undefined, // Use memory store in dev without MONGODB_URI
   cookie: {
     maxAge: 1000 * 60 * 60 * 24 * 7, // 1 week
     httpOnly: true,

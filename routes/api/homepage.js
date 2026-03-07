@@ -156,50 +156,63 @@ router.get('/series', async (req, res) => {
     // Apply pagination
     const paginatedSeries = seriesList.slice(skip, skip + limitNum);
 
-    // Fetch lectures for each series
-    const seriesWithLectures = await Promise.all(
-      paginatedSeries.map(async (s) => {
-        const lectures = await Lecture.aggregate([
-          {
-            $match: {
-              seriesId: s._id,
-              published: true
-            }
-          },
-          {
-            $addFields: {
-              effectiveSortOrder: { $ifNull: ['$sortOrder', 999999] }
-            }
-          },
-          {
-            $sort: {
-              effectiveSortOrder: 1,
-              lectureNumber: 1,
-              createdAt: 1
-            }
-          },
-          {
-            $unset: ['effectiveSortOrder']
-          }
-        ]);
+    // Fetch all lectures for paginated series in ONE query (fixes N+1)
+    const seriesIds = paginatedSeries.map(s => s._id);
+    const allLectures = await Lecture.aggregate([
+      {
+        $match: {
+          seriesId: { $in: seriesIds },
+          published: true
+        }
+      },
+      {
+        $addFields: {
+          effectiveSortOrder: { $ifNull: ['$sortOrder', 999999] }
+        }
+      },
+      {
+        $sort: {
+          seriesId: 1,
+          effectiveSortOrder: 1,
+          lectureNumber: 1,
+          createdAt: 1
+        }
+      },
+      {
+        $unset: ['effectiveSortOrder']
+      }
+    ]);
 
-        // Get most recent lecture date for sorting
-        const mostRecentLecture = lectures.reduce((latest, lecture) => {
-          const lectureDate = lecture.dateRecorded || lecture.createdAt;
-          return lectureDate > latest ? lectureDate : latest;
-        }, new Date(0));
+    // Group lectures by seriesId for efficient lookup
+    const lecturesBySeriesId = new Map();
+    for (const lecture of allLectures) {
+      const seriesIdStr = lecture.seriesId.toString();
+      if (!lecturesBySeriesId.has(seriesIdStr)) {
+        lecturesBySeriesId.set(seriesIdStr, []);
+      }
+      lecturesBySeriesId.get(seriesIdStr).push(lecture);
+    }
 
-        return {
-          ...s,
-          sheikh: s.sheikhId,
-          lectures: lectures,
-          lectureCount: lectures.length,
-          originalAuthor: s.bookAuthor || null,
-          seriesType: getSeriesType(s),
-          mostRecentDate: mostRecentLecture
-        };
-      })
-    );
+    // Map series with their lectures
+    const seriesWithLectures = paginatedSeries.map((s) => {
+      const lectures = lecturesBySeriesId.get(s._id.toString()) || [];
+
+      // Get most recent lecture date for sorting
+      const mostRecentLecture = lectures.reduce((latest, lecture) => {
+        const lectureDate = lecture.dateRecorded || lecture.createdAt;
+        return lectureDate > latest ? lectureDate : latest;
+      }, new Date(0));
+
+      return {
+        ...s,
+        sheikh: s.sheikhId,
+        lectures: lectures,
+        lectureCount: lectures.length,
+        originalAuthor: s.bookAuthor || null,
+        seriesType: getSeriesType(s),
+        mostRecentDate: mostRecentLecture
+      };
+    });
 
     // Filter out series with no published lectures
     const filteredSeries = seriesWithLectures.filter(s => s.lectureCount > 0);
@@ -399,48 +412,61 @@ router.get('/khutbas', async (req, res) => {
     // Apply pagination
     const paginatedSeries = seriesList.slice(skip, skip + limitNum);
 
-    // Fetch lectures for each series
-    const seriesWithLectures = await Promise.all(
-      paginatedSeries.map(async (s) => {
-        const lectures = await Lecture.aggregate([
-          {
-            $match: {
-              seriesId: s._id,
-              published: true
-            }
-          },
-          {
-            $addFields: {
-              effectiveSortOrder: { $ifNull: ['$sortOrder', 999999] }
-            }
-          },
-          {
-            $sort: {
-              effectiveSortOrder: 1,
-              lectureNumber: 1,
-              createdAt: 1
-            }
-          },
-          {
-            $unset: ['effectiveSortOrder']
-          }
-        ]);
+    // Fetch all lectures for paginated series in ONE query (fixes N+1)
+    const seriesIds = paginatedSeries.map(s => s._id);
+    const allLectures = await Lecture.aggregate([
+      {
+        $match: {
+          seriesId: { $in: seriesIds },
+          published: true
+        }
+      },
+      {
+        $addFields: {
+          effectiveSortOrder: { $ifNull: ['$sortOrder', 999999] }
+        }
+      },
+      {
+        $sort: {
+          seriesId: 1,
+          effectiveSortOrder: 1,
+          lectureNumber: 1,
+          createdAt: 1
+        }
+      },
+      {
+        $unset: ['effectiveSortOrder']
+      }
+    ]);
 
-        const mostRecentLecture = lectures.reduce((latest, lecture) => {
-          const lectureDate = lecture.dateRecorded || lecture.createdAt;
-          return lectureDate > latest ? lectureDate : latest;
-        }, new Date(0));
+    // Group lectures by seriesId for efficient lookup
+    const lecturesBySeriesId = new Map();
+    for (const lecture of allLectures) {
+      const seriesIdStr = lecture.seriesId.toString();
+      if (!lecturesBySeriesId.has(seriesIdStr)) {
+        lecturesBySeriesId.set(seriesIdStr, []);
+      }
+      lecturesBySeriesId.get(seriesIdStr).push(lecture);
+    }
 
-        return {
-          ...s,
-          sheikh: s.sheikhId,
-          lectures: lectures,
-          lectureCount: lectures.length,
-          originalAuthor: s.bookAuthor || null,
-          mostRecentDate: mostRecentLecture
-        };
-      })
-    );
+    // Map series with their lectures
+    const seriesWithLectures = paginatedSeries.map((s) => {
+      const lectures = lecturesBySeriesId.get(s._id.toString()) || [];
+
+      const mostRecentLecture = lectures.reduce((latest, lecture) => {
+        const lectureDate = lecture.dateRecorded || lecture.createdAt;
+        return lectureDate > latest ? lectureDate : latest;
+      }, new Date(0));
+
+      return {
+        ...s,
+        sheikh: s.sheikhId,
+        lectures: lectures,
+        lectureCount: lectures.length,
+        originalAuthor: s.bookAuthor || null,
+        mostRecentDate: mostRecentLecture
+      };
+    });
 
     // Filter out series with no published lectures
     const filteredSeries = seriesWithLectures.filter(s => s.lectureCount > 0);

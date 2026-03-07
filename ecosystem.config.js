@@ -37,7 +37,7 @@ module.exports = {
     // Restart behavior
     autorestart: true,
     watch: false, // Don't watch in production
-    max_memory_restart: '500M',
+    max_memory_restart: '380M', // Lower for Render Free Tier (512MB total, leave headroom for GC)
 
     // Restart on these signals
     kill_timeout: 5000,
@@ -53,7 +53,9 @@ module.exports = {
     // pmx: true,
 
     // Environment specific settings
-    node_args: '--max-old-space-size=512', // Limit memory usage
+    // Optimized for Render Free Tier (512MB limit)
+    // Lower heap allows GC headroom before Render kills the process
+    node_args: '--max-old-space-size=400',
   }],
 
   // Deployment configuration (optional)
