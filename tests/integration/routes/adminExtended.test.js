@@ -119,7 +119,7 @@ describe('Admin Routes Extended Tests', () => {
       ]);
 
       const response = await request(app)
-        .get('/admin/lectures?search=التوحيد')
+        .get('/admin/lectures?search=' + encodeURIComponent('التوحيد'))
         .expect(200);
 
       expect(response.body._view).toBe('admin/lectures-list');

@@ -55,13 +55,12 @@ describe('Passport Configuration', () => {
     });
 
     it('should configure strategy with correct options when credentials exist', () => {
-      const GoogleStrategy = require('passport-google-oauth20').Strategy;
-
       process.env.GOOGLE_CLIENT_ID = 'test-client-id';
       process.env.GOOGLE_CLIENT_SECRET = 'test-client-secret';
       process.env.GOOGLE_CALLBACK_URL = 'http://localhost:3000/auth/google/callback';
 
       jest.resetModules();
+      const GoogleStrategy = require('passport-google-oauth20').Strategy;
       require('../../../config/passport');
 
       expect(GoogleStrategy).toHaveBeenCalledWith(

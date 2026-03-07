@@ -108,7 +108,7 @@ router.get('/duration-status', isAdmin, async (req, res) => {
 
     // Get stats
     const total = await Lecture.countDocuments();
-    const withAudio = await Lecture.countDocuments({ audioFileName: { $exists: true, $ne: null, $ne: '' } });
+    const withAudio = await Lecture.countDocuments({ audioFileName: { $exists: true, $nin: [null, ''] } });
     const verified = await Lecture.countDocuments({ durationVerified: true });
     const noAudio = total - withAudio;
     const pending = withAudio - verified;
@@ -118,7 +118,7 @@ router.get('/duration-status', isAdmin, async (req, res) => {
 
     // Get pending lectures (with audio but not verified)
     const pendingLectures = await Lecture.find({
-      audioFileName: { $exists: true, $ne: null, $ne: '' },
+      audioFileName: { $exists: true, $nin: [null, ''] },
       $or: [
         { durationVerified: false },
         { durationVerified: { $exists: false } }
