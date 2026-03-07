@@ -6,6 +6,15 @@
  * - CI environment (uses external MongoDB from MONGODB_URI)
  */
 
+// Production guard: prevent mongodb-memory-server from being loaded in production
+// This saves ~100MB RAM that would be consumed by the binary download
+if (process.env.NODE_ENV === 'production') {
+  throw new Error(
+    'Test database helper should never be loaded in production. ' +
+    'Ensure devDependencies are not installed (use npm ci --omit=dev).'
+  );
+}
+
 const mongoose = require('mongoose');
 
 let mongoServer = null;

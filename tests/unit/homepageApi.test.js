@@ -187,23 +187,36 @@ beforeEach(() => {
   // Default mock for Lecture.aggregate
   Lecture.aggregate.mockImplementation((pipeline) => {
     const matchStage = pipeline.find(s => s.$match);
-    if (matchStage) {
-      const seriesId = matchStage.$match.seriesId;
-      if (seriesId) {
-        const key = seriesId.toString();
-        return Promise.resolve(mockLectures[key] || []);
-      }
-      // For $in queries (stats endpoint)
-      if (matchStage.$match.seriesId && matchStage.$match.seriesId.$in) {
+    if (matchStage && matchStage.$match.seriesId) {
+      // Check for $in queries FIRST (used by /series and /khutbas endpoints)
+      if (matchStage.$match.seriesId.$in) {
         const ids = matchStage.$match.seriesId.$in.map(id => id.toString());
-        const groups = [];
-        for (const id of ids) {
-          if (mockLectures[id] && mockLectures[id].length > 0) {
-            groups.push({ _id: id });
+        // Check if this is a grouping query (stats endpoint) or a lecture fetch
+        const groupStage = pipeline.find(s => s.$group);
+        if (groupStage) {
+          // Stats endpoint - return groups
+          const groups = [];
+          for (const id of ids) {
+            if (mockLectures[id] && mockLectures[id].length > 0) {
+              groups.push({ _id: id });
+            }
           }
+          return Promise.resolve(groups);
+        } else {
+          // Series/khutbas endpoint - return all matching lectures
+          const lectures = [];
+          for (const id of ids) {
+            if (mockLectures[id]) {
+              lectures.push(...mockLectures[id]);
+            }
+          }
+          return Promise.resolve(lectures);
         }
-        return Promise.resolve(groups);
       }
+      // For single seriesId queries
+      const seriesId = matchStage.$match.seriesId;
+      const key = seriesId.toString();
+      return Promise.resolve(mockLectures[key] || []);
     }
     return Promise.resolve([]);
   });
@@ -370,16 +383,25 @@ describe('GET /api/homepage/series', () => {
     const seriesChain = buildChainableMock(manySeries);
     Series.find.mockReturnValue(seriesChain);
 
-    // Each series has 1 lecture
-    Lecture.aggregate.mockResolvedValue([{
-      _id: mockObjectId(),
-      titleArabic: 'درس',
-      published: true,
-      dateRecorded: new Date(),
-      createdAt: new Date(),
-      sortOrder: 0,
-      lectureNumber: 1
-    }]);
+    // Each series has 1 lecture - mock aggregate to return lectures with seriesIds
+    Lecture.aggregate.mockImplementation((pipeline) => {
+      const matchStage = pipeline.find(s => s.$match);
+      if (matchStage && matchStage.$match.seriesId && matchStage.$match.seriesId.$in) {
+        const ids = matchStage.$match.seriesId.$in;
+        // Return one lecture per series
+        return Promise.resolve(ids.map(id => ({
+          _id: mockObjectId(),
+          seriesId: id,
+          titleArabic: 'درس',
+          published: true,
+          dateRecorded: new Date(),
+          createdAt: new Date(),
+          sortOrder: 0,
+          lectureNumber: 1
+        })));
+      }
+      return Promise.resolve([]);
+    });
 
     const res = await request(app)
       .get('/api/homepage/series?page=1&limit=5')
@@ -730,11 +752,35 @@ describe('GET /api/homepage/stats', () => {
 // ============================================================
 // Helper function tests
 // ============================================================
+// Helper to create aggregate mock that returns lectures with proper seriesId
+function createAggregateWithSeriesId() {
+  return (pipeline) => {
+    const matchStage = pipeline.find(s => s.$match);
+    if (matchStage && matchStage.$match.seriesId) {
+      if (matchStage.$match.seriesId.$in) {
+        const ids = matchStage.$match.seriesId.$in;
+        return Promise.resolve(ids.map(id => ({
+          _id: mockObjectId(),
+          seriesId: id,
+          titleArabic: 'درس',
+          published: true,
+          dateRecorded: new Date(),
+          createdAt: new Date(),
+          sortOrder: 0,
+          lectureNumber: 1
+        })));
+      }
+    }
+    return Promise.resolve([]);
+  };
+}
+
 describe('Homepage API - Helper Functions', () => {
   describe('getSeriesType detection', () => {
     it('should detect online series by tag', async () => {
+      const seriesIdVal = mockObjectId();
       const onlineSeries = [{
-        _id: mockObjectId(),
+        _id: seriesIdVal,
         titleArabic: 'سلسلة عادية',
         tags: ['online'],
         sheikhId: mockSheikh,
@@ -742,10 +788,7 @@ describe('Homepage API - Helper Functions', () => {
         createdAt: new Date()
       }];
       Series.find.mockReturnValue(buildChainableMock(onlineSeries));
-      Lecture.aggregate.mockResolvedValue([{
-        _id: mockObjectId(), titleArabic: 'درس', published: true,
-        dateRecorded: new Date(), createdAt: new Date(), sortOrder: 0, lectureNumber: 1
-      }]);
+      Lecture.aggregate.mockImplementation(createAggregateWithSeriesId());
 
       const res = await request(app)
         .get('/api/homepage/series?type=online&excludeKhutbas=false')
@@ -757,8 +800,9 @@ describe('Homepage API - Helper Functions', () => {
     });
 
     it('should detect online series by title containing عن بعد', async () => {
+      const seriesIdVal = mockObjectId();
       const onlineSeries = [{
-        _id: mockObjectId(),
+        _id: seriesIdVal,
         titleArabic: 'دروس عن بعد',
         tags: [],
         sheikhId: mockSheikh,
@@ -766,10 +810,7 @@ describe('Homepage API - Helper Functions', () => {
         createdAt: new Date()
       }];
       Series.find.mockReturnValue(buildChainableMock(onlineSeries));
-      Lecture.aggregate.mockResolvedValue([{
-        _id: mockObjectId(), titleArabic: 'درس', published: true,
-        dateRecorded: new Date(), createdAt: new Date(), sortOrder: 0, lectureNumber: 1
-      }]);
+      Lecture.aggregate.mockImplementation(createAggregateWithSeriesId());
 
       const res = await request(app)
         .get('/api/homepage/series?type=online&excludeKhutbas=false')
@@ -781,8 +822,9 @@ describe('Homepage API - Helper Functions', () => {
     });
 
     it('should detect archive-ramadan series by tag', async () => {
+      const seriesIdVal = mockObjectId();
       const ramadanSeries = [{
-        _id: mockObjectId(),
+        _id: seriesIdVal,
         titleArabic: 'سلسلة رمضانية',
         tags: ['archive-ramadan'],
         sheikhId: mockSheikh,
@@ -790,10 +832,7 @@ describe('Homepage API - Helper Functions', () => {
         createdAt: new Date()
       }];
       Series.find.mockReturnValue(buildChainableMock(ramadanSeries));
-      Lecture.aggregate.mockResolvedValue([{
-        _id: mockObjectId(), titleArabic: 'درس', published: true,
-        dateRecorded: new Date(), createdAt: new Date(), sortOrder: 0, lectureNumber: 1
-      }]);
+      Lecture.aggregate.mockImplementation(createAggregateWithSeriesId());
 
       const res = await request(app)
         .get('/api/homepage/series?type=archive-ramadan&excludeKhutbas=false')
@@ -805,8 +844,9 @@ describe('Homepage API - Helper Functions', () => {
     });
 
     it('should detect archive series by title containing أرشيف', async () => {
+      const seriesIdVal = mockObjectId();
       const archiveSeries = [{
-        _id: mockObjectId(),
+        _id: seriesIdVal,
         titleArabic: 'أرشيف الدروس',
         tags: [],
         sheikhId: mockSheikh,
@@ -814,10 +854,7 @@ describe('Homepage API - Helper Functions', () => {
         createdAt: new Date()
       }];
       Series.find.mockReturnValue(buildChainableMock(archiveSeries));
-      Lecture.aggregate.mockResolvedValue([{
-        _id: mockObjectId(), titleArabic: 'درس', published: true,
-        dateRecorded: new Date(), createdAt: new Date(), sortOrder: 0, lectureNumber: 1
-      }]);
+      Lecture.aggregate.mockImplementation(createAggregateWithSeriesId());
 
       const res = await request(app)
         .get('/api/homepage/series?type=archive&excludeKhutbas=false')
@@ -829,8 +866,9 @@ describe('Homepage API - Helper Functions', () => {
     });
 
     it('should default to masjid type', async () => {
+      const seriesIdVal = mockObjectId();
       const masjidSeries = [{
-        _id: mockObjectId(),
+        _id: seriesIdVal,
         titleArabic: 'شرح الأصول الثلاثة',
         tags: [],
         sheikhId: mockSheikh,
@@ -838,10 +876,7 @@ describe('Homepage API - Helper Functions', () => {
         createdAt: new Date()
       }];
       Series.find.mockReturnValue(buildChainableMock(masjidSeries));
-      Lecture.aggregate.mockResolvedValue([{
-        _id: mockObjectId(), titleArabic: 'درس', published: true,
-        dateRecorded: new Date(), createdAt: new Date(), sortOrder: 0, lectureNumber: 1
-      }]);
+      Lecture.aggregate.mockImplementation(createAggregateWithSeriesId());
 
       const res = await request(app)
         .get('/api/homepage/series?excludeKhutbas=false')
@@ -855,8 +890,9 @@ describe('Homepage API - Helper Functions', () => {
 
   describe('isKhutbaSeries detection', () => {
     it('should detect khutba series by tag', async () => {
+      const seriesIdVal = mockObjectId();
       const khutbaSeries = [{
-        _id: mockObjectId(),
+        _id: seriesIdVal,
         titleArabic: 'سلسلة عادية',
         tags: ['khutba'],
         sheikhId: mockSheikh,
@@ -864,10 +900,7 @@ describe('Homepage API - Helper Functions', () => {
         createdAt: new Date()
       }];
       Series.find.mockReturnValue(buildChainableMock(khutbaSeries));
-      Lecture.aggregate.mockResolvedValue([{
-        _id: mockObjectId(), titleArabic: 'خطبة', published: true,
-        dateRecorded: new Date(), createdAt: new Date(), sortOrder: 0, lectureNumber: 1
-      }]);
+      Lecture.aggregate.mockImplementation(createAggregateWithSeriesId());
 
       const res = await request(app)
         .get('/api/homepage/khutbas')
@@ -877,8 +910,9 @@ describe('Homepage API - Helper Functions', () => {
     });
 
     it('should detect khutba series by title containing خطب', async () => {
+      const seriesIdVal = mockObjectId();
       const khutbaSeries = [{
-        _id: mockObjectId(),
+        _id: seriesIdVal,
         titleArabic: 'خطب الشيخ حسن',
         tags: [],
         sheikhId: mockSheikh,
@@ -886,10 +920,7 @@ describe('Homepage API - Helper Functions', () => {
         createdAt: new Date()
       }];
       Series.find.mockReturnValue(buildChainableMock(khutbaSeries));
-      Lecture.aggregate.mockResolvedValue([{
-        _id: mockObjectId(), titleArabic: 'خطبة', published: true,
-        dateRecorded: new Date(), createdAt: new Date(), sortOrder: 0, lectureNumber: 1
-      }]);
+      Lecture.aggregate.mockImplementation(createAggregateWithSeriesId());
 
       const res = await request(app)
         .get('/api/homepage/khutbas')

@@ -28,11 +28,16 @@ class MemoryCache {
     // Default TTL: 5 minutes
     this.defaultTTL = 300;
 
+    // Maximum cache entries (LRU eviction when exceeded)
+    // Optimized for Render Free Tier 512MB RAM limit
+    this.maxEntries = 50;
+
     // Stats for monitoring
     this.stats = {
       hits: 0,
       misses: 0,
-      sets: 0
+      sets: 0,
+      evictions: 0
     };
   }
 
@@ -45,6 +50,9 @@ class MemoryCache {
     const item = this.cache.get(key);
     if (item !== undefined) {
       this.stats.hits++;
+      // LRU: move to end of Map (most recently used)
+      this.cache.delete(key);
+      this.cache.set(key, item);
       return item;
     }
     this.stats.misses++;
@@ -61,6 +69,13 @@ class MemoryCache {
     // Clear existing timer if any
     if (this.timers.has(key)) {
       clearTimeout(this.timers.get(key));
+    }
+
+    // LRU eviction: remove oldest entry if at capacity (and not updating existing key)
+    if (!this.cache.has(key) && this.cache.size >= this.maxEntries) {
+      const oldestKey = this.cache.keys().next().value;
+      this.del(oldestKey);
+      this.stats.evictions++;
     }
 
     // Store the value
@@ -158,6 +173,7 @@ class MemoryCache {
     return {
       ...this.stats,
       size: this.cache.size,
+      maxEntries: this.maxEntries,
       hitRate: this.stats.hits + this.stats.misses > 0
         ? (this.stats.hits / (this.stats.hits + this.stats.misses) * 100).toFixed(1) + '%'
         : 'N/A'

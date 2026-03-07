@@ -1,3 +1,16 @@
+/**
+ * Excel Import Script
+ *
+ * MEMORY NOTE: This script uses XLSX.readFile() which loads the entire file into memory.
+ * For large files (>20MB), consider using the streaming alternative:
+ *
+ *   const { streamExcel } = require('../utils/excelStreamer');
+ *   await streamExcel(filePath, async (row) => {
+ *     // Process row-by-row, ~5MB RAM instead of 100MB+
+ *   });
+ *
+ * See utils/excelStreamer.js for the streaming implementation.
+ */
 require('dotenv').config();
 const XLSX = require('xlsx');
 const path = require('path');
