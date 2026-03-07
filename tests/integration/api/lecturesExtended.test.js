@@ -28,10 +28,13 @@ jest.mock('../../../middleware/fileValidation', () => ({
   }
 }));
 
+// Module-level variable to control file injection in tests
+let mockFile = null;
+
 jest.mock('../../../config/storage', () => ({
   upload: {
     single: jest.fn(() => (req, res, next) => {
-      req.file = req.testFile || null;
+      req.file = mockFile;
       next();
     })
   }
@@ -534,8 +537,7 @@ describe('Lecture API Extended Tests', () => {
   describe('POST /api/lectures (upload)', () => {
     let sheikh;
     let series;
-    const { isValidAudioFile, extractAudioMetadata } = require('../../../utils/audioMetadata');
-    const fileManager = require('../../../utils/fileManager');
+    const { isValidAudioFile } = require('../../../utils/audioMetadata');
 
     beforeEach(async () => {
       sheikh = await Sheikh.create({
@@ -548,28 +550,21 @@ describe('Lecture API Extended Tests', () => {
         sheikhId: sheikh._id,
         lectureCount: 0
       });
+
+      // Set default mock file for upload tests
+      mockFile = {
+        filename: 'test-audio.mp3',
+        path: '/tmp/test-audio.mp3',
+        size: 50000000
+      };
+    });
+
+    afterEach(() => {
+      mockFile = null;
     });
 
     it('should upload lecture with all required fields', async () => {
-      // Create app with file in request
-      const testApp = express();
-      testApp.use(express.json());
-      testApp.use(express.urlencoded({ extended: true }));
-
-      // Middleware to inject test file
-      testApp.use((req, res, next) => {
-        req.file = {
-          filename: 'test-audio.mp3',
-          path: '/tmp/test-audio.mp3',
-          size: 50000000
-        };
-        next();
-      });
-
-      const apiRoutes = require('../../../routes/api/lectures');
-      testApp.use('/api/lectures', apiRoutes);
-
-      const response = await request(testApp)
+      const response = await request(app)
         .post('/api/lectures')
         .send({
           titleArabic: 'محاضرة جديدة',
@@ -586,23 +581,7 @@ describe('Lecture API Extended Tests', () => {
     });
 
     it('should reject upload without Arabic title', async () => {
-      const testApp = express();
-      testApp.use(express.json());
-      testApp.use(express.urlencoded({ extended: true }));
-
-      testApp.use((req, res, next) => {
-        req.file = {
-          filename: 'test-audio.mp3',
-          path: '/tmp/test-audio.mp3',
-          size: 50000000
-        };
-        next();
-      });
-
-      const apiRoutes = require('../../../routes/api/lectures');
-      testApp.use('/api/lectures', apiRoutes);
-
-      const response = await request(testApp)
+      const response = await request(app)
         .post('/api/lectures')
         .send({
           sheikhId: sheikh._id.toString()
@@ -614,23 +593,7 @@ describe('Lecture API Extended Tests', () => {
     });
 
     it('should reject upload without sheikh', async () => {
-      const testApp = express();
-      testApp.use(express.json());
-      testApp.use(express.urlencoded({ extended: true }));
-
-      testApp.use((req, res, next) => {
-        req.file = {
-          filename: 'test-audio.mp3',
-          path: '/tmp/test-audio.mp3',
-          size: 50000000
-        };
-        next();
-      });
-
-      const apiRoutes = require('../../../routes/api/lectures');
-      testApp.use('/api/lectures', apiRoutes);
-
-      const response = await request(testApp)
+      const response = await request(app)
         .post('/api/lectures')
         .send({
           titleArabic: 'محاضرة'
@@ -644,23 +607,7 @@ describe('Lecture API Extended Tests', () => {
     it('should reject upload with invalid sheikh ID', async () => {
       const fakeSheikhId = new mongoose.Types.ObjectId();
 
-      const testApp = express();
-      testApp.use(express.json());
-      testApp.use(express.urlencoded({ extended: true }));
-
-      testApp.use((req, res, next) => {
-        req.file = {
-          filename: 'test-audio.mp3',
-          path: '/tmp/test-audio.mp3',
-          size: 50000000
-        };
-        next();
-      });
-
-      const apiRoutes = require('../../../routes/api/lectures');
-      testApp.use('/api/lectures', apiRoutes);
-
-      const response = await request(testApp)
+      const response = await request(app)
         .post('/api/lectures')
         .send({
           titleArabic: 'محاضرة',
@@ -675,23 +622,7 @@ describe('Lecture API Extended Tests', () => {
     it('should reject upload with invalid series ID', async () => {
       const fakeSeriesId = new mongoose.Types.ObjectId();
 
-      const testApp = express();
-      testApp.use(express.json());
-      testApp.use(express.urlencoded({ extended: true }));
-
-      testApp.use((req, res, next) => {
-        req.file = {
-          filename: 'test-audio.mp3',
-          path: '/tmp/test-audio.mp3',
-          size: 50000000
-        };
-        next();
-      });
-
-      const apiRoutes = require('../../../routes/api/lectures');
-      testApp.use('/api/lectures', apiRoutes);
-
-      const response = await request(testApp)
+      const response = await request(app)
         .post('/api/lectures')
         .send({
           titleArabic: 'محاضرة',
@@ -707,23 +638,7 @@ describe('Lecture API Extended Tests', () => {
     it('should reject invalid audio file', async () => {
       isValidAudioFile.mockResolvedValueOnce(false);
 
-      const testApp = express();
-      testApp.use(express.json());
-      testApp.use(express.urlencoded({ extended: true }));
-
-      testApp.use((req, res, next) => {
-        req.file = {
-          filename: 'test-audio.mp3',
-          path: '/tmp/test-audio.mp3',
-          size: 50000000
-        };
-        next();
-      });
-
-      const apiRoutes = require('../../../routes/api/lectures');
-      testApp.use('/api/lectures', apiRoutes);
-
-      const response = await request(testApp)
+      const response = await request(app)
         .post('/api/lectures')
         .send({
           titleArabic: 'محاضرة',
@@ -736,23 +651,7 @@ describe('Lecture API Extended Tests', () => {
     });
 
     it('should increment sheikh lecture count after upload', async () => {
-      const testApp = express();
-      testApp.use(express.json());
-      testApp.use(express.urlencoded({ extended: true }));
-
-      testApp.use((req, res, next) => {
-        req.file = {
-          filename: 'test-audio.mp3',
-          path: '/tmp/test-audio.mp3',
-          size: 50000000
-        };
-        next();
-      });
-
-      const apiRoutes = require('../../../routes/api/lectures');
-      testApp.use('/api/lectures', apiRoutes);
-
-      await request(testApp)
+      await request(app)
         .post('/api/lectures')
         .send({
           titleArabic: 'محاضرة جديدة',
@@ -765,23 +664,7 @@ describe('Lecture API Extended Tests', () => {
     });
 
     it('should increment series lecture count when series is provided', async () => {
-      const testApp = express();
-      testApp.use(express.json());
-      testApp.use(express.urlencoded({ extended: true }));
-
-      testApp.use((req, res, next) => {
-        req.file = {
-          filename: 'test-audio.mp3',
-          path: '/tmp/test-audio.mp3',
-          size: 50000000
-        };
-        next();
-      });
-
-      const apiRoutes = require('../../../routes/api/lectures');
-      testApp.use('/api/lectures', apiRoutes);
-
-      await request(testApp)
+      await request(app)
         .post('/api/lectures')
         .send({
           titleArabic: 'محاضرة في سلسلة',
@@ -796,23 +679,7 @@ describe('Lecture API Extended Tests', () => {
     });
 
     it('should auto-convert Gregorian date to Hijri', async () => {
-      const testApp = express();
-      testApp.use(express.json());
-      testApp.use(express.urlencoded({ extended: true }));
-
-      testApp.use((req, res, next) => {
-        req.file = {
-          filename: 'test-audio.mp3',
-          path: '/tmp/test-audio.mp3',
-          size: 50000000
-        };
-        next();
-      });
-
-      const apiRoutes = require('../../../routes/api/lectures');
-      testApp.use('/api/lectures', apiRoutes);
-
-      const response = await request(testApp)
+      const response = await request(app)
         .post('/api/lectures')
         .send({
           titleArabic: 'محاضرة مؤرخة',
@@ -825,23 +692,7 @@ describe('Lecture API Extended Tests', () => {
     });
 
     it('should use provided Hijri date instead of auto-converting', async () => {
-      const testApp = express();
-      testApp.use(express.json());
-      testApp.use(express.urlencoded({ extended: true }));
-
-      testApp.use((req, res, next) => {
-        req.file = {
-          filename: 'test-audio.mp3',
-          path: '/tmp/test-audio.mp3',
-          size: 50000000
-        };
-        next();
-      });
-
-      const apiRoutes = require('../../../routes/api/lectures');
-      testApp.use('/api/lectures', apiRoutes);
-
-      const response = await request(testApp)
+      const response = await request(app)
         .post('/api/lectures')
         .send({
           titleArabic: 'محاضرة بتاريخ هجري',
@@ -869,26 +720,21 @@ describe('Lecture API Extended Tests', () => {
         titleArabic: 'محاضرة بدون صوت',
         sheikhId: sheikh._id
       });
+
+      // Set default mock file
+      mockFile = {
+        filename: 'bulk-audio.mp3',
+        path: '/tmp/bulk-audio.mp3',
+        size: 25000000
+      };
+    });
+
+    afterEach(() => {
+      mockFile = null;
     });
 
     it('should reject without lecture ID', async () => {
-      const testApp = express();
-      testApp.use(express.json());
-      testApp.use(express.urlencoded({ extended: true }));
-
-      testApp.use((req, res, next) => {
-        req.file = {
-          filename: 'bulk-audio.mp3',
-          path: '/tmp/bulk-audio.mp3',
-          size: 25000000
-        };
-        next();
-      });
-
-      const apiRoutes = require('../../../routes/api/lectures');
-      testApp.use('/api/lectures', apiRoutes);
-
-      const response = await request(testApp)
+      const response = await request(app)
         .post('/api/lectures/bulk-upload-audio')
         .send({})
         .expect(400);
@@ -898,16 +744,9 @@ describe('Lecture API Extended Tests', () => {
     });
 
     it('should reject without audio file', async () => {
-      const testApp = express();
-      testApp.use(express.json());
-      testApp.use(express.urlencoded({ extended: true }));
+      mockFile = null; // No file
 
-      // No file middleware
-
-      const apiRoutes = require('../../../routes/api/lectures');
-      testApp.use('/api/lectures', apiRoutes);
-
-      const response = await request(testApp)
+      const response = await request(app)
         .post('/api/lectures/bulk-upload-audio')
         .send({
           lectureId: lecture._id.toString()
@@ -921,23 +760,7 @@ describe('Lecture API Extended Tests', () => {
     it('should return 404 for non-existent lecture', async () => {
       const fakeId = new mongoose.Types.ObjectId();
 
-      const testApp = express();
-      testApp.use(express.json());
-      testApp.use(express.urlencoded({ extended: true }));
-
-      testApp.use((req, res, next) => {
-        req.file = {
-          filename: 'bulk-audio.mp3',
-          path: '/tmp/bulk-audio.mp3',
-          size: 25000000
-        };
-        next();
-      });
-
-      const apiRoutes = require('../../../routes/api/lectures');
-      testApp.use('/api/lectures', apiRoutes);
-
-      const response = await request(testApp)
+      const response = await request(app)
         .post('/api/lectures/bulk-upload-audio')
         .send({
           lectureId: fakeId.toString()
@@ -949,23 +772,7 @@ describe('Lecture API Extended Tests', () => {
     });
 
     it('should upload audio to existing lecture successfully', async () => {
-      const testApp = express();
-      testApp.use(express.json());
-      testApp.use(express.urlencoded({ extended: true }));
-
-      testApp.use((req, res, next) => {
-        req.file = {
-          filename: 'bulk-audio.mp3',
-          path: '/tmp/bulk-audio.mp3',
-          size: 25000000
-        };
-        next();
-      });
-
-      const apiRoutes = require('../../../routes/api/lectures');
-      testApp.use('/api/lectures', apiRoutes);
-
-      const response = await request(testApp)
+      const response = await request(app)
         .post('/api/lectures/bulk-upload-audio')
         .send({
           lectureId: lecture._id.toString()
@@ -984,23 +791,13 @@ describe('Lecture API Extended Tests', () => {
       lecture.audioFileName = 'old-audio.mp3';
       await lecture.save();
 
-      const testApp = express();
-      testApp.use(express.json());
-      testApp.use(express.urlencoded({ extended: true }));
+      mockFile = {
+        filename: 'new-audio.mp3',
+        path: '/tmp/new-audio.mp3',
+        size: 30000000
+      };
 
-      testApp.use((req, res, next) => {
-        req.file = {
-          filename: 'new-audio.mp3',
-          path: '/tmp/new-audio.mp3',
-          size: 30000000
-        };
-        next();
-      });
-
-      const apiRoutes = require('../../../routes/api/lectures');
-      testApp.use('/api/lectures', apiRoutes);
-
-      await request(testApp)
+      await request(app)
         .post('/api/lectures/bulk-upload-audio')
         .send({
           lectureId: lecture._id.toString()
