@@ -3,11 +3,9 @@ const router = express.Router();
 const mongoose = require('mongoose');
 const models = require('../models');
 const {
-  buildSearchQuery,
-  matchesMinTokens,
-  normalizeArabic,
   formatTime,
-  stripTimestamps
+  stripTimestamps,
+  stripSheikhPrefix
 } = require('../utils/arabicSearch');
 
 // Config from environment
@@ -65,19 +63,16 @@ router.get('/results', async (req, res) => {
   }
 
   try {
-    // Build search query with variants
-    const { normalized, tokens, variants, minShouldMatch } = buildSearchQuery(query);
+    // Strip sheikh prefix for cleaner matching
+    const searchQuery = stripSheikhPrefix(query);
 
     let results = [];
 
     if (SEARCH_MODE === 'atlas') {
-      results = await performAtlasSearch(normalized, tokens, variants, minShouldMatch);
+      results = await performAtlasSearch(searchQuery);
     } else {
-      results = await performLocalSearch(variants, tokens, minShouldMatch);
+      results = await performLocalSearch(searchQuery);
     }
-
-    // Filter results by token hit count
-    results = results.filter(r => matchesMinTokens(r.text, tokens, minShouldMatch));
 
     // Enrich results with context
     results = await enrichWithContext(results);
@@ -85,7 +80,7 @@ router.get('/results', async (req, res) => {
     // Log search (best-effort)
     let searchLogId = null;
     if (LOG_SEARCHES) {
-      searchLogId = await logSearch(query, normalized, tokens, minShouldMatch, results);
+      searchLogId = await logSearch(query, searchQuery, results);
     }
 
     res.render('search', {
@@ -158,59 +153,36 @@ router.post('/feedback', async (req, res) => {
 });
 
 /**
- * Atlas Search with compound query
+ * Atlas Search - lucene.arabic analyzer handles normalization natively
  */
-async function performAtlasSearch(normalized, tokens, variants, minShouldMatch) {
+async function performAtlasSearch(query) {
   const Transcript = getTranscript();
-
-  const mustClauses = tokens.map(token => ({
-    text: {
-      query: token,
-      path: 'text',
-      fuzzy: { maxEdits: 1 }
-    }
-  }));
-
-  const shouldClauses = [
-    // Phrase match with high boost
-    {
-      phrase: {
-        query: normalized,
-        path: 'text',
-        slop: 2,
-        score: { boost: { value: 8 } }
-      }
-    },
-    // Exact text match with medium boost
-    {
-      text: {
-        query: normalized,
-        path: 'text',
-        fuzzy: { maxEdits: 1 },
-        score: { boost: { value: 4 } }
-      }
-    }
-  ];
-
-  // Add variant queries with lower boost
-  for (const variant of variants.slice(0, 5)) {
-    shouldClauses.push({
-      text: {
-        query: variant,
-        path: 'text',
-        fuzzy: { maxEdits: 2 }
-      }
-    });
-  }
 
   const pipeline = [
     {
       $search: {
         index: 'default',
         compound: {
-          must: mustClauses,
-          should: shouldClauses,
-          minimumShouldMatch: Math.max(1, minShouldMatch)
+          should: [
+            // Phrase match with high boost for exact phrase relevance
+            {
+              phrase: {
+                query,
+                path: 'text',
+                slop: 2,
+                score: { boost: { value: 5 } }
+              }
+            },
+            // Text match with fuzzy for typo tolerance
+            {
+              text: {
+                query,
+                path: 'text',
+                fuzzy: { maxEdits: 1 }
+              }
+            }
+          ],
+          minimumShouldMatch: 1
         }
       }
     },
@@ -254,12 +226,11 @@ async function performAtlasSearch(normalized, tokens, variants, minShouldMatch) 
 /**
  * Local text search fallback
  */
-async function performLocalSearch(variants, tokens, minShouldMatch) {
+async function performLocalSearch(query) {
   const Transcript = getTranscript();
-  const searchText = variants.join(' ');
 
   const results = await Transcript.find(
-    { $text: { $search: searchText } },
+    { $text: { $search: query } },
     { score: { $meta: 'textScore' } }
   )
     .sort({ score: { $meta: 'textScore' } })
@@ -338,7 +309,7 @@ async function enrichWithContext(results) {
 /**
  * Log search query (best-effort, no failure)
  */
-async function logSearch(query, normalized, tokens, minShouldMatch, results) {
+async function logSearch(query, searchQuery, results) {
   try {
     const SearchLog = getSearchLog();
     if (!SearchLog) {
@@ -349,9 +320,7 @@ async function logSearch(query, normalized, tokens, minShouldMatch, results) {
     console.log('[SearchLog] Creating log for query:', query);
     const log = await SearchLog.create({
       query,
-      normalizedQuery: normalized,
-      tokens,
-      minShouldMatch,
+      normalizedQuery: searchQuery,
       resultCount: results.length,
       topLectureIds: results.slice(0, 5).map(r => r.lectureId?.toString()).filter(Boolean),
       searchMode: SEARCH_MODE,
