@@ -395,11 +395,40 @@ router.get('/lectures/:shortId(\\d+)/:slug_en?/:slug_ar?', async (req, res) => {
 
     const canonicalPath = buildCanonicalUrl('lectures', lecture);
 
+    // Fetch transcript excerpt for SEO (first ~500 words)
+    let transcriptExcerpt = '';
+    let hasTranscript = false;
+    try {
+      const models = require('../models');
+      const Transcript = models.Transcript;
+      if (Transcript) {
+        const transcriptCount = await Transcript.countDocuments({ lectureId: lecture._id });
+        hasTranscript = transcriptCount > 0;
+
+        if (hasTranscript) {
+          // Get first few segments for SEO excerpt
+          const excerptSegments = await Transcript.find({ lectureId: lecture._id })
+            .sort({ startTimeSec: 1 })
+            .limit(10)
+            .select('text')
+            .lean();
+
+          if (excerptSegments.length > 0) {
+            transcriptExcerpt = excerptSegments.map(s => s.text).join(' ').substring(0, 1000);
+          }
+        }
+      }
+    } catch (err) {
+      console.warn('Failed to fetch transcript excerpt:', err.message);
+    }
+
     res.render('public/lecture', {
       title: lecture.titleArabic,
       lecture,
       relatedLectures,
-      canonicalPath: canonicalPath || `/lectures/${lecture._id}`
+      canonicalPath: canonicalPath || `/lectures/${lecture._id}`,
+      hasTranscript,
+      transcriptExcerpt
     });
   } catch (error) {
     console.error('Lecture detail error:', error);

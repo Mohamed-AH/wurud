@@ -569,4 +569,85 @@ router.post('/:id/play', playCountValidation, async (req, res) => {
   }
 });
 
+// @route   GET /api/lectures/:id/transcript
+// @desc    Get transcript for a lecture
+// @access  Public
+router.get('/:id/transcript', idParamValidation, async (req, res) => {
+  try {
+    const { id } = req.params;
+    const models = require('../../models');
+    const Transcript = models.Transcript;
+
+    if (!Transcript) {
+      return res.status(503).json({
+        success: false,
+        message: 'Transcript service unavailable'
+      });
+    }
+
+    // Find lecture first to validate it exists and is published
+    let lecture;
+    if (isValidObjectId(id)) {
+      lecture = await Lecture.findOne({ _id: id, published: true }).select('_id shortId').lean();
+    }
+
+    // Also try shortId if numeric
+    if (!lecture && /^\d+$/.test(id)) {
+      lecture = await Lecture.findOne({ shortId: parseInt(id, 10), published: true }).select('_id shortId').lean();
+    }
+
+    if (!lecture) {
+      return res.status(404).json({
+        success: false,
+        message: 'Lecture not found'
+      });
+    }
+
+    // Fetch transcript segments ordered by time
+    const transcripts = await Transcript.find({ lectureId: lecture._id })
+      .sort({ startTimeSec: 1 })
+      .select('text speaker startTimeSec startTimeMs')
+      .lean();
+
+    if (!transcripts || transcripts.length === 0) {
+      return res.status(404).json({
+        success: false,
+        message: 'No transcript available for this lecture'
+      });
+    }
+
+    // Format timestamps
+    const formatTime = (seconds) => {
+      const h = Math.floor(seconds / 3600);
+      const m = Math.floor((seconds % 3600) / 60);
+      const s = Math.floor(seconds % 60);
+      if (h > 0) {
+        return `${h}:${m.toString().padStart(2, '0')}:${s.toString().padStart(2, '0')}`;
+      }
+      return `${m}:${s.toString().padStart(2, '0')}`;
+    };
+
+    const formattedTranscripts = transcripts.map(t => ({
+      text: t.text,
+      speaker: t.speaker,
+      startTimeSec: t.startTimeSec,
+      formattedTime: formatTime(t.startTimeSec)
+    }));
+
+    res.json({
+      success: true,
+      lectureId: lecture._id,
+      segmentCount: formattedTranscripts.length,
+      transcript: formattedTranscripts
+    });
+  } catch (error) {
+    console.error('Fetch transcript error:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Failed to fetch transcript',
+      error: isProduction ? undefined : error.message
+    });
+  }
+});
+
 module.exports = router;

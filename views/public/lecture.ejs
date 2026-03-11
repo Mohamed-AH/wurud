@@ -301,6 +301,152 @@
     font-size: 13px;
   }
 
+  /* Transcript Section Styles */
+  .transcript-section {
+    margin-top: 32px;
+    border-top: 2px solid var(--accent-amber);
+    padding-top: 24px;
+  }
+
+  .transcript-section .section-title {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 12px;
+  }
+
+  .transcript-toggle-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 8px 16px;
+    background: var(--accent-gold);
+    color: var(--primary-dark);
+    border: none;
+    border-radius: 8px;
+    font-family: var(--font-arabic-body);
+    font-size: 14px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s;
+  }
+
+  .transcript-toggle-btn:hover {
+    background: var(--accent-amber);
+    transform: translateY(-1px);
+  }
+
+  .toggle-icon {
+    font-size: 12px;
+    transition: transform 0.2s;
+  }
+
+  .transcript-excerpt {
+    background: var(--paper);
+    border-radius: 8px;
+    padding: 16px;
+    margin-top: 16px;
+    border-right: 4px solid var(--accent-gold);
+  }
+
+  .excerpt-text {
+    font-family: var(--font-arabic-display);
+    font-size: 16px;
+    line-height: 2;
+    color: var(--text-secondary);
+    margin-bottom: 12px;
+  }
+
+  .excerpt-hint {
+    font-size: 14px;
+    color: var(--text-muted);
+    font-style: italic;
+  }
+
+  .transcript-full {
+    margin-top: 16px;
+    max-height: 500px;
+    overflow-y: auto;
+    border: 1px solid var(--border-light);
+    border-radius: 8px;
+    background: var(--paper);
+  }
+
+  .transcript-loading {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 12px;
+    padding: 32px;
+    color: var(--text-muted);
+  }
+
+  .loading-spinner {
+    width: 20px;
+    height: 20px;
+    border: 2px solid var(--accent-gold);
+    border-top-color: transparent;
+    border-radius: 50%;
+    animation: spin 1s linear infinite;
+  }
+
+  @keyframes spin {
+    to { transform: rotate(360deg); }
+  }
+
+  .transcript-content {
+    padding: 16px;
+  }
+
+  .transcript-segment {
+    display: flex;
+    gap: 12px;
+    padding: 12px;
+    border-bottom: 1px solid var(--border-light);
+    transition: background 0.2s;
+  }
+
+  .transcript-segment:last-child {
+    border-bottom: none;
+  }
+
+  .transcript-segment:hover {
+    background: rgba(193, 154, 107, 0.1);
+  }
+
+  .timestamp-btn {
+    flex-shrink: 0;
+    padding: 4px 10px;
+    background: var(--accent-gold);
+    color: var(--primary-dark);
+    border: none;
+    border-radius: 4px;
+    font-size: 13px;
+    font-weight: 600;
+    font-family: monospace;
+    cursor: pointer;
+    transition: all 0.2s;
+  }
+
+  .timestamp-btn:hover {
+    background: var(--accent-amber);
+    transform: scale(1.05);
+  }
+
+  .segment-text {
+    font-family: var(--font-arabic-display);
+    font-size: 16px;
+    line-height: 1.8;
+    color: var(--text-primary);
+  }
+
+  .transcript-error {
+    text-align: center;
+    color: var(--text-muted);
+    padding: 24px;
+  }
+
   @media (max-width: 968px) {
     .content-grid {
       grid-template-columns: 1fr;
@@ -398,6 +544,29 @@
 
     .related-lecture-meta {
       font-size: 12px;
+    }
+
+    .transcript-section .section-title {
+      flex-direction: column;
+      align-items: flex-start;
+    }
+
+    .transcript-toggle-btn {
+      width: 100%;
+      justify-content: center;
+    }
+
+    .transcript-segment {
+      flex-direction: column;
+      gap: 8px;
+    }
+
+    .timestamp-btn {
+      align-self: flex-start;
+    }
+
+    .segment-text {
+      font-size: 15px;
     }
   }
 
@@ -667,6 +836,36 @@
               </a>
             </div>
           <% } %>
+
+          <!-- Transcript Section -->
+          <% if (hasTranscript) { %>
+            <div class="transcript-section">
+              <h3 class="section-title">
+                <%= locale === 'ar' ? 'نص المحاضرة' : 'Lecture Transcript' %>
+                <button type="button" class="transcript-toggle-btn" id="transcriptToggleBtn" onclick="toggleTranscript()">
+                  <span class="toggle-icon" id="toggleIcon">▼</span>
+                  <span id="toggleText"><%= locale === 'ar' ? 'عرض النص' : 'Show Transcript' %></span>
+                </button>
+              </h3>
+
+              <!-- SEO-friendly excerpt (always visible to search engines) -->
+              <% if (transcriptExcerpt) { %>
+                <div class="transcript-excerpt" id="transcriptExcerpt">
+                  <p class="excerpt-text"><%= transcriptExcerpt %>...</p>
+                  <p class="excerpt-hint"><%= locale === 'ar' ? 'انقر على الزر أعلاه لعرض النص الكامل' : 'Click the button above to view the full transcript' %></p>
+                </div>
+              <% } %>
+
+              <!-- Full transcript container (loaded via AJAX) -->
+              <div class="transcript-full" id="transcriptFull" style="display: none;">
+                <div class="transcript-loading" id="transcriptLoading">
+                  <span class="loading-spinner"></span>
+                  <%= locale === 'ar' ? 'جاري تحميل النص...' : 'Loading transcript...' %>
+                </div>
+                <div class="transcript-content" id="transcriptContent"></div>
+              </div>
+            </div>
+          <% } %>
         </div>
 
         <!-- Sidebar -->
@@ -712,6 +911,101 @@
     } else {
       console.error('❌ Audio player not initialized');
       alert('<%= locale === "ar" ? "مشغل الصوت يتم تحميله، يرجى المحاولة مرة أخرى" : "Audio player is loading, please try again" %>');
+    }
+  }
+
+  // Transcript toggle functionality
+  let transcriptLoaded = false;
+  let transcriptExpanded = false;
+
+  function toggleTranscript() {
+    const fullContainer = document.getElementById('transcriptFull');
+    const excerptContainer = document.getElementById('transcriptExcerpt');
+    const toggleIcon = document.getElementById('toggleIcon');
+    const toggleText = document.getElementById('toggleText');
+
+    transcriptExpanded = !transcriptExpanded;
+
+    if (transcriptExpanded) {
+      // Show full transcript
+      if (excerptContainer) excerptContainer.style.display = 'none';
+      fullContainer.style.display = 'block';
+      toggleIcon.textContent = '▲';
+      toggleText.textContent = '<%= locale === "ar" ? "إخفاء النص" : "Hide Transcript" %>';
+
+      // Load transcript if not already loaded
+      if (!transcriptLoaded) {
+        loadTranscript();
+      }
+    } else {
+      // Hide full transcript, show excerpt
+      fullContainer.style.display = 'none';
+      if (excerptContainer) excerptContainer.style.display = 'block';
+      toggleIcon.textContent = '▼';
+      toggleText.textContent = '<%= locale === "ar" ? "عرض النص" : "Show Transcript" %>';
+    }
+  }
+
+  function loadTranscript() {
+    const loadingEl = document.getElementById('transcriptLoading');
+    const contentEl = document.getElementById('transcriptContent');
+    const lectureId = '<%= lecture._id %>';
+
+    fetch(`/api/lectures/${lectureId}/transcript`)
+      .then(res => res.json())
+      .then(data => {
+        loadingEl.style.display = 'none';
+
+        if (data.success && data.transcript) {
+          transcriptLoaded = true;
+          renderTranscript(data.transcript);
+        } else {
+          contentEl.innerHTML = '<p class="transcript-error"><%= locale === "ar" ? "لم يتم العثور على نص للمحاضرة" : "No transcript found" %></p>';
+        }
+      })
+      .catch(err => {
+        console.error('Failed to load transcript:', err);
+        loadingEl.style.display = 'none';
+        contentEl.innerHTML = '<p class="transcript-error"><%= locale === "ar" ? "حدث خطأ أثناء تحميل النص" : "Error loading transcript" %></p>';
+      });
+  }
+
+  function renderTranscript(segments) {
+    const contentEl = document.getElementById('transcriptContent');
+    const html = segments.map(seg => `
+      <div class="transcript-segment" data-time="${seg.startTimeSec}">
+        <button type="button" class="timestamp-btn" onclick="seekToTime(${seg.startTimeSec})" title="<%= locale === 'ar' ? 'انتقل إلى هذا الوقت' : 'Jump to this time' %>">
+          ${seg.formattedTime}
+        </button>
+        <span class="segment-text">${escapeHtml(seg.text)}</span>
+      </div>
+    `).join('');
+
+    contentEl.innerHTML = html;
+  }
+
+  function escapeHtml(text) {
+    const div = document.createElement('div');
+    div.textContent = text;
+    return div.innerHTML;
+  }
+
+  function seekToTime(seconds) {
+    if (window.audioPlayer) {
+      // First ensure the lecture is playing
+      window.audioPlayer.play('<%= lecture._id %>', {
+        title: '<%= lecture.titleArabic.replace(/'/g, "\\'") %>',
+        titleArabic: '<%= lecture.titleArabic.replace(/'/g, "\\'") %>',
+        sheikh: '<%= lecture.sheikhId ? lecture.sheikhId.nameArabic.replace(/'/g, "\\'") : "" %>'
+      });
+      // Then seek to the specific time
+      setTimeout(() => {
+        if (window.audioPlayer.seek) {
+          window.audioPlayer.seek(seconds);
+        }
+      }, 500);
+    } else {
+      console.warn('Audio player not initialized');
     }
   }
 
