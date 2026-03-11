@@ -228,10 +228,10 @@
       chip.classList.toggle('active', chip.dataset.sort === state.sort);
     });
 
-    // Update search input
-    const searchInput = document.getElementById('searchInput');
-    if (searchInput && state.search) {
-      searchInput.value = state.search;
+    // Update title search input
+    const titleSearchInput = document.getElementById('titleSearchInput');
+    if (titleSearchInput && state.search) {
+      titleSearchInput.value = state.search;
     }
 
     // Update clear button visibility
@@ -380,11 +380,11 @@
       });
     });
 
-    // Search input with debounce
-    const searchInput = document.getElementById('searchInput');
-    if (searchInput) {
+    // Title/Name search input with debounce (separate from transcript search)
+    const titleSearchInput = document.getElementById('titleSearchInput');
+    if (titleSearchInput) {
       let searchTimeout;
-      searchInput.addEventListener('input', function() {
+      titleSearchInput.addEventListener('input', function() {
         clearTimeout(searchTimeout);
         searchTimeout = setTimeout(() => {
           setSearch(this.value);
@@ -471,9 +471,9 @@
     state.sort = 'newest';
     state.page = 1;
 
-    // Clear search input
-    const searchInput = document.getElementById('searchInput');
-    if (searchInput) searchInput.value = '';
+    // Clear title search input
+    const titleSearchInput = document.getElementById('titleSearchInput');
+    if (titleSearchInput) titleSearchInput.value = '';
 
     updateUIFromState();
     updateUrl();

@@ -204,6 +204,64 @@
     color: white;
   }
 
+  /* Minimized Title/Name Search Section */
+  .title-search-section {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: var(--space-md) var(--space-lg);
+    background: rgba(193, 154, 107, 0.08);
+    border-bottom: 1px solid #E8DCC8;
+  }
+
+  .title-search-wrapper {
+    position: relative;
+    max-width: 400px;
+  }
+
+  .title-search-input {
+    width: 100%;
+    padding: 10px 16px;
+    padding-left: 40px;
+    border: 2px solid #D4A574;
+    border-radius: 8px;
+    font-family: var(--font-arabic-body);
+    font-size: 14px;
+    background: #FAF7F2;
+    color: var(--text-primary);
+    transition: all 0.3s ease;
+  }
+
+  .title-search-input::placeholder {
+    color: #8B7355;
+    font-size: 13px;
+  }
+
+  .title-search-input:focus {
+    outline: none;
+    border-color: #C19A6B;
+    box-shadow: 0 0 0 3px rgba(193, 154, 107, 0.15);
+  }
+
+  .title-search-icon {
+    position: absolute;
+    left: 12px;
+    top: 50%;
+    transform: translateY(-50%);
+    font-size: 14px;
+    opacity: 0.6;
+    pointer-events: none;
+  }
+
+  @media (max-width: 768px) {
+    .title-search-section {
+      padding: var(--space-sm) var(--space-md);
+    }
+
+    .title-search-wrapper {
+      max-width: 100%;
+    }
+  }
+
   /* Series Cards */
   .series-list {
     max-width: 1200px;
@@ -1716,10 +1774,10 @@
       type="text"
       class="search-input"
       id="searchInput"
-      placeholder="ابحث بالموضوع، الكلمة، أو العنوان..."
+      placeholder="<%= locale === 'ar' ? 'ابحث في نصوص الدروس...' : 'Search lecture transcripts...' %>"
     >
     <button class="search-btn" onclick="performSearch()">
-      بحث
+      <%= locale === 'ar' ? 'بحث' : 'Search' %>
     </button>
   </div>
   <% if (typeof totalLectureCount !== 'undefined' && totalLectureCount > 0) { %>
@@ -2085,6 +2143,19 @@ function showMoreSeries(slug) {
       🕌 <%= locale === 'ar' ? 'الخطب' : 'Khutbahs' %>
     </button>
     <% } %>
+  </div>
+</div>
+
+<!-- Minimized Name/Title Search -->
+<div class="title-search-section">
+  <div class="title-search-wrapper">
+    <input
+      type="text"
+      class="title-search-input"
+      id="titleSearchInput"
+      placeholder="<%= locale === 'ar' ? 'بحث بعنوان السلسلة أو المحاضرة...' : 'Search by series or lecture name...' %>"
+    >
+    <span class="title-search-icon">🔍</span>
   </div>
 </div>
 
