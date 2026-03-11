@@ -8,5 +8,7 @@ module.exports = {
   Schedule: require('./Schedule'),
   SiteSettings: require('./SiteSettings'),
   PageView: require('./PageView'),
-  Counter: require('./Counter')
+  Counter: require('./Counter'),
+  Transcript: require('./Transcript'),
+  SearchLog: require('./SearchLog')
 };

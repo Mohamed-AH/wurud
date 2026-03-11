@@ -158,6 +158,7 @@ const seriesApiRoutes = require('./routes/api/series');
 const homepageApiRoutes = require('./routes/api/homepage');
 const streamRoutes = require('./routes/stream');
 const downloadRoutes = require('./routes/download');
+const searchRoutes = require('./routes/search');
 
 app.use('/', publicRoutes);
 app.use('/auth', authRoutes);
@@ -168,6 +169,7 @@ app.use('/api/series', seriesApiRoutes);
 app.use('/api/homepage', homepageApiRoutes);
 app.use('/stream', streamRoutes);
 app.use('/download', downloadRoutes);
+app.use('/search', searchRoutes);
 
 // 404 handler
 app.use((req, res) => {
