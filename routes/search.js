@@ -1,7 +1,7 @@
 const express = require('express');
 const router = express.Router();
 const mongoose = require('mongoose');
-const { Transcript, SearchLog, Lecture } = require('../models');
+const models = require('../models');
 const {
   buildSearchQuery,
   matchesMinTokens,
@@ -15,6 +15,10 @@ const SEARCH_MODE = process.env.SEARCH_MODE || 'atlas';
 const CONTEXT_WINDOW_SEC = parseInt(process.env.CONTEXT_WINDOW_SEC, 10) || 90;
 const CONTEXT_ITEMS = parseInt(process.env.CONTEXT_ITEMS, 10) || 2;
 const LOG_SEARCHES = process.env.LOG_SEARCHES !== 'false';
+
+// Helper to get search models (lazy access since they're initialized async)
+const getTranscript = () => models.Transcript;
+const getSearchLog = () => models.SearchLog;
 
 /**
  * GET /search - Render search page
@@ -43,6 +47,19 @@ router.get('/results', async (req, res) => {
       results: [],
       error: null,
       searched: false,
+      searchLogId: null
+    });
+  }
+
+  // Check if search models are initialized
+  const Transcript = getTranscript();
+  if (!Transcript) {
+    return res.render('search', {
+      layout: false,
+      query,
+      results: [],
+      error: 'خدمة البحث غير متاحة حالياً. يرجى المحاولة لاحقاً.',
+      searched: true,
       searchLogId: null
     });
   }
@@ -97,6 +114,11 @@ router.get('/results', async (req, res) => {
  */
 router.post('/feedback', async (req, res) => {
   try {
+    const SearchLog = getSearchLog();
+    if (!SearchLog) {
+      return res.status(503).json({ error: 'خدمة البحث غير متاحة' });
+    }
+
     const { logId, relevant, comment } = req.body;
 
     // Validate logId
@@ -130,6 +152,8 @@ router.post('/feedback', async (req, res) => {
  * Atlas Search with compound query
  */
 async function performAtlasSearch(normalized, tokens, variants, minShouldMatch) {
+  const Transcript = getTranscript();
+
   const mustClauses = tokens.map(token => ({
     text: {
       query: token,
@@ -222,6 +246,7 @@ async function performAtlasSearch(normalized, tokens, variants, minShouldMatch) 
  * Local text search fallback
  */
 async function performLocalSearch(variants, tokens, minShouldMatch) {
+  const Transcript = getTranscript();
   const searchText = variants.join(' ');
 
   const results = await Transcript.find(
@@ -252,6 +277,7 @@ async function performLocalSearch(variants, tokens, minShouldMatch) {
  * Enrich results with context (surrounding transcript lines)
  */
 async function enrichWithContext(results) {
+  const Transcript = getTranscript();
   const enriched = [];
 
   for (const result of results) {
@@ -305,6 +331,9 @@ async function enrichWithContext(results) {
  */
 async function logSearch(query, normalized, tokens, minShouldMatch, results) {
   try {
+    const SearchLog = getSearchLog();
+    if (!SearchLog) return null;
+
     const log = await SearchLog.create({
       query,
       normalizedQuery: normalized,

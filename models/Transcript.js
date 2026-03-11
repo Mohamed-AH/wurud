@@ -44,4 +44,5 @@ transcriptSchema.index({ lectureId: 1, startTimeSec: 1 });
 // Text index for local search fallback
 transcriptSchema.index({ text: 'text' });
 
-module.exports = mongoose.model('Transcript', transcriptSchema);
+// Export schema for use with separate connection
+module.exports = { transcriptSchema };

@@ -53,4 +53,5 @@ const searchLogSchema = new mongoose.Schema({
 // Index for querying recent searches
 searchLogSchema.index({ query: 1, createdAt: -1 });
 
-module.exports = mongoose.model('SearchLog', searchLogSchema);
+// Export schema for use with separate connection
+module.exports = { searchLogSchema };

@@ -10,6 +10,8 @@ const cookieParser = require('cookie-parser');
 const expressLayouts = require('express-ejs-layouts');
 const rateLimit = require('express-rate-limit');
 const connectDB = require('./config/database');
+const { connectSearchDB } = require('./config/searchDatabase');
+const { initSearchModels } = require('./models');
 const passport = require('./config/passport');
 const { i18nMiddleware } = require('./utils/i18n');
 const { trackPageView } = require('./middleware/analytics');
@@ -24,8 +26,15 @@ if (isProduction && !process.env.SESSION_SECRET) {
   process.exit(1);
 }
 
-// Connect to MongoDB
+// Connect to MongoDB (main database)
 connectDB();
+
+// Connect to Search MongoDB (separate database for transcripts)
+connectSearchDB().then(searchConn => {
+  if (searchConn) {
+    initSearchModels(searchConn);
+  }
+});
 
 // View engine setup
 app.set('view engine', 'ejs');
