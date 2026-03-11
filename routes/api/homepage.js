@@ -1,5 +1,6 @@
 const express = require('express');
 const router = express.Router();
+const mongoose = require('mongoose');
 const { Lecture, Series } = require('../../models');
 const cache = require('../../utils/cache');
 
@@ -129,9 +130,32 @@ router.get('/series', async (req, res) => {
       query.category = category;
     }
 
-    // Search filter
+    // If searching, find series that match by title OR have lectures matching the search
+    let seriesIdsFromLectures = [];
     if (search) {
-      Object.assign(query, buildSeriesSearchQuery(search));
+      // Find lectures matching the search term
+      const lectureSearchQuery = buildLectureSearchQuery(search);
+      if (Object.keys(lectureSearchQuery).length > 0) {
+        const matchingLectures = await Lecture.find({
+          ...lectureSearchQuery,
+          published: true,
+          seriesId: { $ne: null }
+        }).select('seriesId').lean();
+        // Get unique series IDs and convert to ObjectIds
+        const uniqueIds = [...new Set(matchingLectures.map(l => l.seriesId?.toString()).filter(Boolean))];
+        seriesIdsFromLectures = uniqueIds.map(id => new mongoose.Types.ObjectId(id));
+      }
+
+      // Build combined query: match series title OR have matching lectures
+      const seriesSearchQuery = buildSeriesSearchQuery(search);
+      if (seriesIdsFromLectures.length > 0) {
+        query.$or = [
+          ...(seriesSearchQuery.$or || []),
+          { _id: { $in: seriesIdsFromLectures } }
+        ];
+      } else if (Object.keys(seriesSearchQuery).length > 0) {
+        Object.assign(query, seriesSearchQuery);
+      }
     }
 
     // Fetch series
@@ -392,9 +416,32 @@ router.get('/khutbas', async (req, res) => {
       isVisible: { $ne: false }
     };
 
-    // Search filter
+    // If searching, find series that match by title OR have lectures matching the search
+    let seriesIdsFromLectures = [];
     if (search) {
-      Object.assign(query, buildSeriesSearchQuery(search));
+      // Find lectures matching the search term
+      const lectureSearchQuery = buildLectureSearchQuery(search);
+      if (Object.keys(lectureSearchQuery).length > 0) {
+        const matchingLectures = await Lecture.find({
+          ...lectureSearchQuery,
+          published: true,
+          seriesId: { $ne: null }
+        }).select('seriesId').lean();
+        // Get unique series IDs and convert to ObjectIds
+        const uniqueIds = [...new Set(matchingLectures.map(l => l.seriesId?.toString()).filter(Boolean))];
+        seriesIdsFromLectures = uniqueIds.map(id => new mongoose.Types.ObjectId(id));
+      }
+
+      // Build combined query: match series title OR have matching lectures
+      const seriesSearchQuery = buildSeriesSearchQuery(search);
+      if (seriesIdsFromLectures.length > 0) {
+        query.$or = [
+          ...(seriesSearchQuery.$or || []),
+          { _id: { $in: seriesIdsFromLectures } }
+        ];
+      } else if (Object.keys(seriesSearchQuery).length > 0) {
+        Object.assign(query, seriesSearchQuery);
+      }
     }
 
     // Fetch all series first

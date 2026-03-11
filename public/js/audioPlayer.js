@@ -162,6 +162,29 @@ class AudioPlayer {
     this.audio.currentTime = Math.max(0, Math.min(this.audio.duration, this.audio.currentTime + seconds));
   }
 
+  /**
+   * Seek to a specific time in seconds
+   * @param {number} seconds - Time to seek to
+   */
+  seekToTime(seconds) {
+    // Validate input - must be a finite number
+    if (typeof seconds !== 'number' || !isFinite(seconds)) {
+      console.warn('Invalid seek time:', seconds);
+      return;
+    }
+
+    // Wait for audio to be ready
+    if (!this.audio.duration || isNaN(this.audio.duration)) {
+      // If not ready, wait for loadedmetadata
+      this.audio.addEventListener('loadedmetadata', () => {
+        this.audio.currentTime = Math.max(0, Math.min(this.audio.duration, seconds));
+      }, { once: true });
+      return;
+    }
+
+    this.audio.currentTime = Math.max(0, Math.min(this.audio.duration, seconds));
+  }
+
   seek(e) {
     if (!this.audio.duration || isNaN(this.audio.duration)) return;
 

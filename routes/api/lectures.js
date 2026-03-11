@@ -308,7 +308,7 @@ router.post('/bulk-upload-audio', [isAdminAPI, upload.single('audioFile')], asyn
 
     if (!lecture) {
       // Clean up uploaded file
-      await fileManager.fileManager.deleteFile(req.file.filename);
+      fileManager.deleteFile(req.file.filename);
       return res.status(404).json({
         success: false,
         message: 'Lecture not found'
@@ -317,7 +317,7 @@ router.post('/bulk-upload-audio', [isAdminAPI, upload.single('audioFile')], asyn
 
     // If lecture already has audio, delete the old file
     if (lecture.audioFileName) {
-      await fileManager.fileManager.deleteFile(lecture.audioFileName);
+      fileManager.deleteFile(lecture.audioFileName);
     }
 
     // Extract audio metadata
@@ -343,7 +343,7 @@ router.post('/bulk-upload-audio', [isAdminAPI, upload.single('audioFile')], asyn
 
     // Clean up uploaded file on error
     if (req.file) {
-      await fileManager.fileManager.deleteFile(req.file.filename);
+      fileManager.deleteFile(req.file.filename);
     }
 
     res.status(500).json({
@@ -564,6 +564,91 @@ router.post('/:id/play', playCountValidation, async (req, res) => {
     res.status(500).json({
       success: false,
       message: 'Failed to increment play count',
+      error: isProduction ? undefined : error.message
+    });
+  }
+});
+
+// @route   GET /api/lectures/:id/transcript
+// @desc    Get transcript for a lecture
+// @access  Public
+router.get('/:id/transcript', idParamValidation, async (req, res) => {
+  try {
+    const { id } = req.params;
+    const models = require('../../models');
+    const Transcript = models.Transcript;
+
+    if (!Transcript) {
+      return res.status(503).json({
+        success: false,
+        message: 'Transcript service unavailable'
+      });
+    }
+
+    // Find lecture first to validate it exists and is published
+    let lecture;
+    if (isValidObjectId(id)) {
+      lecture = await Lecture.findOne({ _id: id, published: true }).select('_id shortId').lean();
+    }
+
+    // Also try shortId if numeric
+    if (!lecture && /^\d+$/.test(id)) {
+      lecture = await Lecture.findOne({ shortId: parseInt(id, 10), published: true }).select('_id shortId').lean();
+    }
+
+    if (!lecture) {
+      return res.status(404).json({
+        success: false,
+        message: 'Lecture not found'
+      });
+    }
+
+    // Fetch transcript segments by shortId from searchdb
+    const transcripts = await Transcript.find({ shortId: lecture.shortId })
+      .sort({ startTimeSec: 1 })
+      .select('text speaker startTimeSec startTimeMs')
+      .lean();
+
+    // Debug: Log transcript fetch result
+    console.log(`📝 API transcript fetch for lecture shortId ${lecture.shortId}: ${transcripts ? transcripts.length : 0} segments found`);
+
+    if (!transcripts || transcripts.length === 0) {
+      console.log(`⚠️ No transcript found for shortId: ${lecture.shortId}`);
+      return res.status(404).json({
+        success: false,
+        message: 'No transcript available for this lecture'
+      });
+    }
+
+    // Format timestamps
+    const formatTime = (seconds) => {
+      const h = Math.floor(seconds / 3600);
+      const m = Math.floor((seconds % 3600) / 60);
+      const s = Math.floor(seconds % 60);
+      if (h > 0) {
+        return `${h}:${m.toString().padStart(2, '0')}:${s.toString().padStart(2, '0')}`;
+      }
+      return `${m}:${s.toString().padStart(2, '0')}`;
+    };
+
+    const formattedTranscripts = transcripts.map(t => ({
+      text: t.text,
+      speaker: t.speaker,
+      startTimeSec: t.startTimeSec,
+      formattedTime: formatTime(t.startTimeSec)
+    }));
+
+    res.json({
+      success: true,
+      lectureId: lecture._id,
+      segmentCount: formattedTranscripts.length,
+      transcript: formattedTranscripts
+    });
+  } catch (error) {
+    console.error('Fetch transcript error:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Failed to fetch transcript',
       error: isProduction ? undefined : error.message
     });
   }

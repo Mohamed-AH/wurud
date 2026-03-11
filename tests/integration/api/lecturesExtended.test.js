@@ -28,10 +28,13 @@ jest.mock('../../../middleware/fileValidation', () => ({
   }
 }));
 
+// Module-level variable to control file injection in tests
+let mockFile = null;
+
 jest.mock('../../../config/storage', () => ({
   upload: {
     single: jest.fn(() => (req, res, next) => {
-      req.file = req.testFile || null;
+      req.file = mockFile;
       next();
     })
   }
@@ -528,6 +531,281 @@ describe('Lecture API Extended Tests', () => {
 
       expect(response.body.success).toBe(false);
       expect(response.body.message).toBe('Validation failed');
+    });
+  });
+
+  describe('POST /api/lectures (upload)', () => {
+    let sheikh;
+    let series;
+    const { isValidAudioFile } = require('../../../utils/audioMetadata');
+
+    beforeEach(async () => {
+      sheikh = await Sheikh.create({
+        nameArabic: 'الشيخ للتحميل',
+        lectureCount: 0
+      });
+
+      series = await Series.create({
+        titleArabic: 'سلسلة تجريبية',
+        sheikhId: sheikh._id,
+        lectureCount: 0
+      });
+
+      // Set default mock file for upload tests
+      mockFile = {
+        filename: 'test-audio.mp3',
+        path: '/tmp/test-audio.mp3',
+        size: 50000000
+      };
+    });
+
+    afterEach(() => {
+      mockFile = null;
+    });
+
+    it('should upload lecture with all required fields', async () => {
+      const response = await request(app)
+        .post('/api/lectures')
+        .send({
+          titleArabic: 'محاضرة جديدة',
+          titleEnglish: 'New Lecture',
+          sheikhId: sheikh._id.toString(),
+          published: 'true',
+          featured: 'false'
+        })
+        .expect(201);
+
+      expect(response.body.success).toBe(true);
+      expect(response.body.lecture.titleArabic).toBe('محاضرة جديدة');
+      expect(response.body.audioMetadata).toBeDefined();
+    });
+
+    it('should reject upload without Arabic title', async () => {
+      const response = await request(app)
+        .post('/api/lectures')
+        .send({
+          sheikhId: sheikh._id.toString()
+        })
+        .expect(400);
+
+      expect(response.body.success).toBe(false);
+      expect(response.body.message).toBe('Arabic title is required');
+    });
+
+    it('should reject upload without sheikh', async () => {
+      const response = await request(app)
+        .post('/api/lectures')
+        .send({
+          titleArabic: 'محاضرة'
+        })
+        .expect(400);
+
+      expect(response.body.success).toBe(false);
+      expect(response.body.message).toBe('Sheikh is required');
+    });
+
+    it('should reject upload with invalid sheikh ID', async () => {
+      const fakeSheikhId = new mongoose.Types.ObjectId();
+
+      const response = await request(app)
+        .post('/api/lectures')
+        .send({
+          titleArabic: 'محاضرة',
+          sheikhId: fakeSheikhId.toString()
+        })
+        .expect(400);
+
+      expect(response.body.success).toBe(false);
+      expect(response.body.message).toBe('Sheikh not found');
+    });
+
+    it('should reject upload with invalid series ID', async () => {
+      const fakeSeriesId = new mongoose.Types.ObjectId();
+
+      const response = await request(app)
+        .post('/api/lectures')
+        .send({
+          titleArabic: 'محاضرة',
+          sheikhId: sheikh._id.toString(),
+          seriesId: fakeSeriesId.toString()
+        })
+        .expect(400);
+
+      expect(response.body.success).toBe(false);
+      expect(response.body.message).toBe('Series not found');
+    });
+
+    it('should reject invalid audio file', async () => {
+      isValidAudioFile.mockResolvedValueOnce(false);
+
+      const response = await request(app)
+        .post('/api/lectures')
+        .send({
+          titleArabic: 'محاضرة',
+          sheikhId: sheikh._id.toString()
+        })
+        .expect(400);
+
+      expect(response.body.success).toBe(false);
+      expect(response.body.message).toContain('Invalid audio file');
+    });
+
+    it('should increment sheikh lecture count after upload', async () => {
+      await request(app)
+        .post('/api/lectures')
+        .send({
+          titleArabic: 'محاضرة جديدة',
+          sheikhId: sheikh._id.toString()
+        })
+        .expect(201);
+
+      const updatedSheikh = await Sheikh.findById(sheikh._id);
+      expect(updatedSheikh.lectureCount).toBe(1);
+    });
+
+    it('should increment series lecture count when series is provided', async () => {
+      await request(app)
+        .post('/api/lectures')
+        .send({
+          titleArabic: 'محاضرة في سلسلة',
+          sheikhId: sheikh._id.toString(),
+          seriesId: series._id.toString(),
+          lectureNumber: 1
+        })
+        .expect(201);
+
+      const updatedSeries = await Series.findById(series._id);
+      expect(updatedSeries.lectureCount).toBe(1);
+    });
+
+    it('should auto-convert Gregorian date to Hijri', async () => {
+      const response = await request(app)
+        .post('/api/lectures')
+        .send({
+          titleArabic: 'محاضرة مؤرخة',
+          sheikhId: sheikh._id.toString(),
+          dateRecorded: '2024-01-15'
+        })
+        .expect(201);
+
+      expect(response.body.lecture.dateRecordedHijri).toBeDefined();
+    });
+
+    it('should use provided Hijri date instead of auto-converting', async () => {
+      const response = await request(app)
+        .post('/api/lectures')
+        .send({
+          titleArabic: 'محاضرة بتاريخ هجري',
+          sheikhId: sheikh._id.toString(),
+          dateRecorded: '2024-01-15',
+          dateRecordedHijri: '1445/07/15'
+        })
+        .expect(201);
+
+      expect(response.body.lecture.dateRecordedHijri).toBe('1445/07/15');
+    });
+  });
+
+  describe('POST /api/lectures/bulk-upload-audio', () => {
+    let sheikh;
+    let lecture;
+    const fileManager = require('../../../utils/fileManager');
+
+    beforeEach(async () => {
+      sheikh = await Sheikh.create({
+        nameArabic: 'الشيخ للتحميل الجماعي'
+      });
+
+      lecture = await Lecture.create({
+        titleArabic: 'محاضرة بدون صوت',
+        sheikhId: sheikh._id
+      });
+
+      // Set default mock file
+      mockFile = {
+        filename: 'bulk-audio.mp3',
+        path: '/tmp/bulk-audio.mp3',
+        size: 25000000
+      };
+    });
+
+    afterEach(() => {
+      mockFile = null;
+    });
+
+    it('should reject without lecture ID', async () => {
+      const response = await request(app)
+        .post('/api/lectures/bulk-upload-audio')
+        .send({})
+        .expect(400);
+
+      expect(response.body.success).toBe(false);
+      expect(response.body.message).toBe('Lecture ID is required');
+    });
+
+    it('should reject without audio file', async () => {
+      mockFile = null; // No file
+
+      const response = await request(app)
+        .post('/api/lectures/bulk-upload-audio')
+        .send({
+          lectureId: lecture._id.toString()
+        })
+        .expect(400);
+
+      expect(response.body.success).toBe(false);
+      expect(response.body.message).toBe('Audio file is required');
+    });
+
+    it('should return 404 for non-existent lecture', async () => {
+      const fakeId = new mongoose.Types.ObjectId();
+
+      const response = await request(app)
+        .post('/api/lectures/bulk-upload-audio')
+        .send({
+          lectureId: fakeId.toString()
+        })
+        .expect(404);
+
+      expect(response.body.success).toBe(false);
+      expect(response.body.message).toBe('Lecture not found');
+    });
+
+    it('should upload audio to existing lecture successfully', async () => {
+      const response = await request(app)
+        .post('/api/lectures/bulk-upload-audio')
+        .send({
+          lectureId: lecture._id.toString()
+        })
+        .expect(200);
+
+      expect(response.body.success).toBe(true);
+      expect(response.body.message).toBe('Audio file uploaded successfully');
+
+      const updatedLecture = await Lecture.findById(lecture._id);
+      expect(updatedLecture.audioFileName).toBe('bulk-audio.mp3');
+    });
+
+    it('should delete old audio file when replacing', async () => {
+      // Set up lecture with existing audio
+      lecture.audioFileName = 'old-audio.mp3';
+      await lecture.save();
+
+      mockFile = {
+        filename: 'new-audio.mp3',
+        path: '/tmp/new-audio.mp3',
+        size: 30000000
+      };
+
+      await request(app)
+        .post('/api/lectures/bulk-upload-audio')
+        .send({
+          lectureId: lecture._id.toString()
+        })
+        .expect(200);
+
+      // fileManager.deleteFile should have been called with old filename
+      expect(fileManager.deleteFile).toHaveBeenCalled();
     });
   });
 });

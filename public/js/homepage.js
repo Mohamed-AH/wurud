@@ -120,10 +120,13 @@
    * Initialize the module
    */
   function init() {
+    console.log('[HOMEPAGE] init() starting');
+
     // Get containers
     seriesContainer = document.querySelector('#content-series .series-list');
     standaloneContainer = document.querySelector('#content-lectures .series-list');
     khutbasContainer = document.querySelector('#content-khutbas .series-list');
+    console.log('[HOMEPAGE] Containers found:', { series: !!seriesContainer, standalone: !!standaloneContainer, khutbas: !!khutbasContainer });
 
     // Create load more button
     createLoadMoreButton();
@@ -133,15 +136,18 @@
 
     // Parse URL state
     parseUrlState();
+    console.log('[HOMEPAGE] URL state parsed:', state);
 
     // Bind events
     bindEvents();
+    console.log('[HOMEPAGE] Events bound');
 
     // Update UI to match state
     updateUIFromState();
 
     // Check if we need to load more (if no initial server-rendered content)
     checkInitialContent();
+    console.log('[HOMEPAGE] init() complete');
   }
 
   /**
@@ -228,10 +234,10 @@
       chip.classList.toggle('active', chip.dataset.sort === state.sort);
     });
 
-    // Update search input
-    const searchInput = document.getElementById('searchInput');
-    if (searchInput && state.search) {
-      searchInput.value = state.search;
+    // Update title search input
+    const titleSearchInput = document.getElementById('titleSearchInput');
+    if (titleSearchInput && state.search) {
+      titleSearchInput.value = state.search;
     }
 
     // Update clear button visibility
@@ -380,15 +386,50 @@
       });
     });
 
-    // Search input with debounce
-    const searchInput = document.getElementById('searchInput');
-    if (searchInput) {
+    // Title/Name search input with debounce (separate from transcript search)
+    const titleSearchInput = document.getElementById('titleSearchInput');
+    const titleSearchIcon = document.getElementById('titleSearchIcon');
+    console.log('[TITLE SEARCH] titleSearchInput element:', titleSearchInput);
+    console.log('[TITLE SEARCH] titleSearchIcon element:', titleSearchIcon);
+
+    if (titleSearchInput) {
+      console.log('[TITLE SEARCH] Attaching input event listener');
       let searchTimeout;
-      searchInput.addEventListener('input', function() {
+
+      // Input event with debounce
+      titleSearchInput.addEventListener('input', function() {
+        console.log('[TITLE SEARCH] Input event fired, value:', this.value);
         clearTimeout(searchTimeout);
         searchTimeout = setTimeout(() => {
+          console.log('[TITLE SEARCH] Debounce complete, calling setSearch with:', this.value);
           setSearch(this.value);
         }, 300);
+      });
+
+      // Enter key handler
+      titleSearchInput.addEventListener('keydown', function(e) {
+        if (e.key === 'Enter') {
+          console.log('[TITLE SEARCH] Enter key pressed, value:', this.value);
+          clearTimeout(searchTimeout);
+          setSearch(this.value);
+        }
+      });
+
+      // Focus event for debugging
+      titleSearchInput.addEventListener('focus', function() {
+        console.log('[TITLE SEARCH] Input focused');
+      });
+    } else {
+      console.warn('[TITLE SEARCH] titleSearchInput element NOT FOUND!');
+    }
+
+    // Search icon click handler
+    if (titleSearchIcon) {
+      titleSearchIcon.addEventListener('click', function() {
+        console.log('[TITLE SEARCH] Search icon clicked');
+        const value = titleSearchInput?.value || '';
+        console.log('[TITLE SEARCH] Icon click - searching for:', value);
+        setSearch(value);
       });
     }
 
@@ -450,14 +491,17 @@
   }
 
   /**
-   * Set search term
+   * Set search term (for title/series name search)
    */
   function setSearch(term) {
+    console.log('[TITLE SEARCH] setSearch() called with:', term);
     state.search = term.trim();
     state.page = 1;
+    console.log('[TITLE SEARCH] Updated state.search:', state.search);
 
     updateUrl();
     updateClearButtonVisibility();
+    console.log('[TITLE SEARCH] Calling fetchData to search by title/series name');
     fetchData(true);
   }
 
@@ -471,9 +515,9 @@
     state.sort = 'newest';
     state.page = 1;
 
-    // Clear search input
-    const searchInput = document.getElementById('searchInput');
-    if (searchInput) searchInput.value = '';
+    // Clear title search input
+    const titleSearchInput = document.getElementById('titleSearchInput');
+    if (titleSearchInput) titleSearchInput.value = '';
 
     updateUIFromState();
     updateUrl();
@@ -505,11 +549,15 @@
   }
 
   /**
-   * Fetch data from API
+   * Fetch data from API (for title/series name search)
    * @param {boolean} replace - If true, replace content; if false, append
    */
   async function fetchData(replace = true) {
-    if (state.loading) return;
+    console.log('[TITLE SEARCH] fetchData() called, replace:', replace);
+    if (state.loading) {
+      console.log('[TITLE SEARCH] Already loading, returning');
+      return;
+    }
 
     state.loading = true;
     loadingIndicator.style.display = 'block';
@@ -536,8 +584,11 @@
         params.set('limit', '10');
       }
 
-      const response = await fetch(`${url}?${params.toString()}`);
+      const fullUrl = `${url}?${params.toString()}`;
+      console.log('[TITLE SEARCH] Fetching from:', fullUrl);
+      const response = await fetch(fullUrl);
       const data = await response.json();
+      console.log('[TITLE SEARCH] API Response:', { success: data.success, count: data.series?.length || data.lectures?.length });
 
       if (data.success) {
         if (state.tab === 'lectures') {
@@ -557,7 +608,7 @@
         updateLoadMoreButton();
       }
     } catch (error) {
-      console.error('Error fetching data:', error);
+      console.error('[TITLE SEARCH] Error fetching data:', error);
     } finally {
       state.loading = false;
       loadingIndicator.style.display = 'none';
@@ -900,5 +951,410 @@
     document.addEventListener('DOMContentLoaded', init);
   } else {
     init();
+  }
+})();
+
+/**
+ * Enhanced Search Module
+ * Handles transcript search with push-down results display
+ */
+(function() {
+  'use strict';
+
+  // State for enhanced search
+  const searchState = {
+    isActive: false,
+    query: '',
+    results: [],
+    searchLogId: null,
+    currentPlayingBtn: null
+  };
+
+  // DOM elements
+  let searchInput, searchResultsContainer, searchResultsList, searchResultsCount;
+  let searchAudioPlayer;
+
+  // Get current locale
+  function getLocale() {
+    return typeof currentLocale !== 'undefined' ? currentLocale : 'ar';
+  }
+
+  // Localized strings for search
+  const searchStrings = {
+    ar: {
+      resultsIn: 'تم العثور على نتائج في',
+      lectures: 'محاضرة',
+      noResults: 'لم يتم العثور على نتائج',
+      tryDifferent: 'جرّب استخدام كلمات مختلفة أو أقل',
+      searching: 'جاري البحث...',
+      playFrom: 'تشغيل',
+      pause: 'إيقاف',
+      moreResults: 'نتائج أخرى',
+      inSameLecture: 'من هذه المحاضرة',
+      otherResults: 'نتائج أخرى في نفس المحاضرة:',
+      goToLecture: 'الذهاب للمحاضرة'
+    },
+    en: {
+      resultsIn: 'Found results in',
+      lectures: 'lecture(s)',
+      noResults: 'No results found',
+      tryDifferent: 'Try using different or fewer words',
+      searching: 'Searching...',
+      playFrom: 'Play',
+      pause: 'Pause',
+      moreResults: 'more results',
+      inSameLecture: 'in this lecture',
+      otherResults: 'Other results in this lecture:',
+      goToLecture: 'Go to Lecture'
+    }
+  };
+
+  function ts(key) {
+    const locale = getLocale();
+    return searchStrings[locale]?.[key] || searchStrings['ar'][key] || key;
+  }
+
+  /**
+   * Initialize enhanced search (hero transcript search)
+   */
+  function initEnhancedSearch() {
+    console.log('[HERO SEARCH] initEnhancedSearch() starting');
+
+    searchInput = document.getElementById('searchInput');
+    searchResultsContainer = document.getElementById('enhancedSearchResults');
+    searchResultsList = document.getElementById('searchResultsList');
+    searchResultsCount = document.getElementById('searchResultsCount');
+    searchAudioPlayer = document.getElementById('searchAudioPlayer');
+
+    console.log('[HERO SEARCH] Elements found:', {
+      searchInput: !!searchInput,
+      searchResultsContainer: !!searchResultsContainer,
+      searchResultsList: !!searchResultsList,
+      searchResultsCount: !!searchResultsCount,
+      searchAudioPlayer: !!searchAudioPlayer
+    });
+
+    if (!searchInput || !searchResultsContainer) {
+      console.warn('[HERO SEARCH] Required elements not found, aborting init');
+      return;
+    }
+
+    // Handle Enter key in search input
+    searchInput.addEventListener('keydown', function(e) {
+      if (e.key === 'Enter') {
+        console.log('[HERO SEARCH] Enter key pressed');
+        e.preventDefault();
+        performSearch();
+      }
+    });
+    console.log('[HERO SEARCH] Enter key listener attached');
+
+    // Handle audio ended
+    if (searchAudioPlayer) {
+      searchAudioPlayer.addEventListener('ended', function() {
+        if (searchState.currentPlayingBtn) {
+          searchState.currentPlayingBtn.classList.remove('playing');
+          searchState.currentPlayingBtn.innerHTML = `<span class="play-icon">▶</span> ${ts('playFrom')}`;
+          searchState.currentPlayingBtn = null;
+        }
+      });
+    }
+
+    console.log('[HERO SEARCH] initEnhancedSearch() complete');
+  }
+
+  /**
+   * Perform enhanced search (transcript search via /search/api)
+   */
+  async function performSearch() {
+    console.log('[HERO SEARCH] performSearch() called');
+    const query = searchInput?.value?.trim();
+    console.log('[HERO SEARCH] Query:', query);
+
+    if (!query) {
+      console.log('[HERO SEARCH] Empty query, returning');
+      return;
+    }
+
+    searchState.query = query;
+    searchState.isActive = true;
+
+    // Show loading state
+    showSearchLoading();
+    console.log('[HERO SEARCH] Fetching transcript results from /search/api');
+
+    try {
+      const response = await fetch(`/search/api?q=${encodeURIComponent(query)}`);
+      const data = await response.json();
+      console.log('[HERO SEARCH] API Response:', data);
+
+      if (data.success) {
+        console.log('[HERO SEARCH] Success! Results count:', data.results?.length);
+        searchState.results = data.results;
+        searchState.searchLogId = data.searchLogId;
+        renderSearchResults(data.results, query);
+      } else {
+        console.log('[HERO SEARCH] API Error:', data.error);
+        showSearchError(data.error || 'حدث خطأ أثناء البحث');
+      }
+    } catch (error) {
+      console.error('[HERO SEARCH] Fetch error:', error);
+      showSearchError('حدث خطأ أثناء البحث. يرجى المحاولة مرة أخرى.');
+    }
+  }
+
+  /**
+   * Show loading state
+   */
+  function showSearchLoading() {
+    searchResultsContainer.classList.add('active');
+    searchResultsList.innerHTML = `
+      <div class="search-loading">
+        <div class="spinner"></div>
+        <span>${ts('searching')}</span>
+      </div>
+    `;
+    searchResultsCount.textContent = '';
+  }
+
+  /**
+   * Show error message
+   */
+  function showSearchError(message) {
+    searchResultsList.innerHTML = `
+      <div class="search-no-results">
+        <div class="search-no-results-icon">⚠️</div>
+        <div class="search-no-results-text">${escapeHtml(message)}</div>
+      </div>
+    `;
+  }
+
+  /**
+   * Render search results
+   */
+  function renderSearchResults(results, query) {
+    searchResultsContainer.classList.add('active');
+
+    if (results.length === 0) {
+      searchResultsList.innerHTML = `
+        <div class="search-no-results">
+          <div class="search-no-results-icon">🔍</div>
+          <div class="search-no-results-text">${ts('noResults')}: "${escapeHtml(query)}"</div>
+          <div class="search-no-results-hint">${ts('tryDifferent')}</div>
+        </div>
+      `;
+      searchResultsCount.textContent = '';
+      return;
+    }
+
+    searchResultsCount.textContent = `(${ts('resultsIn')} ${results.length} ${ts('lectures')})`;
+
+    const html = results.map((result, index) => {
+      const audioUrl = result.audioUrl || (result.audioFileName ? `/audio/${result.audioFileName}` : '');
+      const hasAudio = !!audioUrl;
+      const hasAdditionalHits = result.additionalHits && result.additionalHits.length > 0;
+
+      return `
+        <article class="search-result-card">
+          <h3 class="result-lecture-title">${escapeHtml(result.lectureTitle || 'محاضرة')}</h3>
+
+          <div class="result-meta">
+            ${result.speaker ? `<span class="result-speaker">${escapeHtml(result.speaker)}</span>` : ''}
+            <span class="result-timestamp">⏱️ ${escapeHtml(result.formattedTime || '')}</span>
+          </div>
+
+          <div class="result-context">
+            ${result.contextBefore ? `<span class="context-before">${escapeHtml(result.contextBefore)} </span>` : ''}
+            <span class="hit-text">${escapeHtml(result.text)}</span>
+            ${result.contextAfter ? `<span class="context-after"> ${escapeHtml(result.contextAfter)}</span>` : ''}
+          </div>
+
+          <div class="result-actions">
+            ${hasAudio ? `
+              <button
+                type="button"
+                class="result-play-btn"
+                data-audio-url="${escapeHtml(audioUrl)}"
+                data-start-time="${result.startTimeSec || 0}"
+                onclick="playSearchAudio(this)"
+              >
+                <span class="play-icon">▶</span> ${ts('playFrom')}
+              </button>
+            ` : ''}
+
+            ${result.lectureShortId ? `
+              <a
+                href="https://rasmihassan.com/lectures/${result.lectureShortId}${result.lectureSlugEn ? '/' + result.lectureSlugEn : ''}"
+                class="goto-lecture-btn"
+                target="_blank"
+              >
+                <span class="goto-icon">↗</span> ${ts('goToLecture')}
+              </a>
+            ` : ''}
+
+            ${hasAdditionalHits ? `
+              <button
+                type="button"
+                class="result-expand-btn"
+                onclick="toggleAdditionalResults(this, 'additional-${index}')"
+              >
+                <span class="expand-icon">▼</span>
+                ${result.additionalHits.length} ${ts('moreResults')} ${ts('inSameLecture')}
+              </button>
+            ` : ''}
+          </div>
+
+          ${hasAdditionalHits ? `
+            <div class="additional-results" id="additional-${index}">
+              <div class="additional-results-header">${ts('otherResults')}</div>
+              ${result.additionalHits.map(hit => {
+                const hitAudioUrl = audioUrl;
+                return `
+                  <div class="additional-hit">
+                    <span class="additional-hit-text">
+                      <strong>⏱️ ${escapeHtml(hit.formattedTime || formatTime(hit.startTimeSec))}</strong>
+                      ${escapeHtml(hit.text)}
+                    </span>
+                    ${hitAudioUrl ? `
+                      <button
+                        type="button"
+                        class="additional-hit-play"
+                        data-audio-url="${escapeHtml(hitAudioUrl)}"
+                        data-start-time="${hit.startTimeSec || 0}"
+                        onclick="playSearchAudio(this)"
+                      >
+                        ▶ ${ts('playFrom')}
+                      </button>
+                    ` : ''}
+                  </div>
+                `;
+              }).join('')}
+            </div>
+          ` : ''}
+        </article>
+      `;
+    }).join('');
+
+    searchResultsList.innerHTML = html;
+  }
+
+  /**
+   * Clear enhanced search and restore normal view
+   */
+  function clearEnhancedSearch() {
+    searchState.isActive = false;
+    searchState.query = '';
+    searchState.results = [];
+    searchState.searchLogId = null;
+
+    // Hide results container
+    searchResultsContainer.classList.remove('active');
+    searchResultsList.innerHTML = '';
+    searchResultsCount.textContent = '';
+
+    // Clear search input
+    if (searchInput) {
+      searchInput.value = '';
+    }
+
+    // Stop any playing audio
+    if (searchAudioPlayer) {
+      searchAudioPlayer.pause();
+      searchAudioPlayer.src = '';
+    }
+
+    if (searchState.currentPlayingBtn) {
+      searchState.currentPlayingBtn.classList.remove('playing');
+      searchState.currentPlayingBtn = null;
+    }
+  }
+
+  /**
+   * Play audio from search result
+   */
+  function playSearchAudio(btn) {
+    const audioUrl = btn.dataset.audioUrl;
+    const startTime = parseFloat(btn.dataset.startTime) || 0;
+
+    if (!audioUrl || !searchAudioPlayer) return;
+
+    // If clicking the same button that's playing, pause it
+    if (searchState.currentPlayingBtn === btn && !searchAudioPlayer.paused) {
+      searchAudioPlayer.pause();
+      btn.classList.remove('playing');
+      btn.innerHTML = `<span class="play-icon">▶</span> ${ts('playFrom')}`;
+      searchState.currentPlayingBtn = null;
+      return;
+    }
+
+    // Reset previous playing button
+    if (searchState.currentPlayingBtn) {
+      searchState.currentPlayingBtn.classList.remove('playing');
+      searchState.currentPlayingBtn.innerHTML = `<span class="play-icon">▶</span> ${ts('playFrom')}`;
+    }
+
+    // Load and play new audio
+    searchAudioPlayer.src = audioUrl;
+    searchAudioPlayer.currentTime = startTime;
+    searchAudioPlayer.play()
+      .then(() => {
+        btn.classList.add('playing');
+        btn.innerHTML = `<span class="play-icon">⏸</span> ${ts('pause')}`;
+        searchState.currentPlayingBtn = btn;
+      })
+      .catch(err => {
+        console.error('Audio playback error:', err);
+        alert('حدث خطأ أثناء تشغيل الصوت');
+      });
+  }
+
+  /**
+   * Toggle additional results visibility
+   */
+  function toggleAdditionalResults(btn, targetId) {
+    const target = document.getElementById(targetId);
+    if (!target) return;
+
+    const isOpen = target.classList.contains('open');
+    if (isOpen) {
+      target.classList.remove('open');
+      btn.classList.remove('expanded');
+    } else {
+      target.classList.add('open');
+      btn.classList.add('expanded');
+    }
+  }
+
+  /**
+   * Format time in MM:SS
+   */
+  function formatTime(seconds) {
+    if (!seconds || isNaN(seconds)) return '0:00';
+    const mins = Math.floor(seconds / 60);
+    const secs = Math.floor(seconds % 60);
+    return `${mins}:${secs.toString().padStart(2, '0')}`;
+  }
+
+  /**
+   * Escape HTML to prevent XSS
+   */
+  function escapeHtml(text) {
+    if (!text) return '';
+    const div = document.createElement('div');
+    div.textContent = text;
+    return div.innerHTML;
+  }
+
+  // Expose functions globally
+  window.performSearch = performSearch;
+  window.clearEnhancedSearch = clearEnhancedSearch;
+  window.playSearchAudio = playSearchAudio;
+  window.toggleAdditionalResults = toggleAdditionalResults;
+
+  // Initialize on DOM ready
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', initEnhancedSearch);
+  } else {
+    initEnhancedSearch();
   }
 })();
