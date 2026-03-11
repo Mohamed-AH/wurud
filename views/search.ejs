@@ -95,7 +95,7 @@
 
     <% if (results.length > 0) { %>
     <div class="results-header">
-      <p>تم العثور على <strong><%= results.length %></strong> نتيجة</p>
+      <p>تم العثور على نتائج في <strong><%= results.length %></strong> محاضرة</p>
     </div>
 
     <div class="results-list">
@@ -120,16 +120,54 @@
           <% } %>
         </div>
 
-        <% if (result.audioUrl) { %>
-        <button
-          type="button"
-          class="play-btn"
-          data-audio-url="<%= result.audioUrl %>"
-          data-start-time="<%= result.startTimeSec %>"
-        >
-          <span class="play-icon">&#9658;</span>
-          تشغيل من هنا
-        </button>
+        <div class="result-actions">
+          <% if (result.audioUrl) { %>
+          <button
+            type="button"
+            class="play-btn"
+            data-audio-url="<%= result.audioUrl %>"
+            data-start-time="<%= result.startTimeSec %>"
+          >
+            <span class="play-icon">&#9658;</span>
+            تشغيل من هنا
+          </button>
+          <% } %>
+
+          <% if (result.additionalHits && result.additionalHits.length > 0) { %>
+          <button
+            type="button"
+            class="deep-dive-btn"
+            data-target="additional-<%= index %>"
+          >
+            <span class="deep-dive-icon">&#9662;</span>
+            عرض <%= result.additionalHits.length %> نتائج أخرى من هذه المحاضرة
+          </button>
+          <% } %>
+        </div>
+
+        <% if (result.additionalHits && result.additionalHits.length > 0) { %>
+        <div class="additional-hits" id="additional-<%= index %>">
+          <div class="additional-hits-header">نتائج أخرى في نفس المحاضرة:</div>
+          <% result.additionalHits.forEach(function(hit) { %>
+          <div class="additional-hit">
+            <div class="additional-hit-meta">
+              <span class="timestamp"><%= hit.formattedTime %></span>
+            </div>
+            <div class="additional-hit-text"><%= hit.text %></div>
+            <% if (result.audioUrl) { %>
+            <button
+              type="button"
+              class="play-btn play-btn-small"
+              data-audio-url="<%= result.audioUrl %>"
+              data-start-time="<%= hit.startTimeSec %>"
+            >
+              <span class="play-icon">&#9658;</span>
+              تشغيل
+            </button>
+            <% } %>
+          </div>
+          <% }); %>
+        </div>
         <% } %>
       </article>
       <% }); %>

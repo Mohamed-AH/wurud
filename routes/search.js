@@ -154,6 +154,7 @@ router.post('/feedback', async (req, res) => {
 
 /**
  * Atlas Search - lucene.arabic analyzer handles normalization natively
+ * Groups results by lectureId to prevent one lecture from dominating results
  */
 async function performAtlasSearch(query) {
   const Transcript = getTranscript();
@@ -187,7 +188,7 @@ async function performAtlasSearch(query) {
       }
     },
     {
-      $limit: 50
+      $limit: 100  // Get more results before grouping
     },
     {
       $lookup: {
@@ -204,18 +205,68 @@ async function performAtlasSearch(query) {
       }
     },
     {
-      $project: {
-        _id: 1,
-        lectureId: 1,
-        shortId: 1,
-        text: 1,
-        speaker: 1,
-        startTimeSec: 1,
-        startTimeMs: 1,
-        lectureTitle: '$lecture.titleArabic',
-        audioUrl: '$lecture.audioUrl',
-        audioFileName: '$lecture.audioFileName',
+      $addFields: {
         score: { $meta: 'searchScore' }
+      }
+    },
+    // Sort by score before grouping to ensure top hit is first
+    {
+      $sort: { score: -1 }
+    },
+    // Group by lectureId - keep top hit and collect additional hits
+    {
+      $group: {
+        _id: '$lectureId',
+        topHit: { $first: '$$ROOT' },
+        additionalHits: {
+          $push: {
+            _id: '$_id',
+            shortId: '$shortId',
+            text: '$text',
+            speaker: '$speaker',
+            startTimeSec: '$startTimeSec',
+            startTimeMs: '$startTimeMs',
+            score: '$score'
+          }
+        },
+        maxScore: { $max: '$score' }
+      }
+    },
+    // Sort groups by their top score
+    {
+      $sort: { maxScore: -1 }
+    },
+    // Limit to top lectures
+    {
+      $limit: 20
+    },
+    // Reshape the output
+    {
+      $project: {
+        _id: '$topHit._id',
+        lectureId: '$_id',
+        shortId: '$topHit.shortId',
+        text: '$topHit.text',
+        speaker: '$topHit.speaker',
+        startTimeSec: '$topHit.startTimeSec',
+        startTimeMs: '$topHit.startTimeMs',
+        lectureTitle: '$topHit.lecture.titleArabic',
+        audioUrl: '$topHit.lecture.audioUrl',
+        audioFileName: '$topHit.lecture.audioFileName',
+        score: '$topHit.score',
+        // Filter out the top hit from additional hits and limit to 5
+        additionalHits: {
+          $slice: [
+            {
+              $filter: {
+                input: '$additionalHits',
+                as: 'hit',
+                cond: { $ne: ['$$hit._id', '$topHit._id'] }
+              }
+            },
+            5
+          ]
+        }
       }
     }
   ];
@@ -225,6 +276,7 @@ async function performAtlasSearch(query) {
 
 /**
  * Local text search fallback
+ * Groups results by lectureId to prevent one lecture from dominating results
  */
 async function performLocalSearch(query) {
   const Transcript = getTranscript();
@@ -234,23 +286,52 @@ async function performLocalSearch(query) {
     { score: { $meta: 'textScore' } }
   )
     .sort({ score: { $meta: 'textScore' } })
-    .limit(50)
+    .limit(100)  // Get more results before grouping
     .populate('lectureId', 'titleArabic audioUrl audioFileName')
     .lean();
 
-  return results.map(r => ({
-    _id: r._id,
-    lectureId: r.lectureId?._id,
-    shortId: r.shortId,
-    text: r.text,
-    speaker: r.speaker,
-    startTimeSec: r.startTimeSec,
-    startTimeMs: r.startTimeMs,
-    lectureTitle: r.lectureId?.titleArabic,
-    audioUrl: r.lectureId?.audioUrl,
-    audioFileName: r.lectureId?.audioFileName,
-    score: r.score
-  }));
+  // Group results by lectureId
+  const grouped = new Map();
+
+  for (const r of results) {
+    const lectureIdStr = r.lectureId?._id?.toString() || 'unknown';
+
+    const hit = {
+      _id: r._id,
+      lectureId: r.lectureId?._id,
+      shortId: r.shortId,
+      text: r.text,
+      speaker: r.speaker,
+      startTimeSec: r.startTimeSec,
+      startTimeMs: r.startTimeMs,
+      lectureTitle: r.lectureId?.titleArabic,
+      audioUrl: r.lectureId?.audioUrl,
+      audioFileName: r.lectureId?.audioFileName,
+      score: r.score
+    };
+
+    if (!grouped.has(lectureIdStr)) {
+      // First hit for this lecture becomes the top hit
+      grouped.set(lectureIdStr, {
+        ...hit,
+        additionalHits: []
+      });
+    } else if (grouped.get(lectureIdStr).additionalHits.length < 5) {
+      // Add to additional hits (up to 5)
+      grouped.get(lectureIdStr).additionalHits.push({
+        _id: r._id,
+        shortId: r.shortId,
+        text: r.text,
+        speaker: r.speaker,
+        startTimeSec: r.startTimeSec,
+        startTimeMs: r.startTimeMs,
+        score: r.score
+      });
+    }
+  }
+
+  // Convert to array and limit to 20 lectures
+  return Array.from(grouped.values()).slice(0, 20);
 }
 
 /**
@@ -295,11 +376,18 @@ async function enrichWithContext(results) {
       .map(c => stripTimestamps(c.text))
       .join(' ');
 
+    // Enrich additional hits with formatted time (no full context needed)
+    const enrichedAdditionalHits = (result.additionalHits || []).map(hit => ({
+      ...hit,
+      formattedTime: formatTime(hit.startTimeSec)
+    }));
+
     enriched.push({
       ...result,
       contextBefore: beforeText,
       contextAfter: afterText,
-      formattedTime: formatTime(result.startTimeSec)
+      formattedTime: formatTime(result.startTimeSec),
+      additionalHits: enrichedAdditionalHits
     });
   }
 

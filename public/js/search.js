@@ -10,11 +10,21 @@
   const audioPlayer = document.getElementById('audioPlayer');
   let currentPlayingBtn = null;
 
+  // Helper function to get play button text based on size
+  function getPlayText(isSmall) {
+    return isSmall ? 'تشغيل' : 'تشغيل من هنا';
+  }
+
+  function getPauseText() {
+    return 'إيقاف مؤقت';
+  }
+
   // Play buttons
   document.querySelectorAll('.play-btn').forEach(btn => {
     btn.addEventListener('click', function() {
       const audioUrl = this.dataset.audioUrl;
       const startTime = parseFloat(this.dataset.startTime) || 0;
+      const isSmall = this.classList.contains('play-btn-small');
 
       if (!audioUrl) return;
 
@@ -22,15 +32,16 @@
       if (currentPlayingBtn === this && !audioPlayer.paused) {
         audioPlayer.pause();
         this.classList.remove('playing');
-        this.innerHTML = '<span class="play-icon">&#9658;</span> تشغيل من هنا';
+        this.innerHTML = '<span class="play-icon">&#9658;</span> ' + getPlayText(isSmall);
         currentPlayingBtn = null;
         return;
       }
 
       // Reset previous playing button
       if (currentPlayingBtn) {
+        const prevIsSmall = currentPlayingBtn.classList.contains('play-btn-small');
         currentPlayingBtn.classList.remove('playing');
-        currentPlayingBtn.innerHTML = '<span class="play-icon">&#9658;</span> تشغيل من هنا';
+        currentPlayingBtn.innerHTML = '<span class="play-icon">&#9658;</span> ' + getPlayText(prevIsSmall);
       }
 
       // Load and play new audio
@@ -39,7 +50,7 @@
       audioPlayer.play()
         .then(() => {
           this.classList.add('playing');
-          this.innerHTML = '<span class="play-icon">&#10074;&#10074;</span> إيقاف مؤقت';
+          this.innerHTML = '<span class="play-icon">&#10074;&#10074;</span> ' + getPauseText();
           currentPlayingBtn = this;
         })
         .catch(err => {
@@ -52,10 +63,31 @@
   // Handle audio ended
   audioPlayer.addEventListener('ended', function() {
     if (currentPlayingBtn) {
+      const isSmall = currentPlayingBtn.classList.contains('play-btn-small');
       currentPlayingBtn.classList.remove('playing');
-      currentPlayingBtn.innerHTML = '<span class="play-icon">&#9658;</span> تشغيل من هنا';
+      currentPlayingBtn.innerHTML = '<span class="play-icon">&#9658;</span> ' + getPlayText(isSmall);
       currentPlayingBtn = null;
     }
+  });
+
+  // Deep dive expand/collapse functionality
+  document.querySelectorAll('.deep-dive-btn').forEach(btn => {
+    btn.addEventListener('click', function() {
+      const targetId = this.dataset.target;
+      const targetEl = document.getElementById(targetId);
+
+      if (!targetEl) return;
+
+      const isExpanded = targetEl.classList.contains('open');
+
+      if (isExpanded) {
+        targetEl.classList.remove('open');
+        this.classList.remove('expanded');
+      } else {
+        targetEl.classList.add('open');
+        this.classList.add('expanded');
+      }
+    });
   });
 
   // Feedback functionality

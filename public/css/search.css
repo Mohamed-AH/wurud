@@ -405,6 +405,101 @@ body {
   font-size: 0.85rem;
 }
 
+/* Result Actions */
+.result-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+  align-items: center;
+}
+
+/* Deep Dive Button */
+.deep-dive-btn {
+  background: transparent;
+  color: var(--color-gold-dark);
+  border: 1px solid var(--color-gold);
+  padding: 0.5rem 1rem;
+  font-family: var(--font-naskh);
+  font-size: 0.9rem;
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  transition: all 0.2s;
+}
+
+.deep-dive-btn:hover {
+  background: var(--color-gold-light);
+  border-color: var(--color-gold-dark);
+}
+
+.deep-dive-btn.expanded {
+  background: var(--color-gold-light);
+}
+
+.deep-dive-btn.expanded .deep-dive-icon {
+  transform: rotate(180deg);
+}
+
+.deep-dive-icon {
+  transition: transform 0.2s;
+  font-size: 0.85rem;
+}
+
+/* Additional Hits Section */
+.additional-hits {
+  display: none;
+  margin-top: 1rem;
+  padding-top: 1rem;
+  border-top: 1px dashed var(--color-cream-dark);
+}
+
+.additional-hits.open {
+  display: block;
+}
+
+.additional-hits-header {
+  font-size: 0.9rem;
+  color: var(--color-text-muted);
+  margin-bottom: 0.75rem;
+  font-weight: 600;
+}
+
+.additional-hit {
+  background: var(--color-cream);
+  border-radius: var(--radius-sm);
+  padding: 0.75rem 1rem;
+  margin-bottom: 0.5rem;
+}
+
+.additional-hit:last-child {
+  margin-bottom: 0;
+}
+
+.additional-hit-meta {
+  font-size: 0.85rem;
+  color: var(--color-text-muted);
+  margin-bottom: 0.5rem;
+}
+
+.additional-hit-text {
+  font-family: var(--font-scheherazade);
+  font-size: 1.05rem;
+  line-height: 1.8;
+  color: var(--color-text);
+  margin-bottom: 0.5rem;
+}
+
+.play-btn-small {
+  padding: 0.4rem 0.75rem;
+  font-size: 0.85rem;
+}
+
+.play-btn-small .play-icon {
+  font-size: 0.75rem;
+}
+
 /* Error & No Results */
 .error-message,
 .no-results {
