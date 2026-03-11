@@ -249,7 +249,12 @@
     transform: translateY(-50%);
     font-size: 14px;
     opacity: 0.6;
-    pointer-events: none;
+    cursor: pointer;
+    transition: opacity 0.2s ease;
+  }
+
+  .title-search-icon:hover {
+    opacity: 1;
   }
 
   @media (max-width: 768px) {
@@ -2155,7 +2160,7 @@ function showMoreSeries(slug) {
       id="titleSearchInput"
       placeholder="<%= locale === 'ar' ? 'بحث بعنوان السلسلة أو المحاضرة...' : 'Search by series or lecture name...' %>"
     >
-    <span class="title-search-icon">🔍</span>
+    <span class="title-search-icon" id="titleSearchIcon" title="<%= locale === 'ar' ? 'بحث' : 'Search' %>">🔍</span>
   </div>
 </div>
 

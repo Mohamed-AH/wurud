@@ -120,10 +120,13 @@
    * Initialize the module
    */
   function init() {
+    console.log('[HOMEPAGE] init() starting');
+
     // Get containers
     seriesContainer = document.querySelector('#content-series .series-list');
     standaloneContainer = document.querySelector('#content-lectures .series-list');
     khutbasContainer = document.querySelector('#content-khutbas .series-list');
+    console.log('[HOMEPAGE] Containers found:', { series: !!seriesContainer, standalone: !!standaloneContainer, khutbas: !!khutbasContainer });
 
     // Create load more button
     createLoadMoreButton();
@@ -133,15 +136,18 @@
 
     // Parse URL state
     parseUrlState();
+    console.log('[HOMEPAGE] URL state parsed:', state);
 
     // Bind events
     bindEvents();
+    console.log('[HOMEPAGE] Events bound');
 
     // Update UI to match state
     updateUIFromState();
 
     // Check if we need to load more (if no initial server-rendered content)
     checkInitialContent();
+    console.log('[HOMEPAGE] init() complete');
   }
 
   /**
@@ -382,13 +388,48 @@
 
     // Title/Name search input with debounce (separate from transcript search)
     const titleSearchInput = document.getElementById('titleSearchInput');
+    const titleSearchIcon = document.getElementById('titleSearchIcon');
+    console.log('[TITLE SEARCH] titleSearchInput element:', titleSearchInput);
+    console.log('[TITLE SEARCH] titleSearchIcon element:', titleSearchIcon);
+
     if (titleSearchInput) {
+      console.log('[TITLE SEARCH] Attaching input event listener');
       let searchTimeout;
+
+      // Input event with debounce
       titleSearchInput.addEventListener('input', function() {
+        console.log('[TITLE SEARCH] Input event fired, value:', this.value);
         clearTimeout(searchTimeout);
         searchTimeout = setTimeout(() => {
+          console.log('[TITLE SEARCH] Debounce complete, calling setSearch with:', this.value);
           setSearch(this.value);
         }, 300);
+      });
+
+      // Enter key handler
+      titleSearchInput.addEventListener('keydown', function(e) {
+        if (e.key === 'Enter') {
+          console.log('[TITLE SEARCH] Enter key pressed, value:', this.value);
+          clearTimeout(searchTimeout);
+          setSearch(this.value);
+        }
+      });
+
+      // Focus event for debugging
+      titleSearchInput.addEventListener('focus', function() {
+        console.log('[TITLE SEARCH] Input focused');
+      });
+    } else {
+      console.warn('[TITLE SEARCH] titleSearchInput element NOT FOUND!');
+    }
+
+    // Search icon click handler
+    if (titleSearchIcon) {
+      titleSearchIcon.addEventListener('click', function() {
+        console.log('[TITLE SEARCH] Search icon clicked');
+        const value = titleSearchInput?.value || '';
+        console.log('[TITLE SEARCH] Icon click - searching for:', value);
+        setSearch(value);
       });
     }
 
@@ -450,14 +491,17 @@
   }
 
   /**
-   * Set search term
+   * Set search term (for title/series name search)
    */
   function setSearch(term) {
+    console.log('[TITLE SEARCH] setSearch() called with:', term);
     state.search = term.trim();
     state.page = 1;
+    console.log('[TITLE SEARCH] Updated state.search:', state.search);
 
     updateUrl();
     updateClearButtonVisibility();
+    console.log('[TITLE SEARCH] Calling fetchData to search by title/series name');
     fetchData(true);
   }
 
@@ -505,11 +549,15 @@
   }
 
   /**
-   * Fetch data from API
+   * Fetch data from API (for title/series name search)
    * @param {boolean} replace - If true, replace content; if false, append
    */
   async function fetchData(replace = true) {
-    if (state.loading) return;
+    console.log('[TITLE SEARCH] fetchData() called, replace:', replace);
+    if (state.loading) {
+      console.log('[TITLE SEARCH] Already loading, returning');
+      return;
+    }
 
     state.loading = true;
     loadingIndicator.style.display = 'block';
@@ -536,8 +584,11 @@
         params.set('limit', '10');
       }
 
-      const response = await fetch(`${url}?${params.toString()}`);
+      const fullUrl = `${url}?${params.toString()}`;
+      console.log('[TITLE SEARCH] Fetching from:', fullUrl);
+      const response = await fetch(fullUrl);
       const data = await response.json();
+      console.log('[TITLE SEARCH] API Response:', { success: data.success, count: data.series?.length || data.lectures?.length });
 
       if (data.success) {
         if (state.tab === 'lectures') {
@@ -557,7 +608,7 @@
         updateLoadMoreButton();
       }
     } catch (error) {
-      console.error('Error fetching data:', error);
+      console.error('[TITLE SEARCH] Error fetching data:', error);
     } finally {
       state.loading = false;
       loadingIndicator.style.display = 'none';
@@ -962,24 +1013,39 @@
   }
 
   /**
-   * Initialize enhanced search
+   * Initialize enhanced search (hero transcript search)
    */
   function initEnhancedSearch() {
+    console.log('[HERO SEARCH] initEnhancedSearch() starting');
+
     searchInput = document.getElementById('searchInput');
     searchResultsContainer = document.getElementById('enhancedSearchResults');
     searchResultsList = document.getElementById('searchResultsList');
     searchResultsCount = document.getElementById('searchResultsCount');
     searchAudioPlayer = document.getElementById('searchAudioPlayer');
 
-    if (!searchInput || !searchResultsContainer) return;
+    console.log('[HERO SEARCH] Elements found:', {
+      searchInput: !!searchInput,
+      searchResultsContainer: !!searchResultsContainer,
+      searchResultsList: !!searchResultsList,
+      searchResultsCount: !!searchResultsCount,
+      searchAudioPlayer: !!searchAudioPlayer
+    });
+
+    if (!searchInput || !searchResultsContainer) {
+      console.warn('[HERO SEARCH] Required elements not found, aborting init');
+      return;
+    }
 
     // Handle Enter key in search input
     searchInput.addEventListener('keydown', function(e) {
       if (e.key === 'Enter') {
+        console.log('[HERO SEARCH] Enter key pressed');
         e.preventDefault();
         performSearch();
       }
     });
+    console.log('[HERO SEARCH] Enter key listener attached');
 
     // Handle audio ended
     if (searchAudioPlayer) {
@@ -991,34 +1057,46 @@
         }
       });
     }
+
+    console.log('[HERO SEARCH] initEnhancedSearch() complete');
   }
 
   /**
-   * Perform enhanced search
+   * Perform enhanced search (transcript search via /search/api)
    */
   async function performSearch() {
+    console.log('[HERO SEARCH] performSearch() called');
     const query = searchInput?.value?.trim();
-    if (!query) return;
+    console.log('[HERO SEARCH] Query:', query);
+
+    if (!query) {
+      console.log('[HERO SEARCH] Empty query, returning');
+      return;
+    }
 
     searchState.query = query;
     searchState.isActive = true;
 
     // Show loading state
     showSearchLoading();
+    console.log('[HERO SEARCH] Fetching transcript results from /search/api');
 
     try {
       const response = await fetch(`/search/api?q=${encodeURIComponent(query)}`);
       const data = await response.json();
+      console.log('[HERO SEARCH] API Response:', data);
 
       if (data.success) {
+        console.log('[HERO SEARCH] Success! Results count:', data.results?.length);
         searchState.results = data.results;
         searchState.searchLogId = data.searchLogId;
         renderSearchResults(data.results, query);
       } else {
+        console.log('[HERO SEARCH] API Error:', data.error);
         showSearchError(data.error || 'حدث خطأ أثناء البحث');
       }
     } catch (error) {
-      console.error('Search error:', error);
+      console.error('[HERO SEARCH] Fetch error:', error);
       showSearchError('حدث خطأ أثناء البحث. يرجى المحاولة مرة أخرى.');
     }
   }
