@@ -991,7 +991,8 @@
       pause: 'إيقاف',
       moreResults: 'نتائج أخرى',
       inSameLecture: 'من هذه المحاضرة',
-      otherResults: 'نتائج أخرى في نفس المحاضرة:'
+      otherResults: 'نتائج أخرى في نفس المحاضرة:',
+      goToLecture: 'الذهاب للمحاضرة'
     },
     en: {
       resultsIn: 'Found results in',
@@ -1003,7 +1004,8 @@
       pause: 'Pause',
       moreResults: 'more results',
       inSameLecture: 'in this lecture',
-      otherResults: 'Other results in this lecture:'
+      otherResults: 'Other results in this lecture:',
+      goToLecture: 'Go to Lecture'
     }
   };
 
@@ -1178,6 +1180,16 @@
               >
                 <span class="play-icon">▶</span> ${ts('playFrom')}
               </button>
+            ` : ''}
+
+            ${result.lectureShortId ? `
+              <a
+                href="https://rasmihassan.com/lectures/${result.lectureShortId}${result.lectureSlugEn ? '/' + result.lectureSlugEn : ''}"
+                class="goto-lecture-btn"
+                target="_blank"
+              >
+                <span class="goto-icon">↗</span> ${ts('goToLecture')}
+              </a>
             ` : ''}
 
             ${hasAdditionalHits ? `
