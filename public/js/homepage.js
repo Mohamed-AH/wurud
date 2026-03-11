@@ -902,3 +902,369 @@
     init();
   }
 })();
+
+/**
+ * Enhanced Search Module
+ * Handles transcript search with push-down results display
+ */
+(function() {
+  'use strict';
+
+  // State for enhanced search
+  const searchState = {
+    isActive: false,
+    query: '',
+    results: [],
+    searchLogId: null,
+    currentPlayingBtn: null
+  };
+
+  // DOM elements
+  let searchInput, searchResultsContainer, searchResultsList, searchResultsCount;
+  let searchAudioPlayer;
+
+  // Get current locale
+  function getLocale() {
+    return typeof currentLocale !== 'undefined' ? currentLocale : 'ar';
+  }
+
+  // Localized strings for search
+  const searchStrings = {
+    ar: {
+      resultsIn: 'تم العثور على نتائج في',
+      lectures: 'محاضرة',
+      noResults: 'لم يتم العثور على نتائج',
+      tryDifferent: 'جرّب استخدام كلمات مختلفة أو أقل',
+      searching: 'جاري البحث...',
+      playFrom: 'تشغيل',
+      pause: 'إيقاف',
+      moreResults: 'نتائج أخرى',
+      inSameLecture: 'من هذه المحاضرة',
+      otherResults: 'نتائج أخرى في نفس المحاضرة:'
+    },
+    en: {
+      resultsIn: 'Found results in',
+      lectures: 'lecture(s)',
+      noResults: 'No results found',
+      tryDifferent: 'Try using different or fewer words',
+      searching: 'Searching...',
+      playFrom: 'Play',
+      pause: 'Pause',
+      moreResults: 'more results',
+      inSameLecture: 'in this lecture',
+      otherResults: 'Other results in this lecture:'
+    }
+  };
+
+  function ts(key) {
+    const locale = getLocale();
+    return searchStrings[locale]?.[key] || searchStrings['ar'][key] || key;
+  }
+
+  /**
+   * Initialize enhanced search
+   */
+  function initEnhancedSearch() {
+    searchInput = document.getElementById('searchInput');
+    searchResultsContainer = document.getElementById('enhancedSearchResults');
+    searchResultsList = document.getElementById('searchResultsList');
+    searchResultsCount = document.getElementById('searchResultsCount');
+    searchAudioPlayer = document.getElementById('searchAudioPlayer');
+
+    if (!searchInput || !searchResultsContainer) return;
+
+    // Handle Enter key in search input
+    searchInput.addEventListener('keydown', function(e) {
+      if (e.key === 'Enter') {
+        e.preventDefault();
+        performSearch();
+      }
+    });
+
+    // Handle audio ended
+    if (searchAudioPlayer) {
+      searchAudioPlayer.addEventListener('ended', function() {
+        if (searchState.currentPlayingBtn) {
+          searchState.currentPlayingBtn.classList.remove('playing');
+          searchState.currentPlayingBtn.innerHTML = `<span class="play-icon">▶</span> ${ts('playFrom')}`;
+          searchState.currentPlayingBtn = null;
+        }
+      });
+    }
+  }
+
+  /**
+   * Perform enhanced search
+   */
+  async function performSearch() {
+    const query = searchInput?.value?.trim();
+    if (!query) return;
+
+    searchState.query = query;
+    searchState.isActive = true;
+
+    // Show loading state
+    showSearchLoading();
+
+    try {
+      const response = await fetch(`/search/api?q=${encodeURIComponent(query)}`);
+      const data = await response.json();
+
+      if (data.success) {
+        searchState.results = data.results;
+        searchState.searchLogId = data.searchLogId;
+        renderSearchResults(data.results, query);
+      } else {
+        showSearchError(data.error || 'حدث خطأ أثناء البحث');
+      }
+    } catch (error) {
+      console.error('Search error:', error);
+      showSearchError('حدث خطأ أثناء البحث. يرجى المحاولة مرة أخرى.');
+    }
+  }
+
+  /**
+   * Show loading state
+   */
+  function showSearchLoading() {
+    searchResultsContainer.classList.add('active');
+    searchResultsList.innerHTML = `
+      <div class="search-loading">
+        <div class="spinner"></div>
+        <span>${ts('searching')}</span>
+      </div>
+    `;
+    searchResultsCount.textContent = '';
+  }
+
+  /**
+   * Show error message
+   */
+  function showSearchError(message) {
+    searchResultsList.innerHTML = `
+      <div class="search-no-results">
+        <div class="search-no-results-icon">⚠️</div>
+        <div class="search-no-results-text">${escapeHtml(message)}</div>
+      </div>
+    `;
+  }
+
+  /**
+   * Render search results
+   */
+  function renderSearchResults(results, query) {
+    searchResultsContainer.classList.add('active');
+
+    if (results.length === 0) {
+      searchResultsList.innerHTML = `
+        <div class="search-no-results">
+          <div class="search-no-results-icon">🔍</div>
+          <div class="search-no-results-text">${ts('noResults')}: "${escapeHtml(query)}"</div>
+          <div class="search-no-results-hint">${ts('tryDifferent')}</div>
+        </div>
+      `;
+      searchResultsCount.textContent = '';
+      return;
+    }
+
+    searchResultsCount.textContent = `(${ts('resultsIn')} ${results.length} ${ts('lectures')})`;
+
+    const html = results.map((result, index) => {
+      const audioUrl = result.audioUrl || (result.audioFileName ? `/audio/${result.audioFileName}` : '');
+      const hasAudio = !!audioUrl;
+      const hasAdditionalHits = result.additionalHits && result.additionalHits.length > 0;
+
+      return `
+        <article class="search-result-card">
+          <h3 class="result-lecture-title">${escapeHtml(result.lectureTitle || 'محاضرة')}</h3>
+
+          <div class="result-meta">
+            ${result.speaker ? `<span class="result-speaker">${escapeHtml(result.speaker)}</span>` : ''}
+            <span class="result-timestamp">⏱️ ${escapeHtml(result.formattedTime || '')}</span>
+          </div>
+
+          <div class="result-context">
+            ${result.contextBefore ? `<span class="context-before">${escapeHtml(result.contextBefore)} </span>` : ''}
+            <span class="hit-text">${escapeHtml(result.text)}</span>
+            ${result.contextAfter ? `<span class="context-after"> ${escapeHtml(result.contextAfter)}</span>` : ''}
+          </div>
+
+          <div class="result-actions">
+            ${hasAudio ? `
+              <button
+                type="button"
+                class="result-play-btn"
+                data-audio-url="${escapeHtml(audioUrl)}"
+                data-start-time="${result.startTimeSec || 0}"
+                onclick="playSearchAudio(this)"
+              >
+                <span class="play-icon">▶</span> ${ts('playFrom')}
+              </button>
+            ` : ''}
+
+            ${hasAdditionalHits ? `
+              <button
+                type="button"
+                class="result-expand-btn"
+                onclick="toggleAdditionalResults(this, 'additional-${index}')"
+              >
+                <span class="expand-icon">▼</span>
+                ${result.additionalHits.length} ${ts('moreResults')} ${ts('inSameLecture')}
+              </button>
+            ` : ''}
+          </div>
+
+          ${hasAdditionalHits ? `
+            <div class="additional-results" id="additional-${index}">
+              <div class="additional-results-header">${ts('otherResults')}</div>
+              ${result.additionalHits.map(hit => {
+                const hitAudioUrl = audioUrl;
+                return `
+                  <div class="additional-hit">
+                    <span class="additional-hit-text">
+                      <strong>⏱️ ${escapeHtml(hit.formattedTime || formatTime(hit.startTimeSec))}</strong>
+                      ${escapeHtml(hit.text)}
+                    </span>
+                    ${hitAudioUrl ? `
+                      <button
+                        type="button"
+                        class="additional-hit-play"
+                        data-audio-url="${escapeHtml(hitAudioUrl)}"
+                        data-start-time="${hit.startTimeSec || 0}"
+                        onclick="playSearchAudio(this)"
+                      >
+                        ▶ ${ts('playFrom')}
+                      </button>
+                    ` : ''}
+                  </div>
+                `;
+              }).join('')}
+            </div>
+          ` : ''}
+        </article>
+      `;
+    }).join('');
+
+    searchResultsList.innerHTML = html;
+  }
+
+  /**
+   * Clear enhanced search and restore normal view
+   */
+  function clearEnhancedSearch() {
+    searchState.isActive = false;
+    searchState.query = '';
+    searchState.results = [];
+    searchState.searchLogId = null;
+
+    // Hide results container
+    searchResultsContainer.classList.remove('active');
+    searchResultsList.innerHTML = '';
+    searchResultsCount.textContent = '';
+
+    // Clear search input
+    if (searchInput) {
+      searchInput.value = '';
+    }
+
+    // Stop any playing audio
+    if (searchAudioPlayer) {
+      searchAudioPlayer.pause();
+      searchAudioPlayer.src = '';
+    }
+
+    if (searchState.currentPlayingBtn) {
+      searchState.currentPlayingBtn.classList.remove('playing');
+      searchState.currentPlayingBtn = null;
+    }
+  }
+
+  /**
+   * Play audio from search result
+   */
+  function playSearchAudio(btn) {
+    const audioUrl = btn.dataset.audioUrl;
+    const startTime = parseFloat(btn.dataset.startTime) || 0;
+
+    if (!audioUrl || !searchAudioPlayer) return;
+
+    // If clicking the same button that's playing, pause it
+    if (searchState.currentPlayingBtn === btn && !searchAudioPlayer.paused) {
+      searchAudioPlayer.pause();
+      btn.classList.remove('playing');
+      btn.innerHTML = `<span class="play-icon">▶</span> ${ts('playFrom')}`;
+      searchState.currentPlayingBtn = null;
+      return;
+    }
+
+    // Reset previous playing button
+    if (searchState.currentPlayingBtn) {
+      searchState.currentPlayingBtn.classList.remove('playing');
+      searchState.currentPlayingBtn.innerHTML = `<span class="play-icon">▶</span> ${ts('playFrom')}`;
+    }
+
+    // Load and play new audio
+    searchAudioPlayer.src = audioUrl;
+    searchAudioPlayer.currentTime = startTime;
+    searchAudioPlayer.play()
+      .then(() => {
+        btn.classList.add('playing');
+        btn.innerHTML = `<span class="play-icon">⏸</span> ${ts('pause')}`;
+        searchState.currentPlayingBtn = btn;
+      })
+      .catch(err => {
+        console.error('Audio playback error:', err);
+        alert('حدث خطأ أثناء تشغيل الصوت');
+      });
+  }
+
+  /**
+   * Toggle additional results visibility
+   */
+  function toggleAdditionalResults(btn, targetId) {
+    const target = document.getElementById(targetId);
+    if (!target) return;
+
+    const isOpen = target.classList.contains('open');
+    if (isOpen) {
+      target.classList.remove('open');
+      btn.classList.remove('expanded');
+    } else {
+      target.classList.add('open');
+      btn.classList.add('expanded');
+    }
+  }
+
+  /**
+   * Format time in MM:SS
+   */
+  function formatTime(seconds) {
+    if (!seconds || isNaN(seconds)) return '0:00';
+    const mins = Math.floor(seconds / 60);
+    const secs = Math.floor(seconds % 60);
+    return `${mins}:${secs.toString().padStart(2, '0')}`;
+  }
+
+  /**
+   * Escape HTML to prevent XSS
+   */
+  function escapeHtml(text) {
+    if (!text) return '';
+    const div = document.createElement('div');
+    div.textContent = text;
+    return div.innerHTML;
+  }
+
+  // Expose functions globally
+  window.performSearch = performSearch;
+  window.clearEnhancedSearch = clearEnhancedSearch;
+  window.playSearchAudio = playSearchAudio;
+  window.toggleAdditionalResults = toggleAdditionalResults;
+
+  // Initialize on DOM ready
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', initEnhancedSearch);
+  } else {
+    initEnhancedSearch();
+  }
+})();

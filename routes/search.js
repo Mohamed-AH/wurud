@@ -105,6 +105,67 @@ router.get('/results', async (req, res) => {
 });
 
 /**
+ * GET /search/api - JSON API for enhanced search (used by homepage)
+ */
+router.get('/api', async (req, res) => {
+  const query = (req.query.q || '').trim();
+
+  if (!query) {
+    return res.json({
+      success: true,
+      query: '',
+      results: [],
+      searchLogId: null
+    });
+  }
+
+  // Check if search models are initialized
+  const Transcript = getTranscript();
+  if (!Transcript) {
+    return res.status(503).json({
+      success: false,
+      error: 'خدمة البحث غير متاحة حالياً. يرجى المحاولة لاحقاً.'
+    });
+  }
+
+  try {
+    // Strip sheikh prefix for cleaner matching
+    const searchQuery = stripSheikhPrefix(query);
+
+    let results = [];
+
+    if (SEARCH_MODE === 'atlas') {
+      results = await performAtlasSearch(searchQuery);
+    } else {
+      results = await performLocalSearch(searchQuery);
+    }
+
+    // Enrich results with context
+    results = await enrichWithContext(results);
+
+    // Log search (best-effort)
+    let searchLogId = null;
+    if (LOG_SEARCHES) {
+      searchLogId = await logSearch(query, searchQuery, results);
+    }
+
+    res.json({
+      success: true,
+      query,
+      results,
+      resultCount: results.length,
+      searchLogId
+    });
+  } catch (error) {
+    console.error('Search API error:', error);
+    res.status(500).json({
+      success: false,
+      error: 'حدث خطأ أثناء البحث. يرجى المحاولة مرة أخرى.'
+    });
+  }
+});
+
+/**
  * POST /search/feedback - Submit feedback
  */
 router.post('/feedback', async (req, res) => {
