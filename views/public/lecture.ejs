@@ -1061,8 +1061,8 @@
       });
       // Then seek to the specific time
       setTimeout(() => {
-        if (window.audioPlayer.seek) {
-          window.audioPlayer.seek(seconds);
+        if (window.audioPlayer.seekToTime) {
+          window.audioPlayer.seekToTime(seconds);
         }
         // Highlight the clicked segment
         highlightSegment(seconds);
