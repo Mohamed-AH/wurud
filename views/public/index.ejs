@@ -1774,18 +1774,17 @@
       : '"Seeking knowledge is obligatory upon every Muslim"'
     %>
   </div>
-  <form action="/search/results" method="GET" class="search-container">
+  <div class="search-container">
     <input
       type="text"
-      name="q"
       class="search-input"
       id="searchInput"
       placeholder="<%= locale === 'ar' ? 'ابحث في نصوص الدروس...' : 'Search lecture transcripts...' %>"
     >
-    <button type="submit" class="search-btn">
+    <button type="button" class="search-btn" onclick="performSearch()">
       <%= locale === 'ar' ? 'بحث' : 'Search' %>
     </button>
-  </form>
+  </div>
   <% if (typeof totalLectureCount !== 'undefined' && totalLectureCount > 0) { %>
   <div class="lecture-count-badge">
     <span class="count-divider"></span>
