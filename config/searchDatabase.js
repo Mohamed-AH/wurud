@@ -16,6 +16,7 @@ const connectSearchDB = async () => {
 
     console.log(`✅ Search MongoDB Connected: ${searchConnection.host}`);
     console.log(`📊 Search Database: ${searchConnection.name}`);
+    console.log(`📝 Search logs will be saved to: ${searchConnection.name}.searchlogs`);
 
     searchConnection.on('error', (err) => {
       console.error('❌ Search MongoDB connection error:', err);

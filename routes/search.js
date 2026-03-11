@@ -116,13 +116,16 @@ router.post('/feedback', async (req, res) => {
   try {
     const SearchLog = getSearchLog();
     if (!SearchLog) {
+      console.warn('[Feedback] SearchLog model not initialized');
       return res.status(503).json({ error: 'خدمة البحث غير متاحة' });
     }
 
     const { logId, relevant, comment } = req.body;
+    console.log('[Feedback] Received:', { logId, relevant, comment: comment?.slice(0, 50) });
 
     // Validate logId
     if (!logId || !mongoose.Types.ObjectId.isValid(logId)) {
+      console.warn('[Feedback] Invalid logId:', logId);
       return res.status(400).json({ error: 'معرف غير صالح' });
     }
 
@@ -135,15 +138,21 @@ router.post('/feedback', async (req, res) => {
     }
 
     // Update search log
-    await SearchLog.findByIdAndUpdate(logId, {
+    const result = await SearchLog.findByIdAndUpdate(logId, {
       relevant: relevantBool,
       relevantAt: new Date(),
       comment: comment ? String(comment).slice(0, 300) : undefined
-    });
+    }, { new: true });
+
+    if (result) {
+      console.log('[Feedback] Saved successfully - ID:', logId, 'Relevant:', relevantBool);
+    } else {
+      console.warn('[Feedback] Log not found:', logId);
+    }
 
     res.json({ success: true });
   } catch (error) {
-    console.error('Feedback error:', error);
+    console.error('[Feedback] Error:', error);
     res.status(500).json({ error: 'حدث خطأ أثناء حفظ التقييم' });
   }
 });
@@ -332,8 +341,12 @@ async function enrichWithContext(results) {
 async function logSearch(query, normalized, tokens, minShouldMatch, results) {
   try {
     const SearchLog = getSearchLog();
-    if (!SearchLog) return null;
+    if (!SearchLog) {
+      console.warn('[SearchLog] Model not initialized - search not logged');
+      return null;
+    }
 
+    console.log('[SearchLog] Creating log for query:', query);
     const log = await SearchLog.create({
       query,
       normalizedQuery: normalized,
@@ -344,9 +357,10 @@ async function logSearch(query, normalized, tokens, minShouldMatch, results) {
       searchMode: SEARCH_MODE,
       relevant: null
     });
+    console.log('[SearchLog] Saved successfully - ID:', log._id.toString(), 'Results:', results.length);
     return log._id.toString();
   } catch (error) {
-    console.error('Search log error (non-fatal):', error.message);
+    console.error('[SearchLog] Error saving:', error.message);
     return null;
   }
 }
