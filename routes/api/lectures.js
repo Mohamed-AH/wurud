@@ -603,17 +603,17 @@ router.get('/:id/transcript', idParamValidation, async (req, res) => {
       });
     }
 
-    // Fetch transcript segments ordered by time
-    const transcripts = await Transcript.find({ lectureId: lecture._id })
+    // Fetch transcript segments by shortId from searchdb
+    const transcripts = await Transcript.find({ shortId: lecture.shortId })
       .sort({ startTimeSec: 1 })
       .select('text speaker startTimeSec startTimeMs')
       .lean();
 
     // Debug: Log transcript fetch result
-    console.log(`📝 API transcript fetch for lecture ${lecture._id} (shortId: ${lecture.shortId}): ${transcripts ? transcripts.length : 0} segments found`);
+    console.log(`📝 API transcript fetch for lecture shortId ${lecture.shortId}: ${transcripts ? transcripts.length : 0} segments found`);
 
     if (!transcripts || transcripts.length === 0) {
-      console.log(`⚠️ No transcript found for lectureId: ${lecture._id}`);
+      console.log(`⚠️ No transcript found for shortId: ${lecture.shortId}`);
       return res.status(404).json({
         success: false,
         message: 'No transcript available for this lecture'

@@ -402,15 +402,16 @@ router.get('/lectures/:shortId(\\d+)/:slug_en?/:slug_ar?', async (req, res) => {
       const models = require('../models');
       const Transcript = models.Transcript;
       if (Transcript) {
-        const transcriptCount = await Transcript.countDocuments({ lectureId: lecture._id });
+        // Look up transcript by shortId in searchdb
+        const transcriptCount = await Transcript.countDocuments({ shortId: lecture.shortId });
         hasTranscript = transcriptCount > 0;
 
         // Debug: Log transcript lookup
-        console.log(`📝 Transcript lookup for lecture ${lecture._id} (shortId: ${lecture.shortId}): ${transcriptCount} segments found`);
+        console.log(`📝 Transcript lookup for lecture shortId ${lecture.shortId}: ${transcriptCount} segments found`);
 
         if (hasTranscript) {
           // Get first few segments for SEO excerpt
-          const excerptSegments = await Transcript.find({ lectureId: lecture._id })
+          const excerptSegments = await Transcript.find({ shortId: lecture.shortId })
             .sort({ startTimeSec: 1 })
             .limit(10)
             .select('text')
