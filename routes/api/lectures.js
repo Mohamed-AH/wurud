@@ -609,7 +609,11 @@ router.get('/:id/transcript', idParamValidation, async (req, res) => {
       .select('text speaker startTimeSec startTimeMs')
       .lean();
 
+    // Debug: Log transcript fetch result
+    console.log(`📝 API transcript fetch for lecture ${lecture._id} (shortId: ${lecture.shortId}): ${transcripts ? transcripts.length : 0} segments found`);
+
     if (!transcripts || transcripts.length === 0) {
+      console.log(`⚠️ No transcript found for lectureId: ${lecture._id}`);
       return res.status(404).json({
         success: false,
         message: 'No transcript available for this lecture'

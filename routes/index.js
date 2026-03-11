@@ -405,6 +405,9 @@ router.get('/lectures/:shortId(\\d+)/:slug_en?/:slug_ar?', async (req, res) => {
         const transcriptCount = await Transcript.countDocuments({ lectureId: lecture._id });
         hasTranscript = transcriptCount > 0;
 
+        // Debug: Log transcript lookup
+        console.log(`📝 Transcript lookup for lecture ${lecture._id} (shortId: ${lecture.shortId}): ${transcriptCount} segments found`);
+
         if (hasTranscript) {
           // Get first few segments for SEO excerpt
           const excerptSegments = await Transcript.find({ lectureId: lecture._id })
@@ -417,9 +420,11 @@ router.get('/lectures/:shortId(\\d+)/:slug_en?/:slug_ar?', async (req, res) => {
             transcriptExcerpt = excerptSegments.map(s => s.text).join(' ').substring(0, 1000);
           }
         }
+      } else {
+        console.warn('⚠️ Transcript model not available');
       }
     } catch (err) {
-      console.warn('Failed to fetch transcript excerpt:', err.message);
+      console.warn('❌ Failed to fetch transcript excerpt:', err.message);
     }
 
     res.render('public/lecture', {
