@@ -1138,22 +1138,33 @@ Upload locally-optimized audio files directly to Oracle Cloud Infrastructure.
 - [ ] WhatsApp, Telegram, Twitter, Facebook
 - [ ] Copy link button
 
-#### 4.4 Transcript Search with Timestamps ⬜ NOT STARTED
-**Priority**: LOWER | **Status**: Future
+#### 4.4 Transcript Search with Timestamps ✅ IN PROGRESS
+**Priority**: MEDIUM | **Status**: Partially Complete
+**Last Updated**: 2026-03-11
 
-**Phase A - Transcription:**
-- [ ] Choose transcription service (Whisper API, etc.)
-- [ ] Process all audio files
-- [ ] Store transcripts with timestamps
+**Phase A - Transcription:** ✅ COMPLETE
+- [x] Transcripts stored in separate `searchdb` database
+- [x] `Transcript` model with `startTimeSec`, `text`, `speaker` fields
+- [x] Transcripts linked to lectures via `shortId`
 
-**Phase B - Search:**
-- [ ] Implement full-text search
-- [ ] Build search UI with timestamp results
-- [ ] Add "jump to timestamp" in player
+**Phase B - Search:** ✅ COMPLETE
+- [x] Full-text search via MongoDB Atlas Search
+- [x] Search API at `/api/search`
+- [x] Search page at `/search` with results showing matching segments
 
-**Phase C - Display:**
-- [ ] Show transcript alongside player
-- [ ] Highlight current spoken text
+**Phase C - Display:** ✅ COMPLETE
+- [x] Transcript section on lecture detail page (`views/public/lecture.ejs`)
+- [x] Click-to-expand full transcript (AJAX loaded)
+- [x] Click timestamp to seek audio player
+- [x] **FIX (2026-03-11)**: Added `seekToTime(seconds)` method to AudioPlayer
+  - Previous `seek(e)` expected event object, not seconds
+  - Fixed "non-finite value" error when clicking transcript timestamps
+  - Files: `public/js/audioPlayer.js`, `views/public/lecture.ejs`
+- [x] Highlight active segment during playback
+
+**Remaining:**
+- [ ] Real-time transcript sync (auto-scroll with playback)
+- [ ] Search within transcript on lecture page
 
 #### 4.5 English Version of Site ⬜ NOT STARTED
 **Priority**: LOWER | **Status**: Future
