@@ -1086,6 +1086,380 @@ router.get('/api/sheikhs', isAdmin, async (req, res) => {
   }
 });
 
+// =============================================================================
+// TRANSCRIPT EDITING API ROUTES
+// =============================================================================
+
+// @route   GET /admin/api/lectures/:id/transcript
+// @desc    Get transcript segments for editing
+// @access  Private (Admin only)
+router.get('/api/lectures/:id/transcript', isAdmin, async (req, res) => {
+  try {
+    const { Lecture, Transcript } = require('../../models');
+
+    const lecture = await Lecture.findById(req.params.id).select('shortId titleArabic').lean();
+    if (!lecture) {
+      return res.status(404).json({ success: false, error: 'Lecture not found' });
+    }
+
+    if (!Transcript) {
+      return res.status(503).json({ success: false, error: 'Transcript service not available' });
+    }
+
+    // Fetch transcript by shortId from searchdb
+    const segments = await Transcript.find({ shortId: lecture.shortId })
+      .sort({ startTimeSec: 1 })
+      .lean();
+
+    res.json({
+      success: true,
+      lectureId: lecture._id,
+      shortId: lecture.shortId,
+      title: lecture.titleArabic,
+      segments: segments.map(seg => ({
+        _id: seg._id,
+        text: seg.text,
+        speaker: seg.speaker || '',
+        startTimeSec: seg.startTimeSec,
+        startTimeMs: seg.startTimeMs,
+        endTimeMs: seg.endTimeMs
+      })),
+      count: segments.length
+    });
+  } catch (error) {
+    console.error('Get transcript error:', error);
+    res.status(500).json({ success: false, error: 'Error fetching transcript' });
+  }
+});
+
+// @route   PUT /admin/api/lectures/:id/transcript/:segmentId
+// @desc    Update a single transcript segment
+// @access  Private (Admin only)
+router.put('/api/lectures/:id/transcript/:segmentId', isAdmin, async (req, res) => {
+  try {
+    const { Transcript } = require('../../models');
+
+    if (!Transcript) {
+      return res.status(503).json({ success: false, error: 'Transcript service not available' });
+    }
+
+    const { text, speaker } = req.body;
+
+    if (!text || typeof text !== 'string') {
+      return res.status(400).json({ success: false, error: 'Text is required' });
+    }
+
+    const segment = await Transcript.findByIdAndUpdate(
+      req.params.segmentId,
+      {
+        text: text.trim(),
+        speaker: speaker ? speaker.trim() : undefined
+      },
+      { new: true }
+    );
+
+    if (!segment) {
+      return res.status(404).json({ success: false, error: 'Segment not found' });
+    }
+
+    res.json({
+      success: true,
+      message: 'Segment updated',
+      segment: {
+        _id: segment._id,
+        text: segment.text,
+        speaker: segment.speaker,
+        startTimeSec: segment.startTimeSec
+      }
+    });
+  } catch (error) {
+    console.error('Update transcript segment error:', error);
+    res.status(500).json({ success: false, error: 'Error updating segment' });
+  }
+});
+
+// @route   PUT /admin/api/lectures/:id/transcript
+// @desc    Bulk update transcript segments
+// @access  Private (Admin only)
+router.put('/api/lectures/:id/transcript', isAdmin, async (req, res) => {
+  try {
+    const { Lecture, Transcript } = require('../../models');
+
+    const lecture = await Lecture.findById(req.params.id).select('shortId').lean();
+    if (!lecture) {
+      return res.status(404).json({ success: false, error: 'Lecture not found' });
+    }
+
+    if (!Transcript) {
+      return res.status(503).json({ success: false, error: 'Transcript service not available' });
+    }
+
+    const { segments } = req.body;
+
+    if (!Array.isArray(segments)) {
+      return res.status(400).json({ success: false, error: 'Segments array is required' });
+    }
+
+    // Update each segment
+    const updateResults = await Promise.all(
+      segments.map(async (seg) => {
+        if (!seg._id || !seg.text) return { success: false, id: seg._id };
+
+        try {
+          await Transcript.findByIdAndUpdate(seg._id, {
+            text: seg.text.trim(),
+            speaker: seg.speaker ? seg.speaker.trim() : undefined
+          });
+          return { success: true, id: seg._id };
+        } catch (err) {
+          return { success: false, id: seg._id, error: err.message };
+        }
+      })
+    );
+
+    const successCount = updateResults.filter(r => r.success).length;
+
+    res.json({
+      success: true,
+      message: `Updated ${successCount} of ${segments.length} segments`,
+      results: updateResults
+    });
+  } catch (error) {
+    console.error('Bulk update transcript error:', error);
+    res.status(500).json({ success: false, error: 'Error updating transcript' });
+  }
+});
+
+// @route   DELETE /admin/api/lectures/:id/transcript/:segmentId
+// @desc    Delete a transcript segment
+// @access  Private (Admin only)
+router.delete('/api/lectures/:id/transcript/:segmentId', isAdmin, async (req, res) => {
+  try {
+    const { Transcript } = require('../../models');
+
+    if (!Transcript) {
+      return res.status(503).json({ success: false, error: 'Transcript service not available' });
+    }
+
+    const segment = await Transcript.findByIdAndDelete(req.params.segmentId);
+
+    if (!segment) {
+      return res.status(404).json({ success: false, error: 'Segment not found' });
+    }
+
+    res.json({
+      success: true,
+      message: 'Segment deleted'
+    });
+  } catch (error) {
+    console.error('Delete transcript segment error:', error);
+    res.status(500).json({ success: false, error: 'Error deleting segment' });
+  }
+});
+
+// @route   GET /admin/api/lectures/:id/transcript/export-csv
+// @desc    Download transcript as CSV file
+// @access  Private (Admin only)
+router.get('/api/lectures/:id/transcript/export-csv', isAdmin, async (req, res) => {
+  try {
+    const { Lecture, Transcript } = require('../../models');
+
+    const lecture = await Lecture.findById(req.params.id).select('shortId titleArabic').lean();
+    if (!lecture) {
+      return res.status(404).send('Lecture not found');
+    }
+
+    if (!Transcript) {
+      return res.status(503).send('Transcript service not available');
+    }
+
+    // Fetch transcript segments
+    const segments = await Transcript.find({ shortId: lecture.shortId })
+      .sort({ startTimeSec: 1 })
+      .lean();
+
+    if (segments.length === 0) {
+      return res.status(404).send('No transcript found');
+    }
+
+    // Format time helper
+    const formatTime = (seconds) => {
+      const h = Math.floor(seconds / 3600);
+      const m = Math.floor((seconds % 3600) / 60);
+      const s = Math.floor(seconds % 60);
+      const ms = Math.round((seconds % 1) * 1000);
+      return `${h.toString().padStart(2, '0')}:${m.toString().padStart(2, '0')}:${s.toString().padStart(2, '0')}.${ms.toString().padStart(3, '0')}`;
+    };
+
+    // Build CSV content
+    const csvRows = ['Start,End,Text,Speaker'];
+    segments.forEach((seg, index) => {
+      const startTime = formatTime(seg.startTimeSec + (seg.startTimeMs ? seg.startTimeMs / 1000 : 0));
+      const nextSeg = segments[index + 1];
+      const endTime = nextSeg
+        ? formatTime(nextSeg.startTimeSec + (nextSeg.startTimeMs ? nextSeg.startTimeMs / 1000 : 0))
+        : formatTime(seg.startTimeSec + 5);
+
+      const text = seg.text.replace(/"/g, '""');
+      const speaker = (seg.speaker || '').replace(/"/g, '""');
+
+      csvRows.push(`${startTime},${endTime},"${text}","${speaker}"`);
+    });
+
+    const csvContent = '\ufeff' + csvRows.join('\n');
+
+    res.setHeader('Content-Type', 'text/csv; charset=utf-8');
+    res.setHeader('Content-Disposition', `attachment; filename=transcript-${lecture.shortId}.csv`);
+    res.send(csvContent);
+  } catch (error) {
+    console.error('Export transcript CSV error:', error);
+    res.status(500).send('Error exporting transcript');
+  }
+});
+
+// @route   POST /admin/api/lectures/:id/transcript/export-csv
+// @desc    Export transcript to CSV file (save to server)
+// @access  Private (Admin only)
+router.post('/api/lectures/:id/transcript/export-csv', isAdmin, async (req, res) => {
+  try {
+    const { Lecture, Transcript } = require('../../models');
+    const fs = require('fs');
+    const path = require('path');
+
+    const lecture = await Lecture.findById(req.params.id).select('shortId titleArabic').lean();
+    if (!lecture) {
+      return res.status(404).json({ success: false, error: 'Lecture not found' });
+    }
+
+    if (!Transcript) {
+      return res.status(503).json({ success: false, error: 'Transcript service not available' });
+    }
+
+    // Fetch transcript segments
+    const segments = await Transcript.find({ shortId: lecture.shortId })
+      .sort({ startTimeSec: 1 })
+      .lean();
+
+    if (segments.length === 0) {
+      return res.status(404).json({ success: false, error: 'No transcript found' });
+    }
+
+    // Format time helper
+    const formatTime = (seconds) => {
+      const h = Math.floor(seconds / 3600);
+      const m = Math.floor((seconds % 3600) / 60);
+      const s = Math.floor(seconds % 60);
+      const ms = Math.round((seconds % 1) * 1000);
+      return `${h.toString().padStart(2, '0')}:${m.toString().padStart(2, '0')}:${s.toString().padStart(2, '0')}.${ms.toString().padStart(3, '0')}`;
+    };
+
+    // Build CSV content
+    const csvRows = ['Start,End,Text,Speaker'];
+    segments.forEach((seg, index) => {
+      const startTime = formatTime(seg.startTimeSec + (seg.startTimeMs ? seg.startTimeMs / 1000 : 0));
+      // Use next segment's start as end, or add 5 seconds
+      const nextSeg = segments[index + 1];
+      const endTime = nextSeg
+        ? formatTime(nextSeg.startTimeSec + (nextSeg.startTimeMs ? nextSeg.startTimeMs / 1000 : 0))
+        : formatTime(seg.startTimeSec + 5);
+
+      // Escape CSV fields
+      const text = seg.text.replace(/"/g, '""');
+      const speaker = (seg.speaker || '').replace(/"/g, '""');
+
+      csvRows.push(`${startTime},${endTime},"${text}","${speaker}"`);
+    });
+
+    const csvContent = '\ufeff' + csvRows.join('\n'); // BOM for UTF-8
+
+    // Option to save to file or return as download
+    if (req.body.saveToFile) {
+      const transcriptsDir = path.join(__dirname, '../../data/transcripts');
+      if (!fs.existsSync(transcriptsDir)) {
+        fs.mkdirSync(transcriptsDir, { recursive: true });
+      }
+
+      const filename = `transcript-${lecture.shortId}.csv`;
+      const filepath = path.join(transcriptsDir, filename);
+      fs.writeFileSync(filepath, csvContent, 'utf8');
+
+      // Update sourceCsv field for all segments
+      await Transcript.updateMany(
+        { shortId: lecture.shortId },
+        { sourceCsv: filename }
+      );
+
+      res.json({
+        success: true,
+        message: 'CSV exported',
+        filename,
+        path: filepath,
+        segmentCount: segments.length
+      });
+    } else {
+      // Return as downloadable file
+      res.setHeader('Content-Type', 'text/csv; charset=utf-8');
+      res.setHeader('Content-Disposition', `attachment; filename=transcript-${lecture.shortId}.csv`);
+      res.send(csvContent);
+    }
+  } catch (error) {
+    console.error('Export transcript CSV error:', error);
+    res.status(500).json({ success: false, error: 'Error exporting transcript' });
+  }
+});
+
+// @route   POST /admin/api/lectures/:id/transcript/add-segment
+// @desc    Add a new transcript segment
+// @access  Private (Admin only)
+router.post('/api/lectures/:id/transcript/add-segment', isAdmin, async (req, res) => {
+  try {
+    const { Lecture, Transcript } = require('../../models');
+
+    const lecture = await Lecture.findById(req.params.id).select('shortId').lean();
+    if (!lecture) {
+      return res.status(404).json({ success: false, error: 'Lecture not found' });
+    }
+
+    if (!Transcript) {
+      return res.status(503).json({ success: false, error: 'Transcript service not available' });
+    }
+
+    const { text, speaker, startTimeSec, startTimeMs, endTimeMs } = req.body;
+
+    if (!text || startTimeSec === undefined) {
+      return res.status(400).json({ success: false, error: 'Text and startTimeSec are required' });
+    }
+
+    const segment = new Transcript({
+      lectureId: req.params.id,
+      shortId: lecture.shortId,
+      text: text.trim(),
+      speaker: speaker ? speaker.trim() : undefined,
+      startTimeSec: parseFloat(startTimeSec),
+      startTimeMs: startTimeMs ? parseInt(startTimeMs) : undefined,
+      endTimeMs: endTimeMs ? parseInt(endTimeMs) : undefined
+    });
+
+    await segment.save();
+
+    res.json({
+      success: true,
+      message: 'Segment added',
+      segment: {
+        _id: segment._id,
+        text: segment.text,
+        speaker: segment.speaker,
+        startTimeSec: segment.startTimeSec
+      }
+    });
+  } catch (error) {
+    console.error('Add transcript segment error:', error);
+    res.status(500).json({ success: false, error: 'Error adding segment' });
+  }
+});
+
+// =============================================================================
+
 // @route   POST /admin/lectures/:id/assign-to-series
 // @desc    Assign a lecture to a series
 // @access  Private (Admin only)
