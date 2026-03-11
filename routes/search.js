@@ -312,6 +312,8 @@ async function performAtlasSearch(query) {
         startTimeSec: '$topHit.startTimeSec',
         startTimeMs: '$topHit.startTimeMs',
         lectureTitle: '$topHit.lecture.titleArabic',
+        lectureShortId: '$topHit.lecture.shortId',
+        lectureSlugEn: '$topHit.lecture.slug_en',
         audioUrl: '$topHit.lecture.audioUrl',
         audioFileName: '$topHit.lecture.audioFileName',
         score: '$topHit.score',
@@ -348,7 +350,7 @@ async function performLocalSearch(query) {
   )
     .sort({ score: { $meta: 'textScore' } })
     .limit(100)  // Get more results before grouping
-    .populate('lectureId', 'titleArabic audioUrl audioFileName')
+    .populate('lectureId', 'titleArabic shortId slug_en audioUrl audioFileName')
     .lean();
 
   // Group results by lectureId
@@ -366,6 +368,8 @@ async function performLocalSearch(query) {
       startTimeSec: r.startTimeSec,
       startTimeMs: r.startTimeMs,
       lectureTitle: r.lectureId?.titleArabic,
+      lectureShortId: r.lectureId?.shortId,
+      lectureSlugEn: r.lectureId?.slug_en,
       audioUrl: r.lectureId?.audioUrl,
       audioFileName: r.lectureId?.audioFileName,
       score: r.score

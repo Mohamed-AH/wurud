@@ -132,6 +132,16 @@
             تشغيل من هنا
           </button>
           <% } %>
+          <% if (result.lectureShortId) { %>
+          <a
+            href="https://rasmihassan.com/lectures/<%= result.lectureShortId %><%= result.lectureSlugEn ? '/' + result.lectureSlugEn : '' %>"
+            class="goto-lecture-btn"
+            target="_blank"
+          >
+            <span class="goto-icon">&#8599;</span>
+            الذهاب للمحاضرة
+          </a>
+          <% } %>
 
           <% if (result.additionalHits && result.additionalHits.length > 0) { %>
           <button

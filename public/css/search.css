@@ -405,6 +405,34 @@ body {
   font-size: 0.85rem;
 }
 
+/* Go to Lecture Button */
+.goto-lecture-btn {
+  background: transparent;
+  color: var(--color-gold-dark);
+  border: 2px solid var(--color-gold);
+  padding: 0.65rem 1.25rem;
+  font-family: var(--font-naskh);
+  font-size: 0.95rem;
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  text-decoration: none;
+  transition: all 0.2s;
+}
+
+.goto-lecture-btn:hover {
+  background: var(--color-gold);
+  color: var(--color-white);
+  transform: translateY(-2px);
+  box-shadow: var(--shadow-sm);
+}
+
+.goto-icon {
+  font-size: 0.9rem;
+}
+
 /* Result Actions */
 .result-actions {
   display: flex;
