@@ -259,8 +259,19 @@ router.get('/', async (req, res) => {
     const validTabs = ['series', 'lectures', 'khutbas'];
     const activeTab = validTabs.includes(req.query.tab) ? req.query.tab : 'series';
 
+    // SEO metadata for homepage - emphasizing transcript search
+    const locale = res.locals.locale || 'ar';
+    const metaDescription = locale === 'ar'
+      ? 'البحث في التفريغ الصوتي لدروس الشيخ حسن بن محمد الدغريري - من الكلمة المكتوبة إلى اللحظة المسموعة. ابحث في نصوص أكثر من ' + (totalLectureCount || 500) + ' درس صوتي في العقيدة والفقه والتفسير.'
+      : 'Search audio transcripts of Sheikh Hasan Dhaghriri lectures. From written word to audio moment. Search text of ' + (totalLectureCount || 500) + '+ Islamic lectures on Aqeedah, Fiqh, and Tafsir.';
+    const metaKeywords = locale === 'ar'
+      ? 'البحث في التفريغ الصوتي, تفريغ الدروس, الشيخ حسن الدغريري, البحث في نصوص الدروس, محاضرات إسلامية, جامع الورود جدة, شرح كتاب التوحيد, شرح عمدة الأحكام, دروس العقيدة'
+      : 'audio transcript search, Islamic lecture transcripts, Sheikh Hasan Dhaghriri, search lecture text, Islamic lectures, Jeddah, Aqeedah, Fiqh, Tafsir';
+
     res.render('public/index', {
-      title: 'المكتبة الصوتية',
+      title: locale === 'ar' ? 'البحث في التفريغ الصوتي' : 'Audio Transcript Search',
+      metaDescription,
+      metaKeywords,
       seriesList: [],           // Empty - loaded via API
       standaloneLectures: [],   // Empty - loaded via API
       khutbaSeries: [],         // Empty - loaded via API
@@ -428,8 +439,26 @@ router.get('/lectures/:shortId(\\d+)/:slug_en?/:slug_ar?', async (req, res) => {
       console.warn('❌ Failed to fetch transcript excerpt:', err.message);
     }
 
+    // Build meta description including transcript excerpt for SEO
+    const locale = res.locals.locale || 'ar';
+    let metaDescription;
+    if (transcriptExcerpt) {
+      metaDescription = locale === 'ar'
+        ? `${lecture.titleArabic} - ${transcriptExcerpt.substring(0, 150)}...`
+        : `${lecture.titleEnglish || lecture.titleArabic} - ${transcriptExcerpt.substring(0, 150)}...`;
+    } else if (lecture.descriptionArabic) {
+      metaDescription = locale === 'ar'
+        ? lecture.descriptionArabic.substring(0, 200)
+        : (lecture.descriptionEnglish || lecture.descriptionArabic).substring(0, 200);
+    } else {
+      metaDescription = locale === 'ar'
+        ? `${lecture.titleArabic} - درس صوتي من دروس الشيخ ${lecture.sheikhId?.nameArabic || ''}`
+        : `${lecture.titleEnglish || lecture.titleArabic} - Audio lecture by Sheikh ${lecture.sheikhId?.nameEnglish || lecture.sheikhId?.nameArabic || ''}`;
+    }
+
     res.render('public/lecture', {
       title: lecture.titleArabic,
+      metaDescription,
       lecture,
       relatedLectures,
       canonicalPath: canonicalPath || `/lectures/${lecture._id}`,

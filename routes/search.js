@@ -7,6 +7,7 @@ const {
   stripTimestamps,
   stripSheikhPrefix
 } = require('../utils/arabicSearch');
+const { sanitizeSearchInput, sanitizeComment } = require('../utils/validators');
 
 // Config from environment
 const SEARCH_MODE = process.env.SEARCH_MODE || 'atlas';
@@ -36,7 +37,8 @@ router.get('/', (req, res) => {
  * GET /search/results - Perform search
  */
 router.get('/results', async (req, res) => {
-  const query = (req.query.q || '').trim();
+  // Sanitize search input to prevent XSS
+  const query = sanitizeSearchInput(req.query.q || '', 200);
 
   if (!query) {
     return res.render('search', {
@@ -108,7 +110,8 @@ router.get('/results', async (req, res) => {
  * GET /search/api - JSON API for enhanced search (used by homepage)
  */
 router.get('/api', async (req, res) => {
-  const query = (req.query.q || '').trim();
+  // Sanitize search input to prevent XSS
+  const query = sanitizeSearchInput(req.query.q || '', 200);
 
   if (!query) {
     return res.json({
@@ -193,11 +196,14 @@ router.post('/feedback', async (req, res) => {
       return res.status(400).json({ error: 'يرجى تحديد ما إذا كانت النتائج مفيدة' });
     }
 
+    // Sanitize comment to prevent XSS
+    const sanitizedComment = comment ? sanitizeComment(comment, 300) : undefined;
+
     // Update search log
     const result = await SearchLog.findByIdAndUpdate(logId, {
       relevant: relevantBool,
       relevantAt: new Date(),
-      comment: comment ? String(comment).slice(0, 300) : undefined
+      comment: sanitizedComment
     }, { new: true });
 
     if (result) {

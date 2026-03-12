@@ -37,9 +37,21 @@
     font-size: 36px;
     font-weight: 700;
     color: #FAF7F2;
-    margin-bottom: 32px;
+    margin-bottom: 12px;
     line-height: 1.8;
     text-shadow: 2px 2px 6px rgba(0, 0, 0, 0.3);
+  }
+
+  .search-hero-subheading {
+    font-family: var(--font-arabic-body);
+    font-size: 18px;
+    font-weight: 400;
+    color: rgba(250, 247, 242, 0.85);
+    margin-bottom: 28px;
+    line-height: 1.6;
+    max-width: 700px;
+    margin-left: auto;
+    margin-right: auto;
   }
 
   .search-container {
@@ -577,11 +589,18 @@
 
     .search-hero-quote {
       font-size: 20px;
-      margin-bottom: 20px;
+      margin-bottom: 10px;
       padding: 0 8px;
       word-wrap: break-word;
       overflow-wrap: break-word;
       line-height: 1.6;
+    }
+
+    .search-hero-subheading {
+      font-size: 14px;
+      margin-bottom: 20px;
+      padding: 0 12px;
+      line-height: 1.5;
     }
 
     .search-hero::before {
@@ -1153,7 +1172,14 @@
     .search-hero-quote {
       font-size: 17px;
       line-height: 1.5;
+      margin-bottom: 8px;
+    }
+
+    .search-hero-subheading {
+      font-size: 13px;
       margin-bottom: 16px;
+      padding: 0 8px;
+      line-height: 1.4;
     }
 
     .search-hero::before {
@@ -1264,7 +1290,14 @@
     .search-hero-quote {
       font-size: 15px;
       line-height: 1.4;
+      margin-bottom: 6px;
+    }
+
+    .search-hero-subheading {
+      font-size: 12px;
       margin-bottom: 12px;
+      padding: 0 4px;
+      line-height: 1.3;
     }
 
     .search-hero::before {
@@ -1792,14 +1825,199 @@
       text-align: center;
     }
   }
+
+  /* Search Feedback Prompt Styles */
+  .search-feedback-prompt {
+    display: none;
+    background: linear-gradient(135deg, #F5EBE0 0%, #FAF7F2 100%);
+    border: 2px solid #C19A6B;
+    border-radius: 12px;
+    padding: 16px 20px;
+    margin-bottom: var(--space-lg);
+    animation: fadeIn 0.3s ease-out;
+  }
+
+  .search-feedback-prompt.active {
+    display: block;
+  }
+
+  .search-feedback-prompt.submitted {
+    display: none;
+  }
+
+  @keyframes fadeIn {
+    from { opacity: 0; transform: translateY(-10px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+
+  .feedback-question {
+    font-family: var(--font-arabic-display);
+    font-size: 16px;
+    font-weight: 600;
+    color: #5C4033;
+    margin-bottom: 12px;
+    text-align: center;
+  }
+
+  .feedback-buttons {
+    display: flex;
+    justify-content: center;
+    gap: 12px;
+    margin-bottom: 12px;
+  }
+
+  .feedback-btn {
+    padding: 10px 24px;
+    border: 2px solid #C19A6B;
+    border-radius: 8px;
+    background: transparent;
+    color: #5C4033;
+    font-family: var(--font-arabic-body);
+    font-size: 15px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+
+  .feedback-btn:hover {
+    background: rgba(193, 154, 107, 0.15);
+    transform: translateY(-1px);
+  }
+
+  .feedback-btn.selected {
+    background: var(--accent-gold);
+    color: var(--primary-dark);
+    font-weight: 600;
+    border-color: var(--accent-gold);
+  }
+
+  .feedback-btn.yes.selected {
+    background: #4CAF50;
+    border-color: #4CAF50;
+    color: white;
+  }
+
+  .feedback-btn.no.selected {
+    background: #dc3545;
+    border-color: #dc3545;
+    color: white;
+  }
+
+  .feedback-comment-section {
+    display: none;
+    margin-top: 12px;
+  }
+
+  .feedback-comment-section.active {
+    display: block;
+  }
+
+  .feedback-comment-input {
+    width: 100%;
+    padding: 10px 14px;
+    border: 2px solid #C19A6B;
+    border-radius: 8px;
+    font-family: var(--font-arabic-body);
+    font-size: 14px;
+    background: white;
+    color: var(--text-primary);
+    resize: vertical;
+    min-height: 60px;
+    max-height: 120px;
+  }
+
+  .feedback-comment-input::placeholder {
+    color: #8B7355;
+  }
+
+  .feedback-comment-input:focus {
+    outline: none;
+    border-color: var(--accent-gold);
+    box-shadow: 0 0 0 3px rgba(193, 154, 107, 0.2);
+  }
+
+  .feedback-submit-btn {
+    display: block;
+    margin: 12px auto 0;
+    padding: 10px 32px;
+    background: var(--accent-gold);
+    color: var(--primary-dark);
+    border: none;
+    border-radius: 8px;
+    font-family: var(--font-arabic-body);
+    font-size: 15px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s ease;
+  }
+
+  .feedback-submit-btn:hover {
+    background: var(--accent-amber);
+    transform: translateY(-1px);
+  }
+
+  .feedback-submit-btn:disabled {
+    background: #ccc;
+    cursor: not-allowed;
+    transform: none;
+  }
+
+  .feedback-thank-you {
+    display: none;
+    text-align: center;
+    padding: 16px;
+    background: linear-gradient(135deg, #E8F5E9 0%, #C8E6C9 100%);
+    border: 2px solid #4CAF50;
+    border-radius: 12px;
+    margin-bottom: var(--space-lg);
+  }
+
+  .feedback-thank-you.active {
+    display: block;
+    animation: fadeIn 0.3s ease-out;
+  }
+
+  .feedback-thank-you-icon {
+    font-size: 32px;
+    margin-bottom: 8px;
+  }
+
+  .feedback-thank-you-text {
+    font-family: var(--font-arabic-display);
+    font-size: 16px;
+    font-weight: 600;
+    color: #2E7D32;
+  }
+
+  /* Responsive feedback styles */
+  @media (max-width: 768px) {
+    .feedback-buttons {
+      flex-direction: column;
+      gap: 8px;
+    }
+
+    .feedback-btn {
+      width: 100%;
+      justify-content: center;
+    }
+  }
 </style>
 
 <!-- Search Hero -->
 <div class="search-hero">
   <div class="search-hero-quote">
     <%= locale === 'ar'
-      ? '"طَلَبُ الْعِلْمِ فَرِيضَةٌ عَلَى كُلِّ مُسْلِمٍ"'
-      : '"Seeking knowledge is obligatory upon every Muslim"'
+      ? 'البحث في التفريغ الصوتي'
+      : 'Search Audio Transcripts'
+    %>
+  </div>
+  <div class="search-hero-subheading">
+    <%= locale === 'ar'
+      ? 'من الكلمة المكتوبة إلى اللحظة المسموعة.. طريقك الأقصر لضبط المسائل وتحرير الفوائد'
+      : 'From written word to audio moment... your shortest path to precise Islamic scholarship'
     %>
   </div>
   <div class="search-container">
@@ -1829,13 +2047,49 @@
 <div class="enhanced-search-results" id="enhancedSearchResults">
   <div class="search-results-header">
     <div>
-      <span class="search-results-title">نتائج البحث في النصوص</span>
+      <span class="search-results-title"><%= locale === 'ar' ? 'نتائج البحث في النصوص' : 'Transcript Search Results' %></span>
       <span class="search-results-count" id="searchResultsCount"></span>
     </div>
     <button class="clear-search-btn" id="clearSearchBtn" onclick="clearEnhancedSearch()">
       <span class="close-icon">✕</span>
-      إغلاق البحث
+      <%= locale === 'ar' ? 'إغلاق البحث' : 'Close Search' %>
     </button>
+  </div>
+
+  <!-- Search Feedback Prompt -->
+  <div class="search-feedback-prompt" id="searchFeedbackPrompt">
+    <div class="feedback-question">
+      <%= locale === 'ar' ? 'هل وجدت ما كنت تبحث عنه؟' : 'Did you find what you were looking for?' %>
+    </div>
+    <div class="feedback-buttons">
+      <button type="button" class="feedback-btn yes" onclick="selectFeedback(true)" id="feedbackYesBtn">
+        <span>✓</span>
+        <%= locale === 'ar' ? 'نعم' : 'Yes' %>
+      </button>
+      <button type="button" class="feedback-btn no" onclick="selectFeedback(false)" id="feedbackNoBtn">
+        <span>✕</span>
+        <%= locale === 'ar' ? 'لا' : 'No' %>
+      </button>
+    </div>
+    <div class="feedback-comment-section" id="feedbackCommentSection">
+      <textarea
+        class="feedback-comment-input"
+        id="feedbackCommentInput"
+        placeholder="<%= locale === 'ar' ? 'أضف تعليقاً (اختياري)...' : 'Add a comment (optional)...' %>"
+        maxlength="300"
+      ></textarea>
+      <button type="button" class="feedback-submit-btn" onclick="submitSearchFeedback()" id="feedbackSubmitBtn">
+        <%= locale === 'ar' ? 'إرسال' : 'Submit' %>
+      </button>
+    </div>
+  </div>
+
+  <!-- Thank You Message -->
+  <div class="feedback-thank-you" id="feedbackThankYou">
+    <div class="feedback-thank-you-icon">✓</div>
+    <div class="feedback-thank-you-text">
+      <%= locale === 'ar' ? 'شكراً لتقييمك!' : 'Thank you for your feedback!' %>
+    </div>
   </div>
 
   <div class="search-results-list" id="searchResultsList">

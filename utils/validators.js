@@ -208,6 +208,53 @@ const searchValidation = [
 ];
 
 /**
+ * Sanitize search input - removes potential XSS and normalizes input
+ * Use this for all user-provided search strings
+ */
+const sanitizeSearchInput = (input, maxLength = 200) => {
+  if (!input || typeof input !== 'string') return '';
+
+  // Trim and limit length
+  let sanitized = input.trim().substring(0, maxLength);
+
+  // Remove null bytes and control characters (except newlines/tabs for comments)
+  sanitized = sanitized.replace(/[\x00-\x08\x0B\x0C\x0E-\x1F\x7F]/g, '');
+
+  // HTML entity encode dangerous characters to prevent XSS
+  sanitized = sanitized
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#x27;');
+
+  return sanitized;
+};
+
+/**
+ * Sanitize comment input - allows more characters but still prevents XSS
+ */
+const sanitizeComment = (input, maxLength = 300) => {
+  if (!input || typeof input !== 'string') return '';
+
+  // Trim and limit length
+  let sanitized = input.trim().substring(0, maxLength);
+
+  // Remove null bytes and most control characters but keep newlines and tabs
+  sanitized = sanitized.replace(/[\x00-\x08\x0B\x0C\x0E-\x1F\x7F]/g, '');
+
+  // HTML entity encode dangerous characters
+  sanitized = sanitized
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#x27;');
+
+  return sanitized;
+};
+
+/**
  * Sanitize user input to prevent NoSQL injection
  * Removes $ and . from object keys
  */
@@ -238,5 +285,7 @@ module.exports = {
   playCountValidation,
   lectureUploadValidation,
   searchValidation,
-  sanitizeMongoQuery
+  sanitizeMongoQuery,
+  sanitizeSearchInput,
+  sanitizeComment
 };

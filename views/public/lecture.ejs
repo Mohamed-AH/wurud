@@ -675,6 +675,37 @@
   }
 </style>
 
+<!-- Structured Data for SEO -->
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "AudioObject",
+  "name": "<%= lecture.titleArabic.replace(/"/g, '\\"') %>",
+  <% if (lecture.titleEnglish) { %>"alternateName": "<%= lecture.titleEnglish.replace(/"/g, '\\"') %>",<% } %>
+  "description": "<%= lecture.descriptionArabic ? lecture.descriptionArabic.replace(/"/g, '\\"').replace(/\n/g, ' ').substring(0, 300) : (transcriptExcerpt ? transcriptExcerpt.replace(/"/g, '\\"').replace(/\n/g, ' ').substring(0, 300) : lecture.titleArabic.replace(/"/g, '\\"')) %>",
+  "duration": "<%= lecture.duration ? 'PT' + Math.floor(lecture.duration / 60) + 'M' + (lecture.duration % 60) + 'S' : '' %>",
+  <% if (lecture.audioUrl) { %>"contentUrl": "<%= lecture.audioUrl %>",<% } %>
+  "encodingFormat": "audio/mpeg",
+  "inLanguage": "ar",
+  "creator": {
+    "@type": "Person",
+    "name": "<%= lecture.sheikhId ? (lecture.sheikhId.nameArabic || '').replace(/"/g, '\\"') : '' %>",
+    "url": "<%= lecture.sheikhId && lecture.sheikhId.shortId ? 'https://rasmihassan.com/sheikhs/' + lecture.sheikhId.shortId : 'https://rasmihassan.com' %>"
+  },
+  <% if (lecture.seriesId) { %>
+  "isPartOf": {
+    "@type": "PodcastSeries",
+    "name": "<%= lecture.seriesId.titleArabic ? lecture.seriesId.titleArabic.replace(/"/g, '\\"') : '' %>",
+    "url": "<%= lecture.seriesId.shortId ? 'https://rasmihassan.com/series/' + lecture.seriesId.shortId : '' %>"
+  },
+  <% } %>
+  <% if (hasTranscript && transcriptExcerpt) { %>
+  "transcript": "<%= transcriptExcerpt.replace(/"/g, '\\"').replace(/\n/g, ' ') %>",
+  <% } %>
+  "url": "https://rasmihassan.com<%= canonicalPath %>"
+}
+</script>
+
 <div class="lecture-detail-page">
   <!-- Breadcrumb -->
   <nav class="breadcrumb">

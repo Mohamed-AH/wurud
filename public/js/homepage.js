@@ -967,12 +967,16 @@
     query: '',
     results: [],
     searchLogId: null,
-    currentPlayingBtn: null
+    currentPlayingBtn: null,
+    feedbackSelected: null,
+    feedbackSubmitted: false
   };
 
   // DOM elements
   let searchInput, searchResultsContainer, searchResultsList, searchResultsCount;
   let searchAudioPlayer;
+  let feedbackPrompt, feedbackYesBtn, feedbackNoBtn, feedbackCommentSection;
+  let feedbackCommentInput, feedbackSubmitBtn, feedbackThankYou;
 
   // Get current locale
   function getLocale() {
@@ -1026,12 +1030,22 @@
     searchResultsCount = document.getElementById('searchResultsCount');
     searchAudioPlayer = document.getElementById('searchAudioPlayer');
 
+    // Feedback elements
+    feedbackPrompt = document.getElementById('searchFeedbackPrompt');
+    feedbackYesBtn = document.getElementById('feedbackYesBtn');
+    feedbackNoBtn = document.getElementById('feedbackNoBtn');
+    feedbackCommentSection = document.getElementById('feedbackCommentSection');
+    feedbackCommentInput = document.getElementById('feedbackCommentInput');
+    feedbackSubmitBtn = document.getElementById('feedbackSubmitBtn');
+    feedbackThankYou = document.getElementById('feedbackThankYou');
+
     console.log('[HERO SEARCH] Elements found:', {
       searchInput: !!searchInput,
       searchResultsContainer: !!searchResultsContainer,
       searchResultsList: !!searchResultsList,
       searchResultsCount: !!searchResultsCount,
-      searchAudioPlayer: !!searchAudioPlayer
+      searchAudioPlayer: !!searchAudioPlayer,
+      feedbackPrompt: !!feedbackPrompt
     });
 
     if (!searchInput || !searchResultsContainer) {
@@ -1149,6 +1163,9 @@
 
     searchResultsCount.textContent = `(${ts('resultsIn')} ${results.length} ${ts('lectures')})`;
 
+    // Show feedback prompt if we have results and haven't submitted feedback yet
+    showFeedbackPrompt();
+
     const html = results.map((result, index) => {
       const audioUrl = result.audioUrl || (result.audioFileName ? `/audio/${result.audioFileName}` : '');
       const hasAudio = !!audioUrl;
@@ -1246,11 +1263,16 @@
     searchState.query = '';
     searchState.results = [];
     searchState.searchLogId = null;
+    searchState.feedbackSelected = null;
+    searchState.feedbackSubmitted = false;
 
     // Hide results container
     searchResultsContainer.classList.remove('active');
     searchResultsList.innerHTML = '';
     searchResultsCount.textContent = '';
+
+    // Reset feedback UI
+    hideFeedbackPrompt();
 
     // Clear search input
     if (searchInput) {
@@ -1345,11 +1367,127 @@
     return div.innerHTML;
   }
 
+  /**
+   * Show feedback prompt
+   */
+  function showFeedbackPrompt() {
+    if (!feedbackPrompt || searchState.feedbackSubmitted) return;
+
+    feedbackPrompt.classList.add('active');
+    feedbackPrompt.classList.remove('submitted');
+
+    // Reset button states
+    if (feedbackYesBtn) feedbackYesBtn.classList.remove('selected');
+    if (feedbackNoBtn) feedbackNoBtn.classList.remove('selected');
+    if (feedbackCommentSection) feedbackCommentSection.classList.remove('active');
+    if (feedbackCommentInput) feedbackCommentInput.value = '';
+    if (feedbackThankYou) feedbackThankYou.classList.remove('active');
+  }
+
+  /**
+   * Hide feedback prompt
+   */
+  function hideFeedbackPrompt() {
+    if (feedbackPrompt) {
+      feedbackPrompt.classList.remove('active');
+      feedbackPrompt.classList.remove('submitted');
+    }
+    if (feedbackYesBtn) feedbackYesBtn.classList.remove('selected');
+    if (feedbackNoBtn) feedbackNoBtn.classList.remove('selected');
+    if (feedbackCommentSection) feedbackCommentSection.classList.remove('active');
+    if (feedbackCommentInput) feedbackCommentInput.value = '';
+    if (feedbackThankYou) feedbackThankYou.classList.remove('active');
+  }
+
+  /**
+   * Select feedback (yes/no)
+   */
+  function selectFeedback(isRelevant) {
+    searchState.feedbackSelected = isRelevant;
+
+    // Update button states
+    if (feedbackYesBtn) {
+      feedbackYesBtn.classList.toggle('selected', isRelevant === true);
+    }
+    if (feedbackNoBtn) {
+      feedbackNoBtn.classList.toggle('selected', isRelevant === false);
+    }
+
+    // Show comment section
+    if (feedbackCommentSection) {
+      feedbackCommentSection.classList.add('active');
+    }
+  }
+
+  /**
+   * Submit search feedback
+   */
+  async function submitSearchFeedback() {
+    if (searchState.feedbackSelected === null || !searchState.searchLogId) {
+      console.warn('[FEEDBACK] No feedback selected or no searchLogId');
+      return;
+    }
+
+    // Disable submit button during submission
+    if (feedbackSubmitBtn) {
+      feedbackSubmitBtn.disabled = true;
+    }
+
+    try {
+      const comment = feedbackCommentInput?.value?.trim() || '';
+
+      const response = await fetch('/search/feedback', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          logId: searchState.searchLogId,
+          relevant: searchState.feedbackSelected,
+          comment: comment
+        })
+      });
+
+      const data = await response.json();
+
+      if (data.success) {
+        console.log('[FEEDBACK] Submitted successfully');
+        searchState.feedbackSubmitted = true;
+
+        // Hide feedback prompt and show thank you
+        if (feedbackPrompt) {
+          feedbackPrompt.classList.remove('active');
+          feedbackPrompt.classList.add('submitted');
+        }
+        if (feedbackThankYou) {
+          feedbackThankYou.classList.add('active');
+
+          // Auto-hide thank you message after 3 seconds
+          setTimeout(() => {
+            if (feedbackThankYou) {
+              feedbackThankYou.classList.remove('active');
+            }
+          }, 3000);
+        }
+      } else {
+        console.error('[FEEDBACK] Error:', data.error);
+      }
+    } catch (error) {
+      console.error('[FEEDBACK] Submit error:', error);
+    } finally {
+      if (feedbackSubmitBtn) {
+        feedbackSubmitBtn.disabled = false;
+      }
+    }
+  }
+
   // Expose functions globally
   window.performSearch = performSearch;
   window.clearEnhancedSearch = clearEnhancedSearch;
   window.playSearchAudio = playSearchAudio;
   window.toggleAdditionalResults = toggleAdditionalResults;
+  window.selectFeedback = selectFeedback;
+  window.submitSearchFeedback = submitSearchFeedback;
 
   // Initialize on DOM ready
   if (document.readyState === 'loading') {
