@@ -2004,6 +2004,44 @@
       justify-content: center;
     }
   }
+
+  /* AI Transcript Disclaimer for Search Results */
+  .search-ai-disclaimer {
+    background: rgba(193, 154, 107, 0.06);
+    border: 1px dashed var(--border-light);
+    border-radius: 8px;
+    padding: 10px 14px;
+    margin-bottom: var(--space-md);
+    display: flex;
+    align-items: flex-start;
+    gap: 8px;
+    font-size: 12px;
+    color: var(--text-muted);
+    line-height: 1.5;
+  }
+
+  .search-ai-disclaimer-icon {
+    flex-shrink: 0;
+    font-size: 14px;
+    opacity: 0.6;
+    margin-top: 1px;
+  }
+
+  .search-ai-disclaimer-text {
+    flex: 1;
+  }
+
+  .search-ai-disclaimer-text strong {
+    color: var(--text-secondary);
+    font-weight: 500;
+  }
+
+  @media (max-width: 480px) {
+    .search-ai-disclaimer {
+      padding: 8px 12px;
+      font-size: 11px;
+    }
+  }
 </style>
 
 <!-- Search Hero -->
@@ -2054,6 +2092,18 @@
       <span class="close-icon">✕</span>
       <%= locale === 'ar' ? 'إغلاق البحث' : 'Close Search' %>
     </button>
+  </div>
+
+  <!-- AI Transcript Disclaimer -->
+  <div class="search-ai-disclaimer">
+    <span class="search-ai-disclaimer-icon">&#9432;</span>
+    <div class="search-ai-disclaimer-text">
+      <% if (locale === 'ar') { %>
+        <strong>تنبيه:</strong> النصوص مُنشأة آليًا وقد تحتوي على أخطاء. للمرجعية الدقيقة، استمع للتسجيل الصوتي.
+      <% } else { %>
+        <strong>Note:</strong> Transcripts are AI-generated and may contain errors. For authoritative reference, listen to the audio.
+      <% } %>
+    </div>
   </div>
 
   <!-- Search Feedback Prompt -->
@@ -2955,4 +3005,4 @@ function showMoreSeries(slug) {
 </script>
 
 <!-- Server-side filtering and pagination module (minified) -->
-<script src="/js/homepage.min.js" defer></script>
+<script src="/js/homepage.min.js<%= typeof v !== 'undefined' ? v : '' %>" defer></script>

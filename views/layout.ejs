@@ -92,12 +92,12 @@
   </style>
 
   <!-- CSS: audioPlayer loaded async (not needed for initial paint) -->
-  <link rel="stylesheet" href="/css/audioPlayer.css" media="print" onload="this.media='all'">
-  <noscript><link rel="stylesheet" href="/css/audioPlayer.css"></noscript>
+  <link rel="stylesheet" href="/css/audioPlayer.css<%= typeof v !== 'undefined' ? v : '' %>" media="print" onload="this.media='all'">
+  <noscript><link rel="stylesheet" href="/css/audioPlayer.css<%= typeof v !== 'undefined' ? v : '' %>"></noscript>
 
   <!-- Non-critical CSS loaded asynchronously -->
-  <link rel="preload" href="/css/main.css" as="style" onload="this.onload=null;this.rel='stylesheet'">
-  <noscript><link rel="stylesheet" href="/css/main.css"></noscript>
+  <link rel="preload" href="/css/main.css<%= typeof v !== 'undefined' ? v : '' %>" as="style" onload="this.onload=null;this.rel='stylesheet'">
+  <noscript><link rel="stylesheet" href="/css/main.css<%= typeof v !== 'undefined' ? v : '' %>"></noscript>
 
   <!-- Critical inline CSS for above-the-fold content (minimized for performance) -->
   <style>
@@ -144,8 +144,8 @@
   <!-- Mobile Nav Backdrop -->
   <div id="mobileNavBackdrop" class="mobile-nav-backdrop"></div>
 
-  <script src="/js/audioPlayer.min.js" defer></script>
-  <script src="/js/share.js" defer></script>
+  <script src="/js/audioPlayer.min.js<%= typeof v !== 'undefined' ? v : '' %>" defer></script>
+  <script src="/js/share.js<%= typeof v !== 'undefined' ? v : '' %>" defer></script>
   <script>
     // Language Toggle Functionality
     (function() {
