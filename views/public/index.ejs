@@ -2036,17 +2036,6 @@
     font-weight: 500;
   }
 
-  .search-ai-disclaimer-link {
-    color: var(--accent-gold);
-    text-decoration: none;
-    font-weight: 500;
-    cursor: pointer;
-  }
-
-  .search-ai-disclaimer-link:hover {
-    text-decoration: underline;
-  }
-
   @media (max-width: 480px) {
     .search-ai-disclaimer {
       padding: 8px 12px;
@@ -2110,13 +2099,9 @@
     <span class="search-ai-disclaimer-icon">&#9432;</span>
     <div class="search-ai-disclaimer-text">
       <% if (locale === 'ar') { %>
-        <strong>تنبيه:</strong> النصوص مُنشأة آليًا وقد تحتوي على أخطاء.
-        <span class="search-ai-disclaimer-link" onclick="document.querySelector('.search-feedback-prompt')?.classList.add('active')">وجدت خطأ؟</span>
-        للمرجعية الدقيقة، استمع للتسجيل الصوتي.
+        <strong>تنبيه:</strong> النصوص مُنشأة آليًا وقد تحتوي على أخطاء. للمرجعية الدقيقة، استمع للتسجيل الصوتي.
       <% } else { %>
-        <strong>Note:</strong> Transcripts are AI-generated and may contain errors.
-        <span class="search-ai-disclaimer-link" onclick="document.querySelector('.search-feedback-prompt')?.classList.add('active')">Found an error?</span>
-        For authoritative reference, listen to the audio.
+        <strong>Note:</strong> Transcripts are AI-generated and may contain errors. For authoritative reference, listen to the audio.
       <% } %>
     </div>
   </div>
