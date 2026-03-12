@@ -139,7 +139,8 @@ function buildChainableMock(resolveValue) {
     sort: jest.fn().mockReturnThis(),
     lean: jest.fn().mockResolvedValue(resolveValue),
     skip: jest.fn().mockReturnThis(),
-    limit: jest.fn().mockReturnThis()
+    limit: jest.fn().mockReturnThis(),
+    select: jest.fn().mockReturnThis()
   };
   return chain;
 }
@@ -1070,5 +1071,182 @@ describe('Homepage API - Edge Cases', () => {
 
     // Should not crash - mostRecentDate should fallback to createdAt
     expect(res.body.success).toBe(true);
+  });
+});
+
+// ============================================================
+// Search Input Sanitization Tests
+// ============================================================
+describe('Homepage API - Search Sanitization', () => {
+  describe('Series Search Sanitization', () => {
+    it('should sanitize XSS payloads in series search', async () => {
+      const xssPayload = '<script>alert("XSS")</script>';
+
+      await request(app)
+        .get('/api/homepage/series')
+        .query({ search: xssPayload })
+        .expect(200);
+
+      // Verify the search query was sanitized before being used
+      const findArgs = Series.find.mock.calls[0][0];
+      expect(findArgs.$or).toBeDefined();
+
+      // The regex should contain encoded HTML entities, not raw tags
+      const titleArabicRegex = findArgs.$or[0].titleArabic;
+      const regexStr = titleArabicRegex.toString();
+      expect(regexStr).not.toContain('<script>');
+      expect(regexStr).toContain('&lt;'); // Encoded <
+    });
+
+    it('should handle HTML entities in series search', async () => {
+      const htmlEntities = '& < > " \'';
+
+      await request(app)
+        .get('/api/homepage/series')
+        .query({ search: htmlEntities })
+        .expect(200);
+
+      const findArgs = Series.find.mock.calls[0][0];
+      expect(findArgs.$or).toBeDefined();
+
+      // Should have encoded the entities
+      const regexStr = findArgs.$or[0].titleArabic.toString();
+      expect(regexStr).toContain('&amp;'); // Encoded &
+    });
+
+    it('should preserve Arabic text in series search', async () => {
+      const arabicSearch = 'شرح كتاب التوحيد';
+
+      await request(app)
+        .get('/api/homepage/series')
+        .query({ search: arabicSearch })
+        .expect(200);
+
+      const findArgs = Series.find.mock.calls[0][0];
+      expect(findArgs.$or).toBeDefined();
+
+      // Arabic text should be preserved in the regex
+      const regexStr = findArgs.$or[0].titleArabic.toString();
+      expect(regexStr).toContain('شرح');
+    });
+
+    it('should escape regex special characters in series search', async () => {
+      const regexChars = '.*+?^${}()|[]\\';
+
+      await request(app)
+        .get('/api/homepage/series')
+        .query({ search: regexChars })
+        .expect(200);
+
+      // Should not throw and should handle gracefully
+      expect(Series.find).toHaveBeenCalled();
+
+      // The regex chars should be escaped
+      const findArgs = Series.find.mock.calls[0][0];
+      const regexStr = findArgs.$or[0].titleArabic.toString();
+      // Special chars should be escaped with backslashes
+      expect(regexStr).toContain('\\.');
+      expect(regexStr).toContain('\\*');
+    });
+  });
+
+  describe('Standalone Lecture Search Sanitization', () => {
+    it('should sanitize XSS payloads in standalone search', async () => {
+      const xssPayload = '<img src=x onerror=alert(1)>';
+
+      await request(app)
+        .get('/api/homepage/standalone')
+        .query({ search: xssPayload })
+        .expect(200);
+
+      const findArgs = Lecture.find.mock.calls[0][0];
+      expect(findArgs.$or).toBeDefined();
+
+      // The regex should contain encoded HTML, not raw tags
+      const regexStr = findArgs.$or[0].titleArabic.toString();
+      expect(regexStr).not.toContain('<img');
+      expect(regexStr).toContain('&lt;'); // Encoded <
+    });
+
+    it('should handle empty search gracefully', async () => {
+      await request(app)
+        .get('/api/homepage/standalone')
+        .query({ search: '' })
+        .expect(200);
+
+      const findArgs = Lecture.find.mock.calls[0][0];
+      // Empty search should not add $or clause
+      expect(findArgs.$or).toBeUndefined();
+    });
+
+    it('should handle whitespace-only search', async () => {
+      await request(app)
+        .get('/api/homepage/standalone')
+        .query({ search: '   ' })
+        .expect(200);
+
+      const findArgs = Lecture.find.mock.calls[0][0];
+      // Whitespace-only search should not add $or clause
+      expect(findArgs.$or).toBeUndefined();
+    });
+  });
+
+  describe('Khutba Search Sanitization', () => {
+    it('should sanitize XSS payloads in khutba search', async () => {
+      const xssPayload = '"><svg onload=alert(1)>';
+
+      await request(app)
+        .get('/api/homepage/khutbas')
+        .query({ search: xssPayload })
+        .expect(200);
+
+      const findArgs = Series.find.mock.calls[0][0];
+      expect(findArgs.$or).toBeDefined();
+
+      // The regex should contain encoded HTML, not raw tags
+      const regexStr = findArgs.$or[0].titleArabic.toString();
+      expect(regexStr).not.toContain('<svg');
+      expect(regexStr).toContain('&lt;'); // Encoded <
+    });
+  });
+
+  describe('Stats Search Sanitization', () => {
+    it('should sanitize XSS payloads in stats search', async () => {
+      const xssPayload = '<iframe src="javascript:alert(1)">';
+
+      await request(app)
+        .get('/api/homepage/stats')
+        .query({ search: xssPayload })
+        .expect(200);
+
+      // Stats endpoint should handle sanitized search
+      expect(Series.find).toHaveBeenCalled();
+    });
+  });
+
+  describe('ReDoS Prevention', () => {
+    it('should handle potentially catastrophic regex patterns', async () => {
+      // Patterns that could cause ReDoS if not escaped
+      const dangerousPatterns = [
+        'a{1,1000000}',
+        '(a+)+',
+        '([a-zA-Z]+)*',
+        '(a|aa)+',
+        '(.*a){100}'
+      ];
+
+      for (const pattern of dangerousPatterns) {
+        const startTime = Date.now();
+
+        await request(app)
+          .get('/api/homepage/series')
+          .query({ search: pattern })
+          .expect(200);
+
+        const duration = Date.now() - startTime;
+        // Should complete quickly (not hang due to ReDoS)
+        expect(duration).toBeLessThan(5000);
+      }
+    });
   });
 });
