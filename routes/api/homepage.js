@@ -3,6 +3,7 @@ const router = express.Router();
 const mongoose = require('mongoose');
 const { Lecture, Series } = require('../../models');
 const cache = require('../../utils/cache');
+const { sanitizeSearchInput } = require('../../utils/validators');
 
 const isProduction = process.env.NODE_ENV === 'production';
 
@@ -52,12 +53,13 @@ function escapeRegex(string) {
   return string.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
 }
 
-// Helper: Build search query for series (sanitized against ReDoS)
+// Helper: Build search query for series (sanitized against ReDoS and XSS)
 function buildSeriesSearchQuery(search) {
   if (!search || typeof search !== 'string') return {};
 
-  // Limit search length to prevent abuse
-  const sanitizedSearch = escapeRegex(search.substring(0, 200).trim());
+  // Sanitize input to prevent XSS, then escape regex special chars
+  const sanitized = sanitizeSearchInput(search, 200);
+  const sanitizedSearch = escapeRegex(sanitized);
   if (!sanitizedSearch) return {};
 
   const searchRegex = new RegExp(sanitizedSearch, 'i');
@@ -70,12 +72,13 @@ function buildSeriesSearchQuery(search) {
   };
 }
 
-// Helper: Build search query for lectures (sanitized against ReDoS)
+// Helper: Build search query for lectures (sanitized against ReDoS and XSS)
 function buildLectureSearchQuery(search) {
   if (!search || typeof search !== 'string') return {};
 
-  // Limit search length to prevent abuse
-  const sanitizedSearch = escapeRegex(search.substring(0, 200).trim());
+  // Sanitize input to prevent XSS, then escape regex special chars
+  const sanitized = sanitizeSearchInput(search, 200);
+  const sanitizedSearch = escapeRegex(sanitized);
   if (!sanitizedSearch) return {};
 
   const searchRegex = new RegExp(sanitizedSearch, 'i');
