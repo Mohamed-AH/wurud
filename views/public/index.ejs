@@ -37,9 +37,21 @@
     font-size: 36px;
     font-weight: 700;
     color: #FAF7F2;
-    margin-bottom: 32px;
+    margin-bottom: 12px;
     line-height: 1.8;
     text-shadow: 2px 2px 6px rgba(0, 0, 0, 0.3);
+  }
+
+  .search-hero-subheading {
+    font-family: var(--font-arabic-body);
+    font-size: 18px;
+    font-weight: 400;
+    color: rgba(250, 247, 242, 0.85);
+    margin-bottom: 28px;
+    line-height: 1.6;
+    max-width: 700px;
+    margin-left: auto;
+    margin-right: auto;
   }
 
   .search-container {
@@ -577,11 +589,18 @@
 
     .search-hero-quote {
       font-size: 20px;
-      margin-bottom: 20px;
+      margin-bottom: 10px;
       padding: 0 8px;
       word-wrap: break-word;
       overflow-wrap: break-word;
       line-height: 1.6;
+    }
+
+    .search-hero-subheading {
+      font-size: 14px;
+      margin-bottom: 20px;
+      padding: 0 12px;
+      line-height: 1.5;
     }
 
     .search-hero::before {
@@ -1153,7 +1172,14 @@
     .search-hero-quote {
       font-size: 17px;
       line-height: 1.5;
+      margin-bottom: 8px;
+    }
+
+    .search-hero-subheading {
+      font-size: 13px;
       margin-bottom: 16px;
+      padding: 0 8px;
+      line-height: 1.4;
     }
 
     .search-hero::before {
@@ -1264,7 +1290,14 @@
     .search-hero-quote {
       font-size: 15px;
       line-height: 1.4;
+      margin-bottom: 6px;
+    }
+
+    .search-hero-subheading {
+      font-size: 12px;
       margin-bottom: 12px;
+      padding: 0 4px;
+      line-height: 1.3;
     }
 
     .search-hero::before {
@@ -1977,8 +2010,14 @@
 <div class="search-hero">
   <div class="search-hero-quote">
     <%= locale === 'ar'
-      ? '"طَلَبُ الْعِلْمِ فَرِيضَةٌ عَلَى كُلِّ مُسْلِمٍ"'
-      : '"Seeking knowledge is obligatory upon every Muslim"'
+      ? 'البحث في التفريغ الصوتي'
+      : 'Search Audio Transcripts'
+    %>
+  </div>
+  <div class="search-hero-subheading">
+    <%= locale === 'ar'
+      ? 'من الكلمة المكتوبة إلى اللحظة المسموعة.. طريقك الأقصر لضبط المسائل وتحرير الفوائد'
+      : 'From written word to audio moment... your shortest path to precise Islamic scholarship'
     %>
   </div>
   <div class="search-container">
