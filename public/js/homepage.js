@@ -12,6 +12,10 @@
 (function() {
   'use strict';
 
+  // Debug mode - only log in development (localhost)
+  const isDev = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
+  const log = isDev ? console.log.bind(console) : function() {};
+
   // State
   const state = {
     tab: 'series',
@@ -120,13 +124,13 @@
    * Initialize the module
    */
   function init() {
-    console.log('[HOMEPAGE] init() starting');
+    log('[HOMEPAGE] init() starting');
 
     // Get containers
     seriesContainer = document.querySelector('#content-series .series-list');
     standaloneContainer = document.querySelector('#content-lectures .series-list');
     khutbasContainer = document.querySelector('#content-khutbas .series-list');
-    console.log('[HOMEPAGE] Containers found:', { series: !!seriesContainer, standalone: !!standaloneContainer, khutbas: !!khutbasContainer });
+    log('[HOMEPAGE] Containers found:', { series: !!seriesContainer, standalone: !!standaloneContainer, khutbas: !!khutbasContainer });
 
     // Create load more button
     createLoadMoreButton();
@@ -136,18 +140,18 @@
 
     // Parse URL state
     parseUrlState();
-    console.log('[HOMEPAGE] URL state parsed:', state);
+    log('[HOMEPAGE] URL state parsed:', state);
 
     // Bind events
     bindEvents();
-    console.log('[HOMEPAGE] Events bound');
+    log('[HOMEPAGE] Events bound');
 
     // Update UI to match state
     updateUIFromState();
 
     // Check if we need to load more (if no initial server-rendered content)
     checkInitialContent();
-    console.log('[HOMEPAGE] init() complete');
+    log('[HOMEPAGE] init() complete');
   }
 
   /**
@@ -389,19 +393,19 @@
     // Title/Name search input with debounce (separate from transcript search)
     const titleSearchInput = document.getElementById('titleSearchInput');
     const titleSearchIcon = document.getElementById('titleSearchIcon');
-    console.log('[TITLE SEARCH] titleSearchInput element:', titleSearchInput);
-    console.log('[TITLE SEARCH] titleSearchIcon element:', titleSearchIcon);
+    log('[TITLE SEARCH] titleSearchInput element:', titleSearchInput);
+    log('[TITLE SEARCH] titleSearchIcon element:', titleSearchIcon);
 
     if (titleSearchInput) {
-      console.log('[TITLE SEARCH] Attaching input event listener');
+      log('[TITLE SEARCH] Attaching input event listener');
       let searchTimeout;
 
       // Input event with debounce
       titleSearchInput.addEventListener('input', function() {
-        console.log('[TITLE SEARCH] Input event fired, value:', this.value);
+        log('[TITLE SEARCH] Input event fired, value:', this.value);
         clearTimeout(searchTimeout);
         searchTimeout = setTimeout(() => {
-          console.log('[TITLE SEARCH] Debounce complete, calling setSearch with:', this.value);
+          log('[TITLE SEARCH] Debounce complete, calling setSearch with:', this.value);
           setSearch(this.value);
         }, 300);
       });
@@ -409,7 +413,7 @@
       // Enter key handler
       titleSearchInput.addEventListener('keydown', function(e) {
         if (e.key === 'Enter') {
-          console.log('[TITLE SEARCH] Enter key pressed, value:', this.value);
+          log('[TITLE SEARCH] Enter key pressed, value:', this.value);
           clearTimeout(searchTimeout);
           setSearch(this.value);
         }
@@ -417,7 +421,7 @@
 
       // Focus event for debugging
       titleSearchInput.addEventListener('focus', function() {
-        console.log('[TITLE SEARCH] Input focused');
+        log('[TITLE SEARCH] Input focused');
       });
     } else {
       console.warn('[TITLE SEARCH] titleSearchInput element NOT FOUND!');
@@ -426,9 +430,9 @@
     // Search icon click handler
     if (titleSearchIcon) {
       titleSearchIcon.addEventListener('click', function() {
-        console.log('[TITLE SEARCH] Search icon clicked');
+        log('[TITLE SEARCH] Search icon clicked');
         const value = titleSearchInput?.value || '';
-        console.log('[TITLE SEARCH] Icon click - searching for:', value);
+        log('[TITLE SEARCH] Icon click - searching for:', value);
         setSearch(value);
       });
     }
@@ -494,14 +498,14 @@
    * Set search term (for title/series name search)
    */
   function setSearch(term) {
-    console.log('[TITLE SEARCH] setSearch() called with:', term);
+    log('[TITLE SEARCH] setSearch() called with:', term);
     state.search = term.trim();
     state.page = 1;
-    console.log('[TITLE SEARCH] Updated state.search:', state.search);
+    log('[TITLE SEARCH] Updated state.search:', state.search);
 
     updateUrl();
     updateClearButtonVisibility();
-    console.log('[TITLE SEARCH] Calling fetchData to search by title/series name');
+    log('[TITLE SEARCH] Calling fetchData to search by title/series name');
     fetchData(true);
   }
 
@@ -553,9 +557,9 @@
    * @param {boolean} replace - If true, replace content; if false, append
    */
   async function fetchData(replace = true) {
-    console.log('[TITLE SEARCH] fetchData() called, replace:', replace);
+    log('[TITLE SEARCH] fetchData() called, replace:', replace);
     if (state.loading) {
-      console.log('[TITLE SEARCH] Already loading, returning');
+      log('[TITLE SEARCH] Already loading, returning');
       return;
     }
 
@@ -585,10 +589,10 @@
       }
 
       const fullUrl = `${url}?${params.toString()}`;
-      console.log('[TITLE SEARCH] Fetching from:', fullUrl);
+      log('[TITLE SEARCH] Fetching from:', fullUrl);
       const response = await fetch(fullUrl);
       const data = await response.json();
-      console.log('[TITLE SEARCH] API Response:', { success: data.success, count: data.series?.length || data.lectures?.length });
+      log('[TITLE SEARCH] API Response:', { success: data.success, count: data.series?.length || data.lectures?.length });
 
       if (data.success) {
         if (state.tab === 'lectures') {
@@ -961,6 +965,10 @@
 (function() {
   'use strict';
 
+  // Debug mode - only log in development (localhost)
+  const isDev = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
+  const log = isDev ? console.log.bind(console) : function() {};
+
   // State for enhanced search
   const searchState = {
     isActive: false,
@@ -1022,7 +1030,7 @@
    * Initialize enhanced search (hero transcript search)
    */
   function initEnhancedSearch() {
-    console.log('[HERO SEARCH] initEnhancedSearch() starting');
+    log('[HERO SEARCH] initEnhancedSearch() starting');
 
     searchInput = document.getElementById('searchInput');
     searchResultsContainer = document.getElementById('enhancedSearchResults');
@@ -1039,7 +1047,7 @@
     feedbackSubmitBtn = document.getElementById('feedbackSubmitBtn');
     feedbackThankYou = document.getElementById('feedbackThankYou');
 
-    console.log('[HERO SEARCH] Elements found:', {
+    log('[HERO SEARCH] Elements found:', {
       searchInput: !!searchInput,
       searchResultsContainer: !!searchResultsContainer,
       searchResultsList: !!searchResultsList,
@@ -1056,12 +1064,12 @@
     // Handle Enter key in search input
     searchInput.addEventListener('keydown', function(e) {
       if (e.key === 'Enter') {
-        console.log('[HERO SEARCH] Enter key pressed');
+        log('[HERO SEARCH] Enter key pressed');
         e.preventDefault();
         performSearch();
       }
     });
-    console.log('[HERO SEARCH] Enter key listener attached');
+    log('[HERO SEARCH] Enter key listener attached');
 
     // Handle audio ended
     if (searchAudioPlayer) {
@@ -1074,19 +1082,19 @@
       });
     }
 
-    console.log('[HERO SEARCH] initEnhancedSearch() complete');
+    log('[HERO SEARCH] initEnhancedSearch() complete');
   }
 
   /**
    * Perform enhanced search (transcript search via /search/api)
    */
   async function performSearch() {
-    console.log('[HERO SEARCH] performSearch() called');
+    log('[HERO SEARCH] performSearch() called');
     const query = searchInput?.value?.trim();
-    console.log('[HERO SEARCH] Query:', query);
+    log('[HERO SEARCH] Query:', query);
 
     if (!query) {
-      console.log('[HERO SEARCH] Empty query, returning');
+      log('[HERO SEARCH] Empty query, returning');
       return;
     }
 
@@ -1095,20 +1103,20 @@
 
     // Show loading state
     showSearchLoading();
-    console.log('[HERO SEARCH] Fetching transcript results from /search/api');
+    log('[HERO SEARCH] Fetching transcript results from /search/api');
 
     try {
       const response = await fetch(`/search/api?q=${encodeURIComponent(query)}`);
       const data = await response.json();
-      console.log('[HERO SEARCH] API Response:', data);
+      log('[HERO SEARCH] API Response:', data);
 
       if (data.success) {
-        console.log('[HERO SEARCH] Success! Results count:', data.results?.length);
+        log('[HERO SEARCH] Success! Results count:', data.results?.length);
         searchState.results = data.results;
         searchState.searchLogId = data.searchLogId;
         renderSearchResults(data.results, query);
       } else {
-        console.log('[HERO SEARCH] API Error:', data.error);
+        log('[HERO SEARCH] API Error:', data.error);
         showSearchError(data.error || 'حدث خطأ أثناء البحث');
       }
     } catch (error) {
@@ -1451,7 +1459,7 @@
       const data = await response.json();
 
       if (data.success) {
-        console.log('[FEEDBACK] Submitted successfully');
+        log('[FEEDBACK] Submitted successfully');
         searchState.feedbackSubmitted = true;
 
         // Hide feedback prompt and show thank you
