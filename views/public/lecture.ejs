@@ -479,6 +479,47 @@
     padding: 24px;
   }
 
+  /* AI Transcript Disclaimer */
+  .transcript-disclaimer {
+    background: rgba(193, 154, 107, 0.08);
+    border: 1px solid var(--border-light);
+    border-radius: 8px;
+    padding: 12px 16px;
+    margin-bottom: 16px;
+    display: flex;
+    align-items: flex-start;
+    gap: 10px;
+    font-size: 13px;
+    color: var(--text-muted);
+    line-height: 1.6;
+  }
+
+  .transcript-disclaimer-icon {
+    flex-shrink: 0;
+    font-size: 16px;
+    opacity: 0.7;
+  }
+
+  .transcript-disclaimer-text {
+    flex: 1;
+  }
+
+  .transcript-disclaimer-text strong {
+    color: var(--text-secondary);
+    font-weight: 600;
+  }
+
+  .transcript-disclaimer-audio-link {
+    color: var(--accent-gold);
+    text-decoration: none;
+    font-weight: 500;
+    cursor: pointer;
+  }
+
+  .transcript-disclaimer-audio-link:hover {
+    text-decoration: underline;
+  }
+
   /* Active/playing segment highlight */
   .transcript-segment.active {
     background: rgba(193, 154, 107, 0.25);
@@ -920,6 +961,20 @@
                   <span id="toggleText"><%= locale === 'ar' ? 'عرض النص' : 'Show Transcript' %></span>
                 </button>
               </h3>
+
+              <!-- AI Transcript Disclaimer -->
+              <div class="transcript-disclaimer">
+                <span class="transcript-disclaimer-icon">&#9432;</span>
+                <div class="transcript-disclaimer-text">
+                  <% if (locale === 'ar') { %>
+                    <strong>تنبيه:</strong> هذا النص مُنشأ آليًا باستخدام الذكاء الاصطناعي وقد يحتوي على أخطاء.
+                    للمرجعية الدقيقة، يرجى <span class="transcript-disclaimer-audio-link" onclick="playLecture()">الاستماع للتسجيل الصوتي</span>.
+                  <% } else { %>
+                    <strong>Note:</strong> This transcript is AI-generated and may contain errors.
+                    For authoritative reference, please <span class="transcript-disclaimer-audio-link" onclick="playLecture()">listen to the audio recording</span>.
+                  <% } %>
+                </div>
+              </div>
 
               <!-- SEO-friendly excerpt (always visible to search engines) -->
               <% if (transcriptExcerpt) { %>

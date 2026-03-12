@@ -14,95 +14,37 @@ const SEARCH_MODE = process.env.SEARCH_MODE || 'atlas';
 const CONTEXT_WINDOW_SEC = parseInt(process.env.CONTEXT_WINDOW_SEC, 10) || 90;
 const CONTEXT_ITEMS = parseInt(process.env.CONTEXT_ITEMS, 10) || 2;
 const LOG_SEARCHES = process.env.LOG_SEARCHES !== 'false';
+const isProduction = process.env.NODE_ENV === 'production';
 
 // Helper to get search models (lazy access since they're initialized async)
 const getTranscript = () => models.Transcript;
 const getSearchLog = () => models.SearchLog;
 
 /**
- * GET /search - Render search page
+ * GET /search - Redirect to homepage (search consolidated on homepage)
+ * The standalone search page has been decommissioned.
  */
 router.get('/', (req, res) => {
-  res.render('search', {
-    layout: false,
-    query: '',
-    results: [],
-    error: null,
-    searched: false,
-    searchLogId: null
-  });
+  const query = req.query.q || '';
+  // Redirect to homepage - the search functionality is now integrated there
+  if (query) {
+    res.redirect(301, `/?search=${encodeURIComponent(query)}`);
+  } else {
+    res.redirect(301, '/');
+  }
 });
 
 /**
- * GET /search/results - Perform search
+ * GET /search/results - Redirect to homepage (search consolidated on homepage)
+ * The standalone search results page has been decommissioned.
  */
-router.get('/results', async (req, res) => {
-  // Sanitize search input to prevent XSS
-  const query = sanitizeSearchInput(req.query.q || '', 200);
-
-  if (!query) {
-    return res.render('search', {
-      layout: false,
-      query: '',
-      results: [],
-      error: null,
-      searched: false,
-      searchLogId: null
-    });
-  }
-
-  // Check if search models are initialized
-  const Transcript = getTranscript();
-  if (!Transcript) {
-    return res.render('search', {
-      layout: false,
-      query,
-      results: [],
-      error: 'خدمة البحث غير متاحة حالياً. يرجى المحاولة لاحقاً.',
-      searched: true,
-      searchLogId: null
-    });
-  }
-
-  try {
-    // Strip sheikh prefix for cleaner matching
-    const searchQuery = stripSheikhPrefix(query);
-
-    let results = [];
-
-    if (SEARCH_MODE === 'atlas') {
-      results = await performAtlasSearch(searchQuery);
-    } else {
-      results = await performLocalSearch(searchQuery);
-    }
-
-    // Enrich results with context
-    results = await enrichWithContext(results);
-
-    // Log search (best-effort)
-    let searchLogId = null;
-    if (LOG_SEARCHES) {
-      searchLogId = await logSearch(query, searchQuery, results);
-    }
-
-    res.render('search', {
-      layout: false,
-      query,
-      results,
-      error: null,
-      searched: true,
-      searchLogId
-    });
-  } catch (error) {
-    console.error('Search error:', error);
-    res.render('search', {
-      layout: false,
-      query,
-      results: [],
-      error: 'حدث خطأ أثناء البحث. يرجى المحاولة مرة أخرى.',
-      searched: true,
-      searchLogId: null
-    });
+router.get('/results', (req, res) => {
+  const query = req.query.q || '';
+  // Redirect to homepage with search query
+  if (query) {
+    res.redirect(301, `/?search=${encodeURIComponent(query)}`);
+  } else {
+    res.redirect(301, '/');
   }
 });
 

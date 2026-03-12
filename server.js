@@ -15,10 +15,15 @@ const { initSearchModels } = require('./models');
 const passport = require('./config/passport');
 const { i18nMiddleware } = require('./utils/i18n');
 const { trackPageView } = require('./middleware/analytics');
+const { suppressConsoleInProduction } = require('./utils/logger');
+const { assetVersionMiddleware, noCacheMiddleware, ASSET_VERSION } = require('./utils/assetVersion');
 
 const app = express();
 const PORT = process.env.PORT || 3000;
 const isProduction = process.env.NODE_ENV === 'production';
+
+// Suppress non-essential console output in production
+suppressConsoleInProduction();
 
 // Fail fast if SESSION_SECRET is missing in production
 if (isProduction && !process.env.SESSION_SECRET) {
@@ -145,6 +150,28 @@ app.use(cookieParser());
 // i18n middleware (must be before routes)
 app.use(i18nMiddleware);
 
+// Asset version middleware (makes version available to all templates)
+app.use(assetVersionMiddleware);
+
+// No-cache headers for HTML pages (ensures users always get latest version)
+// Applied to all routes except static files (handled separately above)
+app.use((req, res, next) => {
+  // Skip for static file requests (they have their own caching)
+  const staticExtensions = ['.js', '.css', '.woff', '.woff2', '.ttf', '.eot', '.otf',
+    '.png', '.jpg', '.jpeg', '.gif', '.svg', '.ico', '.webp', '.avif', '.mp3', '.wav', '.ogg'];
+  const hasStaticExt = staticExtensions.some(ext => req.path.endsWith(ext));
+
+  if (!hasStaticExt) {
+    // Set no-cache headers for HTML entry points
+    res.set({
+      'Cache-Control': 'no-cache, no-store, must-revalidate',
+      'Pragma': 'no-cache',
+      'Expires': '0'
+    });
+  }
+  next();
+});
+
 // Analytics tracking middleware (non-blocking)
 app.use(trackPageView);
 
@@ -167,7 +194,7 @@ const seriesApiRoutes = require('./routes/api/series');
 const homepageApiRoutes = require('./routes/api/homepage');
 const streamRoutes = require('./routes/stream');
 const downloadRoutes = require('./routes/download');
-const searchRoutes = require('./routes/search');
+const searchApiRoutes = require('./routes/search');
 
 app.use('/', publicRoutes);
 app.use('/auth', authRoutes);
@@ -178,7 +205,7 @@ app.use('/api/series', seriesApiRoutes);
 app.use('/api/homepage', homepageApiRoutes);
 app.use('/stream', streamRoutes);
 app.use('/download', downloadRoutes);
-app.use('/search', searchRoutes);
+app.use('/search', searchApiRoutes);
 
 // 404 handler
 app.use((req, res) => {
@@ -196,8 +223,9 @@ app.listen(PORT, () => {
   const { uploadDir } = require('./config/storage');
   const absoluteUploadPath = path.resolve(uploadDir);
 
-  console.log(`🚀 Duroos server running on http://localhost:${PORT}`);
-  console.log(`📝 Environment: ${process.env.NODE_ENV || 'development'}`);
-  console.log(`📁 Upload directory: ${absoluteUploadPath}`);
-  console.log(`   (${uploadDir})`);
+  // Use console.warn for startup messages (preserved in production for critical info)
+  console.warn(`🚀 Duroos server running on http://localhost:${PORT}`);
+  console.warn(`📝 Environment: ${process.env.NODE_ENV || 'development'}`);
+  console.warn(`📁 Upload directory: ${absoluteUploadPath}`);
+  console.warn(`🔖 Asset version: ${ASSET_VERSION}`);
 });

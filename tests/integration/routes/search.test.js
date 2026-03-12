@@ -89,107 +89,59 @@ beforeEach(() => {
 });
 
 // ============================================================
-// GET /search - Search Page
+// GET /search - Search Page (Decommissioned - Redirects to Homepage)
 // ============================================================
 describe('GET /search', () => {
-  it('should render search page with empty state', async () => {
+  it('should redirect to homepage (search consolidated on homepage)', async () => {
     const res = await request(app)
       .get('/search')
-      .expect(200);
+      .expect(301);
 
-    expect(res.body.view).toBe('search');
-    expect(res.body.query).toBe('');
-    expect(res.body.results).toEqual([]);
-    expect(res.body.searched).toBe(false);
+    expect(res.headers.location).toBe('/');
+  });
+
+  it('should redirect to homepage with search query parameter', async () => {
+    const res = await request(app)
+      .get('/search')
+      .query({ q: 'test query' })
+      .expect(301);
+
+    expect(res.headers.location).toBe('/?search=test%20query');
   });
 });
 
 // ============================================================
-// GET /search/results - Search Results (HTML)
+// GET /search/results - Search Results (Decommissioned - Redirects to Homepage)
 // ============================================================
 describe('GET /search/results', () => {
-  it('should sanitize search query to prevent XSS', async () => {
-    const xssPayload = '<script>alert("XSS")</script>';
-
+  it('should redirect to homepage with search query', async () => {
     const res = await request(app)
       .get('/search/results')
-      .query({ q: xssPayload })
-      .expect(200);
+      .query({ q: 'test query' })
+      .expect(301);
 
-    // Query should be sanitized - no raw script tags
-    expect(res.body.query).not.toContain('<script>');
-    expect(res.body.query).toContain('&lt;script&gt;');
+    expect(res.headers.location).toBe('/?search=test%20query');
   });
 
-  it('should handle empty query gracefully', async () => {
+  it('should redirect to homepage for empty query', async () => {
     const res = await request(app)
       .get('/search/results')
       .query({ q: '' })
-      .expect(200);
+      .expect(301);
 
-    expect(res.body.searched).toBe(false);
-    expect(res.body.results).toEqual([]);
+    expect(res.headers.location).toBe('/');
   });
 
-  it('should handle whitespace-only query', async () => {
-    const res = await request(app)
-      .get('/search/results')
-      .query({ q: '   ' })
-      .expect(200);
-
-    expect(res.body.searched).toBe(false);
-  });
-
-  it('should truncate overly long search queries', async () => {
-    const longQuery = 'أ'.repeat(300);
-
-    const res = await request(app)
-      .get('/search/results')
-      .query({ q: longQuery })
-      .expect(200);
-
-    // Query should be truncated to 200 chars max
-    expect(res.body.query.length).toBeLessThanOrEqual(200 * 6); // Account for HTML encoding
-  });
-
-  it('should preserve Arabic search queries', async () => {
-    Transcript.aggregate.mockResolvedValue([]);
-
+  it('should redirect Arabic queries correctly', async () => {
     const arabicQuery = 'البحث في التفريغ';
 
     const res = await request(app)
       .get('/search/results')
       .query({ q: arabicQuery })
-      .expect(200);
+      .expect(301);
 
-    expect(res.body.query).toContain('البحث');
-    expect(res.body.searched).toBe(true);
-  });
-
-  it('should return searchLogId when LOG_SEARCHES is enabled', async () => {
-    Transcript.aggregate.mockResolvedValue([]);
-
-    const res = await request(app)
-      .get('/search/results')
-      .query({ q: 'test query' })
-      .expect(200);
-
-    expect(res.body.searchLogId).toBeDefined();
-  });
-
-  it('should sanitize HTML entities in query', async () => {
-    const htmlQuery = '& < > " \'';
-
-    const res = await request(app)
-      .get('/search/results')
-      .query({ q: htmlQuery })
-      .expect(200);
-
-    expect(res.body.query).toContain('&amp;');
-    expect(res.body.query).toContain('&lt;');
-    expect(res.body.query).toContain('&gt;');
-    expect(res.body.query).toContain('&quot;');
-    expect(res.body.query).toContain('&#x27;');
+    // Should redirect with URL-encoded Arabic query
+    expect(res.headers.location).toContain('?search=');
   });
 });
 
