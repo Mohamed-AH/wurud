@@ -41,6 +41,12 @@ connectSearchDB().then(searchConn => {
   }
 });
 
+// Trust proxy - required when behind reverse proxy (Render, Heroku, etc.)
+// This ensures rate limiting and secure cookies work correctly
+if (isProduction) {
+  app.set('trust proxy', 1);
+}
+
 // View engine setup
 app.set('view engine', 'ejs');
 app.set('views', path.join(__dirname, 'views'));

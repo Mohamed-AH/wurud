@@ -3,6 +3,10 @@
  * Manages global audio playback across the site
  */
 
+// Debug mode - only log in development (localhost)
+const isDev = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
+const log = isDev ? log.bind(console) : () => {};
+
 class AudioPlayer {
   constructor() {
     this.audio = document.getElementById('audio');
@@ -115,7 +119,7 @@ class AudioPlayer {
    * @param {object} lectureData - Lecture metadata (title, sheikh, etc.)
    */
   play(lectureId, lectureData) {
-    console.log('▶️ Playing lecture:', lectureId, lectureData);
+    log('▶️ Playing lecture:', lectureId, lectureData);
 
     this.currentLecture = {
       id: lectureId,
@@ -384,9 +388,9 @@ class AudioPlayer {
         localStorage.setItem(verifiedKey, 'true');
 
         if (data.updated) {
-          console.log(`✅ Duration corrected: ${data.oldDuration}s → ${data.newDuration}s`);
+          log(`✅ Duration corrected: ${data.oldDuration}s → ${data.newDuration}s`);
         } else if (data.verified) {
-          console.log(`✅ Duration verified: ${Math.round(actualDuration)}s`);
+          log(`✅ Duration verified: ${Math.round(actualDuration)}s`);
         }
       }
     } catch (error) {
@@ -506,15 +510,15 @@ class AudioPlayer {
 }
 
 // Initialize when DOM is ready
-console.log('🎵 Audio Player script loaded');
+log('🎵 Audio Player script loaded');
 if (document.readyState === 'loading') {
   document.addEventListener('DOMContentLoaded', () => {
-    console.log('🎵 Initializing Audio Player...');
+    log('🎵 Initializing Audio Player...');
     window.audioPlayer = new AudioPlayer();
-    console.log('✅ Audio Player initialized:', window.audioPlayer);
+    log('✅ Audio Player initialized:', window.audioPlayer);
   });
 } else {
-  console.log('🎵 Initializing Audio Player (already loaded)...');
+  log('🎵 Initializing Audio Player (already loaded)...');
   window.audioPlayer = new AudioPlayer();
-  console.log('✅ Audio Player initialized:', window.audioPlayer);
+  log('✅ Audio Player initialized:', window.audioPlayer);
 }
