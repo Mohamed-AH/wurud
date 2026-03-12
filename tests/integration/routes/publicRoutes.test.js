@@ -54,7 +54,7 @@ describe('Public Routes Integration Tests', () => {
         .expect(200);
 
       expect(response.body._view).toBe('public/index');
-      expect(response.body.title).toBe('المكتبة الصوتية');
+      expect(response.body.title).toBe('البحث في التفريغ الصوتي');
       expect(response.body.seriesList).toEqual([]);
       expect(response.body.standaloneLectures).toEqual([]);
       expect(response.body.khutbaSeries).toEqual([]);
