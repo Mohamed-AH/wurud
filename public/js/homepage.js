@@ -965,6 +965,10 @@
 (function() {
   'use strict';
 
+  // Debug mode - only log in development (localhost)
+  const isDev = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
+  const log = isDev ? console.log.bind(console) : function() {};
+
   // State for enhanced search
   const searchState = {
     isActive: false,
