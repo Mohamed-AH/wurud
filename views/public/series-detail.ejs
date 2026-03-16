@@ -366,13 +366,17 @@
 
   .search-input {
     width: 100%;
-    padding: 12px 16px 12px 44px;
+    padding: 12px 44px 12px 16px;
     border: 2px solid var(--accent-amber);
     border-radius: 25px;
     font-size: 15px;
     background: white;
     transition: all 0.3s;
     font-family: inherit;
+  }
+
+  [dir="ltr"] .search-input {
+    padding: 12px 16px 12px 44px;
   }
 
   .search-input:focus {
@@ -720,8 +724,12 @@
     }
 
     .search-input {
-      padding: 10px 14px 10px 40px;
+      padding: 10px 40px 10px 14px;
       font-size: 14px;
+    }
+
+    [dir="ltr"] .search-input {
+      padding: 10px 14px 10px 40px;
     }
 
     .search-icon {
@@ -899,8 +907,12 @@
     }
 
     .search-input {
-      padding: 8px 12px 8px 36px;
+      padding: 8px 36px 8px 12px;
       font-size: 13px;
+    }
+
+    [dir="ltr"] .search-input {
+      padding: 8px 12px 8px 36px;
     }
 
     .year-filter-wrapper {
