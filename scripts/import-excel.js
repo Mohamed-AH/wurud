@@ -152,11 +152,9 @@ async function importExcel() {
 
     console.log(`📊 Found ${data.length} records in Excel file (sheet: ${sheetName})\n`);
 
-    // Connect to MongoDB (skip in dry run mode)
-    if (!dryRun) {
-      await mongoose.connect(process.env.MONGODB_URI);
-      console.log('✅ MongoDB Connected\n');
-    }
+    // Connect to MongoDB (needed for both dry run and actual import to check existing data)
+    await mongoose.connect(process.env.MONGODB_URI);
+    console.log('✅ MongoDB Connected\n');
 
     const stats = {
       sheikhsCreated: 0,
@@ -181,55 +179,61 @@ async function importExcel() {
 
         // Find or create Sheikh
         const sheikhNameArabic = String(row.Sheikh).trim();
-        let sheikh = dryRun ? null : await Sheikh.findOne({ nameArabic: sheikhNameArabic });
+        let sheikh = await Sheikh.findOne({ nameArabic: sheikhNameArabic });
 
-        if (!sheikh && !dryRun) {
-          sheikh = await Sheikh.create({
-            nameArabic: sheikhNameArabic,
-            nameEnglish: sheikhNameArabic, // Can be updated later
-            honorific: 'حفظه الله',
-            bioArabic: `الشيخ ${sheikhNameArabic}`,
-            bioEnglish: `Sheikh ${sheikhNameArabic}`
-          });
-          stats.sheikhsCreated++;
-          console.log(`✅ Created sheikh: ${sheikhNameArabic}`);
-        } else if (dryRun && !stats._seenSheikhs) {
-          stats._seenSheikhs = new Set();
-        }
-        if (dryRun && !stats._seenSheikhs.has(sheikhNameArabic)) {
-          stats._seenSheikhs.add(sheikhNameArabic);
-          stats.sheikhsCreated++;
-          console.log(`🔍 Would create sheikh: ${sheikhNameArabic}`);
+        if (!sheikh) {
+          if (dryRun) {
+            // Track unique sheikhs that would be created
+            if (!stats._seenSheikhs) stats._seenSheikhs = new Set();
+            if (!stats._seenSheikhs.has(sheikhNameArabic)) {
+              stats._seenSheikhs.add(sheikhNameArabic);
+              stats.sheikhsCreated++;
+              console.log(`🔍 Would create sheikh: ${sheikhNameArabic}`);
+            }
+          } else {
+            sheikh = await Sheikh.create({
+              nameArabic: sheikhNameArabic,
+              nameEnglish: sheikhNameArabic, // Can be updated later
+              honorific: 'حفظه الله',
+              bioArabic: `الشيخ ${sheikhNameArabic}`,
+              bioEnglish: `Sheikh ${sheikhNameArabic}`
+            });
+            stats.sheikhsCreated++;
+            console.log(`✅ Created sheikh: ${sheikhNameArabic}`);
+          }
         }
 
         // Find or create Series (if Type is "Series" and SeriesName exists)
         let series = null;
-        if (row.Type === 'Series' && row.SeriesName) {
+        if (row.Type === 'Series' && row.SeriesName && sheikh) {
           const seriesTitleArabic = String(row.SeriesName).trim();
-          series = dryRun ? null : await Series.findOne({
+          series = await Series.findOne({
             titleArabic: seriesTitleArabic,
             sheikhId: sheikh._id
           });
 
-          if (!series && !dryRun) {
-            series = await Series.create({
-              titleArabic: seriesTitleArabic,
-              titleEnglish: seriesTitleArabic, // Can be updated later
-              sheikhId: sheikh._id,
-              category: mapCategory(row.Category),
-              descriptionArabic: `سلسلة ${seriesTitleArabic}`,
-              descriptionEnglish: `Series: ${seriesTitleArabic}`,
-              lectureCount: 0
-            });
-            stats.seriesCreated++;
-            console.log(`✅ Created series: ${seriesTitleArabic}`);
-          } else if (dryRun) {
-            if (!stats._seenSeries) stats._seenSeries = new Set();
-            const seriesKey = `${sheikhNameArabic}:${seriesTitleArabic}`;
-            if (!stats._seenSeries.has(seriesKey)) {
-              stats._seenSeries.add(seriesKey);
+          if (!series) {
+            if (dryRun) {
+              // Track unique series that would be created
+              if (!stats._seenSeries) stats._seenSeries = new Set();
+              const seriesKey = `${sheikhNameArabic}:${seriesTitleArabic}`;
+              if (!stats._seenSeries.has(seriesKey)) {
+                stats._seenSeries.add(seriesKey);
+                stats.seriesCreated++;
+                console.log(`🔍 Would create series: ${seriesTitleArabic}`);
+              }
+            } else {
+              series = await Series.create({
+                titleArabic: seriesTitleArabic,
+                titleEnglish: seriesTitleArabic, // Can be updated later
+                sheikhId: sheikh._id,
+                category: mapCategory(row.Category),
+                descriptionArabic: `سلسلة ${seriesTitleArabic}`,
+                descriptionEnglish: `Series: ${seriesTitleArabic}`,
+                lectureCount: 0
+              });
               stats.seriesCreated++;
-              console.log(`🔍 Would create series: ${seriesTitleArabic}`);
+              console.log(`✅ Created series: ${seriesTitleArabic}`);
             }
           }
         }
@@ -362,8 +366,8 @@ async function importExcel() {
       console.log('3. Update lectures to published: true once audio files are available');
     }
 
-    // Close database connection if connected
-    if (!dryRun && mongoose.connection.readyState === 1) {
+    // Close database connection
+    if (mongoose.connection.readyState === 1) {
       await mongoose.connection.close();
       console.log('\n👋 Database connection closed');
     }
