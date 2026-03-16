@@ -124,7 +124,9 @@ async function importExcel() {
     // Parse command line arguments
     const args = process.argv.slice(2);
     const dryRun = args.includes('--dry-run');
-    const inputFile = args.find(arg => !arg.startsWith('--')) || 'updatedData.xlsx';
+    const seriesIndex = args.findIndex(arg => arg === '--series');
+    const seriesArg = seriesIndex !== -1 ? args[seriesIndex + 1] : null;
+    const inputFile = args.find(arg => !arg.startsWith('--') && arg !== seriesArg) || 'updatedData.xlsx';
     const filePath = path.isAbsolute(inputFile) ? inputFile : path.join(__dirname, '..', inputFile);
 
     console.log('📖 Reading Excel file...');
@@ -139,10 +141,11 @@ async function importExcel() {
       console.error(`❌ File not found: ${filePath}`);
       console.log('\nUsage: node scripts/import-excel.js [excel-file] [options]');
       console.log('\nOptions:');
-      console.log('  --dry-run    Preview what would be imported without making changes');
+      console.log('  --dry-run          Preview what would be imported without making changes');
+      console.log('  --series <id>      Assign all lectures to this series (MongoDB ObjectId)');
       console.log('\nExamples:');
       console.log('  node scripts/import-excel.js khutba_archive.xlsx --dry-run');
-      console.log('  node scripts/import-excel.js khutba_archive.xlsx');
+      console.log('  node scripts/import-excel.js khutba_archive.xlsx --series 697604301c69c76d98f8e65d');
       process.exit(1);
     }
 
@@ -155,6 +158,17 @@ async function importExcel() {
     // Connect to MongoDB (needed for both dry run and actual import to check existing data)
     await mongoose.connect(process.env.MONGODB_URI);
     console.log('✅ MongoDB Connected\n');
+
+    // Look up target series if specified
+    let targetSeries = null;
+    if (seriesArg) {
+      targetSeries = await Series.findById(seriesArg);
+      if (!targetSeries) {
+        console.error(`❌ Series not found with ID: ${seriesArg}`);
+        process.exit(1);
+      }
+      console.log(`📚 Target series: ${targetSeries.titleArabic} (${targetSeries._id})\n`);
+    }
 
     const stats = {
       sheikhsCreated: 0,
@@ -203,9 +217,9 @@ async function importExcel() {
           }
         }
 
-        // Find or create Series (if Type is "Series" and SeriesName exists)
-        let series = null;
-        if (row.Type === 'Series' && row.SeriesName && sheikh) {
+        // Determine series: use target series if specified, otherwise find/create from Excel data
+        let series = targetSeries;
+        if (!targetSeries && row.Type === 'Series' && row.SeriesName && sheikh) {
           const seriesTitleArabic = String(row.SeriesName).trim();
           series = await Series.findOne({
             titleArabic: seriesTitleArabic,
