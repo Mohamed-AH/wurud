@@ -123,8 +123,8 @@ function mapCategory(excelCategory) {
     'Aqeedah': 'Aqeedah',
     'Seerah': 'Seerah',
     'Akhlaq': 'Akhlaq',
-    'Khutba': 'Other', // Friday sermons
-    'Khutbah': 'Other'
+    'Khutba': 'Khutba',
+    'Khutbah': 'Khutba'
   };
 
   const normalized = String(excelCategory).trim();
@@ -133,14 +133,28 @@ function mapCategory(excelCategory) {
 
 async function importExcel() {
   try {
-    console.log('📖 Reading Excel file...\n');
+    // Get file path from command line arguments or use default
+    const args = process.argv.slice(2);
+    const inputFile = args[0] || 'updatedData.xlsx';
+    const filePath = path.isAbsolute(inputFile) ? inputFile : path.join(__dirname, '..', inputFile);
 
-    const filePath = path.join(__dirname, '../updatedData.xlsx');
+    console.log('📖 Reading Excel file...');
+    console.log(`   File: ${filePath}\n`);
+
+    if (!require('fs').existsSync(filePath)) {
+      console.error(`❌ File not found: ${filePath}`);
+      console.log('\nUsage: node scripts/import-excel.js [excel-file]');
+      console.log('Examples:');
+      console.log('  node scripts/import-excel.js khutba_archive.xlsx');
+      console.log('  node scripts/import-excel.js /path/to/file.xlsx');
+      process.exit(1);
+    }
+
     const workbook = XLSX.readFile(filePath);
     const sheetName = workbook.SheetNames[0];
     const data = XLSX.utils.sheet_to_json(workbook.Sheets[sheetName]);
 
-    console.log(`📊 Found ${data.length} lectures in Excel file\n`);
+    console.log(`📊 Found ${data.length} records in Excel file (sheet: ${sheetName})\n`);
 
     const stats = {
       sheikhsCreated: 0,
@@ -261,8 +275,8 @@ async function importExcel() {
           duration: duration,
           fileSize: estimatedFileSize, // Estimated, will be updated when audio uploaded
           category: mapCategory(row.Category),
-          location: row['Location/Online'] || '',
-          recordingDate: recordingDate,
+          location: row['Location/Online'] || undefined, // Let model use default
+          dateRecorded: recordingDate,
           published: false, // Set to false until audio files are uploaded
           featured: false,
           descriptionArabic: row.OriginalAuthor ? `من كتاب: ${row.OriginalAuthor}` : '',
