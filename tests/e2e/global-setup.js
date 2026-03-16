@@ -72,27 +72,32 @@ async function globalSetup() {
 
   const { Sheikh, Series, Lecture } = require('../../models');
 
-  // Clear existing test data
-  await Sheikh.deleteMany({});
+  // Clear existing test data (only series and lectures, preserve sheikhs)
   await Series.deleteMany({});
   await Lecture.deleteMany({});
 
-  // Create sheikhs
-  const sheikh1 = await Sheikh.create({
-    nameArabic: 'حسن الدغريري',
-    nameEnglish: 'Hassan Al-Daghriri',
-    honorific: 'حفظه الله',
-    bioArabic: 'من طلبة العلم المعاصرين',
-    bioEnglish: 'Contemporary Islamic scholar',
-  });
+  // Create sheikhs only if they don't exist
+  let sheikh1 = await Sheikh.findOne({ slug_en: 'hassan-al-daghriri' });
+  if (!sheikh1) {
+    sheikh1 = await Sheikh.create({
+      nameArabic: 'حسن الدغريري',
+      nameEnglish: 'Hassan Al-Daghriri',
+      honorific: 'حفظه الله',
+      bioArabic: 'من طلبة العلم المعاصرين',
+      bioEnglish: 'Contemporary Islamic scholar',
+    });
+  }
 
-  const sheikh2 = await Sheikh.create({
-    nameArabic: 'محمد بن عبدالله',
-    nameEnglish: 'Mohammed bin Abdullah',
-    honorific: 'حفظه الله',
-    bioArabic: 'طالب علم متخصص في الفقه',
-    bioEnglish: 'Islamic scholar specialized in Fiqh',
-  });
+  let sheikh2 = await Sheikh.findOne({ nameEnglish: 'Mohammed bin Abdullah' });
+  if (!sheikh2) {
+    sheikh2 = await Sheikh.create({
+      nameArabic: 'محمد بن عبدالله',
+      nameEnglish: 'Mohammed bin Abdullah',
+      honorific: 'حفظه الله',
+      bioArabic: 'طالب علم متخصص في الفقه',
+      bioEnglish: 'Islamic scholar specialized in Fiqh',
+    });
+  }
 
   // Create regular series (Aqeedah)
   const series1 = await Series.create({
