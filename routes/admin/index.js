@@ -474,7 +474,12 @@ router.get('/series/:id/edit', isAdmin, async (req, res) => {
 router.post('/series/:id/edit', isAdmin, async (req, res) => {
   try {
     const { Series } = require('../../models');
-    const { titleArabic, titleEnglish, category, descriptionArabic, descriptionEnglish, tags, bookAuthor, isVisible } = req.body;
+    const {
+      titleArabic, titleEnglish, category, descriptionArabic, descriptionEnglish,
+      tags, bookAuthor, isVisible,
+      // Display options for search/filter
+      showSearch, showYearFilter, showSortOptions, minLecturesForSearch, minLecturesForYearFilter
+    } = req.body;
 
     // Handle tags - can be a string (single tag) or array (multiple tags)
     let tagsArray = [];
@@ -489,7 +494,16 @@ router.post('/series/:id/edit', isAdmin, async (req, res) => {
     // Handle visibility - checkbox sends 'on' when checked, undefined when not
     const isVisibleBool = isVisible === 'on' || isVisible === 'true' || isVisible === true;
 
-    console.log(`[Series Edit] ID: ${req.params.id}, Category: ${category} -> ${validCategory}, isVisible: ${isVisibleBool}, Tags: ${JSON.stringify(tagsArray)}`);
+    // Handle display options for search/filter
+    const displayOptions = {
+      showSearch: showSearch === 'on' || showSearch === 'true' || showSearch === true,
+      showYearFilter: showYearFilter === 'on' || showYearFilter === 'true' || showYearFilter === true,
+      showSortOptions: showSortOptions === 'on' || showSortOptions === 'true' || showSortOptions === true,
+      minLecturesForSearch: parseInt(minLecturesForSearch) || 15,
+      minLecturesForYearFilter: parseInt(minLecturesForYearFilter) || 15
+    };
+
+    console.log(`[Series Edit] ID: ${req.params.id}, Category: ${category} -> ${validCategory}, isVisible: ${isVisibleBool}, Tags: ${JSON.stringify(tagsArray)}, DisplayOptions: ${JSON.stringify(displayOptions)}`);
 
     await Series.findByIdAndUpdate(req.params.id, {
       titleArabic,
@@ -499,7 +513,8 @@ router.post('/series/:id/edit', isAdmin, async (req, res) => {
       descriptionEnglish,
       tags: tagsArray,
       bookAuthor: bookAuthor || null,
-      isVisible: isVisibleBool
+      isVisible: isVisibleBool,
+      displayOptions
     });
 
     // Invalidate homepage cache

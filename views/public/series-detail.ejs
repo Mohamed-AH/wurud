@@ -339,16 +339,101 @@
     opacity: 0.5;
   }
 
+  /* Search & Filter Controls */
+  .search-filter-controls {
+    background: var(--cream);
+    border-radius: 12px;
+    padding: 20px;
+    margin-bottom: 24px;
+    border: 2px solid var(--accent-amber);
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+  }
+
+  .search-row {
+    display: flex;
+    gap: 12px;
+    flex-wrap: wrap;
+    align-items: center;
+  }
+
+  .search-input-wrapper {
+    flex: 1;
+    min-width: 200px;
+    position: relative;
+  }
+
+  .search-input {
+    width: 100%;
+    padding: 12px 16px 12px 44px;
+    border: 2px solid var(--accent-amber);
+    border-radius: 25px;
+    font-size: 15px;
+    background: white;
+    transition: all 0.3s;
+    font-family: inherit;
+  }
+
+  .search-input:focus {
+    outline: none;
+    border-color: var(--accent-gold);
+    box-shadow: 0 0 0 3px rgba(212, 175, 55, 0.2);
+  }
+
+  .search-input::placeholder {
+    color: var(--text-muted);
+  }
+
+  .search-icon {
+    position: absolute;
+    right: 14px;
+    top: 50%;
+    transform: translateY(-50%);
+    color: var(--accent-gold);
+    font-size: 18px;
+  }
+
+  [dir="ltr"] .search-icon {
+    right: auto;
+    left: 14px;
+  }
+
+  .year-filter-wrapper {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+
+  .year-filter-label {
+    font-size: 14px;
+    font-weight: 600;
+    color: var(--text-secondary);
+    white-space: nowrap;
+  }
+
+  .year-filter-select {
+    padding: 10px 16px;
+    border: 2px solid var(--accent-amber);
+    border-radius: 20px;
+    font-size: 14px;
+    background: white;
+    cursor: pointer;
+    transition: all 0.3s;
+    min-width: 100px;
+    font-family: inherit;
+  }
+
+  .year-filter-select:focus {
+    outline: none;
+    border-color: var(--accent-gold);
+  }
+
   /* Sort Controls */
   .sort-controls {
     display: flex;
     align-items: center;
     gap: 12px;
-    padding: 16px 20px;
-    background: var(--cream);
-    border-radius: 12px;
-    margin-bottom: 24px;
-    border: 2px solid var(--accent-amber);
     flex-wrap: wrap;
   }
 
@@ -389,7 +474,7 @@
     box-shadow: 0 2px 8px var(--shadow-warm);
   }
 
-  .clear-sort-btn {
+  .clear-filters-btn {
     padding: 8px 16px;
     border-radius: 20px;
     font-size: 13px;
@@ -402,8 +487,33 @@
     margin-right: auto;
   }
 
-  .clear-sort-btn:hover {
+  .clear-filters-btn:hover {
     background: #c82333;
+  }
+
+  .results-count {
+    font-size: 14px;
+    color: var(--text-secondary);
+    padding: 8px 16px;
+    background: rgba(212, 175, 55, 0.1);
+    border-radius: 20px;
+  }
+
+  .no-results {
+    text-align: center;
+    padding: 40px 20px;
+    color: var(--text-secondary);
+    background: var(--cream);
+    border-radius: 12px;
+    display: none;
+  }
+
+  .no-results.visible {
+    display: block;
+  }
+
+  .lecture-item.hidden {
+    display: none !important;
   }
 
   /* Large desktop (1200px and above) - ensure wide layout */
@@ -463,19 +573,41 @@
       font-size: 18px;
     }
 
+    .search-filter-controls {
+      padding: 16px;
+    }
+
+    .search-row {
+      flex-direction: column;
+      align-items: stretch;
+    }
+
+    .search-input-wrapper {
+      min-width: 100%;
+    }
+
+    .year-filter-wrapper {
+      width: 100%;
+      justify-content: space-between;
+    }
+
     .sort-controls {
       flex-direction: column;
       align-items: flex-start;
-      padding: 14px;
     }
 
     .sort-chips {
       width: 100%;
     }
 
-    .clear-sort-btn {
+    .clear-filters-btn {
       margin-right: 0;
       margin-top: 8px;
+    }
+
+    .results-count {
+      width: 100%;
+      text-align: center;
     }
 
     .breadcrumb .container {
@@ -581,6 +713,54 @@
       line-height: 1.7;
     }
 
+    /* Search & Filter */
+    .search-filter-controls {
+      padding: 12px;
+      gap: 12px;
+    }
+
+    .search-input {
+      padding: 10px 14px 10px 40px;
+      font-size: 14px;
+    }
+
+    .search-icon {
+      font-size: 16px;
+    }
+
+    .year-filter-label {
+      font-size: 13px;
+    }
+
+    .year-filter-select {
+      padding: 8px 12px;
+      font-size: 13px;
+      min-width: 80px;
+    }
+
+    .sort-label {
+      font-size: 13px;
+    }
+
+    .sort-chips {
+      gap: 6px;
+    }
+
+    .sort-chip {
+      padding: 6px 10px;
+      font-size: 12px;
+    }
+
+    .clear-filters-btn {
+      padding: 6px 12px;
+      font-size: 12px;
+    }
+
+    .results-count {
+      font-size: 12px;
+      padding: 6px 12px;
+    }
+
     /* Lecture list items */
     .lectures-list {
       gap: 12px;
@@ -614,31 +794,6 @@
       width: 100%;
       overflow: hidden;
       box-sizing: border-box;
-    }
-
-    /* Sort controls */
-    .sort-controls {
-      padding: 10px;
-      gap: 8px;
-      margin-bottom: 16px;
-    }
-
-    .sort-label {
-      font-size: 13px;
-    }
-
-    .sort-chips {
-      gap: 6px;
-    }
-
-    .sort-chip {
-      padding: 6px 10px;
-      font-size: 12px;
-    }
-
-    .clear-sort-btn {
-      padding: 6px 12px;
-      font-size: 12px;
     }
 
     .breadcrumb {
@@ -737,6 +892,31 @@
       font-size: 14px;
     }
 
+    /* Search & Filter */
+    .search-filter-controls {
+      padding: 10px;
+      gap: 10px;
+    }
+
+    .search-input {
+      padding: 8px 12px 8px 36px;
+      font-size: 13px;
+    }
+
+    .year-filter-wrapper {
+      flex-direction: column;
+      align-items: stretch;
+    }
+
+    .year-filter-select {
+      width: 100%;
+    }
+
+    .sort-chip {
+      padding: 5px 8px;
+      font-size: 11px;
+    }
+
     .lecture-item {
       padding: 2px;
       gap: 6px;
@@ -758,15 +938,6 @@
       max-width: 100%;
       width: 100%;
       overflow: hidden;
-    }
-
-    .sort-controls {
-      padding: 8px;
-    }
-
-    .sort-chip {
-      padding: 5px 8px;
-      font-size: 11px;
     }
 
     .series-card {
@@ -959,32 +1130,120 @@
     <div class="container">
       <h2 class="section-title"><%= relatedKhutbaSeries && relatedKhutbaSeries.length > 0 ? (locale === 'ar' ? 'خطب متفرقة' : 'Miscellaneous Khutbahs') : (locale === 'ar' ? 'محاضرات السلسلة' : 'Series Lectures') %> (<%= lectures.length %>)</h2>
 
+      <%
+        // Get display options from series (with defaults)
+        const displayOptions = series.displayOptions || {};
+        const showSearch = displayOptions.showSearch !== false;
+        const showYearFilter = displayOptions.showYearFilter !== false;
+        const showSortOptions = displayOptions.showSortOptions !== false;
+        const minLecturesForSearch = displayOptions.minLecturesForSearch || 15;
+        const minLecturesForYearFilter = displayOptions.minLecturesForYearFilter || 15;
+
+        // Determine if we should show each option based on lecture count
+        const lectureCount = lectures ? lectures.length : 0;
+        const shouldShowSearch = showSearch && lectureCount >= minLecturesForSearch;
+        const shouldShowYearFilter = showYearFilter && lectureCount >= minLecturesForYearFilter;
+        const shouldShowSort = showSortOptions;
+
+        // Extract unique Hijri years from lectures
+        const hijriYears = new Set();
+        if (lectures) {
+          lectures.forEach(lecture => {
+            if (lecture.dateRecordedHijri) {
+              const year = lecture.dateRecordedHijri.split('/')[0];
+              if (year && !isNaN(parseInt(year))) {
+                hijriYears.add(parseInt(year));
+              }
+            }
+          });
+        }
+        const sortedHijriYears = Array.from(hijriYears).sort((a, b) => b - a);
+      %>
+
       <% if (lectures && lectures.length > 0) { %>
-        <!-- Sort Controls -->
-        <div class="sort-controls">
-          <span class="sort-label"><%= locale === 'ar' ? 'ترتيب:' : 'Sort:' %></span>
-          <div class="sort-chips">
-            <button class="sort-chip active" data-sort="order" onclick="sortLectures('order')">
-              <%= locale === 'ar' ? 'الترتيب الأصلي' : 'Original Order' %>
-            </button>
-            <button class="sort-chip" data-sort="number" onclick="sortLectures('number')">
-              <%= locale === 'ar' ? 'حسب الرقم' : 'By Number' %>
-            </button>
-            <button class="sort-chip" data-sort="oldest" onclick="sortLectures('oldest')">
-              <%= locale === 'ar' ? 'الأقدم أولاً' : 'Oldest First' %>
-            </button>
-            <button class="sort-chip" data-sort="newest" onclick="sortLectures('newest')">
-              <%= locale === 'ar' ? 'الأحدث أولاً' : 'Newest First' %>
-            </button>
+        <% if (shouldShowSearch || shouldShowYearFilter || shouldShowSort) { %>
+        <!-- Search & Filter Controls -->
+        <div class="search-filter-controls" id="searchFilterControls">
+          <% if (shouldShowSearch || shouldShowYearFilter) { %>
+          <div class="search-row">
+            <% if (shouldShowSearch) { %>
+            <div class="search-input-wrapper">
+              <input
+                type="text"
+                id="lectureSearch"
+                class="search-input"
+                placeholder="<%= locale === 'ar' ? 'ابحث في العناوين...' : 'Search titles...' %>"
+                oninput="filterLectures()"
+              >
+              <span class="search-icon">🔍</span>
+            </div>
+            <% } %>
+
+            <% if (shouldShowYearFilter && sortedHijriYears.length > 1) { %>
+            <div class="year-filter-wrapper">
+              <label class="year-filter-label"><%= locale === 'ar' ? 'السنة الهجرية:' : 'Hijri Year:' %></label>
+              <select id="yearFilter" class="year-filter-select" onchange="filterLectures()">
+                <option value=""><%= locale === 'ar' ? 'الكل' : 'All' %></option>
+                <% sortedHijriYears.forEach(year => { %>
+                  <option value="<%= year %>"><%= locale === 'ar' ? toArabicNumerals(year) : year %> <%= locale === 'ar' ? 'هـ' : 'H' %></option>
+                <% }); %>
+              </select>
+            </div>
+            <% } %>
           </div>
-          <button class="clear-sort-btn" onclick="clearSort()" id="clearSortBtn" style="display: none;">
-            <%= locale === 'ar' ? 'مسح' : 'Clear' %> ✕
-          </button>
+          <% } %>
+
+          <% if (shouldShowSort) { %>
+          <div class="sort-controls">
+            <span class="sort-label"><%= locale === 'ar' ? 'ترتيب:' : 'Sort:' %></span>
+            <div class="sort-chips">
+              <button class="sort-chip active" data-sort="order" onclick="sortLectures('order')">
+                <%= locale === 'ar' ? 'الترتيب الأصلي' : 'Original Order' %>
+              </button>
+              <button class="sort-chip" data-sort="number" onclick="sortLectures('number')">
+                <%= locale === 'ar' ? 'حسب الرقم' : 'By Number' %>
+              </button>
+              <button class="sort-chip" data-sort="oldest" onclick="sortLectures('oldest')">
+                <%= locale === 'ar' ? 'الأقدم أولاً' : 'Oldest First' %>
+              </button>
+              <button class="sort-chip" data-sort="newest" onclick="sortLectures('newest')">
+                <%= locale === 'ar' ? 'الأحدث أولاً' : 'Newest First' %>
+              </button>
+            </div>
+          </div>
+          <% } %>
+
+          <div style="display: flex; gap: 12px; flex-wrap: wrap; align-items: center;">
+            <button class="clear-filters-btn" onclick="clearAllFilters()" id="clearFiltersBtn" style="display: none;">
+              <%= locale === 'ar' ? 'مسح الفلاتر' : 'Clear Filters' %> ✕
+            </button>
+            <span class="results-count" id="resultsCount" style="display: none;"></span>
+          </div>
+        </div>
+        <% } %>
+
+        <div class="no-results" id="noResults">
+          <div style="font-size: 48px; margin-bottom: 16px;">🔍</div>
+          <h3><%= locale === 'ar' ? 'لا توجد نتائج' : 'No results found' %></h3>
+          <p><%= locale === 'ar' ? 'جرب تغيير كلمات البحث أو الفلاتر' : 'Try changing your search terms or filters' %></p>
         </div>
 
         <div class="lectures-list" id="lecturesList">
           <% lectures.forEach((lecture, index) => { %>
-            <div class="lecture-item" data-sort-order="<%= lecture.sortOrder != null ? lecture.sortOrder : index %>" data-lecture-number="<%= lecture.lectureNumber || 999 %>" data-date="<%= lecture.dateRecorded ? new Date(lecture.dateRecorded).getTime() : 0 %>" data-index="<%= index %>">
+            <%
+              // Extract Hijri year from dateRecordedHijri (format: YYYY/MM/DD)
+              const hijriYear = lecture.dateRecordedHijri ? lecture.dateRecordedHijri.split('/')[0] : '';
+              // Get title for search
+              const searchTitle = (lecture.titleArabic || '') + ' ' + (lecture.titleEnglish || '');
+            %>
+            <div class="lecture-item"
+                 data-sort-order="<%= lecture.sortOrder != null ? lecture.sortOrder : index %>"
+                 data-lecture-number="<%= lecture.lectureNumber || 999 %>"
+                 data-date="<%= lecture.dateRecorded ? new Date(lecture.dateRecorded).getTime() : 0 %>"
+                 data-hijri="<%= lecture.dateRecordedHijri || '' %>"
+                 data-hijri-year="<%= hijriYear %>"
+                 data-title="<%= searchTitle.toLowerCase() %>"
+                 data-index="<%= index %>">
               <% if (lecture.lectureNumber) { %>
                 <div class="lecture-number-badge">
                   <%= lecture.lectureNumber %>
@@ -1027,9 +1286,107 @@
     }
   }
 
-  // Sort lectures
-  let currentSort = 'order';
+  // Normalize Arabic text for search (remove diacritics, normalize hamza variants, etc.)
+  function normalizeArabicForSearch(text) {
+    if (!text) return '';
+    return text
+      .toLowerCase()
+      // Remove Arabic diacritics (tashkeel)
+      .replace(/[\u064B-\u0652\u0670]/g, '')
+      // Normalize hamza variants to alif
+      .replace(/[أإآ]/g, 'ا')
+      // Normalize ya variants
+      .replace(/[ىي]/g, 'ي')
+      // Normalize ta marbuta
+      .replace(/ة/g, 'ه')
+      .trim();
+  }
 
+  // Convert Hijri date string (YYYY/MM/DD) to sortable number
+  function hijriToSortable(hijriDate) {
+    if (!hijriDate) return 0;
+    const parts = hijriDate.split('/');
+    if (parts.length !== 3) return 0;
+    const year = parseInt(parts[0]) || 0;
+    const month = parseInt(parts[1]) || 0;
+    const day = parseInt(parts[2]) || 0;
+    return year * 10000 + month * 100 + day;
+  }
+
+  // State
+  let currentSort = 'order';
+  let currentSearch = '';
+  let currentYear = '';
+
+  // Filter and display lectures
+  function filterLectures() {
+    const searchInput = document.getElementById('lectureSearch');
+    const yearSelect = document.getElementById('yearFilter');
+    const lecturesList = document.getElementById('lecturesList');
+    const noResults = document.getElementById('noResults');
+    const resultsCount = document.getElementById('resultsCount');
+    const clearBtn = document.getElementById('clearFiltersBtn');
+
+    if (!lecturesList) return;
+
+    currentSearch = searchInput ? normalizeArabicForSearch(searchInput.value) : '';
+    currentYear = yearSelect ? yearSelect.value : '';
+
+    const lectures = Array.from(lecturesList.querySelectorAll('.lecture-item'));
+    let visibleCount = 0;
+
+    lectures.forEach(lecture => {
+      let visible = true;
+
+      // Search filter
+      if (currentSearch) {
+        const title = normalizeArabicForSearch(lecture.dataset.title || '');
+        if (!title.includes(currentSearch)) {
+          visible = false;
+        }
+      }
+
+      // Year filter
+      if (visible && currentYear) {
+        const lectureYear = lecture.dataset.hijriYear || '';
+        if (lectureYear !== currentYear) {
+          visible = false;
+        }
+      }
+
+      // Apply visibility
+      lecture.classList.toggle('hidden', !visible);
+      if (visible) visibleCount++;
+    });
+
+    // Show/hide no results message
+    if (noResults) {
+      noResults.classList.toggle('visible', visibleCount === 0 && (currentSearch || currentYear));
+    }
+
+    // Update results count
+    if (resultsCount) {
+      if (currentSearch || currentYear) {
+        const locale = document.documentElement.lang || 'ar';
+        if (locale === 'ar') {
+          resultsCount.textContent = `عرض ${visibleCount} من ${lectures.length}`;
+        } else {
+          resultsCount.textContent = `Showing ${visibleCount} of ${lectures.length}`;
+        }
+        resultsCount.style.display = 'inline-block';
+      } else {
+        resultsCount.style.display = 'none';
+      }
+    }
+
+    // Show/hide clear button
+    if (clearBtn) {
+      const hasFilters = currentSearch || currentYear || currentSort !== 'order';
+      clearBtn.style.display = hasFilters ? 'block' : 'none';
+    }
+  }
+
+  // Sort lectures
   function sortLectures(sortType) {
     const lecturesList = document.getElementById('lecturesList');
     if (!lecturesList) return;
@@ -1044,30 +1401,40 @@
         const orderB = parseInt(b.dataset.sortOrder) || 0;
         return orderA - orderB;
       } else if (sortType === 'number') {
-        // By lecture number (extracted from title)
+        // By lecture number
         const numA = parseInt(a.dataset.lectureNumber) || 999;
         const numB = parseInt(b.dataset.lectureNumber) || 999;
         return numA - numB;
       } else if (sortType === 'oldest') {
+        // Try Hijri date first, then Gregorian, then sort order
+        const hijriA = hijriToSortable(a.dataset.hijri);
+        const hijriB = hijriToSortable(b.dataset.hijri);
+        if (hijriA !== hijriB && hijriA !== 0 && hijriB !== 0) {
+          return hijriA - hijriB;
+        }
         const dateA = parseInt(a.dataset.date) || 0;
         const dateB = parseInt(b.dataset.date) || 0;
-        // If dates are equal or both 0, fall back to sort order
-        if (dateA === dateB) {
-          const orderA = parseInt(a.dataset.sortOrder) || 0;
-          const orderB = parseInt(b.dataset.sortOrder) || 0;
-          return orderA - orderB;
+        if (dateA !== dateB) {
+          return dateA - dateB;
         }
-        return dateA - dateB;
+        const orderA = parseInt(a.dataset.sortOrder) || 0;
+        const orderB = parseInt(b.dataset.sortOrder) || 0;
+        return orderA - orderB;
       } else if (sortType === 'newest') {
+        // Try Hijri date first, then Gregorian, then sort order
+        const hijriA = hijriToSortable(a.dataset.hijri);
+        const hijriB = hijriToSortable(b.dataset.hijri);
+        if (hijriA !== hijriB && hijriA !== 0 && hijriB !== 0) {
+          return hijriB - hijriA;
+        }
         const dateA = parseInt(a.dataset.date) || 0;
         const dateB = parseInt(b.dataset.date) || 0;
-        // If dates are equal or both 0, fall back to sort order (descending)
-        if (dateA === dateB) {
-          const orderA = parseInt(a.dataset.sortOrder) || 0;
-          const orderB = parseInt(b.dataset.sortOrder) || 0;
-          return orderB - orderA;
+        if (dateA !== dateB) {
+          return dateB - dateA;
         }
-        return dateB - dateA;
+        const orderA = parseInt(a.dataset.sortOrder) || 0;
+        const orderB = parseInt(b.dataset.sortOrder) || 0;
+        return orderB - orderA;
       }
       return 0;
     });
@@ -1080,16 +1447,47 @@
       chip.classList.toggle('active', chip.dataset.sort === sortType);
     });
 
-    // Show clear button if not default sort
-    const clearBtn = document.getElementById('clearSortBtn');
-    if (clearBtn) {
-      clearBtn.style.display = sortType !== 'order' ? 'block' : 'none';
-    }
-
     currentSort = sortType;
+
+    // Update clear button visibility
+    const clearBtn = document.getElementById('clearFiltersBtn');
+    if (clearBtn) {
+      const hasFilters = currentSearch || currentYear || currentSort !== 'order';
+      clearBtn.style.display = hasFilters ? 'block' : 'none';
+    }
   }
 
-  function clearSort() {
+  // Clear all filters and sort
+  function clearAllFilters() {
+    // Clear search
+    const searchInput = document.getElementById('lectureSearch');
+    if (searchInput) searchInput.value = '';
+
+    // Clear year filter
+    const yearSelect = document.getElementById('yearFilter');
+    if (yearSelect) yearSelect.value = '';
+
+    // Reset state
+    currentSearch = '';
+    currentYear = '';
+
+    // Reset sort to default
     sortLectures('order');
+
+    // Re-apply filters (will show all)
+    filterLectures();
+
+    // Hide clear button
+    const clearBtn = document.getElementById('clearFiltersBtn');
+    if (clearBtn) clearBtn.style.display = 'none';
+
+    // Hide results count
+    const resultsCount = document.getElementById('resultsCount');
+    if (resultsCount) resultsCount.style.display = 'none';
+  }
+
+  // Legacy function for backward compatibility
+  function clearSort() {
+    clearAllFilters();
   }
 </script>
