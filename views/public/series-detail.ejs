@@ -1188,7 +1188,19 @@
           });
         }
         const sortedHijriYears = Array.from(hijriYears).sort((a, b) => b - a);
+
+        // Debug: collect sample dates
+        const sampleDates = lectures.slice(0, 5).map(l => l.dateRecordedHijri || 'NULL');
       %>
+
+      <!-- DEBUG: Hijri Year Filter Info
+        Lecture Count: <%= lectureCount %>
+        showYearFilter setting: <%= showYearFilter %>
+        minLecturesForYearFilter: <%= minLecturesForYearFilter %>
+        shouldShowYearFilter: <%= shouldShowYearFilter %>
+        Hijri Years Found: <%= sortedHijriYears.length %> - [<%= sortedHijriYears.join(', ') %>]
+        Sample dateRecordedHijri values: <%= JSON.stringify(sampleDates) %>
+      -->
 
       <% if (lectures && lectures.length > 0) { %>
         <% if (shouldShowSearch || shouldShowYearFilter || shouldShowSort) { %>
