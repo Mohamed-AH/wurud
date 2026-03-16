@@ -1160,20 +1160,30 @@
         // Extract unique Hijri years from lectures
         const hijriYears = new Set();
 
+        // Helper function to convert Arabic numerals to Western numerals
+        function arabicToWestern(str) {
+          if (!str) return str;
+          const arabicNumerals = ['٠', '١', '٢', '٣', '٤', '٥', '٦', '٧', '٨', '٩'];
+          return str.replace(/[٠-٩]/g, d => arabicNumerals.indexOf(d));
+        }
+
         // Helper function to extract year from various Hijri date formats
         function extractHijriYear(dateStr) {
           if (!dateStr) return null;
 
+          // Convert Arabic numerals to Western first
+          const normalized = arabicToWestern(dateStr);
+
           // Handle "YYYY/MM/DD" format (year first with slashes)
-          const yearFirstSlash = dateStr.match(/^(\d{4})\/\d{1,2}\/\d{1,2}$/);
+          const yearFirstSlash = normalized.match(/^(\d{4})\/\d{1,2}\/\d{1,2}$/);
           if (yearFirstSlash) return parseInt(yearFirstSlash[1]);
 
           // Handle "DD/MM/YYYY" format (year last with slashes)
-          const yearLastSlash = dateStr.match(/^\d{1,2}\/\d{1,2}\/(\d{4})$/);
+          const yearLastSlash = normalized.match(/^\d{1,2}\/\d{1,2}\/(\d{4})$/);
           if (yearLastSlash) return parseInt(yearLastSlash[1]);
 
           // Handle "YYYY-MM-DD" format (year first with dashes)
-          const yearFirstDash = dateStr.match(/^(\d{4})-\d{1,2}-\d{1,2}$/);
+          const yearFirstDash = normalized.match(/^(\d{4})-\d{1,2}-\d{1,2}$/);
           if (yearFirstDash) return parseInt(yearFirstDash[1]);
 
           return null;
