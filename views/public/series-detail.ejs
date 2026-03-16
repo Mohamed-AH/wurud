@@ -1159,13 +1159,31 @@
 
         // Extract unique Hijri years from lectures
         const hijriYears = new Set();
+
+        // Helper function to extract year from various Hijri date formats
+        function extractHijriYear(dateStr) {
+          if (!dateStr) return null;
+
+          // Handle "YYYY/MM/DD" format (year first with slashes)
+          const yearFirstSlash = dateStr.match(/^(\d{4})\/\d{1,2}\/\d{1,2}$/);
+          if (yearFirstSlash) return parseInt(yearFirstSlash[1]);
+
+          // Handle "DD/MM/YYYY" format (year last with slashes)
+          const yearLastSlash = dateStr.match(/^\d{1,2}\/\d{1,2}\/(\d{4})$/);
+          if (yearLastSlash) return parseInt(yearLastSlash[1]);
+
+          // Handle "YYYY-MM-DD" format (year first with dashes)
+          const yearFirstDash = dateStr.match(/^(\d{4})-\d{1,2}-\d{1,2}$/);
+          if (yearFirstDash) return parseInt(yearFirstDash[1]);
+
+          return null;
+        }
+
         if (lectures) {
           lectures.forEach(lecture => {
-            if (lecture.dateRecordedHijri) {
-              const year = lecture.dateRecordedHijri.split('/')[0];
-              if (year && !isNaN(parseInt(year))) {
-                hijriYears.add(parseInt(year));
-              }
+            const year = extractHijriYear(lecture.dateRecordedHijri);
+            if (year && year >= 1400 && year <= 1500) {
+              hijriYears.add(year);
             }
           });
         }
@@ -1243,8 +1261,8 @@
         <div class="lectures-list" id="lecturesList">
           <% lectures.forEach((lecture, index) => { %>
             <%
-              // Extract Hijri year from dateRecordedHijri (format: YYYY/MM/DD)
-              const hijriYear = lecture.dateRecordedHijri ? lecture.dateRecordedHijri.split('/')[0] : '';
+              // Extract Hijri year using the helper function defined above
+              const hijriYear = extractHijriYear(lecture.dateRecordedHijri) || '';
               // Get title for search
               const searchTitle = (lecture.titleArabic || '') + ' ' + (lecture.titleEnglish || '');
             %>
