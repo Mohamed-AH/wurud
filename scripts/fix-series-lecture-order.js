@@ -3,7 +3,9 @@
  * Fix lecture sort order for a specific series
  * Sorts by dateRecorded (or createdAt as fallback) with latest at the end
  *
- * Usage: node scripts/fix-series-lecture-order.js --series <seriesId>
+ * Usage:
+ *   node scripts/fix-series-lecture-order.js --series <seriesId> --dry-run  # Preview changes
+ *   node scripts/fix-series-lecture-order.js --series <seriesId>            # Apply changes
  */
 
 require('dotenv').config();
@@ -13,9 +15,10 @@ const { Lecture, Series } = require('../models');
 const args = process.argv.slice(2);
 const seriesIdIndex = args.indexOf('--series');
 const seriesId = seriesIdIndex !== -1 ? args[seriesIdIndex + 1] : null;
+const DRY_RUN = args.includes('--dry-run');
 
 if (!seriesId) {
-  console.error('Usage: node scripts/fix-series-lecture-order.js --series <seriesId>');
+  console.error('Usage: node scripts/fix-series-lecture-order.js --series <seriesId> [--dry-run]');
   process.exit(1);
 }
 
@@ -23,6 +26,7 @@ async function fixLectureOrder() {
   try {
     await mongoose.connect(process.env.MONGODB_URI);
     console.log('Connected to MongoDB');
+    console.log(`Mode: ${DRY_RUN ? 'DRY RUN (no changes will be made)' : 'LIVE'}`);
 
     // Verify series exists
     const series = await Series.findById(seriesId);
@@ -52,24 +56,30 @@ async function fixLectureOrder() {
     });
 
     // Update sortOrder for each lecture
-    console.log('Updating lecture order (oldest first, latest at end):\n');
+    console.log(`${DRY_RUN ? 'Previewing' : 'Updating'} lecture order (oldest first, latest at end):\n`);
 
     for (let i = 0; i < lectures.length; i++) {
       const lecture = lectures[i];
       const newSortOrder = i + 1;
       const effectiveDate = lecture.dateRecorded || lecture.createdAt;
 
-      await Lecture.updateOne(
-        { _id: lecture._id },
-        { $set: { sortOrder: newSortOrder, lectureNumber: newSortOrder } }
-      );
+      if (!DRY_RUN) {
+        await Lecture.updateOne(
+          { _id: lecture._id },
+          { $set: { sortOrder: newSortOrder, lectureNumber: newSortOrder } }
+        );
+      }
 
       console.log(`${newSortOrder}. ${lecture.titleArabic}`);
       console.log(`   Date: ${effectiveDate ? new Date(effectiveDate).toISOString().split('T')[0] : 'N/A'}`);
       console.log(`   (was sortOrder: ${lecture.sortOrder || 'unset'}, lectureNumber: ${lecture.lectureNumber || 'unset'})\n`);
     }
 
-    console.log(`\nSuccessfully updated ${lectures.length} lectures`);
+    if (DRY_RUN) {
+      console.log(`\nDRY RUN: Would update ${lectures.length} lectures. Run without --dry-run to apply.`);
+    } else {
+      console.log(`\nSuccessfully updated ${lectures.length} lectures`);
+    }
 
   } catch (error) {
     console.error('Error:', error.message);
