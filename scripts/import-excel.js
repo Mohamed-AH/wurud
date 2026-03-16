@@ -110,12 +110,12 @@ function mapCategory(excelCategory) {
   const categoryMap = {
     'Tafseer': 'Tafsir',
     'Hadeeth': 'Hadith',
-    'Khutbah': 'Khutba'
+    'Khutba': 'Khutbah'
   };
 
   const normalized = String(excelCategory).trim();
   // Return mapped value, or original if it's a valid category, or 'Other'
-  const validCategories = ['Aqeedah', 'Fiqh', 'Tafsir', 'Hadith', 'Seerah', 'Akhlaq', 'Khutba', 'Other'];
+  const validCategories = ['Aqeedah', 'Fiqh', 'Tafsir', 'Hadith', 'Seerah', 'Akhlaq', 'Khutbah', 'Other'];
   return categoryMap[normalized] || (validCategories.includes(normalized) ? normalized : 'Other');
 }
 

@@ -80,7 +80,7 @@ const lectureSchema = new mongoose.Schema({
   },
   category: {
     type: String,
-    enum: ['Aqeedah', 'Fiqh', 'Tafsir', 'Hadith', 'Seerah', 'Akhlaq', 'Khutba', 'Other'],
+    enum: ['Aqeedah', 'Fiqh', 'Tafsir', 'Hadith', 'Seerah', 'Akhlaq', 'Khutbah', 'Other'],
     default: 'Other',
     index: true
   },
