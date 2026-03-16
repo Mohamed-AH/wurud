@@ -94,6 +94,34 @@ const seriesSchema = new mongoose.Schema({
   sectionOrder: {
     type: Number,
     default: 0
+  },
+  // Search/Filter display options (controlled from admin panel)
+  displayOptions: {
+    // Enable/disable search bar on series page
+    showSearch: {
+      type: Boolean,
+      default: true
+    },
+    // Enable/disable filter by Hijri year
+    showYearFilter: {
+      type: Boolean,
+      default: true
+    },
+    // Enable/disable sort options
+    showSortOptions: {
+      type: Boolean,
+      default: true
+    },
+    // Minimum lectures required to show search/filter (0 = always show, based on settings)
+    minLecturesForSearch: {
+      type: Number,
+      default: 15
+    },
+    // Minimum lectures required to show year filter
+    minLecturesForYearFilter: {
+      type: Number,
+      default: 15
+    }
   }
 }, {
   timestamps: true

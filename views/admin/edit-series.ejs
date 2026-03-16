@@ -810,6 +810,75 @@
           </div>
         </div>
 
+        <!-- Display Options Section -->
+        <%
+          const displayOptions = series.displayOptions || {};
+          const showSearch = displayOptions.showSearch !== false;
+          const showYearFilter = displayOptions.showYearFilter !== false;
+          const showSortOptions = displayOptions.showSortOptions !== false;
+          const minLecturesForSearch = displayOptions.minLecturesForSearch || 15;
+          const minLecturesForYearFilter = displayOptions.minLecturesForYearFilter || 15;
+        %>
+        <div class="form-group" style="margin-top: 32px; padding-top: 24px; border-top: 2px solid #ddd;">
+          <label style="font-size: 18px; color: #1A5F5A; margin-bottom: 16px; display: block;">
+            <span style="margin-left: 8px;">🔍</span>
+            <%= adminLocale === 'ar' ? 'خيارات العرض (البحث والفلترة)' : 'Display Options (Search & Filter)' %>
+          </label>
+          <p style="font-size: 13px; color: #666; margin-bottom: 20px; background: #f0f8ff; padding: 12px; border-radius: 8px;">
+            💡 <%= adminLocale === 'ar' ? 'تحكم في ظهور شريط البحث وخيارات الفلترة في صفحة السلسلة. مفيد للسلاسل الكبيرة مثل الخطب (183 خطبة).' : 'Control the visibility of search bar and filter options on the series page. Useful for large series like khutbahs (183 lectures).' %>
+          </p>
+
+          <div style="display: grid; gap: 16px;">
+            <!-- Search Toggle -->
+            <div class="toggle-container" style="background: #f8f9fa;">
+              <label class="toggle-switch">
+                <input type="checkbox" name="showSearch" id="showSearch" <%= showSearch ? 'checked' : '' %>>
+                <span class="toggle-slider"></span>
+              </label>
+              <div style="flex: 1;">
+                <div class="toggle-label"><%= adminLocale === 'ar' ? '🔎 إظهار شريط البحث' : '🔎 Show Search Bar' %></div>
+                <div class="toggle-description"><%= adminLocale === 'ar' ? 'السماح للزوار بالبحث في عناوين المحاضرات' : 'Allow visitors to search lecture titles' %></div>
+              </div>
+              <div style="display: flex; align-items: center; gap: 8px;">
+                <label style="font-size: 12px; color: #666; margin: 0;"><%= adminLocale === 'ar' ? 'الحد الأدنى:' : 'Min lectures:' %></label>
+                <input type="number" name="minLecturesForSearch" value="<%= minLecturesForSearch %>" min="0" max="1000" style="width: 60px; padding: 6px 8px; border: 1px solid #ddd; border-radius: 4px; text-align: center;">
+              </div>
+            </div>
+
+            <!-- Year Filter Toggle -->
+            <div class="toggle-container" style="background: #f8f9fa;">
+              <label class="toggle-switch">
+                <input type="checkbox" name="showYearFilter" id="showYearFilter" <%= showYearFilter ? 'checked' : '' %>>
+                <span class="toggle-slider"></span>
+              </label>
+              <div style="flex: 1;">
+                <div class="toggle-label"><%= adminLocale === 'ar' ? '📅 إظهار فلتر السنة الهجرية' : '📅 Show Hijri Year Filter' %></div>
+                <div class="toggle-description"><%= adminLocale === 'ar' ? 'السماح للزوار بتصفية المحاضرات حسب السنة الهجرية' : 'Allow visitors to filter lectures by Hijri year' %></div>
+              </div>
+              <div style="display: flex; align-items: center; gap: 8px;">
+                <label style="font-size: 12px; color: #666; margin: 0;"><%= adminLocale === 'ar' ? 'الحد الأدنى:' : 'Min lectures:' %></label>
+                <input type="number" name="minLecturesForYearFilter" value="<%= minLecturesForYearFilter %>" min="0" max="1000" style="width: 60px; padding: 6px 8px; border: 1px solid #ddd; border-radius: 4px; text-align: center;">
+              </div>
+            </div>
+
+            <!-- Sort Options Toggle -->
+            <div class="toggle-container" style="background: #f8f9fa;">
+              <label class="toggle-switch">
+                <input type="checkbox" name="showSortOptions" id="showSortOptions" <%= showSortOptions ? 'checked' : '' %>>
+                <span class="toggle-slider"></span>
+              </label>
+              <div style="flex: 1;">
+                <div class="toggle-label"><%= adminLocale === 'ar' ? '↕️ إظهار خيارات الترتيب' : '↕️ Show Sort Options' %></div>
+                <div class="toggle-description"><%= adminLocale === 'ar' ? 'السماح للزوار بترتيب المحاضرات (الأحدث/الأقدم/حسب الرقم)' : 'Allow visitors to sort lectures (newest/oldest/by number)' %></div>
+              </div>
+            </div>
+          </div>
+
+          <p style="font-size: 12px; color: #888; margin-top: 12px;">
+            ℹ️ <%= adminLocale === 'ar' ? 'الحد الأدنى = 0 يعني دائماً إظهار الخيار. مثال: إذا كان الحد الأدنى 15 والسلسلة بها 10 محاضرات، لن يظهر الخيار.' : 'Min = 0 means always show. Example: if min is 15 and series has 10 lectures, the option won\'t show.' %>
+          </p>
+        </div>
+
         <div class="actions">
           <button type="submit" class="btn btn-primary"><%= adminLocale === 'ar' ? '💾 حفظ التغييرات' : '💾 Save Changes' %></button>
           <a href="/admin/manage" class="btn btn-secondary"><%= adminLocale === 'ar' ? '↩️ إلغاء' : '↩️ Cancel' %></a>

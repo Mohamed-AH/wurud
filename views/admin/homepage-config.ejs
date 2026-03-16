@@ -288,6 +288,29 @@
           </div>
         </div>
 
+        <div class="config-section">
+          <h3><%= adminLocale === 'ar' ? 'إحصائيات صفحة السلسلة' : 'Series Page Stats' %></h3>
+
+          <div class="toggle-row">
+            <div class="toggle-info">
+              <div class="toggle-title"><%= adminLocale === 'ar' ? 'الحد الأدنى لعرض الاستماعات' : 'Min Plays to Show' %></div>
+              <div class="toggle-desc"><%= adminLocale === 'ar' ? 'إخفاء عدد الاستماعات إذا كان أقل من هذا الرقم' : 'Hide play count if below this number' %></div>
+            </div>
+            <input type="number" name="minPlaysToShow" value="<%= seriesStatsSettings.minPlaysToShow || 100 %>" min="0" max="10000" style="width: 80px; padding: 6px 10px; border: 1px solid #ddd; border-radius: 4px; font-size: 14px;">
+          </div>
+
+          <div class="toggle-row">
+            <div class="toggle-info">
+              <div class="toggle-title"><%= adminLocale === 'ar' ? 'عرض مدة المحتوى' : 'Show Duration' %></div>
+              <div class="toggle-desc"><%= adminLocale === 'ar' ? 'عرض إجمالي ساعات المحتوى في صفحة السلسلة' : 'Show total content hours on series page' %></div>
+            </div>
+            <label class="toggle-switch">
+              <input type="checkbox" name="showDuration" <%= seriesStatsSettings.showDuration ? 'checked' : '' %>>
+              <span class="toggle-slider"></span>
+            </label>
+          </div>
+        </div>
+
         <button type="submit" class="btn-save"><%= adminLocale === 'ar' ? 'حفظ الإعدادات' : 'Save Settings' %></button>
       </form>
     </div>

@@ -795,13 +795,18 @@ router.get('/series/:shortId(\\d+)/:slug_en?/:slug_ar?', async (req, res) => {
 
     const canonicalPath = buildCanonicalUrl('series', series);
 
+    // Get site settings for series stats display
+    const siteSettings = await SiteSettings.getSettings();
+    const seriesStatsSettings = siteSettings.seriesStats || { minPlaysToShow: 100, showDuration: false };
+
     res.render('public/series-detail', {
       title: series.titleArabic,
       series,
       lectures,
       stats,
       relatedKhutbaSeries,
-      canonicalPath: canonicalPath || `/series/${series._id}`
+      canonicalPath: canonicalPath || `/series/${series._id}`,
+      seriesStatsSettings
     });
   } catch (error) {
     console.error('Series profile error:', error);
@@ -904,13 +909,18 @@ router.get('/series/:idOrSlug', async (req, res) => {
       }
     }
 
+    // Get site settings for series stats display
+    const siteSettings = await SiteSettings.getSettings();
+    const seriesStatsSettings = siteSettings.seriesStats || { minPlaysToShow: 100, showDuration: false };
+
     res.render('public/series-detail', {
       title: series.titleArabic,
       series,
       lectures,
       stats,
       relatedKhutbaSeries,
-      canonicalPath: '/series/' + (series.slug ? encodeURIComponent(series.slug) : series._id)
+      canonicalPath: '/series/' + (series.slug ? encodeURIComponent(series.slug) : series._id),
+      seriesStatsSettings
     });
   } catch (error) {
     console.error('Series profile error:', error);

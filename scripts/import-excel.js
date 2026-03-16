@@ -17,14 +17,6 @@ const path = require('path');
 const mongoose = require('mongoose');
 const { Lecture, Sheikh, Series } = require('../models');
 
-// Connect to MongoDB
-mongoose.connect(process.env.MONGODB_URI)
-  .then(() => console.log('✅ MongoDB Connected'))
-  .catch(err => {
-    console.error('❌ MongoDB connection failed:', err.message);
-    process.exit(1);
-  });
-
 // Parse duration from MM:SS or HH:MM:SS format to seconds
 function parseDuration(durationStr) {
   if (!durationStr || durationStr === '' || durationStr === null || durationStr === undefined) {
@@ -114,33 +106,69 @@ function extractLectureNumber(serialText) {
 function mapCategory(excelCategory) {
   if (!excelCategory) return 'Other';
 
+  // Map alternate spellings to canonical enum values
   const categoryMap = {
     'Tafseer': 'Tafsir',
-    'Tafsir': 'Tafsir',
     'Hadeeth': 'Hadith',
-    'Hadith': 'Hadith',
-    'Fiqh': 'Fiqh',
-    'Aqeedah': 'Aqeedah',
-    'Seerah': 'Seerah',
-    'Akhlaq': 'Akhlaq',
-    'Khutba': 'Other', // Friday sermons
-    'Khutbah': 'Other'
+    'Khutba': 'Khutbah'
   };
 
   const normalized = String(excelCategory).trim();
-  return categoryMap[normalized] || 'Other';
+  // Return mapped value, or original if it's a valid category, or 'Other'
+  const validCategories = ['Aqeedah', 'Fiqh', 'Tafsir', 'Hadith', 'Seerah', 'Akhlaq', 'Khutbah', 'Other'];
+  return categoryMap[normalized] || (validCategories.includes(normalized) ? normalized : 'Other');
 }
 
 async function importExcel() {
   try {
-    console.log('📖 Reading Excel file...\n');
+    // Parse command line arguments
+    const args = process.argv.slice(2);
+    const dryRun = args.includes('--dry-run');
+    const seriesIndex = args.findIndex(arg => arg === '--series');
+    const seriesArg = seriesIndex !== -1 ? args[seriesIndex + 1] : null;
+    const inputFile = args.find(arg => !arg.startsWith('--') && arg !== seriesArg) || 'updatedData.xlsx';
+    const filePath = path.isAbsolute(inputFile) ? inputFile : path.join(__dirname, '..', inputFile);
 
-    const filePath = path.join(__dirname, '../updatedData.xlsx');
+    console.log('📖 Reading Excel file...');
+    console.log(`   File: ${filePath}`);
+    if (dryRun) {
+      console.log('   🔍 DRY RUN MODE - No changes will be made\n');
+    } else {
+      console.log('');
+    }
+
+    if (!require('fs').existsSync(filePath)) {
+      console.error(`❌ File not found: ${filePath}`);
+      console.log('\nUsage: node scripts/import-excel.js [excel-file] [options]');
+      console.log('\nOptions:');
+      console.log('  --dry-run          Preview what would be imported without making changes');
+      console.log('  --series <id>      Assign all lectures to this series (MongoDB ObjectId)');
+      console.log('\nExamples:');
+      console.log('  node scripts/import-excel.js khutba_archive.xlsx --dry-run');
+      console.log('  node scripts/import-excel.js khutba_archive.xlsx --series 697604301c69c76d98f8e65d');
+      process.exit(1);
+    }
+
     const workbook = XLSX.readFile(filePath);
     const sheetName = workbook.SheetNames[0];
     const data = XLSX.utils.sheet_to_json(workbook.Sheets[sheetName]);
 
-    console.log(`📊 Found ${data.length} lectures in Excel file\n`);
+    console.log(`📊 Found ${data.length} records in Excel file (sheet: ${sheetName})\n`);
+
+    // Connect to MongoDB (needed for both dry run and actual import to check existing data)
+    await mongoose.connect(process.env.MONGODB_URI);
+    console.log('✅ MongoDB Connected\n');
+
+    // Look up target series if specified
+    let targetSeries = null;
+    if (seriesArg) {
+      targetSeries = await Series.findById(seriesArg);
+      if (!targetSeries) {
+        console.error(`❌ Series not found with ID: ${seriesArg}`);
+        process.exit(1);
+      }
+      console.log(`📚 Target series: ${targetSeries.titleArabic} (${targetSeries._id})\n`);
+    }
 
     const stats = {
       sheikhsCreated: 0,
@@ -168,20 +196,30 @@ async function importExcel() {
         let sheikh = await Sheikh.findOne({ nameArabic: sheikhNameArabic });
 
         if (!sheikh) {
-          sheikh = await Sheikh.create({
-            nameArabic: sheikhNameArabic,
-            nameEnglish: sheikhNameArabic, // Can be updated later
-            honorific: 'حفظه الله',
-            bioArabic: `الشيخ ${sheikhNameArabic}`,
-            bioEnglish: `Sheikh ${sheikhNameArabic}`
-          });
-          stats.sheikhsCreated++;
-          console.log(`✅ Created sheikh: ${sheikhNameArabic}`);
+          if (dryRun) {
+            // Track unique sheikhs that would be created
+            if (!stats._seenSheikhs) stats._seenSheikhs = new Set();
+            if (!stats._seenSheikhs.has(sheikhNameArabic)) {
+              stats._seenSheikhs.add(sheikhNameArabic);
+              stats.sheikhsCreated++;
+              console.log(`🔍 Would create sheikh: ${sheikhNameArabic}`);
+            }
+          } else {
+            sheikh = await Sheikh.create({
+              nameArabic: sheikhNameArabic,
+              nameEnglish: sheikhNameArabic, // Can be updated later
+              honorific: 'حفظه الله',
+              bioArabic: `الشيخ ${sheikhNameArabic}`,
+              bioEnglish: `Sheikh ${sheikhNameArabic}`
+            });
+            stats.sheikhsCreated++;
+            console.log(`✅ Created sheikh: ${sheikhNameArabic}`);
+          }
         }
 
-        // Find or create Series (if Type is "Series" and SeriesName exists)
-        let series = null;
-        if (row.Type === 'Series' && row.SeriesName) {
+        // Determine series: use target series if specified, otherwise find/create from Excel data
+        let series = targetSeries;
+        if (!targetSeries && row.Type === 'Series' && row.SeriesName && sheikh) {
           const seriesTitleArabic = String(row.SeriesName).trim();
           series = await Series.findOne({
             titleArabic: seriesTitleArabic,
@@ -189,17 +227,28 @@ async function importExcel() {
           });
 
           if (!series) {
-            series = await Series.create({
-              titleArabic: seriesTitleArabic,
-              titleEnglish: seriesTitleArabic, // Can be updated later
-              sheikhId: sheikh._id,
-              category: mapCategory(row.Category),
-              descriptionArabic: `سلسلة ${seriesTitleArabic}`,
-              descriptionEnglish: `Series: ${seriesTitleArabic}`,
-              lectureCount: 0
-            });
-            stats.seriesCreated++;
-            console.log(`✅ Created series: ${seriesTitleArabic}`);
+            if (dryRun) {
+              // Track unique series that would be created
+              if (!stats._seenSeries) stats._seenSeries = new Set();
+              const seriesKey = `${sheikhNameArabic}:${seriesTitleArabic}`;
+              if (!stats._seenSeries.has(seriesKey)) {
+                stats._seenSeries.add(seriesKey);
+                stats.seriesCreated++;
+                console.log(`🔍 Would create series: ${seriesTitleArabic}`);
+              }
+            } else {
+              series = await Series.create({
+                titleArabic: seriesTitleArabic,
+                titleEnglish: seriesTitleArabic, // Can be updated later
+                sheikhId: sheikh._id,
+                category: mapCategory(row.Category),
+                descriptionArabic: `سلسلة ${seriesTitleArabic}`,
+                descriptionEnglish: `Series: ${seriesTitleArabic}`,
+                lectureCount: 0
+              });
+              stats.seriesCreated++;
+              console.log(`✅ Created series: ${seriesTitleArabic}`);
+            }
           }
         }
 
@@ -228,14 +277,16 @@ async function importExcel() {
         }
 
         // Check if this modified filename already exists in database
-        const existingLecture = await Lecture.findOne({
-          audioFileName: audioFileName
-        });
+        if (!dryRun) {
+          const existingLecture = await Lecture.findOne({
+            audioFileName: audioFileName
+          });
 
-        if (existingLecture) {
-          console.log(`⏭️  Skipping lecture (already in DB): ${audioFileName}`);
-          stats.lecturesSkipped++;
-          continue;
+          if (existingLecture) {
+            console.log(`⏭️  Skipping lecture (already in DB): ${audioFileName}`);
+            stats.lecturesSkipped++;
+            continue;
+          }
         }
 
         // Parse duration and date
@@ -250,36 +301,44 @@ async function importExcel() {
         // Create title
         const titleArabic = row.Serial || row.SeriesName || 'محاضرة';
 
-        // Create Lecture
-        const lecture = await Lecture.create({
-          audioFileName: audioFileName,
-          titleArabic: titleArabic,
-          titleEnglish: titleArabic, // Can be updated later
-          sheikhId: sheikh._id,
-          seriesId: series ? series._id : null,
-          lectureNumber: lectureNumber,
-          duration: duration,
-          fileSize: estimatedFileSize, // Estimated, will be updated when audio uploaded
-          category: mapCategory(row.Category),
-          location: row['Location/Online'] || '',
-          recordingDate: recordingDate,
-          published: false, // Set to false until audio files are uploaded
-          featured: false,
-          descriptionArabic: row.OriginalAuthor ? `من كتاب: ${row.OriginalAuthor}` : '',
-          descriptionEnglish: row.OriginalAuthor ? `From book: ${row.OriginalAuthor}` : ''
-        });
-
-        // Update series lecture count
-        if (series) {
-          await Series.findByIdAndUpdate(series._id, {
-            $inc: { lectureCount: 1 }
+        if (dryRun) {
+          // Dry run - just count
+          stats.lecturesCreated++;
+          if (stats.lecturesCreated % 50 === 0) {
+            console.log(`🔍 Would import ${stats.lecturesCreated} lectures...`);
+          }
+        } else {
+          // Create Lecture
+          const lecture = await Lecture.create({
+            audioFileName: audioFileName,
+            titleArabic: titleArabic,
+            titleEnglish: titleArabic, // Can be updated later
+            sheikhId: sheikh._id,
+            seriesId: series ? series._id : null,
+            lectureNumber: lectureNumber,
+            duration: duration,
+            fileSize: estimatedFileSize, // Estimated, will be updated when audio uploaded
+            category: mapCategory(row.Category),
+            location: row['Location/Online'] || undefined, // Let model use default
+            dateRecorded: recordingDate,
+            published: false, // Set to false until audio files are uploaded
+            featured: false,
+            descriptionArabic: row.OriginalAuthor ? `من كتاب: ${row.OriginalAuthor}` : '',
+            descriptionEnglish: row.OriginalAuthor ? `From book: ${row.OriginalAuthor}` : ''
           });
-        }
 
-        stats.lecturesCreated++;
+          // Update series lecture count
+          if (series) {
+            await Series.findByIdAndUpdate(series._id, {
+              $inc: { lectureCount: 1 }
+            });
+          }
 
-        if (stats.lecturesCreated % 10 === 0) {
-          console.log(`📝 Imported ${stats.lecturesCreated} lectures...`);
+          stats.lecturesCreated++;
+
+          if (stats.lecturesCreated % 10 === 0) {
+            console.log(`📝 Imported ${stats.lecturesCreated} lectures...`);
+          }
         }
 
       } catch (error) {
@@ -293,13 +352,16 @@ async function importExcel() {
 
     // Print final statistics
     console.log('\n' + '='.repeat(60));
-    console.log('📊 Import Complete!');
+    console.log(dryRun ? '📊 Dry Run Summary' : '📊 Import Complete!');
     console.log('='.repeat(60));
-    console.log(`✅ Sheikhs created: ${stats.sheikhsCreated}`);
-    console.log(`✅ Series created: ${stats.seriesCreated}`);
-    console.log(`✅ Lectures created: ${stats.lecturesCreated}`);
-    console.log(`🔄 Duplicate filenames renamed: ${stats.filenamesModified}`);
-    console.log(`⏭️  Lectures skipped: ${stats.lecturesSkipped}`);
+    const prefix = dryRun ? '🔍 Would create' : '✅ Created';
+    console.log(`${prefix} sheikhs: ${stats.sheikhsCreated}`);
+    console.log(`${prefix} series: ${stats.seriesCreated}`);
+    console.log(`${prefix} lectures: ${stats.lecturesCreated}`);
+    console.log(`🔄 Duplicate filenames: ${stats.filenamesModified}`);
+    if (!dryRun) {
+      console.log(`⏭️  Lectures skipped: ${stats.lecturesSkipped}`);
+    }
     console.log(`❌ Errors: ${stats.errors.length}`);
 
     if (stats.errors.length > 0) {
@@ -309,18 +371,28 @@ async function importExcel() {
       });
     }
 
-    console.log('\n💡 Next steps:');
-    console.log('1. Review imported data in MongoDB');
-    console.log('2. Upload actual audio files to the uploads folder');
-    console.log('3. Update lectures to published: true once audio files are available');
+    if (dryRun) {
+      console.log('\n💡 To perform the actual import, run without --dry-run');
+    } else {
+      console.log('\n💡 Next steps:');
+      console.log('1. Review imported data in MongoDB');
+      console.log('2. Upload actual audio files using: node scripts/upload-to-oci.js <dir>');
+      console.log('3. Update lectures to published: true once audio files are available');
+    }
+
+    // Close database connection
+    if (mongoose.connection.readyState === 1) {
+      await mongoose.connection.close();
+      console.log('\n👋 Database connection closed');
+    }
 
   } catch (error) {
     console.error('❌ Import failed:', error);
-  } finally {
-    await mongoose.connection.close();
-    console.log('\n👋 Database connection closed');
-    process.exit(0);
+    if (mongoose.connection.readyState === 1) {
+      await mongoose.connection.close();
+    }
   }
+  process.exit(0);
 }
 
 // Run the import

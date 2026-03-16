@@ -6,7 +6,7 @@
  * Object Storage bucket. Also updates MongoDB lecture records with OCI URLs.
  *
  * Usage:
- *   node scripts/upload-to-oci.js <audio-directory>
+ *   node scripts/upload-to-oci.js /path/to/audio-files --update-db --skip-existing
  *
  * Environment Variables Required:
  *   OCI_NAMESPACE - OCI tenancy namespace
@@ -216,7 +216,7 @@ async function main() {
     console.log('  --skip-existing  Skip files that already exist in OCI');
     console.log('');
     console.log('Example:');
-    console.log('  node scripts/upload-to-oci.js /mnt/audio-optimized --update-db');
+    console.log('  node scripts/upload-to-oci.js /path/to/audio-files --update-db --skip-existing');
     process.exit(1);
   }
 
@@ -289,7 +289,7 @@ async function main() {
 
     if (!flags.updateDb && !flags.dryRun) {
       console.log('\n💡 Tip: Run with --update-db to update MongoDB records:');
-      console.log(`   node scripts/upload-to-oci.js ${audioDir} --update-db --skip-existing`);
+      console.log(`   node scripts/upload-to-oci.js /path/to/audio-files --update-db --skip-existing`);
     }
   }
 
