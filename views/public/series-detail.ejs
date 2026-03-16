@@ -1193,14 +1193,15 @@
         const sampleDates = lectures.slice(0, 5).map(l => l.dateRecordedHijri || 'NULL');
       %>
 
-      <!-- DEBUG: Hijri Year Filter Info
-        Lecture Count: <%= lectureCount %>
-        showYearFilter setting: <%= showYearFilter %>
-        minLecturesForYearFilter: <%= minLecturesForYearFilter %>
-        shouldShowYearFilter: <%= shouldShowYearFilter %>
-        Hijri Years Found: <%= sortedHijriYears.length %> - [<%= sortedHijriYears.join(', ') %>]
-        Sample dateRecordedHijri values: <%= JSON.stringify(sampleDates) %>
-      -->
+      <script>
+        console.log('=== DEBUG: Hijri Year Filter Info ===');
+        console.log('Lecture Count:', <%= lectureCount %>);
+        console.log('showYearFilter setting:', <%= showYearFilter %>);
+        console.log('minLecturesForYearFilter:', <%= minLecturesForYearFilter %>);
+        console.log('shouldShowYearFilter:', <%= shouldShowYearFilter %>);
+        console.log('Hijri Years Found:', <%= sortedHijriYears.length %>, '[<%= sortedHijriYears.join(", ") %>]');
+        console.log('Sample dateRecordedHijri values:', <%- JSON.stringify(sampleDates) %>);
+      </script>
 
       <% if (lectures && lectures.length > 0) { %>
         <% if (shouldShowSearch || shouldShowYearFilter || shouldShowSort) { %>
