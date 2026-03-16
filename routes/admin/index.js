@@ -2486,6 +2486,7 @@ router.get('/homepage-config', isAdmin, async (req, res) => {
       title: 'Homepage Configuration',
       user: req.user,
       settings: settings.homepage || {},
+      seriesStatsSettings: settings.seriesStats || { minPlaysToShow: 100, showDuration: false },
       success: req.query.success,
       error: req.query.error
     });
@@ -2509,6 +2510,12 @@ router.post('/homepage-config', isAdmin, async (req, res) => {
       showSeriesTab: req.body.showSeriesTab === 'on',
       showStandaloneTab: req.body.showStandaloneTab === 'on',
       showKhutbasTab: req.body.showKhutbasTab === 'on'
+    };
+
+    // Series detail page stats settings
+    settings.seriesStats = {
+      minPlaysToShow: parseInt(req.body.minPlaysToShow, 10) || 100,
+      showDuration: req.body.showDuration === 'on'
     };
 
     await settings.save();

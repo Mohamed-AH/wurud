@@ -53,6 +53,13 @@ describe('SiteSettings Model', () => {
       expect(settings.homepage.showKhutbasTab).toBe(true);
     });
 
+    it('should have correct seriesStats defaults', async () => {
+      const settings = await SiteSettings.create({ key: 'global' });
+
+      expect(settings.seriesStats.minPlaysToShow).toBe(100);
+      expect(settings.seriesStats.showDuration).toBe(false);
+    });
+
     it('should have correct cachedStats defaults', async () => {
       const settings = await SiteSettings.create({ key: 'global' });
 

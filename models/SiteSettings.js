@@ -57,6 +57,20 @@ const siteSettingsSchema = new mongoose.Schema({
     }
   },
 
+  // Series detail page stats configuration
+  seriesStats: {
+    // Minimum plays before showing play count (hide if below threshold)
+    minPlaysToShow: {
+      type: Number,
+      default: 100
+    },
+    // Whether to show the duration stat card
+    showDuration: {
+      type: Boolean,
+      default: false
+    }
+  },
+
   // Cached aggregate stats (updated periodically)
   cachedStats: {
     totalPlays: {

@@ -834,9 +834,20 @@
   </div>
 
   <!-- Statistics -->
+  <%
+    // Detect if this is a khutba series by checking title only
+    const titleAr = series.titleArabic || '';
+    const isKhutbaSeries = titleAr.includes('خطب') || titleAr.includes('خطبة');
+
+    // Get stats display settings (with defaults if not provided)
+    const minPlaysToShow = typeof seriesStatsSettings !== 'undefined' && seriesStatsSettings.minPlaysToShow ? seriesStatsSettings.minPlaysToShow : 100;
+    const showDuration = typeof seriesStatsSettings !== 'undefined' && seriesStatsSettings.showDuration ? seriesStatsSettings.showDuration : false;
+    const showPlays = stats.totalPlays >= minPlaysToShow;
+  %>
   <div class="stats-section">
     <div class="container">
       <div class="stats-grid">
+        <!-- Lecture/Khutbah Count -->
         <div class="stat-card">
           <div class="stat-icon">
             <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
@@ -846,10 +857,12 @@
           </div>
           <div class="stat-content">
             <div class="stat-value"><%= stats.totalLectures %></div>
-            <div class="stat-label"><%= locale === 'ar' ? 'محاضرة' : 'Lectures' %></div>
+            <div class="stat-label"><%= locale === 'ar' ? (isKhutbaSeries ? 'خطبة' : 'محاضرة') : (isKhutbaSeries ? 'Khutbahs' : 'Lectures') %></div>
           </div>
         </div>
 
+        <% if (showPlays) { %>
+        <!-- Plays (only shown if >= threshold) -->
         <div class="stat-card">
           <div class="stat-icon">
             <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
@@ -862,7 +875,10 @@
             <div class="stat-label"><%= locale === 'ar' ? 'استماع' : 'Plays' %></div>
           </div>
         </div>
+        <% } %>
 
+        <% if (showDuration && stats.totalDuration > 0) { %>
+        <!-- Duration (only shown if enabled in settings and > 0) -->
         <div class="stat-card">
           <div class="stat-icon">
             <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
@@ -875,20 +891,6 @@
             <div class="stat-label"><%= locale === 'ar' ? 'ساعة محتوى' : 'Hours' %></div>
           </div>
         </div>
-
-        <% if (stats.completeLectures > 0) { %>
-          <div class="stat-card">
-            <div class="stat-icon">
-              <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path>
-                <polyline points="22 4 12 14.01 9 11.01"></polyline>
-              </svg>
-            </div>
-            <div class="stat-content">
-              <div class="stat-value"><%= Math.round((stats.completeLectures / stats.totalLectures) * 100) %>%</div>
-              <div class="stat-label"><%= locale === 'ar' ? 'مرقمة' : 'Numbered' %></div>
-            </div>
-          </div>
         <% } %>
       </div>
     </div>
