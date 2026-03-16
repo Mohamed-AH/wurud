@@ -75,6 +75,22 @@ async function fixLectureOrder() {
       console.log(`   (was sortOrder: ${lecture.sortOrder || 'unset'}, lectureNumber: ${lecture.lectureNumber || 'unset'})\n`);
     }
 
+    // Show final order summary
+    console.log('\n' + '='.repeat(80));
+    console.log('FINAL ORDER (how the series will appear):');
+    console.log('='.repeat(80));
+    console.log(`${'#'.padEnd(4)} | ${'Date'.padEnd(12)} | Title`);
+    console.log('-'.repeat(80));
+
+    for (let i = 0; i < lectures.length; i++) {
+      const lecture = lectures[i];
+      const effectiveDate = lecture.dateRecorded || lecture.createdAt;
+      const dateStr = effectiveDate ? new Date(effectiveDate).toISOString().split('T')[0] : 'N/A';
+      console.log(`${String(i + 1).padEnd(4)} | ${dateStr.padEnd(12)} | ${lecture.titleArabic}`);
+    }
+
+    console.log('='.repeat(80));
+
     if (DRY_RUN) {
       console.log(`\nDRY RUN: Would update ${lectures.length} lectures. Run without --dry-run to apply.`);
     } else {
