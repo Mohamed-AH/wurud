@@ -1227,6 +1227,8 @@
                 class="search-input"
                 placeholder="<%= locale === 'ar' ? 'ابحث في العناوين...' : 'Search titles...' %>"
                 oninput="filterLectures()"
+                maxlength="100"
+                autocomplete="off"
               >
               <span class="search-icon">🔍</span>
             </div>
@@ -1339,6 +1341,22 @@
     }
   }
 
+  // Sanitize search input to prevent XSS and other potential issues
+  function sanitizeSearchInput(input) {
+    if (!input) return '';
+    return input
+      // Remove HTML tags
+      .replace(/<[^>]*>/g, '')
+      // Remove script-related patterns
+      .replace(/javascript:/gi, '')
+      .replace(/on\w+\s*=/gi, '')
+      // Remove special characters that could be problematic
+      .replace(/[<>'"&]/g, '')
+      // Limit length (in case maxlength is bypassed)
+      .substring(0, 100)
+      .trim();
+  }
+
   // Normalize Arabic text for search (remove diacritics, normalize hamza variants, etc.)
   function normalizeArabicForSearch(text) {
     if (!text) return '';
@@ -1382,7 +1400,7 @@
 
     if (!lecturesList) return;
 
-    currentSearch = searchInput ? normalizeArabicForSearch(searchInput.value) : '';
+    currentSearch = searchInput ? normalizeArabicForSearch(sanitizeSearchInput(searchInput.value)) : '';
     currentYear = yearSelect ? yearSelect.value : '';
 
     const lectures = Array.from(lecturesList.querySelectorAll('.lecture-item'));
