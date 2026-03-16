@@ -106,21 +106,17 @@ function extractLectureNumber(serialText) {
 function mapCategory(excelCategory) {
   if (!excelCategory) return 'Other';
 
+  // Map alternate spellings to canonical enum values
   const categoryMap = {
     'Tafseer': 'Tafsir',
-    'Tafsir': 'Tafsir',
     'Hadeeth': 'Hadith',
-    'Hadith': 'Hadith',
-    'Fiqh': 'Fiqh',
-    'Aqeedah': 'Aqeedah',
-    'Seerah': 'Seerah',
-    'Akhlaq': 'Akhlaq',
-    'Khutba': 'Khutba',
     'Khutbah': 'Khutba'
   };
 
   const normalized = String(excelCategory).trim();
-  return categoryMap[normalized] || 'Other';
+  // Return mapped value, or original if it's a valid category, or 'Other'
+  const validCategories = ['Aqeedah', 'Fiqh', 'Tafsir', 'Hadith', 'Seerah', 'Akhlaq', 'Khutba', 'Other'];
+  return categoryMap[normalized] || (validCategories.includes(normalized) ? normalized : 'Other');
 }
 
 async function importExcel() {
