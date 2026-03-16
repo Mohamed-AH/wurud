@@ -599,7 +599,9 @@ const categoryMap = {
   'Seerah': { ar: 'السيرة', en: 'Seerah' },
   'General': { ar: 'عام', en: 'General' },
   'Other': { ar: 'أخرى', en: 'Other' },
-  'Khutbah': { ar: 'خطب', en: 'Khutbah' }
+  'Khutbah': { ar: 'خطب', en: 'Khutbah' },
+  'Khutba': { ar: 'خطب', en: 'Khutba' },
+  'Akhlaq': { ar: 'الأخلاق', en: 'Akhlaq' }
 };
 
 function translateCategory(category, locale) {
