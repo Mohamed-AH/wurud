@@ -244,8 +244,8 @@ describe('PageView Model', () => {
         const today = new Date();
         today.setHours(0, 0, 0, 0);
 
-        await PageView.create({ page: '/lecture/1', pageType: 'lecture', date: today, count: 100 });
-        await PageView.create({ page: '/homepage', pageType: 'homepage', date: today, count: 500 });
+        await PageView.create({ page: '/top-pages-lecture-filter', pageType: 'lecture', date: today, count: 100 });
+        await PageView.create({ page: '/top-pages-homepage-filter', pageType: 'homepage', date: today, count: 500 });
 
         const topPages = await PageView.getTopPages(5, 'lecture');
         expect(topPages).toHaveLength(1);
@@ -267,14 +267,14 @@ describe('PageView Model', () => {
         today.setHours(0, 0, 0, 0);
 
         await PageView.create({
-          page: '/homepage',
+          page: '/summary-homepage',
           pageType: 'homepage',
           date: today,
           count: 100
         });
 
         await PageView.create({
-          page: '/lecture/1',
+          page: '/summary-lecture',
           pageType: 'lecture',
           date: today,
           count: 50
