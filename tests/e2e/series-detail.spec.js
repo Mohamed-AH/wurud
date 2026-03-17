@@ -32,9 +32,10 @@ test.describe('Series Detail Page - Basic Functionality', () => {
     // Series title should be visible in hero
     await expect(page.locator('.series-hero h1.series-title')).toBeVisible({ timeout: 15000 });
 
-    // Stats cards should be present
+    // Stats cards should be present (at least 1 - lecture count is always shown)
+    // Additional stats like plays and duration are conditionally shown based on settings
     const statCards = page.locator('.stat-card');
-    expect(await statCards.count()).toBeGreaterThanOrEqual(2);
+    expect(await statCards.count()).toBeGreaterThanOrEqual(1);
 
     // Lectures section should exist
     await expect(page.locator('.lectures-list, .empty-state')).toBeVisible();
@@ -60,8 +61,11 @@ test.describe('Series Detail Page - Basic Functionality', () => {
         // Sort chip should be active
         await expect(sortByNumber).toHaveClass(/active/);
 
-        // Clear button should be visible
-        await expect(page.locator('#clearSortBtn')).toBeVisible();
+        // Original order chip should no longer be active
+        const originalOrderChip = page.locator('.sort-chip[data-sort="order"]');
+        if (await originalOrderChip.isVisible()) {
+          await expect(originalOrderChip).not.toHaveClass(/active/);
+        }
       }
     }
   });
