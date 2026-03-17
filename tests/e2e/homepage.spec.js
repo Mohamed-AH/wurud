@@ -8,8 +8,8 @@ test.describe('Homepage - Basic Functionality', () => {
   test('should load homepage successfully', async ({ page }) => {
     await page.goto('/');
 
-    // Check page title contains المكتبة الصوتية (The Audio Library)
-    await expect(page).toHaveTitle(/المكتبة الصوتية|Audio Library/);
+    // Check page title contains البحث في التفريغ الصوتي (Transcript Search) or similar
+    await expect(page).toHaveTitle(/البحث في التفريغ الصوتي|المكتبة الصوتية|Audio Library|Transcript Search/);
 
     // Check main navigation tabs are present
     await expect(page.locator('#tab-lectures')).toBeVisible();
@@ -517,7 +517,7 @@ test.describe('Homepage - Transcript Search Feedback', () => {
     await page.waitForLoadState('networkidle');
 
     // Find the enhanced search input (transcript search)
-    const searchInput = page.locator('#enhancedSearchInput');
+    const searchInput = page.locator('#searchInput');
 
     if (await searchInput.isVisible()) {
       // Enter a search query
@@ -525,7 +525,7 @@ test.describe('Homepage - Transcript Search Feedback', () => {
       await page.waitForTimeout(500);
 
       // Click search button or press enter
-      const searchButton = page.locator('#enhancedSearchBtn');
+      const searchButton = page.locator('.search-btn');
       if (await searchButton.isVisible()) {
         await searchButton.click();
       } else {
@@ -559,8 +559,8 @@ test.describe('Homepage - Transcript Search Feedback', () => {
     await page.goto('/');
     await page.waitForLoadState('domcontentloaded');
 
-    // Check that comment textarea exists
-    const commentTextarea = page.locator('#feedbackComment');
+    // Check that comment textarea exists (uses feedbackCommentInput on index page)
+    const commentTextarea = page.locator('#feedbackCommentInput');
     await expect(commentTextarea).toHaveCount(1);
   });
 
@@ -581,12 +581,12 @@ test.describe('Homepage - Transcript Search Feedback', () => {
     await page.waitForLoadState('networkidle');
 
     // Make feedback prompt visible by triggering search (if possible)
-    const searchInput = page.locator('#enhancedSearchInput');
+    const searchInput = page.locator('#searchInput');
 
     if (await searchInput.isVisible()) {
       await searchInput.fill('test');
 
-      const searchButton = page.locator('#enhancedSearchBtn');
+      const searchButton = page.locator('.search-btn');
       if (await searchButton.isVisible()) {
         await searchButton.click();
         await page.waitForTimeout(2000);
@@ -609,12 +609,12 @@ test.describe('Homepage - Transcript Search Feedback', () => {
     await page.goto('/');
     await page.waitForLoadState('networkidle');
 
-    const searchInput = page.locator('#enhancedSearchInput');
+    const searchInput = page.locator('#searchInput');
 
     if (await searchInput.isVisible()) {
       await searchInput.fill('test');
 
-      const searchButton = page.locator('#enhancedSearchBtn');
+      const searchButton = page.locator('.search-btn');
       if (await searchButton.isVisible()) {
         await searchButton.click();
         await page.waitForTimeout(2000);
@@ -664,20 +664,20 @@ test.describe('Homepage - Hero Section', () => {
     await page.goto('/');
     await page.waitForLoadState('domcontentloaded');
 
-    // Enhanced search input should be visible
-    const enhancedSearch = page.locator('#enhancedSearchInput');
-    await expect(enhancedSearch).toBeVisible({ timeout: 10000 });
+    // Search input should be visible (uses #searchInput on index page)
+    const searchInput = page.locator('#searchInput');
+    await expect(searchInput).toBeVisible({ timeout: 10000 });
   });
 
   test('should have proper placeholder text for transcript search', async ({ page }) => {
     await page.goto('/');
     await page.waitForLoadState('domcontentloaded');
 
-    const enhancedSearch = page.locator('#enhancedSearchInput');
+    const searchInput = page.locator('#searchInput');
 
-    if (await enhancedSearch.isVisible()) {
+    if (await searchInput.isVisible()) {
       // Check placeholder contains search-related text
-      const placeholder = await enhancedSearch.getAttribute('placeholder');
+      const placeholder = await searchInput.getAttribute('placeholder');
       expect(placeholder).toBeDefined();
       expect(placeholder.length).toBeGreaterThan(0);
     }
