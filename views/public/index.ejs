@@ -1039,6 +1039,11 @@
     white-space: nowrap;
   }
 
+  .schedule-day-cell.multi-day {
+    white-space: normal;
+    min-width: 100px;
+  }
+
   .schedule-day-cell .day-short {
     display: none;
   }
@@ -1138,6 +1143,11 @@
 
     .schedule-day-cell .day-short {
       display: inline;
+    }
+
+    .schedule-day-cell.multi-day {
+      min-width: 70px;
+      line-height: 1.4;
     }
 
     .schedule-time-cell .time-full {
@@ -2202,6 +2212,54 @@
   // Get day for display
   const getDay = (day) => locale === 'en' ? (dayTranslations[day] || day) : day;
   const getDayShort = (day) => locale === 'en' ? (dayShortEn[day] || day) : (dayShortAr[day] || day);
+
+  // Group schedule items by series + time + location
+  const groupScheduleItems = (items) => {
+    const dayOrder = ['السبت', 'الأحد', 'الاثنين', 'الثلاثاء', 'الأربعاء', 'الخميس', 'الجمعة'];
+    const groups = {};
+
+    items.forEach(item => {
+      const key = `${item.seriesId._id}-${item.time}-${item.location}`;
+      if (!groups[key]) {
+        groups[key] = {
+          ...item,
+          days: [item.dayOfWeek]
+        };
+      } else {
+        groups[key].days.push(item.dayOfWeek);
+        // Keep the "newest" isNew flag
+        if (item.isNew) groups[key].isNew = true;
+      }
+    });
+
+    // Sort days within each group and sort groups by first day
+    return Object.values(groups).map(group => {
+      group.days.sort((a, b) => dayOrder.indexOf(a) - dayOrder.indexOf(b));
+      return group;
+    }).sort((a, b) => dayOrder.indexOf(a.days[0]) - dayOrder.indexOf(b.days[0]));
+  };
+
+  // Format combined days for display
+  const formatDays = (days, short = false) => {
+    const getDayFn = short ? getDayShort : getDay;
+    const dayNames = days.map(d => getDayFn(d));
+
+    if (dayNames.length === 1) return dayNames[0];
+    if (dayNames.length === 2) {
+      return locale === 'ar'
+        ? `${dayNames[0]} و${dayNames[1]}`
+        : `${dayNames[0]} & ${dayNames[1]}`;
+    }
+    // 3+ days
+    const last = dayNames.pop();
+    return locale === 'ar'
+      ? `${dayNames.join('، ')} و${last}`
+      : `${dayNames.join(', ')} & ${last}`;
+  };
+
+  // Create grouped schedules
+  const groupedInPerson = groupScheduleItems(inPersonSchedule);
+  const groupedOnline = groupScheduleItems(onlineSchedule);
 %>
 <section class="weekly-schedule-section">
   <div class="schedule-header">
@@ -2213,17 +2271,17 @@
   <div class="schedule-tabs">
     <button class="schedule-tab active" onclick="switchScheduleTab('inperson')">
       🕌 <%= locale === 'ar' ? 'جامع الورود' : 'In-Person' %>
-      <span class="schedule-tab-count"><%= inPersonSchedule.length %></span>
+      <span class="schedule-tab-count"><%= groupedInPerson.length %></span>
     </button>
     <button class="schedule-tab" onclick="switchScheduleTab('online')">
       💻 <%= locale === 'ar' ? 'عن بُعد' : 'Online' %>
-      <span class="schedule-tab-count"><%= onlineSchedule.length %></span>
+      <span class="schedule-tab-count"><%= groupedOnline.length %></span>
     </button>
   </div>
 
   <!-- In-Person Classes Panel -->
   <div id="schedule-inperson" class="schedule-panel active">
-    <% if (inPersonSchedule.length > 0) { %>
+    <% if (groupedInPerson.length > 0) { %>
     <div class="schedule-table-wrapper">
       <table class="schedule-table">
         <thead>
@@ -2235,11 +2293,11 @@
           </tr>
         </thead>
         <tbody>
-          <% inPersonSchedule.forEach(function(item) { %>
+          <% groupedInPerson.forEach(function(item) { %>
           <tr>
-            <td class="schedule-day-cell">
-              <span class="day-full"><%= getDay(item.dayOfWeek) %></span>
-              <span class="day-short"><%= getDayShort(item.dayOfWeek) %></span>
+            <td class="schedule-day-cell<%= item.days.length > 1 ? ' multi-day' : '' %>">
+              <span class="day-full"><%= formatDays(item.days, false) %></span>
+              <span class="day-short"><%= formatDays(item.days, true) %></span>
             </td>
             <td class="schedule-time-cell">
               <span class="time-full"><%= translateTime(item.time) %></span>
@@ -2276,7 +2334,7 @@
 
   <!-- Online Classes Panel -->
   <div id="schedule-online" class="schedule-panel">
-    <% if (onlineSchedule.length > 0) { %>
+    <% if (groupedOnline.length > 0) { %>
     <div class="schedule-table-wrapper">
       <table class="schedule-table">
         <thead>
@@ -2288,11 +2346,11 @@
           </tr>
         </thead>
         <tbody>
-          <% onlineSchedule.forEach(function(item) { %>
+          <% groupedOnline.forEach(function(item) { %>
           <tr>
-            <td class="schedule-day-cell">
-              <span class="day-full"><%= getDay(item.dayOfWeek) %></span>
-              <span class="day-short"><%= getDayShort(item.dayOfWeek) %></span>
+            <td class="schedule-day-cell<%= item.days.length > 1 ? ' multi-day' : '' %>">
+              <span class="day-full"><%= formatDays(item.days, false) %></span>
+              <span class="day-short"><%= formatDays(item.days, true) %></span>
             </td>
             <td class="schedule-time-cell">
               <span class="time-full"><%= translateTime(item.time) %></span>
