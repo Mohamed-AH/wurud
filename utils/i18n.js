@@ -56,7 +56,7 @@ const translations = {
 
     // Series detail
     series_title: 'السلاسل',
-    series_lectures: 'محاضرات السلسلة',
+    series_lectures: 'دروس السلسلة',
     series_about: 'وصف السلسلة',
     series_completion: 'مرقمة',
     series_no_lectures: 'لا توجد محاضرات منشورة في هذه السلسلة حالياً',
