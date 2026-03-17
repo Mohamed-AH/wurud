@@ -2212,6 +2212,29 @@ router.post('/sections/new', isAdmin, async (req, res) => {
   }
 });
 
+// @route   POST /admin/sections/reorder
+// @desc    Reorder sections (AJAX)
+// @access  Private (Admin only)
+router.post('/sections/reorder', isAdmin, async (req, res) => {
+  try {
+    const { Section } = require('../../models');
+
+    const { order } = req.body; // Array of { id, order }
+
+    if (!Array.isArray(order)) {
+      return res.status(400).json({ success: false, message: 'Invalid order data' });
+    }
+
+    await Section.reorder(order);
+    invalidateHomepageCache();
+
+    res.json({ success: true });
+  } catch (error) {
+    console.error('Reorder sections error:', error);
+    res.status(500).json({ success: false, message: 'Reorder failed' });
+  }
+});
+
 // @route   GET /admin/sections/:id/edit
 // @desc    Edit section form
 // @access  Private (Admin only)
@@ -2294,29 +2317,6 @@ router.post('/sections/:id/delete', isAdmin, async (req, res) => {
   } catch (error) {
     console.error('Delete section error:', error);
     res.redirect('/admin/sections?error=delete_failed');
-  }
-});
-
-// @route   POST /admin/sections/reorder
-// @desc    Reorder sections (AJAX)
-// @access  Private (Admin only)
-router.post('/sections/reorder', isAdmin, async (req, res) => {
-  try {
-    const { Section } = require('../../models');
-
-    const { order } = req.body; // Array of { id, order }
-
-    if (!Array.isArray(order)) {
-      return res.status(400).json({ success: false, message: 'Invalid order data' });
-    }
-
-    await Section.reorder(order);
-    invalidateHomepageCache();
-
-    res.json({ success: true });
-  } catch (error) {
-    console.error('Reorder sections error:', error);
-    res.status(500).json({ success: false, message: 'Reorder failed' });
   }
 });
 
