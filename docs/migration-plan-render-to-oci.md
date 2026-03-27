@@ -27,6 +27,8 @@ Your OOM kills stem from the 512MB limit. OCI's ARM instance with 24GB RAM elimi
 
 > **Note:** ARM instances may face capacity constraints. If you get "Out of capacity" errors, try different availability domains or upgrade to Pay-As-You-Go (PAYG) — you won't be charged for Always Free resources. ([Source](https://medium.com/@me69oshan/get-always-free-vm-instance-in-oracle-cloud-and-solve-out-of-host-capacity-issue-the-easy-way-88babae4eae5))
 
+> **ARM Compatibility Warning:** While ARM instances offer excellent cost savings, some npm packages may not have ARM (aarch64) support yet. Test your dependencies locally or in CI before deploying. If you encounter compatibility issues, consider using the x86 VM.Standard.E2.1.Micro shape (1 OCPU, 1GB RAM) as a fallback, though it has less resources.
+
 ### 1.2 Initial Instance Setup
 
 ```bash
@@ -104,7 +106,7 @@ services:
       - .env.production
     volumes:
       - ./uploads:/app/uploads
-      - ./logs:/app/logs
+      # Note: Don't mount logs volume - use Docker logging + Sentry instead
     healthcheck:
       test: ["CMD", "wget", "-q", "--spider", "http://localhost:3000/health"]
       interval: 30s
@@ -160,34 +162,26 @@ yourdomain.com {
 }
 ```
 
-### 2.4 Update PM2 Configuration
+### 2.4 Why NOT to Use PM2 with Docker
 
-Since you now have abundant memory, simplify `ecosystem.config.js`:
+> **Important:** Do NOT use PM2 inside Docker containers.
 
-```javascript
-module.exports = {
-  apps: [{
-    name: 'duroos',
-    script: 'server.js',
-    instances: 2,  // Can now run multiple instances!
-    exec_mode: 'cluster',
-    max_memory_restart: '2G',  // Generous limit
-    node_args: '--max-old-space-size=2048',  // 2GB heap per instance
-    env_production: {
-      NODE_ENV: 'production',
-      PORT: 3000
-    },
-    // Logging
-    log_date_format: 'YYYY-MM-DD HH:mm:ss Z',
-    error_file: './logs/error.log',
-    out_file: './logs/out.log',
-    merge_logs: true,
+Docker containers are designed to run **one main process**:
+- With PM2 → you're introducing a process manager inside another process manager
+- With Docker → container lifecycle = your app lifecycle
 
-    // Monitoring
-    instance_var: 'INSTANCE_ID'
-  }]
-};
+**The Dockerfile already uses the correct approach:**
+```dockerfile
+CMD ["node", "server.js"]
 ```
+
+Docker handles:
+- Process supervision (via `restart: unless-stopped`)
+- Health checks (via `HEALTHCHECK`)
+- Log management (via logging driver)
+- Resource limits (via Docker/compose configuration)
+
+If you need horizontal scaling, use Docker Swarm or Kubernetes to run multiple containers, not PM2 cluster mode inside a container.
 
 ---
 
@@ -200,10 +194,16 @@ Given your preference for practical tools over enterprise stacks, here's a light
 | Component | Tool | Memory Usage | Why |
 |-----------|------|--------------|-----|
 | **Logs** | Docker JSON + Logrotate | ~0 | Built-in, zero overhead |
+| **Errors** | Sentry (Free Plan) | 0 (external) | Error tracking, no infra |
 | **Metrics** | VictoriaMetrics | ~30-50 MB | Prometheus-compatible, lighter |
-| **Dashboards** | Grafana | ~100 MB | Or skip entirely |
+| **Dashboards** | Grafana Cloud (Free) | 0 (external) | Don't self-host, use free tier |
 | **Alerts** | VictoriaMetrics vmalert | ~20 MB | Built-in alerting |
 | **Uptime** | Better Stack (Free) | 0 (external) | External monitoring |
+
+> **Important:** Don't self-host Grafana. Use [Grafana Cloud Free Tier](https://grafana.com/pricing/) instead:
+> - 10K metrics, 50GB logs, 50GB traces free
+> - No infrastructure to maintain
+> - Remote write from VictoriaMetrics to Grafana Cloud
 
 ### 3.1 Option A: Minimal (Recommended for Simplicity)
 
@@ -232,27 +232,40 @@ docker logs -f duroos-app
 docker logs duroos-app 2>&1 | grep "error"
 ```
 
-### 3.2 Option B: VictoriaMetrics (If You Want Metrics)
+### 3.2 Option B: VictoriaMetrics + Grafana Cloud (If You Want Metrics)
 
-Add to `docker-compose.prod.yml`:
+Use VictoriaMetrics locally to collect metrics, then remote-write to Grafana Cloud for dashboards.
+
+**Add vmagent to `docker-compose.prod.yml`:**
 
 ```yaml
-  victoriametrics:
-    image: victoriametrics/victoria-metrics:latest
-    container_name: victoriametrics
+  vmagent:
+    image: victoriametrics/vmagent:latest
+    container_name: vmagent
     restart: unless-stopped
-    ports:
-      - "8428:8428"
     volumes:
-      - vm_data:/victoria-metrics-data
+      - ./prometheus.yml:/etc/prometheus/prometheus.yml
     command:
-      - "-storageDataPath=/victoria-metrics-data"
-      - "-retentionPeriod=30d"
+      - "-promscrape.config=/etc/prometheus/prometheus.yml"
+      - "-remoteWrite.url=${GRAFANA_REMOTE_WRITE_URL}"
+      - "-remoteWrite.basicAuth.username=${GRAFANA_METRICS_USER}"
+      - "-remoteWrite.basicAuth.password=${GRAFANA_API_KEY}"
     # Uses ~30-50MB RAM
-
-volumes:
-  vm_data:
 ```
+
+**Create `prometheus.yml`:**
+```yaml
+scrape_configs:
+  - job_name: 'duroos'
+    static_configs:
+      - targets: ['duroos:3000']
+    scrape_interval: 30s
+```
+
+**Get Grafana Cloud credentials:**
+1. Sign up at https://grafana.com/products/cloud/
+2. Go to Connections → Add new connection → Hosted Prometheus
+3. Copy the Remote Write URL, Username, and generate an API key
 
 **Add metrics to your Node.js app:**
 
@@ -295,31 +308,44 @@ app.get('/metrics', async (req, res) => {
 });
 ```
 
-### 3.3 Structured Logging (Optional Enhancement)
+### 3.3 Error Tracking with Sentry (Recommended)
 
-If you want better log searching, update `utils/logger.js`:
+> **Important:** Don't log to file inside containers. Use Sentry's free plan for error tracking and monitoring.
 
+**Install Sentry:**
+```bash
+npm install @sentry/node
+```
+
+**Initialize in `server.js`:**
 ```javascript
-const winston = require('winston');
+const Sentry = require('@sentry/node');
 
-const logger = winston.createLogger({
-  level: process.env.LOG_LEVEL || 'info',
-  format: winston.format.combine(
-    winston.format.timestamp(),
-    winston.format.json()
-  ),
-  transports: [
-    new winston.transports.Console(),
-    new winston.transports.File({
-      filename: './logs/app.log',
-      maxsize: 50 * 1024 * 1024, // 50MB
-      maxFiles: 5
-    })
-  ]
+// Initialize Sentry BEFORE other imports
+Sentry.init({
+  dsn: process.env.SENTRY_DSN,
+  environment: process.env.NODE_ENV,
+  tracesSampleRate: 0.1, // 10% of transactions for performance monitoring
 });
 
-module.exports = logger;
+// Add error handler middleware (AFTER all routes)
+app.use(Sentry.Handlers.errorHandler());
 ```
+
+**Benefits of Sentry Free Plan:**
+- 5K errors/month free
+- Error grouping and deduplication
+- Stack traces with source maps
+- Performance monitoring
+- Slack/email alerts
+- No infrastructure to maintain
+
+**Environment variable:**
+```bash
+SENTRY_DSN=https://xxx@xxx.ingest.sentry.io/xxx
+```
+
+For general logging, continue using Docker's built-in JSON logging (already configured in docker-compose) and view with `docker logs`.
 
 ---
 
