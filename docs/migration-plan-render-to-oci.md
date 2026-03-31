@@ -20,45 +20,154 @@ Your OOM kills stem from the 512MB limit. OCI's ARM instance with 24GB RAM elimi
 
 **Recommended Configuration:**
 - **Shape:** VM.Standard.A1.Flex (ARM Ampere)
-- **OCPUs:** 2 (start conservative, can scale to 4)
-- **Memory:** 12 GB (start with half, scale if needed)
-- **Image:** Oracle Linux 8 or Ubuntu 22.04 (aarch64)
+- **OCPUs:** 1-2 (start conservative, can scale to 4)
+- **Memory:** 6-12 GB (start with 6GB, scale if needed)
+- **Image:** Ubuntu 22.04 (aarch64)
 - **Boot Volume:** 50 GB (within 200GB free limit)
 
 > **Note:** ARM instances may face capacity constraints. If you get "Out of capacity" errors, try different availability domains or upgrade to Pay-As-You-Go (PAYG) — you won't be charged for Always Free resources. ([Source](https://medium.com/@me69oshan/get-always-free-vm-instance-in-oracle-cloud-and-solve-out-of-host-capacity-issue-the-easy-way-88babae4eae5))
 
 > **ARM Compatibility Warning:** While ARM instances offer excellent cost savings, some npm packages may not have ARM (aarch64) support yet. Test your dependencies locally or in CI before deploying. If you encounter compatibility issues, consider using the x86 VM.Standard.E2.1.Micro shape (1 OCPU, 1GB RAM) as a fallback, though it has less resources.
 
-### 1.2 Initial Instance Setup
+### 1.2 VCN and Networking Setup
+
+Before creating the instance, set up the networking infrastructure.
+
+#### Step 1: Create a VCN (Virtual Cloud Network)
+
+1. **Navigate:** Networking → Virtual Cloud Networks → Create VCN
+2. **Configuration:**
+   - **Name:** `wurud-vcn` (or your preference)
+   - **CIDR Block:** `10.0.0.0/16`
+   - **DNS Label:** `wurudvcn`
+   - Check **Use DNS Hostnames in this VCN**
+
+#### Step 2: Create Subnets
+
+**Public Subnet** (for your instance):
+- **Name:** `public-subnet`
+- **CIDR Block:** `10.0.0.0/24`
+- **Subnet Access:** Public (Regional)
+- **DNS Label:** `public`
+
+**Private Subnet** (optional, for future use):
+- **Name:** `private-subnet`
+- **CIDR Block:** `10.0.1.0/24`
+- **Subnet Access:** Private
+
+#### Step 3: Create Internet Gateway
+
+1. **Navigate:** VCN → Internet Gateways → Create
+2. **Name:** `wurud-igw`
+
+#### Step 4: Update Route Table
+
+1. **Navigate:** VCN → Route Tables → Default Route Table
+2. **Add Route Rule:**
+   - **Target Type:** Internet Gateway
+   - **Destination CIDR:** `0.0.0.0/0`
+   - **Target:** Select your `wurud-igw`
+
+#### Step 5: Configure Security List (Ingress Rules)
+
+Navigate: VCN → Security Lists → Default Security List
+
+Add these **Ingress Rules**:
+
+| Source CIDR | Protocol | Port | Description |
+|-------------|----------|------|-------------|
+| `0.0.0.0/0` | TCP | 22 | SSH |
+| `0.0.0.0/0` | TCP | 80 | HTTP |
+| `0.0.0.0/0` | TCP | 443 | HTTPS |
+| `0.0.0.0/0` | TCP | 3000 | Node.js (temp) |
+| `0.0.0.0/0` | ICMP | All | Ping |
+
+#### Step 6: Enable IPv6 (Optional)
+
+1. **Edit VCN:** Add IPv6 CIDR block
+2. **Edit Subnet:** Assign IPv6 CIDR from the VCN's IPv6 block
+3. **Update Route Table:** Add IPv6 route `::/0` → Internet Gateway
+4. **Update Security List:** Add IPv6 ingress rules (`::/0` for source)
+
+#### Step 7: VNIC Configuration (During Instance Creation)
+
+When creating your compute instance, configure the primary VNIC:
+
+1. **Primary VNIC:**
+   - **VCN:** Select `wurud-vcn`
+   - **Subnet:** Select `public-subnet`
+   - **Public IPv4:** ✅ Assign a public IPv4 address
+   - **Private IPv4:** Auto-assigned (e.g., `10.0.0.x`)
+   - **IPv6:** ✅ Assign IPv6 address (if enabled on subnet)
+
+**Network Architecture:**
+
+```
+┌─────────────────────────────────────────────────┐
+│  VCN: wurud-vcn (10.0.0.0/16)                   │
+│                                                 │
+│  ┌─────────────────────────────────────────┐    │
+│  │  Public Subnet (10.0.0.0/24)            │    │
+│  │                                         │    │
+│  │  ┌─────────────────────────────────┐   │    │
+│  │  │  Your Instance (1 OCPU, 6GB)    │   │    │
+│  │  │  VNIC:                          │   │    │
+│  │  │  - Private IP: 10.0.0.x         │   │    │
+│  │  │  - Public IP: xxx.xxx.xxx.xxx   │   │    │
+│  │  │  - IPv6: (if enabled)           │   │    │
+│  │  └─────────────────────────────────┘   │    │
+│  │                                         │    │
+│  └─────────────────────────────────────────┘    │
+│                     │                           │
+│              Internet Gateway                   │
+│                     │                           │
+└─────────────────────┼───────────────────────────┘
+                      ▼
+                  Internet
+```
+
+### 1.3 Initial Instance Setup (Ubuntu)
 
 ```bash
-# SSH into your instance
-ssh -i ~/.ssh/your-key opc@<public-ip>
+# SSH into your instance (Ubuntu uses 'ubuntu' user, not 'opc')
+ssh -i ~/.ssh/your-key ubuntu@<public-ip>
 
 # Update system
-sudo dnf update -y
+sudo apt update && sudo apt upgrade -y
 
 # Install Docker
-sudo dnf config-manager --add-repo https://download.docker.com/linux/centos/docker-ce.repo
-sudo dnf install -y docker-ce docker-ce-cli containerd.io docker-compose-plugin
+sudo apt install -y ca-certificates curl gnupg
+sudo install -m 0755 -d /etc/apt/keyrings
+curl -fsSL https://download.docker.com/linux/ubuntu/gpg | sudo gpg --dearmor -o /etc/apt/keyrings/docker.gpg
+sudo chmod a+r /etc/apt/keyrings/docker.gpg
+
+echo \
+  "deb [arch=$(dpkg --print-architecture) signed-by=/etc/apt/keyrings/docker.gpg] https://download.docker.com/linux/ubuntu \
+  $(. /etc/os-release && echo "$VERSION_CODENAME") stable" | \
+  sudo tee /etc/apt/sources.list.d/docker.list > /dev/null
+
+sudo apt update
+sudo apt install -y docker-ce docker-ce-cli containerd.io docker-buildx-plugin docker-compose-plugin
 
 # Start Docker
 sudo systemctl enable docker
 sudo systemctl start docker
 
 # Add user to docker group
-sudo usermod -aG docker opc
+sudo usermod -aG docker ubuntu
 newgrp docker
 ```
 
-### 1.3 Configure Firewall & Security Lists
+### 1.4 Configure Firewall & Security Lists
 
 ```bash
-# Open ports in OS firewall
-sudo firewall-cmd --permanent --add-port=80/tcp
-sudo firewall-cmd --permanent --add-port=443/tcp
-sudo firewall-cmd --permanent --add-port=3000/tcp
-sudo firewall-cmd --reload
+# Ubuntu uses ufw (Uncomplicated Firewall)
+sudo ufw allow 22/tcp    # SSH
+sudo ufw allow 80/tcp    # HTTP
+sudo ufw allow 443/tcp   # HTTPS
+sudo ufw allow 3000/tcp  # Node.js (temp)
+sudo ufw enable
+sudo ufw status
 ```
 
 **In OCI Console:**
@@ -357,7 +466,7 @@ Create `deploy.sh` on your OCI instance:
 #!/bin/bash
 set -e
 
-APP_DIR="/home/opc/duroos"
+APP_DIR="/home/ubuntu/duroos"
 REPO_URL="https://github.com/yourusername/wurud.git"
 
 echo "=== Deploying Duroos ==="
