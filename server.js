@@ -17,11 +17,32 @@ const { i18nMiddleware } = require('./utils/i18n');
 const { trackPageView } = require('./middleware/analytics');
 const { suppressConsoleInProduction } = require('./utils/logger');
 const { assetVersionMiddleware, noCacheMiddleware, ASSET_VERSION } = require('./utils/assetVersion');
-const { dbHealthMiddleware, dbErrorHandler, setupDbHealthListeners, getHealthStatus } = require('./middleware/dbHealth');
+const { dbHealthMiddleware, dbErrorHandler, setupDbHealthListeners, getHealthStatus, isMongoError } = require('./middleware/dbHealth');
 
 const app = express();
 const PORT = process.env.PORT || 3000;
 const isProduction = process.env.NODE_ENV === 'production';
+
+// Global error handlers to prevent crashes during DB outages
+process.on('unhandledRejection', (reason, promise) => {
+  // Check if it's a MongoDB error - log but don't crash
+  if (isMongoError(reason)) {
+    console.error('⚠️ Unhandled MongoDB rejection (server continues in maintenance mode):', reason.message);
+    return;
+  }
+  console.error('Unhandled Rejection:', reason);
+});
+
+process.on('uncaughtException', (error) => {
+  // Check if it's a MongoDB error - log but don't crash
+  if (isMongoError(error)) {
+    console.error('⚠️ Uncaught MongoDB exception (server continues in maintenance mode):', error.message);
+    return;
+  }
+  // For non-MongoDB errors, log and exit (unsafe to continue)
+  console.error('Uncaught Exception:', error);
+  process.exit(1);
+});
 
 // Suppress non-essential console output in production
 suppressConsoleInProduction();
@@ -115,20 +136,40 @@ app.use(compression());
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
+// Create session store with error handling (falls back to memory store on DB failure)
+let sessionStore;
+if (process.env.MONGODB_URI) {
+  try {
+    sessionStore = MongoStore.create({
+      mongoUrl: process.env.MONGODB_URI,
+      touchAfter: 24 * 3600, // Lazy update: only update session once per 24 hours unless data changes
+      ttl: 7 * 24 * 60 * 60, // Session TTL: 7 days (matches cookie maxAge)
+      crypto: {
+        secret: process.env.SESSION_SECRET || 'dev-secret-local-only'
+      },
+      autoRemove: 'native',
+      // Handle connection errors gracefully
+      mongoOptions: {
+        serverSelectionTimeoutMS: 5000,
+      }
+    });
+    // Catch session store errors to prevent crashes
+    sessionStore.on('error', (error) => {
+      console.error('⚠️ Session store error (sessions may not persist):', error.message);
+    });
+  } catch (err) {
+    console.warn('⚠️ Failed to create MongoDB session store, using memory store');
+    sessionStore = undefined;
+  }
+}
+
 // Session middleware with MongoDB store (saves RAM on free tier)
 app.use(session({
   secret: process.env.SESSION_SECRET || (isProduction ? undefined : 'dev-secret-local-only'),
   resave: false,
   saveUninitialized: false,
   name: 'wurud.sid', // Custom session name (avoid default 'connect.sid')
-  store: process.env.MONGODB_URI ? MongoStore.create({
-    mongoUrl: process.env.MONGODB_URI,
-    touchAfter: 24 * 3600, // Lazy update: only update session once per 24 hours unless data changes
-    ttl: 7 * 24 * 60 * 60, // Session TTL: 7 days (matches cookie maxAge)
-    crypto: {
-      secret: process.env.SESSION_SECRET || 'dev-secret-local-only'
-    }
-  }) : undefined, // Use memory store in dev without MONGODB_URI
+  store: sessionStore, // Uses memory store if undefined
   cookie: {
     maxAge: 1000 * 60 * 60 * 24 * 7, // 1 week
     httpOnly: true,
