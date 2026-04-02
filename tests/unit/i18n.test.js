@@ -2,6 +2,20 @@
  * Unit Tests for i18n (internationalization) utility
  */
 
+// Mock SiteSettings to prevent database connection
+jest.mock('../../models/SiteSettings', () => ({
+  getSettings: jest.fn().mockResolvedValue({
+    noticeBanner: {
+      enabled: true,
+      messageAr: 'رسالة اختبار',
+      messageEn: 'Test message',
+      linkUrl: 'https://example.com',
+      linkTextAr: 'رابط',
+      linkTextEn: 'Link'
+    }
+  })
+}));
+
 const {
   t,
   i18nMiddleware,
