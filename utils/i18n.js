@@ -273,6 +273,9 @@ const translations = {
     // Site Notice Banner
     notice_message: 'تنبيه: تأثر سيرفر الموقع بالأعطال التقنية، والمحتوى المتاح حالياً هو حتى ٢٢ رمضان. العمل جارٍ على استعادة البيانات، وجميع الدروس متوفرة الآن عبر قناتنا في',
     notice_telegram: 'تيليجرام',
+
+    // Admin - Notice Banner
+    admin_notice_banner_title: 'إعدادات شريط التنبيه',
   },
 
   en: {
@@ -544,6 +547,9 @@ const translations = {
     // Site Notice Banner
     notice_message: 'Notice: The site server was affected by technical issues and is being restored. Data currently available is up to 22 Ramadan. All recent and past audio remain available on our',
     notice_telegram: 'Telegram channel',
+
+    // Admin - Notice Banner
+    admin_notice_banner_title: 'Notice Banner Settings',
   }
 };
 
@@ -560,10 +566,58 @@ function t(locale, key) {
   return translations[locale][key] || key;
 }
 
+// Cache for notice banner settings (refreshed every 60 seconds)
+let noticeBannerCache = null;
+let noticeBannerCacheTime = 0;
+const NOTICE_BANNER_CACHE_TTL = 60000; // 60 seconds
+
+/**
+ * Get notice banner settings with caching
+ */
+async function getNoticeBannerSettings() {
+  const now = Date.now();
+  if (noticeBannerCache && (now - noticeBannerCacheTime) < NOTICE_BANNER_CACHE_TTL) {
+    return noticeBannerCache;
+  }
+
+  try {
+    const SiteSettings = require('../models/SiteSettings');
+    const settings = await SiteSettings.getSettings();
+    noticeBannerCache = settings.noticeBanner || {
+      enabled: true,
+      messageAr: translations.ar.notice_message,
+      messageEn: translations.en.notice_message,
+      linkUrl: 'https://t.me/daririhasan',
+      linkTextAr: translations.ar.notice_telegram,
+      linkTextEn: translations.en.notice_telegram
+    };
+    noticeBannerCacheTime = now;
+    return noticeBannerCache;
+  } catch (error) {
+    // Return default settings if database is unavailable
+    return {
+      enabled: true,
+      messageAr: translations.ar.notice_message,
+      messageEn: translations.en.notice_message,
+      linkUrl: 'https://t.me/daririhasan',
+      linkTextAr: translations.ar.notice_telegram,
+      linkTextEn: translations.en.notice_telegram
+    };
+  }
+}
+
+/**
+ * Invalidate notice banner cache (call when settings are updated)
+ */
+function invalidateNoticeBannerCache() {
+  noticeBannerCache = null;
+  noticeBannerCacheTime = 0;
+}
+
 /**
  * Middleware to set locale and inject translation function into templates
  */
-function i18nMiddleware(req, res, next) {
+async function i18nMiddleware(req, res, next) {
   // Get locale from query, cookie, or default to Arabic
   const locale = req.query.lang || req.cookies?.locale || 'ar';
 
@@ -591,6 +645,13 @@ function i18nMiddleware(req, res, next) {
 
   // Inject all translations for client-side use
   res.locals.translations = translations[validLocale];
+
+  // Inject notice banner settings
+  try {
+    res.locals.noticeBanner = await getNoticeBannerSettings();
+  } catch (error) {
+    res.locals.noticeBanner = { enabled: false };
+  }
 
   next();
 }
@@ -736,5 +797,6 @@ module.exports = {
   translateCategory,
   categoryMap,
   toArabicNumerals,
-  formatHijriDate
+  formatHijriDate,
+  invalidateNoticeBannerCache
 };

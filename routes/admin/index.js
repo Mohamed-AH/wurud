@@ -2,7 +2,7 @@ const express = require('express');
 const router = express.Router();
 const { isAdmin, isEditor, isSuperAdmin } = require('../../middleware/auth');
 const { convertToHijri } = require('../../utils/dateUtils');
-const { adminI18nMiddleware } = require('../../utils/i18n');
+const { adminI18nMiddleware, invalidateNoticeBannerCache } = require('../../utils/i18n');
 const cache = require('../../utils/cache');
 
 // Apply admin i18n middleware to all admin routes
@@ -2540,6 +2540,60 @@ router.post('/homepage-config', isAdmin, async (req, res) => {
   } catch (error) {
     console.error('Homepage config update error:', error);
     res.redirect('/admin/homepage-config?error=update_failed');
+  }
+});
+
+// ============================================
+// NOTICE BANNER CONFIGURATION ROUTES
+// ============================================
+
+// @route   GET /admin/notice-banner
+// @desc    Notice banner configuration page
+// @access  Private (Admin only)
+router.get('/notice-banner', isAdmin, async (req, res) => {
+  try {
+    const { SiteSettings } = require('../../models');
+
+    const siteSettings = await SiteSettings.getSettings();
+
+    res.render('admin/notice-banner', {
+      title: 'Notice Banner',
+      user: req.user,
+      settings: siteSettings.noticeBanner || {},
+      success: req.query.success,
+      error: req.query.error
+    });
+  } catch (error) {
+    console.error('Notice banner config error:', error);
+    res.status(500).send('Error loading notice banner configuration');
+  }
+});
+
+// @route   POST /admin/notice-banner
+// @desc    Update notice banner configuration
+// @access  Private (Admin only)
+router.post('/notice-banner', isAdmin, async (req, res) => {
+  try {
+    const { SiteSettings } = require('../../models');
+
+    const settings = await SiteSettings.getSettings();
+
+    settings.noticeBanner = {
+      enabled: req.body.enabled === 'on',
+      messageAr: req.body.messageAr || '',
+      messageEn: req.body.messageEn || '',
+      linkUrl: req.body.linkUrl || '',
+      linkTextAr: req.body.linkTextAr || '',
+      linkTextEn: req.body.linkTextEn || ''
+    };
+
+    await settings.save();
+    invalidateNoticeBannerCache();
+
+    res.redirect('/admin/notice-banner?success=settings_updated');
+  } catch (error) {
+    console.error('Notice banner config update error:', error);
+    res.redirect('/admin/notice-banner?error=update_failed');
   }
 });
 
