@@ -2,6 +2,20 @@
  * Unit Tests for i18n (internationalization) utility
  */
 
+// Mock SiteSettings to prevent database connection
+jest.mock('../../models/SiteSettings', () => ({
+  getSettings: jest.fn().mockResolvedValue({
+    noticeBanner: {
+      enabled: true,
+      messageAr: 'رسالة اختبار',
+      messageEn: 'Test message',
+      linkUrl: 'https://example.com',
+      linkTextAr: 'رابط',
+      linkTextEn: 'Link'
+    }
+  })
+}));
+
 const {
   t,
   i18nMiddleware,
@@ -199,83 +213,83 @@ describe('i18n Utility', () => {
       next = jest.fn();
     });
 
-    it('should default to Arabic locale', () => {
-      i18nMiddleware(req, res, next);
+    it('should default to Arabic locale', async () => {
+      await i18nMiddleware(req, res, next);
 
       expect(res.locals.locale).toBe('ar');
       expect(res.locals.isRTL).toBe(true);
       expect(next).toHaveBeenCalled();
     });
 
-    it('should use query param lang if provided', () => {
+    it('should use query param lang if provided', async () => {
       req.query.lang = 'en';
 
-      i18nMiddleware(req, res, next);
+      await i18nMiddleware(req, res, next);
 
       expect(res.locals.locale).toBe('en');
       expect(res.locals.isRTL).toBe(false);
     });
 
-    it('should use cookie locale if no query param', () => {
+    it('should use cookie locale if no query param', async () => {
       req.cookies = { locale: 'en' };
 
-      i18nMiddleware(req, res, next);
+      await i18nMiddleware(req, res, next);
 
       expect(res.locals.locale).toBe('en');
     });
 
-    it('should fallback to Arabic for invalid locale', () => {
+    it('should fallback to Arabic for invalid locale', async () => {
       req.query.lang = 'fr';
 
-      i18nMiddleware(req, res, next);
+      await i18nMiddleware(req, res, next);
 
       expect(res.locals.locale).toBe('ar');
     });
 
-    it('should set currentPath', () => {
+    it('should set currentPath', async () => {
       req.path = '/lectures/123';
 
-      i18nMiddleware(req, res, next);
+      await i18nMiddleware(req, res, next);
 
       expect(res.locals.currentPath).toBe('/lectures/123');
     });
 
-    it('should inject t() function', () => {
-      i18nMiddleware(req, res, next);
+    it('should inject t() function', async () => {
+      await i18nMiddleware(req, res, next);
 
       expect(typeof res.locals.t).toBe('function');
       expect(res.locals.t('nav_home')).toBe('الرئيسية');
     });
 
-    it('should inject translateCategory function', () => {
-      i18nMiddleware(req, res, next);
+    it('should inject translateCategory function', async () => {
+      await i18nMiddleware(req, res, next);
 
       expect(typeof res.locals.translateCategory).toBe('function');
       expect(res.locals.translateCategory('Aqeedah')).toBe('العقيدة');
     });
 
-    it('should inject formatHijriDate function', () => {
-      i18nMiddleware(req, res, next);
+    it('should inject formatHijriDate function', async () => {
+      await i18nMiddleware(req, res, next);
 
       expect(typeof res.locals.formatHijriDate).toBe('function');
     });
 
-    it('should inject toArabicNumerals function', () => {
-      i18nMiddleware(req, res, next);
+    it('should inject toArabicNumerals function', async () => {
+      await i18nMiddleware(req, res, next);
 
       expect(res.locals.toArabicNumerals).toBe(toArabicNumerals);
     });
 
-    it('should inject translations object for client-side use', () => {
-      i18nMiddleware(req, res, next);
+    it('should inject translations object for client-side use', async () => {
+      await i18nMiddleware(req, res, next);
 
       expect(res.locals.translations).toBe(translations.ar);
     });
 
-    it('should handle missing cookies gracefully', () => {
+    it('should handle missing cookies gracefully', async () => {
       req.cookies = undefined;
 
-      i18nMiddleware(req, res, next);
+      await i18nMiddleware(req, res, next);
 
       expect(res.locals.locale).toBe('ar');
       expect(next).toHaveBeenCalled();
