@@ -32,11 +32,11 @@ if (isProduction && !process.env.SESSION_SECRET) {
   process.exit(1);
 }
 
+// Setup database health listeners immediately (before connection attempt)
+setupDbHealthListeners();
+
 // Connect to MongoDB (main database)
-connectDB().then(() => {
-  // Setup database health listeners after connection
-  setupDbHealthListeners();
-});
+connectDB();
 
 // Connect to Search MongoDB (separate database for transcripts)
 connectSearchDB().then(searchConn => {

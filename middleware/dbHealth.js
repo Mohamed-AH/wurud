@@ -1,10 +1,11 @@
 const mongoose = require('mongoose');
 const path = require('path');
 
-// Database health state
-let dbHealthy = true;
+// Database health state - start unhealthy until connection confirmed
+let dbHealthy = false;
 let lastHealthCheck = Date.now();
 let consecutiveFailures = 0;
+let initialConnectionAttempted = false;
 
 // Configuration
 const HEALTH_CHECK_INTERVAL = 30000; // 30 seconds
@@ -24,6 +25,8 @@ function isDbHealthy() {
  * Update health status based on connection state
  */
 function updateHealthStatus(healthy) {
+  initialConnectionAttempted = true;
+
   if (healthy) {
     if (!dbHealthy) {
       console.warn('✅ Database connection recovered');
@@ -32,7 +35,8 @@ function updateHealthStatus(healthy) {
     consecutiveFailures = 0;
   } else {
     consecutiveFailures++;
-    if (consecutiveFailures >= MAX_CONSECUTIVE_FAILURES) {
+    // Fail fast on initial connection failure or after threshold
+    if (!dbHealthy || consecutiveFailures >= MAX_CONSECUTIVE_FAILURES) {
       if (dbHealthy) {
         console.error('❌ Database connection failed - entering maintenance mode');
       }
@@ -129,15 +133,7 @@ function dbHealthMiddleware(req, res, next) {
     }
 
     // For HTML requests, render maintenance page
-    return res.status(503).sendFile(
-      path.join(__dirname, '../views/public/maintenance.ejs').replace('.ejs', '.html'),
-      (err) => {
-        if (err) {
-          // Fallback: render EJS without layout
-          res.status(503).render('public/maintenance', { layout: false });
-        }
-      }
-    );
+    return res.status(503).render('public/maintenance', { layout: false });
   }
 
   next();
@@ -174,12 +170,17 @@ function dbErrorHandler(err, req, res, next) {
  * Setup mongoose connection event listeners for health tracking
  */
 function setupDbHealthListeners() {
+  // Check if already connected (in case listeners set up after connection)
+  if (isDbHealthy()) {
+    updateHealthStatus(true);
+  }
+
   mongoose.connection.on('connected', () => {
     updateHealthStatus(true);
   });
 
   mongoose.connection.on('disconnected', () => {
-    console.warn('⚠️ MongoDB disconnected - checking health status');
+    console.warn('⚠️ MongoDB disconnected - entering maintenance mode');
     updateHealthStatus(false);
   });
 
@@ -190,9 +191,12 @@ function setupDbHealthListeners() {
 
   // Periodic recovery check when in maintenance mode
   setInterval(() => {
-    if (!dbHealthy && isDbHealthy()) {
-      console.warn('🔄 Attempting database recovery check...');
-      updateHealthStatus(true);
+    if (!dbHealthy) {
+      const currentlyHealthy = isDbHealthy();
+      if (currentlyHealthy) {
+        console.warn('🔄 Database connection recovered');
+        updateHealthStatus(true);
+      }
     }
   }, RECOVERY_CHECK_INTERVAL);
 }
