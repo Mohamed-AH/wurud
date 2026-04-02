@@ -131,9 +131,14 @@
 </head>
 <body>
   <!-- Site Notice Banner -->
+  <% if (typeof noticeBanner !== 'undefined' && noticeBanner.enabled) { %>
   <div class="site-notice" role="alert">
-    <%= t('notice_message') %> <a href="https://t.me/daririhasan" target="_blank" rel="noopener noreferrer"><%= t('notice_telegram') %></a>.
+    <%= locale === 'ar' ? noticeBanner.messageAr : noticeBanner.messageEn %>
+    <% if (noticeBanner.linkUrl) { %>
+      <a href="<%= noticeBanner.linkUrl %>" target="_blank" rel="noopener noreferrer"><%= locale === 'ar' ? noticeBanner.linkTextAr : noticeBanner.linkTextEn %></a>.
+    <% } %>
   </div>
+  <% } %>
   <%- include('partials/header') %>
 
   <main>

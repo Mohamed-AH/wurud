@@ -71,6 +71,40 @@ const siteSettingsSchema = new mongoose.Schema({
     }
   },
 
+  // Notice banner configuration
+  noticeBanner: {
+    // Whether the notice banner is enabled
+    enabled: {
+      type: Boolean,
+      default: true
+    },
+    // Arabic message
+    messageAr: {
+      type: String,
+      default: 'تنبيه: تأثر سيرفر الموقع بالأعطال التقنية، والمحتوى المتاح حالياً هو حتى ٢٢ رمضان. العمل جارٍ على استعادة البيانات، وجميع الدروس متوفرة الآن عبر قناتنا في'
+    },
+    // English message
+    messageEn: {
+      type: String,
+      default: 'Notice: The site server was affected by technical issues and is being restored. Data currently available is up to 22 Ramadan. All recent and past audio remain available on our'
+    },
+    // Link URL (optional)
+    linkUrl: {
+      type: String,
+      default: 'https://t.me/daririhasan'
+    },
+    // Arabic link text
+    linkTextAr: {
+      type: String,
+      default: 'تيليجرام'
+    },
+    // English link text
+    linkTextEn: {
+      type: String,
+      default: 'Telegram channel'
+    }
+  },
+
   // Cached aggregate stats (updated periodically)
   cachedStats: {
     totalPlays: {
