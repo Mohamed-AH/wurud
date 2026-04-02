@@ -269,6 +269,10 @@ const translations = {
     admin_login_whitelist_info: 'يمكن فقط لعناوين البريد الإلكتروني المصرح لها الوصول إلى لوحة التحكم.',
     admin_login_error_unauthorized: 'بريدك الإلكتروني غير مصرح له بالوصول إلى لوحة التحكم.',
     admin_login_error_inactive: 'تم تعطيل حساب المشرف الخاص بك.',
+
+    // Site Notice Banner
+    notice_message: 'تنبيه: تأثر سيرفر الموقع بالأعطال التقنية، والمحتوى المتاح حالياً هو حتى ٢٢ رمضان. العمل جارٍ على استعادة البيانات، وجميع الدروس متوفرة الآن عبر قناتنا في',
+    notice_telegram: 'تيليجرام',
   },
 
   en: {
@@ -536,6 +540,10 @@ const translations = {
     admin_login_whitelist_info: 'Only whitelisted email addresses can access the admin panel.',
     admin_login_error_unauthorized: 'Your email is not authorized to access the admin panel.',
     admin_login_error_inactive: 'Your admin account has been deactivated.',
+
+    // Site Notice Banner
+    notice_message: 'Notice: The site server was affected by technical issues and is being restored. Data currently available is up to 22 Ramadan. All recent and past audio remain available on our',
+    notice_telegram: 'Telegram channel',
   }
 };
 
