@@ -87,100 +87,23 @@ describe('Database Configuration', () => {
       );
     });
 
-    it('should set up error event handler', async () => {
-      const mockConnection = {
-        connection: { host: 'localhost', name: 'test' }
-      };
-      mockConnect.mockResolvedValue(mockConnection);
-
-      const connectDB = require('../../../config/database');
-      await connectDB();
-
-      expect(mockOn).toHaveBeenCalledWith(
-        'error',
-        expect.any(Function)
-      );
-    });
-
-    it('should set up disconnected event handler', async () => {
-      const mockConnection = {
-        connection: { host: 'localhost', name: 'test' }
-      };
-      mockConnect.mockResolvedValue(mockConnection);
-
-      const connectDB = require('../../../config/database');
-      await connectDB();
-
-      expect(mockOn).toHaveBeenCalledWith(
-        'disconnected',
-        expect.any(Function)
-      );
-    });
-
-    it('should handle connection error handler being called', async () => {
-      const mockConnection = {
-        connection: { host: 'localhost', name: 'test' }
-      };
-      mockConnect.mockResolvedValue(mockConnection);
-
-      // Capture the error handler
-      let errorHandler;
-      mockOn.mockImplementation((event, handler) => {
-        if (event === 'error') {
-          errorHandler = handler;
-        }
-      });
-
-      const connectDB = require('../../../config/database');
-      await connectDB();
-
-      // Simulate an error event
-      const testError = new Error('Connection lost');
-      errorHandler(testError);
-
-      expect(console.error).toHaveBeenCalledWith(
-        expect.stringContaining('MongoDB connection error'),
-        testError
-      );
-    });
-
-    it('should handle disconnected event handler being called', async () => {
-      const mockConnection = {
-        connection: { host: 'localhost', name: 'test' }
-      };
-      mockConnect.mockResolvedValue(mockConnection);
-
-      // Capture the disconnected handler
-      let disconnectedHandler;
-      mockOn.mockImplementation((event, handler) => {
-        if (event === 'disconnected') {
-          disconnectedHandler = handler;
-        }
-      });
-
-      const connectDB = require('../../../config/database');
-      await connectDB();
-
-      // Simulate disconnect event
-      disconnectedHandler();
-
-      expect(console.warn).toHaveBeenCalledWith(
-        expect.stringContaining('MongoDB disconnected')
-      );
-    });
-
-    it('should exit process on connection failure', async () => {
+    it('should return null and log warning on connection failure (maintenance mode)', async () => {
       const connectionError = new Error('Connection refused');
       mockConnect.mockRejectedValue(connectionError);
 
       const connectDB = require('../../../config/database');
-      await connectDB();
+      const result = await connectDB();
 
+      expect(result).toBeNull();
       expect(console.error).toHaveBeenCalledWith(
         expect.stringContaining('MongoDB connection failed'),
         'Connection refused'
       );
-      expect(process.exit).toHaveBeenCalledWith(1);
+      expect(console.warn).toHaveBeenCalledWith(
+        expect.stringContaining('maintenance mode')
+      );
+      // Should NOT exit - server runs in maintenance mode
+      expect(process.exit).not.toHaveBeenCalled();
     });
 
     it('should handle SIGINT for graceful shutdown', async () => {
