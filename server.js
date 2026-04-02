@@ -17,6 +17,7 @@ const { i18nMiddleware } = require('./utils/i18n');
 const { trackPageView } = require('./middleware/analytics');
 const { suppressConsoleInProduction } = require('./utils/logger');
 const { assetVersionMiddleware, noCacheMiddleware, ASSET_VERSION } = require('./utils/assetVersion');
+const { dbHealthMiddleware, dbErrorHandler, setupDbHealthListeners, getHealthStatus } = require('./middleware/dbHealth');
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -32,7 +33,10 @@ if (isProduction && !process.env.SESSION_SECRET) {
 }
 
 // Connect to MongoDB (main database)
-connectDB();
+connectDB().then(() => {
+  // Setup database health listeners after connection
+  setupDbHealthListeners();
+});
 
 // Connect to Search MongoDB (separate database for transcripts)
 connectSearchDB().then(searchConn => {
@@ -181,14 +185,26 @@ app.use((req, res, next) => {
 // Analytics tracking middleware (non-blocking)
 app.use(trackPageView);
 
-// Health check route
+// Health check route (includes database status)
 app.get('/health', (req, res) => {
-  res.json({
-    status: 'healthy',
+  const dbStatus = getHealthStatus();
+  const isHealthy = dbStatus.database === 'healthy';
+
+  res.status(isHealthy ? 200 : 503).json({
+    status: isHealthy ? 'healthy' : 'degraded',
     timestamp: new Date().toISOString(),
-    uptime: process.uptime()
+    uptime: process.uptime(),
+    database: dbStatus
   });
 });
+
+// Maintenance page route (always accessible)
+app.get('/maintenance', (req, res) => {
+  res.render('public/maintenance', { layout: false });
+});
+
+// Database health middleware (fail-fast for DB issues)
+app.use(dbHealthMiddleware);
 
 // Routes
 const publicRoutes = require('./routes/index');
@@ -218,7 +234,10 @@ app.use((req, res) => {
   res.status(404).send('Page not found');
 });
 
-// Error handler
+// Database error handler (fail-fast for MongoDB issues)
+app.use(dbErrorHandler);
+
+// General error handler
 app.use((err, req, res, next) => {
   console.error(err.stack);
   res.status(500).send('Something went wrong!');
