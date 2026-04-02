@@ -3,21 +3,12 @@ const mongoose = require('mongoose');
 const connectDB = async () => {
   try {
     const conn = await mongoose.connect(process.env.MONGODB_URI, {
-      // These options are no longer needed in Mongoose 6+
-      // but keeping structure for clarity
+      serverSelectionTimeoutMS: 10000, // Fail fast: 10 second timeout for initial connection
+      socketTimeoutMS: 45000,
     });
 
     console.log(`✅ MongoDB Connected: ${conn.connection.host}`);
     console.log(`📊 Database: ${conn.connection.name}`);
-
-    // Handle connection events
-    mongoose.connection.on('error', (err) => {
-      console.error('❌ MongoDB connection error:', err);
-    });
-
-    mongoose.connection.on('disconnected', () => {
-      console.warn('⚠️  MongoDB disconnected');
-    });
 
     // Graceful shutdown
     process.on('SIGINT', async () => {
@@ -28,8 +19,10 @@ const connectDB = async () => {
 
     return conn;
   } catch (error) {
+    // Log error but don't exit - let maintenance mode handle it
     console.error('❌ MongoDB connection failed:', error.message);
-    process.exit(1);
+    console.warn('⚠️ Server will run in maintenance mode until database is available');
+    return null;
   }
 };
 

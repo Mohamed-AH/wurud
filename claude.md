@@ -10,11 +10,38 @@ A web platform for hosting and streaming ~160 Arabic Islamic lecture audio files
 
 ---
 
-## 🚀 CURRENT INITIATIVE: Roadmap 4.3 & 4.5 + Security/Optimization/Testing
+## 🚀 CURRENT INITIATIVE: OCI Migration (Render → Oracle Cloud)
 
-**Started**: 2026-02-28
-**Target**: Complete comprehensive improvements across security, features, optimization, and testing
+**Started**: 2026-03-31
+**Target**: Migrate from Render Free Tier to OCI Always Free for better resources (24GB RAM vs 512MB)
 **Branch**: `claude/fix-homepage-tests-ovChk`
+**Documentation**: `docs/migration-plan-render-to-oci.md`
+
+### 📋 Migration Progress
+
+| Phase | Focus | Status | Notes |
+|-------|-------|--------|-------|
+| 1.1 | Create ARM Compute Instance | 🔄 IN PROGRESS | Ubuntu 22.04, 1 OCPU, 6GB RAM |
+| 1.2 | VCN & Networking Setup | 🔄 IN PROGRESS | VCN, Subnets, Internet Gateway, Security Lists |
+| 1.3 | Initial Instance Setup | ⏳ PENDING | Docker installation on Ubuntu |
+| 1.4 | Firewall Configuration | ⏳ PENDING | ufw setup for ports 22, 80, 443, 3000 |
+| 2 | Application Deployment | ⏳ PENDING | docker-compose.prod.yml + Caddy |
+| 3 | Monitoring Setup | ⏳ PENDING | Docker logs + Sentry + optional VictoriaMetrics |
+| 4 | DNS & SSL | ⏳ PENDING | Point domain, update Google OAuth |
+| 5 | Go Live & Cleanup | ⏳ PENDING | Monitor, then remove Render |
+
+### Current Instance Configuration
+- **Shape**: VM.Standard.A1.Flex (ARM Ampere)
+- **OCPUs**: 1
+- **Memory**: 6 GB
+- **Image**: Ubuntu 22.04 (aarch64)
+- **Boot Volume**: 50 GB
+
+---
+
+## ✅ PREVIOUS INITIATIVE: Roadmap 4.3 & 4.5 + Security/Optimization/Testing (COMPLETE)
+
+**Completed**: 2026-02-28
 
 ### 📋 Phase Overview
 
