@@ -34,17 +34,40 @@ Add to dependencies (after line 60):
 
 Structure:
 1. Read env vars: `GRAFANA_URL`, `GRAFANA_USER_ID`, `GRAFANA_API_TOKEN`
-2. Initialize prom-client with `wurud_` prefix
+2. Initialize prom-client with `wurud_` prefix (call `collectDefaultMetrics` only once)
 3. Collect default Node.js metrics (RSS, Heap, CPU, Event Loop Lag)
 4. Create background worker that pushes every 15 seconds
-5. Use native `https` module (existing pattern in codebase)
+5. Use native `https` module with `async/await` (register.metrics() returns Promise)
 6. Wrap in try/catch, run only when `NODE_ENV === 'production'`
 7. Use `timer.unref()` to prevent blocking process exit
+
+**Memory Optimization:**
+- Call `collectDefaultMetrics()` only once at initialization
+- Use `https.request.write()` with small chunks, avoid large string buffers
+- Push and discard immediately to minimize memory lingering
+
+**Endpoint Format:**
+- Try Prometheus text format first (`register.metrics()` output)
+- If needed, add formatter for Influx line protocol: `measurement,tag=value field=value timestamp`
 
 Key patterns to follow (from existing codebase):
 - `setInterval` pattern from `middleware/dbHealth.js:193-201`
 - `isProduction` check from `server.js:24`
 - Silent try/catch with production-only logging
+
+**Example push logic:**
+```javascript
+const pushMetrics = async () => {
+  try {
+    const data = await client.register.metrics();
+    const req = https.request(options, (res) => { /* handle res */ });
+    req.write(data);
+    req.end();
+  } catch (err) {
+    if (process.env.NODE_ENV !== 'production') console.error(err);
+  }
+};
+```
 
 ---
 
@@ -82,9 +105,13 @@ GRAFANA_API_TOKEN=glc_your_api_key_here
 
 ## PromQL Queries for Grafana Dashboard
 
-### RSS Memory (MB)
+### RSS Memory (MB) with 512MB Limit Line
 ```promql
+# Query A - Actual memory usage
 wurud_process_resident_memory_bytes{job="wurud"} / 1024 / 1024
+
+# Query B - Threshold (set to red dashed line in Grafana)
+vector(512)
 ```
 
 ### CPU Usage (%)
@@ -124,3 +151,11 @@ wurud_nodejs_eventloop_lag_seconds{job="wurud"} * 1000
 3. **Verify in Grafana**: Open Explore, query `wurud_process_resident_memory_bytes` - should show data within 30 seconds
 4. **Check logs**: In production, should see `Metrics: Push worker started (15s interval)` on startup
 5. **Run tests**: `npm test` should pass (metrics module won't affect tests due to production check)
+
+---
+
+## Render Sleep Behavior
+
+When Render Free Tier puts the app to sleep (after 15 mins of inactivity), the `setInterval` stops and Grafana will show "No Data" gaps. This is expected behavior.
+
+**Alerting Tip:** Set Grafana alerts to "Ignore No Data" to avoid false "Down" alerts during natural sleep periods.
