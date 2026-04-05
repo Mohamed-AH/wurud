@@ -44,14 +44,43 @@ function setupMetricsCollection() {
 }
 
 /**
+ * Convert prom-client metrics to Influx line protocol format
+ * Format: measurement,tag=value field=value timestamp
+ */
+async function convertToInfluxLineProtocol() {
+  const metrics = await client.register.getMetricsAsJSON();
+  const lines = [];
+  const timestamp = Date.now() * 1000000; // nanoseconds
+
+  for (const metric of metrics) {
+    const name = metric.name;
+
+    for (const value of metric.values) {
+      // Build tag set from labels
+      const tags = Object.entries(value.labels || {})
+        .map(([k, v]) => `${k}=${v}`)
+        .join(',');
+
+      const tagStr = tags ? `,${tags}` : '';
+
+      // Influx line protocol: measurement,tags field=value timestamp
+      lines.push(`${name}${tagStr} value=${value.value} ${timestamp}`);
+    }
+  }
+
+  return lines.join('\n');
+}
+
+/**
  * Push metrics to Grafana Cloud using native https module
- * Uses Prometheus text format which Grafana Cloud accepts
+ * Uses Influx line protocol format via /api/v1/push/influx/write endpoint
  */
 async function pushMetrics() {
   if (!client) return;
 
   try {
-    const metricsData = await client.register.metrics();
+    const metricsData = await convertToInfluxLineProtocol();
+    if (!metricsData) return;
 
     const parsedUrl = new URL(GRAFANA_URL);
 
