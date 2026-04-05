@@ -18,6 +18,7 @@ const { trackPageView } = require('./middleware/analytics');
 const { suppressConsoleInProduction } = require('./utils/logger');
 const { assetVersionMiddleware, noCacheMiddleware, ASSET_VERSION } = require('./utils/assetVersion');
 const { dbHealthMiddleware, dbErrorHandler, setupDbHealthListeners, getHealthStatus, isMongoError } = require('./middleware/dbHealth');
+const { initMetrics } = require('./utils/metrics');
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -55,6 +56,9 @@ if (isProduction && !process.env.SESSION_SECRET) {
 
 // Setup database health listeners immediately (before connection attempt)
 setupDbHealthListeners();
+
+// Initialize Prometheus metrics push (production only)
+initMetrics();
 
 // Connect to MongoDB (main database)
 connectDB();
