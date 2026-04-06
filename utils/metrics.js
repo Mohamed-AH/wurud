@@ -18,6 +18,7 @@
  * - GRAFANA_URL: Grafana Cloud push endpoint
  * - GRAFANA_USER_ID: Grafana Cloud user ID
  * - GRAFANA_API_TOKEN: Grafana Cloud API token
+ * - METRIC_TAG: Instance identifier for app_instance label (e.g., "stable", "test")
  */
 
 const https = require('https');
@@ -31,6 +32,7 @@ const VISITOR_TTL_MS = 5 * 60 * 1000; // 5 minutes for "online" status
 const GRAFANA_URL = process.env.GRAFANA_URL;
 const GRAFANA_USER_ID = process.env.GRAFANA_USER_ID;
 const GRAFANA_API_TOKEN = process.env.GRAFANA_API_TOKEN;
+const METRIC_TAG = process.env.METRIC_TAG || 'default';
 
 let client = null;
 let metricsInitialized = false;
@@ -177,6 +179,12 @@ function setupMetricsCollection() {
 
   client = require('prom-client');
 
+  // Set default label for all metrics to differentiate server instances
+  // This allows stable and test servers to be uniquely identified in Grafana
+  client.register.setDefaultLabels({
+    app_instance: METRIC_TAG
+  });
+
   // Collect default Node.js metrics with wurud_ prefix
   // Includes: memory (RSS, heap), CPU, event loop lag, GC
   client.collectDefaultMetrics({
@@ -221,26 +229,27 @@ async function convertToInfluxLineProtocol() {
 function convertCustomMetricsToInflux() {
   const lines = [];
   const timestamp = Date.now() * 1000000; // nanoseconds
+  const instanceTag = `app_instance=${escapeTag(METRIC_TAG)}`;
 
   // Audio plays counter
   for (const [audioTitle, count] of Object.entries(metricsStore.audioPlays)) {
-    lines.push(`wurud_audio_play_total,audio_title=${audioTitle} value=${count} ${timestamp}`);
+    lines.push(`wurud_audio_play_total,${instanceTag},audio_title=${audioTitle} value=${count} ${timestamp}`);
   }
 
   // Search term hits counter
   for (const [term, count] of Object.entries(metricsStore.searchTerms)) {
-    lines.push(`wurud_search_term_hit,term=${term} value=${count} ${timestamp}`);
+    lines.push(`wurud_search_term_hit,${instanceTag},term=${term} value=${count} ${timestamp}`);
   }
 
   // Empty search results counter
   for (const [term, count] of Object.entries(metricsStore.searchEmpty)) {
-    lines.push(`wurud_search_empty,term=${term} value=${count} ${timestamp}`);
+    lines.push(`wurud_search_empty,${instanceTag},term=${term} value=${count} ${timestamp}`);
   }
 
   // HTTP errors counter
   for (const [key, count] of Object.entries(metricsStore.httpErrors)) {
     const [path, status] = key.split('|');
-    lines.push(`wurud_http_errors_total,path=${path},status=${status} value=${count} ${timestamp}`);
+    lines.push(`wurud_http_errors_total,${instanceTag},path=${path},status=${status} value=${count} ${timestamp}`);
   }
 
   // Search latency histogram (push individual values or summary stats)
@@ -252,15 +261,15 @@ function convertCustomMetricsToInflux() {
     const min = Math.min(...latencies);
 
     // Push summary statistics
-    lines.push(`wurud_search_latency_ms_avg value=${avg.toFixed(2)} ${timestamp}`);
-    lines.push(`wurud_search_latency_ms_max value=${max} ${timestamp}`);
-    lines.push(`wurud_search_latency_ms_min value=${min} ${timestamp}`);
-    lines.push(`wurud_search_latency_ms_count value=${latencies.length} ${timestamp}`);
+    lines.push(`wurud_search_latency_ms_avg,${instanceTag} value=${avg.toFixed(2)} ${timestamp}`);
+    lines.push(`wurud_search_latency_ms_max,${instanceTag} value=${max} ${timestamp}`);
+    lines.push(`wurud_search_latency_ms_min,${instanceTag} value=${min} ${timestamp}`);
+    lines.push(`wurud_search_latency_ms_count,${instanceTag} value=${latencies.length} ${timestamp}`);
   }
 
   // Online visitors gauge
   const onlineCount = getOnlineVisitorCount();
-  lines.push(`wurud_users_online value=${onlineCount} ${timestamp}`);
+  lines.push(`wurud_users_online,${instanceTag} value=${onlineCount} ${timestamp}`);
 
   return lines;
 }
