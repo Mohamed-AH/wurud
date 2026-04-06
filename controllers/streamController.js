@@ -6,6 +6,7 @@ const { getFilePath, fileExists } = require('../utils/fileManager');
 const { getMimeType, handleRangeRequest } = require('../middleware/streamHandler');
 const { getPublicUrl, isConfigured: isOciConfigured } = require('../utils/ociStorage');
 const { isValidObjectId } = require('../utils/validators');
+const { recordAudioPlay } = require('../utils/metrics');
 
 const isProduction = process.env.NODE_ENV === 'production';
 
@@ -109,6 +110,9 @@ const streamAudio = async (req, res) => {
         console.error('Error incrementing play count:', err);
       });
 
+      // Record audio play metric
+      recordAudioPlay(lecture.audioFileName || lecture.titleArabic || 'unknown');
+
       // Redirect to OCI Object Storage URL
       return res.redirect(lecture.audioUrl);
     }
@@ -121,6 +125,9 @@ const streamAudio = async (req, res) => {
       lecture.incrementPlayCount().catch(err => {
         console.error('Error incrementing play count:', err);
       });
+
+      // Record audio play metric
+      recordAudioPlay(lecture.audioFileName || lecture.titleArabic || 'unknown');
 
       // Redirect to OCI
       return res.redirect(ociUrl);
@@ -144,6 +151,9 @@ const streamAudio = async (req, res) => {
     lecture.incrementPlayCount().catch(err => {
       console.error('Error incrementing play count:', err);
     });
+
+    // Record audio play metric
+    recordAudioPlay(lecture.audioFileName || lecture.titleArabic || 'unknown');
 
     // Get MIME type
     const mimeType = getMimeType(lecture.audioFileName);
