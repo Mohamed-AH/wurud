@@ -8,6 +8,7 @@ const {
   stripSheikhPrefix
 } = require('../utils/arabicSearch');
 const { sanitizeSearchInput, sanitizeComment } = require('../utils/validators');
+const { recordSearch } = require('../utils/metrics');
 
 // Config from environment
 const SEARCH_MODE = process.env.SEARCH_MODE || 'atlas';
@@ -79,11 +80,16 @@ router.get('/api', async (req, res) => {
 
     let results = [];
 
+    // Track search latency
+    const searchStart = Date.now();
+
     if (SEARCH_MODE === 'atlas') {
       results = await performAtlasSearch(searchQuery);
     } else {
       results = await performLocalSearch(searchQuery);
     }
+
+    const searchLatency = Date.now() - searchStart;
 
     // Enrich results with context
     results = await enrichWithContext(results);
@@ -93,6 +99,9 @@ router.get('/api', async (req, res) => {
     if (LOG_SEARCHES) {
       searchLogId = await logSearch(query, searchQuery, results);
     }
+
+    // Record search metrics (term, result count, latency)
+    recordSearch(query, results.length, searchLatency);
 
     res.json({
       success: true,

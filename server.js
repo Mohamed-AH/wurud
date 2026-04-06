@@ -18,7 +18,7 @@ const { trackPageView } = require('./middleware/analytics');
 const { suppressConsoleInProduction } = require('./utils/logger');
 const { assetVersionMiddleware, noCacheMiddleware, ASSET_VERSION } = require('./utils/assetVersion');
 const { dbHealthMiddleware, dbErrorHandler, setupDbHealthListeners, getHealthStatus, isMongoError } = require('./middleware/dbHealth');
-const { initMetrics } = require('./utils/metrics');
+const { initMetrics, requestTrackingMiddleware } = require('./utils/metrics');
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -139,6 +139,9 @@ app.use(compression());
 // Body parsing middleware
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
+
+// Request tracking middleware (metrics: HTTP errors, visitor count)
+app.use(requestTrackingMiddleware);
 
 // Create session store with error handling (falls back to memory store on DB failure)
 let sessionStore;
