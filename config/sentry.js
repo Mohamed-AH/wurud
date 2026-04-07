@@ -129,6 +129,11 @@ function initSentry(app) {
       nodeProfilingIntegration(),
       // Capture console.log, console.warn, console.error as Sentry logs
       Sentry.consoleLoggingIntegration({ levels: ['log', 'warn', 'error'] }),
+      // Enable spans for outbound HTTP requests (OCI, external APIs)
+      Sentry.httpIntegration({
+        spans: true, // Enables "Outbound API Requests" dashboard
+        breadcrumbs: true, // Ensures [oci] logs appear in timeline
+      }),
     ],
 
     // Sample rates (configurable via env)
