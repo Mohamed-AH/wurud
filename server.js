@@ -1,5 +1,7 @@
-require('dotenv').config();
-const { initSentry, Sentry } = require('./config/sentry');
+// IMPORTANT: Import instrument.js at the very top - initializes Sentry before everything else
+require('./instrument.js');
+
+const Sentry = require('@sentry/node');
 const express = require('express');
 const path = require('path');
 const helmet = require('helmet');
@@ -24,12 +26,6 @@ const { initMetrics, requestTrackingMiddleware } = require('./utils/metrics');
 const app = express();
 const PORT = process.env.PORT || 3000;
 const isProduction = process.env.NODE_ENV === 'production';
-
-// Initialize Sentry error tracking (must be early, before other middleware)
-initSentry(app);
-
-// Test Sentry logs
-Sentry.logger.info('User triggered test log', { action: 'test_log' });
 
 // Global error handlers to prevent crashes during DB outages
 process.on('unhandledRejection', (reason, promise) => {
@@ -253,6 +249,21 @@ app.get('/health', (req, res) => {
   });
 });
 
+// Sentry verification route - intentional error for testing
+app.get('/debug-sentry', function mainHandler(req, res) {
+  throw new Error('My first Sentry error!');
+});
+
+// Sentry metrics example route
+app.get('/metrics-test', (req, res) => {
+  // Example metrics as per Sentry docs
+  Sentry.metrics.increment('button_click', 1);
+  Sentry.metrics.gauge('page_load_time', 150);
+  Sentry.metrics.distribution('response_time', 200);
+
+  res.json({ message: 'Metrics sent to Sentry' });
+});
+
 // Maintenance page route (always accessible)
 app.get('/maintenance', (req, res) => {
   res.render('public/maintenance', { layout: false });
@@ -284,10 +295,8 @@ app.use('/stream', streamRoutes);
 app.use('/download', downloadRoutes);
 app.use('/search', searchApiRoutes);
 
-// Sentry error handler (must be after routes, before other error handlers)
-if (process.env.SENTRY_DSN) {
-  Sentry.setupExpressErrorHandler(app);
-}
+// The Sentry error handler must be registered before any other error middleware and after all controllers
+Sentry.setupExpressErrorHandler(app);
 
 // 404 handler
 app.use((req, res) => {
@@ -297,10 +306,13 @@ app.use((req, res) => {
 // Database error handler (fail-fast for MongoDB issues)
 app.use(dbErrorHandler);
 
-// General error handler
-app.use((err, req, res, next) => {
+// Optional fallthrough error handler
+app.use(function onError(err, req, res, next) {
+  // The error id is attached to `res.sentry` to be returned
+  // and optionally displayed to the user for support.
   console.error(err.stack);
-  res.status(500).send('Something went wrong!');
+  res.statusCode = 500;
+  res.end(res.sentry + '\n');
 });
 
 // Start server
