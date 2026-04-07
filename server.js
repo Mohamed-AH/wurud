@@ -28,6 +28,9 @@ const isProduction = process.env.NODE_ENV === 'production';
 // Initialize Sentry error tracking (must be early, before other middleware)
 initSentry(app);
 
+// Test Sentry logs
+Sentry.logger.info('User triggered test log', { action: 'test_log' });
+
 // Global error handlers to prevent crashes during DB outages
 process.on('unhandledRejection', (reason, promise) => {
   // Check if it's a MongoDB error - log but don't crash
