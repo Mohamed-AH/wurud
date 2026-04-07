@@ -137,6 +137,9 @@ function initSentry(app) {
     // Enable IP/header tracking for visitor journey identification
     sendDefaultPii: true,
 
+    // Enable Sentry logs
+    enableLogs: true,
+
     // Filter events before sending
     beforeSend(event, hint) {
       const request = event.request;
