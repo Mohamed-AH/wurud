@@ -23,7 +23,7 @@ Sentry.init({
 console.log('Sending test metrics to Sentry...');
 
 // Send test metrics
-Sentry.metrics.increment('button_click', 1);
+Sentry.metrics.count('button_click', 1);
 console.log('  - Sent: button_click (counter) = 1');
 
 Sentry.metrics.gauge('page_load_time', 150);
@@ -33,7 +33,7 @@ Sentry.metrics.distribution('response_time', 200);
 console.log('  - Sent: response_time (distribution) = 200');
 
 // Send a few more for good measure
-Sentry.metrics.increment('button_click', 1);
+Sentry.metrics.count('button_click', 1);
 Sentry.metrics.gauge('page_load_time', 180);
 Sentry.metrics.distribution('response_time', 250);
 
