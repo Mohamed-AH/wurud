@@ -20,6 +20,19 @@
  *   cache.invalidatePattern('homepage:*'); // Clear matching keys
  */
 
+// Lazy-loaded to avoid circular dependencies
+let sentryMetrics = null;
+function getSentryMetrics() {
+  if (sentryMetrics === null) {
+    try {
+      sentryMetrics = require('./sentryMetrics');
+    } catch (e) {
+      sentryMetrics = false; // Mark as unavailable
+    }
+  }
+  return sentryMetrics || null;
+}
+
 class MemoryCache {
   constructor() {
     this.cache = new Map();
@@ -53,9 +66,15 @@ class MemoryCache {
       // LRU: move to end of Map (most recently used)
       this.cache.delete(key);
       this.cache.set(key, item);
+      // Track cache hit metric
+      const metrics = getSentryMetrics();
+      if (metrics) metrics.cacheHit(key);
       return item;
     }
     this.stats.misses++;
+    // Track cache miss metric
+    const metrics = getSentryMetrics();
+    if (metrics) metrics.cacheMiss(key);
     return undefined;
   }
 

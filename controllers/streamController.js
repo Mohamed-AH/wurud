@@ -7,6 +7,7 @@ const { getMimeType, handleRangeRequest } = require('../middleware/streamHandler
 const { getPublicUrl, isConfigured: isOciConfigured } = require('../utils/ociStorage');
 const { isValidObjectId } = require('../utils/validators');
 const { recordAudioPlay } = require('../utils/metrics');
+const sentryMetrics = require('../utils/sentryMetrics');
 
 const isProduction = process.env.NODE_ENV === 'production';
 
@@ -112,6 +113,7 @@ const streamAudio = async (req, res) => {
 
       // Record audio play metric
       recordAudioPlay(lecture.audioFileName || lecture.titleArabic || 'unknown');
+      sentryMetrics.audioPlay('oci');
 
       // Redirect to OCI Object Storage URL
       return res.redirect(lecture.audioUrl);
@@ -128,6 +130,7 @@ const streamAudio = async (req, res) => {
 
       // Record audio play metric
       recordAudioPlay(lecture.audioFileName || lecture.titleArabic || 'unknown');
+      sentryMetrics.audioPlay('oci');
 
       // Redirect to OCI
       return res.redirect(ociUrl);
@@ -154,6 +157,7 @@ const streamAudio = async (req, res) => {
 
     // Record audio play metric
     recordAudioPlay(lecture.audioFileName || lecture.titleArabic || 'unknown');
+    sentryMetrics.audioPlay('local');
 
     // Get MIME type
     const mimeType = getMimeType(lecture.audioFileName);
@@ -227,6 +231,7 @@ const downloadAudio = async (req, res) => {
     if (lecture.audioUrl && lecture.audioUrl.includes('objectstorage')) {
       try {
         await proxyOciDownload(lecture.audioUrl, res, downloadFilename, mimeType);
+        sentryMetrics.audioDownload('oci', lecture.fileSize ? lecture.fileSize / 1024 / 1024 : 0);
         return;
       } catch (err) {
         console.error('OCI proxy download error:', err);
@@ -242,6 +247,7 @@ const downloadAudio = async (req, res) => {
       const ociUrl = getPublicUrl(lecture.audioFileName);
       try {
         await proxyOciDownload(ociUrl, res, downloadFilename, mimeType);
+        sentryMetrics.audioDownload('oci', lecture.fileSize ? lecture.fileSize / 1024 / 1024 : 0);
         return;
       } catch (err) {
         console.error('OCI proxy download error:', err);
@@ -274,6 +280,9 @@ const downloadAudio = async (req, res) => {
     // Stream file to response
     const fileStream = fs.createReadStream(filePath);
     fileStream.pipe(res);
+
+    // Track download metric
+    sentryMetrics.audioDownload('local', lecture.fileSize ? lecture.fileSize / 1024 / 1024 : 0);
 
     fileStream.on('error', (err) => {
       console.error('Download stream error:', err);
