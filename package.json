@@ -39,6 +39,8 @@
   "author": "",
   "license": "ISC",
   "dependencies": {
+    "@sentry/node": "^10.47.0",
+    "@sentry/profiling-node": "^10.47.0",
     "compression": "^1.7.4",
     "connect-mongo": "^6.0.0",
     "cookie-parser": "^1.4.7",

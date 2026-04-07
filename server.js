@@ -1,4 +1,5 @@
 require('dotenv').config();
+const { initSentry, Sentry } = require('./config/sentry');
 const express = require('express');
 const path = require('path');
 const helmet = require('helmet');
@@ -23,6 +24,9 @@ const { initMetrics, requestTrackingMiddleware } = require('./utils/metrics');
 const app = express();
 const PORT = process.env.PORT || 3000;
 const isProduction = process.env.NODE_ENV === 'production';
+
+// Initialize Sentry error tracking (must be early, before other middleware)
+initSentry(app);
 
 // Global error handlers to prevent crashes during DB outages
 process.on('unhandledRejection', (reason, promise) => {
@@ -276,6 +280,11 @@ app.use('/api/homepage', homepageApiRoutes);
 app.use('/stream', streamRoutes);
 app.use('/download', downloadRoutes);
 app.use('/search', searchApiRoutes);
+
+// Sentry error handler (must be after routes, before other error handlers)
+if (process.env.SENTRY_DSN) {
+  Sentry.setupExpressErrorHandler(app);
+}
 
 // 404 handler
 app.use((req, res) => {
