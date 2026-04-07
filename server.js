@@ -254,16 +254,6 @@ app.get('/debug-sentry', function mainHandler(req, res) {
   throw new Error('My first Sentry error!');
 });
 
-// Sentry metrics example route
-app.get('/metrics-test', (req, res) => {
-  // Example metrics as per Sentry docs
-  Sentry.metrics.increment('button_click', 1);
-  Sentry.metrics.gauge('page_load_time', 150);
-  Sentry.metrics.distribution('response_time', 200);
-
-  res.json({ message: 'Metrics sent to Sentry' });
-});
-
 // Maintenance page route (always accessible)
 app.get('/maintenance', (req, res) => {
   res.render('public/maintenance', { layout: false });
