@@ -125,7 +125,11 @@ function initSentry(app) {
   Sentry.init({
     dsn: dsn,
     environment: environment,
-    integrations: [nodeProfilingIntegration()],
+    integrations: [
+      nodeProfilingIntegration(),
+      // Capture console.log, console.warn, console.error as Sentry logs
+      Sentry.consoleLoggingIntegration({ levels: ['log', 'warn', 'error'] }),
+    ],
 
     // Sample rates (configurable via env)
     tracesSampleRate: tracesSampleRate,
