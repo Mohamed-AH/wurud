@@ -15,6 +15,7 @@ const {
   playCountValidation,
   isValidObjectId
 } = require('../../utils/validators');
+const sentryMetrics = require('../../utils/sentryMetrics');
 
 const isProduction = process.env.NODE_ENV === 'production';
 
@@ -27,6 +28,7 @@ router.post('/',
   handleMulterError,
   validateUploadedFile,
   async (req, res) => {
+    const uploadStart = Date.now();
     try {
       const file = req.file;
 
@@ -143,6 +145,9 @@ router.post('/',
       // Populate references for response
       await lecture.populate('sheikhId', 'nameArabic nameEnglish honorific');
       await lecture.populate('seriesId', 'titleArabic titleEnglish');
+
+      // Track upload latency metric
+      sentryMetrics.uploadLatency(Date.now() - uploadStart);
 
       res.status(201).json({
         success: true,

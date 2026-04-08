@@ -65,6 +65,7 @@ Grafana Cloud push-based Prometheus monitoring implemented.
 - `ad10ba3` Refine monitoring plan with technical feedback
 - `31c45e8` Implement push-based Prometheus monitoring for Grafana Cloud
 - `c1e8829` Fix metrics push: use Influx line protocol for Grafana Cloud
+- `10ab264` Add app_instance label to metrics for server differentiation
 
 ---
 

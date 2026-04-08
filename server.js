@@ -1,4 +1,7 @@
-require('dotenv').config();
+// IMPORTANT: Import instrument.js at the very top - initializes Sentry before everything else
+require('./instrument.js');
+
+const Sentry = require('@sentry/node');
 const express = require('express');
 const path = require('path');
 const helmet = require('helmet');
@@ -246,6 +249,11 @@ app.get('/health', (req, res) => {
   });
 });
 
+// Sentry verification route - intentional error for testing
+app.get('/debug-sentry', function mainHandler(req, res) {
+  throw new Error('My first Sentry error!');
+});
+
 // Maintenance page route (always accessible)
 app.get('/maintenance', (req, res) => {
   res.render('public/maintenance', { layout: false });
@@ -277,6 +285,9 @@ app.use('/stream', streamRoutes);
 app.use('/download', downloadRoutes);
 app.use('/search', searchApiRoutes);
 
+// The Sentry error handler must be registered before any other error middleware and after all controllers
+Sentry.setupExpressErrorHandler(app);
+
 // 404 handler
 app.use((req, res) => {
   res.status(404).send('Page not found');
@@ -285,10 +296,13 @@ app.use((req, res) => {
 // Database error handler (fail-fast for MongoDB issues)
 app.use(dbErrorHandler);
 
-// General error handler
-app.use((err, req, res, next) => {
+// Optional fallthrough error handler
+app.use(function onError(err, req, res, next) {
+  // The error id is attached to `res.sentry` to be returned
+  // and optionally displayed to the user for support.
   console.error(err.stack);
-  res.status(500).send('Something went wrong!');
+  res.statusCode = 500;
+  res.end(res.sentry + '\n');
 });
 
 // Start server

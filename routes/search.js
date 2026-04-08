@@ -9,6 +9,7 @@ const {
 } = require('../utils/arabicSearch');
 const { sanitizeSearchInput, sanitizeComment } = require('../utils/validators');
 const { recordSearch } = require('../utils/metrics');
+const sentryMetrics = require('../utils/sentryMetrics');
 
 // Config from environment
 const SEARCH_MODE = process.env.SEARCH_MODE || 'atlas';
@@ -102,6 +103,12 @@ router.get('/api', async (req, res) => {
 
     // Record search metrics (term, result count, latency)
     recordSearch(query, results.length, searchLatency);
+
+    // Sentry metrics for search performance
+    sentryMetrics.searchLatency(searchLatency, SEARCH_MODE, results.length);
+    if (results.length === 0) {
+      sentryMetrics.searchEmpty(SEARCH_MODE);
+    }
 
     res.json({
       success: true,
