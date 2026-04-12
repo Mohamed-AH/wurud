@@ -365,43 +365,52 @@ async function performLocalSearch(query) {
 
 /**
  * Enrich results with context (surrounding transcript lines)
+ * Optimized: Batch fetch all context in a single aggregation (40 -> 1 query for 20 results)
  */
 async function enrichWithContext(results) {
   const Transcript = getTranscript();
-  const enriched = [];
+  if (!results.length) return [];
 
-  for (const result of results) {
-    const contextBefore = await Transcript.find({
-      lectureId: result.lectureId,
-      startTimeSec: {
-        $gte: result.startTimeSec - CONTEXT_WINDOW_SEC,
-        $lt: result.startTimeSec
-      },
-      _id: { $ne: result._id }
-    })
-      .sort({ startTimeSec: -1 })
-      .limit(CONTEXT_ITEMS)
-      .lean();
+  // Build $or conditions for all results' context windows
+  const orConditions = results.map(r => ({
+    lectureId: r.lectureId,
+    startTimeSec: {
+      $gte: r.startTimeSec - CONTEXT_WINDOW_SEC,
+      $lte: r.startTimeSec + CONTEXT_WINDOW_SEC
+    },
+    _id: { $ne: r._id }
+  }));
 
-    const contextAfter = await Transcript.find({
-      lectureId: result.lectureId,
-      startTimeSec: {
-        $gt: result.startTimeSec,
-        $lte: result.startTimeSec + CONTEXT_WINDOW_SEC
-      },
-      _id: { $ne: result._id }
-    })
-      .sort({ startTimeSec: 1 })
-      .limit(CONTEXT_ITEMS)
-      .lean();
+  // Single aggregation to fetch all context segments
+  const allContext = await Transcript.aggregate([
+    { $match: { $or: orConditions } },
+    { $project: { text: 1, lectureId: 1, startTimeSec: 1 } },
+    { $sort: { lectureId: 1, startTimeSec: 1 } }
+  ]);
 
-    // Reverse contextBefore to get chronological order
-    const beforeText = contextBefore
-      .reverse()
+  // Group context by lectureId for efficient lookup
+  const contextMap = new Map();
+  for (const ctx of allContext) {
+    const key = ctx.lectureId.toString();
+    if (!contextMap.has(key)) contextMap.set(key, []);
+    contextMap.get(key).push(ctx);
+  }
+
+  // Enrich results using the pre-fetched context
+  return results.map(result => {
+    const lectureContext = contextMap.get(result.lectureId.toString()) || [];
+
+    // Filter and limit context before (items with smaller timestamps)
+    const contextBefore = lectureContext
+      .filter(c => c.startTimeSec < result.startTimeSec && c.startTimeSec >= result.startTimeSec - CONTEXT_WINDOW_SEC)
+      .slice(-CONTEXT_ITEMS)
       .map(c => stripTimestamps(c.text))
       .join(' ');
 
-    const afterText = contextAfter
+    // Filter and limit context after (items with larger timestamps)
+    const contextAfter = lectureContext
+      .filter(c => c.startTimeSec > result.startTimeSec && c.startTimeSec <= result.startTimeSec + CONTEXT_WINDOW_SEC)
+      .slice(0, CONTEXT_ITEMS)
       .map(c => stripTimestamps(c.text))
       .join(' ');
 
@@ -411,16 +420,14 @@ async function enrichWithContext(results) {
       formattedTime: formatTime(hit.startTimeSec)
     }));
 
-    enriched.push({
+    return {
       ...result,
-      contextBefore: beforeText,
-      contextAfter: afterText,
+      contextBefore,
+      contextAfter,
       formattedTime: formatTime(result.startTimeSec),
       additionalHits: enrichedAdditionalHits
-    });
-  }
-
-  return enriched;
+    };
+  });
 }
 
 /**

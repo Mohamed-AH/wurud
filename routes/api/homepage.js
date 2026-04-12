@@ -184,6 +184,7 @@ router.get('/series', async (req, res) => {
     const paginatedSeries = seriesList.slice(skip, skip + limitNum);
 
     // Fetch all lectures for paginated series in ONE query (fixes N+1)
+    // Optimized: Uses $project to limit memory usage
     const seriesIds = paginatedSeries.map(s => s._id);
     const allLectures = await Lecture.aggregate([
       {
@@ -206,7 +207,21 @@ router.get('/series', async (req, res) => {
         }
       },
       {
-        $unset: ['effectiveSortOrder']
+        $project: {
+          _id: 1,
+          seriesId: 1,
+          titleArabic: 1,
+          titleEnglish: 1,
+          lectureNumber: 1,
+          sortOrder: 1,
+          dateRecorded: 1,
+          createdAt: 1,
+          durationSeconds: 1,
+          duration: 1,
+          audioUrl: 1,
+          slug: 1,
+          shortId: 1
+        }
       }
     ]);
 
@@ -463,6 +478,7 @@ router.get('/khutbas', async (req, res) => {
     const paginatedSeries = seriesList.slice(skip, skip + limitNum);
 
     // Fetch all lectures for paginated series in ONE query (fixes N+1)
+    // Optimized: Uses $project to limit memory usage
     const seriesIds = paginatedSeries.map(s => s._id);
     const allLectures = await Lecture.aggregate([
       {
@@ -485,7 +501,21 @@ router.get('/khutbas', async (req, res) => {
         }
       },
       {
-        $unset: ['effectiveSortOrder']
+        $project: {
+          _id: 1,
+          seriesId: 1,
+          titleArabic: 1,
+          titleEnglish: 1,
+          lectureNumber: 1,
+          sortOrder: 1,
+          dateRecorded: 1,
+          createdAt: 1,
+          durationSeconds: 1,
+          duration: 1,
+          audioUrl: 1,
+          slug: 1,
+          shortId: 1
+        }
       }
     ]);
 
