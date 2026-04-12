@@ -198,7 +198,7 @@ describe('GET /search/api', () => {
 
   it('should include resultCount in response', async () => {
     const mockResults = [
-      { _id: mockLectureId, text: 'Test result', lectureTitle: 'Test Lecture' }
+      { _id: mockLectureId, lectureId: mockLectureId, startTimeSec: 100, text: 'Test result', lectureTitle: 'Test Lecture' }
     ];
     Transcript.aggregate.mockResolvedValue(mockResults);
 
