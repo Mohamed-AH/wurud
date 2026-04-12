@@ -426,6 +426,89 @@ const sectionsWithCounts = sections.map(s => ({
 
 ---
 
+---
+
+## Additional Optimizations (Reviewer Suggestions)
+
+### A. Index Verification
+
+The compound index for context queries **already exists** at `models/Transcript.js:42`:
+```javascript
+transcriptSchema.index({ lectureId: 1, startTimeSec: 1 });
+```
+This ensures the `enrichWithContext()` aggregation will use an efficient index scan.
+
+### B. Global Lean Middleware (Quick Win)
+
+Add a plugin to `config/database.js` or before model initialization to default all read queries to `.lean()`:
+
+```javascript
+const mongoose = require('mongoose');
+
+// Global plugin: Default find/findOne to lean() for memory efficiency
+mongoose.plugin((schema) => {
+  schema.pre('find', function() {
+    if (this.options.lean === undefined) {
+      this.lean();
+    }
+  });
+  schema.pre('findOne', function() {
+    if (this.options.lean === undefined) {
+      this.lean();
+    }
+  });
+});
+```
+
+**Caution:** This affects queries that call `.save()` after fetching. Those queries should explicitly use `{ lean: false }` or use `findById()` patterns that skip the middleware.
+
+### C. Memory-Safe Chunked bulkWrite (3.2 Enhancement)
+
+For bulk transcript updates, chunk large arrays to prevent memory spikes:
+
+```javascript
+const CHUNK_SIZE = 100;
+
+async function chunkedBulkWrite(Model, operations) {
+  const results = [];
+  for (let i = 0; i < operations.length; i += CHUNK_SIZE) {
+    const chunk = operations.slice(i, i + CHUNK_SIZE);
+    const result = await Model.bulkWrite(chunk);
+    results.push(result);
+  }
+  return results;
+}
+
+// Usage in routes/admin/index.js:1219-1233
+const bulkOps = segments
+  .filter(seg => seg._id && seg.text)
+  .map(seg => ({
+    updateOne: {
+      filter: { _id: seg._id },
+      update: {
+        $set: {
+          text: seg.text.trim(),
+          ...(seg.speaker ? { speaker: seg.speaker.trim() } : {})
+        }
+      }
+    }
+  }));
+
+if (bulkOps.length > 100) {
+  await chunkedBulkWrite(Transcript, bulkOps);
+} else {
+  await Transcript.bulkWrite(bulkOps);
+}
+```
+
+### D. BSON Document Limit Note
+
+The nested `$lookup` in `fetchSectionsData()` (Phase 1.2) returns all series within sections. At current scale (~10 users/week), this is safe. If sections grow to 100+ series each, consider:
+- Adding `$limit` inside the inner `$lookup` pipeline
+- Paginating section data via API
+
+---
+
 ## Expected Outcome
 
 - **Before:** 100+ database queries per homepage load
