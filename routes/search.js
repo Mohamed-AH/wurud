@@ -13,7 +13,7 @@ const sentryMetrics = require('../utils/sentryMetrics');
 
 // Config from environment
 const SEARCH_MODE = process.env.SEARCH_MODE || 'atlas';
-const CONTEXT_WINDOW_SEC = parseInt(process.env.CONTEXT_WINDOW_SEC, 10) || 90;
+const CONTEXT_WINDOW_SEC = parseInt(process.env.CONTEXT_WINDOW_SEC, 10) || 45;
 const CONTEXT_ITEMS = parseInt(process.env.CONTEXT_ITEMS, 10) || 2;
 const LOG_SEARCHES = process.env.LOG_SEARCHES !== 'false';
 const isProduction = process.env.NODE_ENV === 'production';
@@ -384,7 +384,7 @@ async function enrichWithContext(results) {
   // Single aggregation to fetch all context segments
   const allContext = await Transcript.aggregate([
     { $match: { $or: orConditions } },
-    { $project: { text: 1, lectureId: 1, startTimeSec: 1 } },
+    { $project: { _id: 0, text: 1, lectureId: 1, startTimeSec: 1 } },
     { $sort: { lectureId: 1, startTimeSec: 1 } }
   ]);
 
