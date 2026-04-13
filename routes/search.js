@@ -458,4 +458,38 @@ async function logSearch(query, searchQuery, results) {
   }
 }
 
+// ============================================================
+// DEBUG ROUTE - REMOVE BEFORE PRODUCTION
+// ============================================================
+router.get('/debug-index', async (req, res) => {
+  try {
+    const Transcript = getTranscript();
+
+    if (!Transcript) {
+      return res.status(503).json({
+        success: false,
+        error: 'Transcript model not available'
+      });
+    }
+
+    // Test the compound index (lectureId + startTimeSec)
+    const explain = await Transcript.find({
+      lectureId: "65f1a2b3c4d5e6f7a8b9c0d1",
+      startTimeSec: { $gte: 100, $lte: 200 }
+    }).explain("executionStats");
+
+    res.json({
+      winningPlan: explain.queryPlanner.winningPlan.stage,
+      executionTime: explain.executionStats.executionTimeMillis,
+      docsExamined: explain.executionStats.totalDocsExamined
+    });
+  } catch (error) {
+    console.error('Debug index error:', error);
+    res.status(500).json({ error: error.message });
+  }
+});
+// ============================================================
+// END DEBUG ROUTE - REMOVE BEFORE PRODUCTION
+// ============================================================
+
 module.exports = router;
