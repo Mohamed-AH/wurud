@@ -428,13 +428,8 @@ router.get('/series/:id/edit', isAdmin, async (req, res) => {
         $match: { seriesId: new mongoose.Types.ObjectId(req.params.id) }
       },
       {
-        $addFields: {
-          effectiveSortOrder: { $ifNull: ['$sortOrder', 999999] }
-        }
-      },
-      {
         $sort: {
-          effectiveSortOrder: 1,
+          sortOrder: 1,
           lectureNumber: 1,
           createdAt: 1
         }

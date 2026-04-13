@@ -31,13 +31,8 @@ async function fetchHomepageData() {
           }
         },
         {
-          $addFields: {
-            effectiveSortOrder: { $ifNull: ['$sortOrder', 999999] }
-          }
-        },
-        {
           $sort: {
-            effectiveSortOrder: 1,
+            sortOrder: 1,
             lectureNumber: 1,
             createdAt: 1
           }
@@ -783,13 +778,8 @@ router.get('/series/:shortId(\\d+)/:slug_en?/:slug_ar?', async (req, res) => {
         }
       },
       {
-        $addFields: {
-          effectiveSortOrder: { $ifNull: ['$sortOrder', 999999] }
-        }
-      },
-      {
         $sort: {
-          effectiveSortOrder: 1,
+          sortOrder: 1,
           lectureNumber: 1,
           createdAt: 1
         }
@@ -808,7 +798,7 @@ router.get('/series/:shortId(\\d+)/:slug_en?/:slug_ar?', async (req, res) => {
         }
       },
       {
-        $unset: ['sheikhData', 'effectiveSortOrder']
+        $unset: ['sheikhData']
       }
     ]);
 
@@ -906,13 +896,8 @@ router.get('/series/:idOrSlug', async (req, res) => {
         }
       },
       {
-        $addFields: {
-          effectiveSortOrder: { $ifNull: ['$sortOrder', 999999] }
-        }
-      },
-      {
         $sort: {
-          effectiveSortOrder: 1,
+          sortOrder: 1,
           lectureNumber: 1,
           createdAt: 1
         }
@@ -931,7 +916,7 @@ router.get('/series/:idOrSlug', async (req, res) => {
         }
       },
       {
-        $unset: ['sheikhData', 'effectiveSortOrder']
+        $unset: ['sheikhData']
       }
     ]);
 

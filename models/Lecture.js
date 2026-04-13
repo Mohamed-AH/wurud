@@ -149,6 +149,15 @@ lectureSchema.index({ published: 1, createdAt: -1 });
 lectureSchema.index({ sheikhId: 1, seriesId: 1, lectureNumber: 1 });
 lectureSchema.index({ featured: 1, published: 1 });
 
+// Optimized index for series lecture sorting (eliminates in-memory blocking sort)
+lectureSchema.index({
+  seriesId: 1,
+  published: 1,
+  sortOrder: 1,
+  lectureNumber: 1,
+  createdAt: 1
+});
+
 // Text index for search
 lectureSchema.index({
   titleArabic: 'text',

@@ -194,14 +194,9 @@ router.get('/series', async (req, res) => {
         }
       },
       {
-        $addFields: {
-          effectiveSortOrder: { $ifNull: ['$sortOrder', 999999] }
-        }
-      },
-      {
         $sort: {
           seriesId: 1,
-          effectiveSortOrder: 1,
+          sortOrder: 1,
           lectureNumber: 1,
           createdAt: 1
         }
@@ -488,14 +483,9 @@ router.get('/khutbas', async (req, res) => {
         }
       },
       {
-        $addFields: {
-          effectiveSortOrder: { $ifNull: ['$sortOrder', 999999] }
-        }
-      },
-      {
         $sort: {
           seriesId: 1,
-          effectiveSortOrder: 1,
+          sortOrder: 1,
           lectureNumber: 1,
           createdAt: 1
         }
