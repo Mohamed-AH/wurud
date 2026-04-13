@@ -11,6 +11,7 @@ router.use(adminI18nMiddleware);
 // Helper function to invalidate homepage cache after admin changes
 function invalidateHomepageCache() {
   cache.invalidatePattern('homepage:*');
+  cache.invalidatePattern('search:*');
   cache.del('sitemap:xml');
 }
 

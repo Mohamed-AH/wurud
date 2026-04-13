@@ -10,12 +10,14 @@ const {
 const { sanitizeSearchInput, sanitizeComment } = require('../utils/validators');
 const { recordSearch } = require('../utils/metrics');
 const sentryMetrics = require('../utils/sentryMetrics');
+const cache = require('../utils/cache');
 
 // Config from environment
 const SEARCH_MODE = process.env.SEARCH_MODE || 'atlas';
 const CONTEXT_WINDOW_SEC = parseInt(process.env.CONTEXT_WINDOW_SEC, 10) || 45;
 const CONTEXT_ITEMS = parseInt(process.env.CONTEXT_ITEMS, 10) || 2;
 const LOG_SEARCHES = process.env.LOG_SEARCHES !== 'false';
+const SEARCH_CACHE_TTL = parseInt(process.env.SEARCH_CACHE_TTL, 10) || 300; // 5 minutes
 const isProduction = process.env.NODE_ENV === 'production';
 
 // Helper to get search models (lazy access since they're initialized async)
@@ -78,7 +80,37 @@ router.get('/api', async (req, res) => {
   try {
     // Strip sheikh prefix for cleaner matching
     const searchQuery = stripSheikhPrefix(query);
+    const cacheKey = `search:${searchQuery.toLowerCase().trim()}`;
 
+    // Check cache first
+    const cachedResults = cache.get(cacheKey);
+    if (cachedResults) {
+      // Cache hit - return cached results with new log ID
+      const searchLogId = LOG_SEARCHES ? new mongoose.Types.ObjectId() : null;
+
+      // Send response immediately
+      res.json({
+        success: true,
+        query,
+        results: cachedResults,
+        resultCount: cachedResults.length,
+        searchLogId: searchLogId?.toString() || null
+      });
+
+      // Log asynchronously (don't block response)
+      if (LOG_SEARCHES && searchLogId) {
+        setImmediate(async () => {
+          try {
+            await logSearchAsync(searchLogId, query, searchQuery, cachedResults);
+          } catch (err) {
+            console.error('Async search logging failed:', err);
+          }
+        });
+      }
+      return;
+    }
+
+    // Cache miss - perform search
     let results = [];
 
     // Track search latency
@@ -95,11 +127,11 @@ router.get('/api', async (req, res) => {
     // Enrich results with context
     results = await enrichWithContext(results);
 
-    // Log search (best-effort)
-    let searchLogId = null;
-    if (LOG_SEARCHES) {
-      searchLogId = await logSearch(query, searchQuery, results);
-    }
+    // Cache enriched results
+    cache.set(cacheKey, results, SEARCH_CACHE_TTL);
+
+    // Pre-generate ObjectId for async logging
+    const searchLogId = LOG_SEARCHES ? new mongoose.Types.ObjectId() : null;
 
     // Record search metrics (term, result count, latency)
     recordSearch(query, results.length, searchLatency);
@@ -110,13 +142,25 @@ router.get('/api', async (req, res) => {
       sentryMetrics.searchEmpty(SEARCH_MODE);
     }
 
+    // Send response immediately
     res.json({
       success: true,
       query,
       results,
       resultCount: results.length,
-      searchLogId
+      searchLogId: searchLogId?.toString() || null
     });
+
+    // Log asynchronously (don't block response)
+    if (LOG_SEARCHES && searchLogId) {
+      setImmediate(async () => {
+        try {
+          await logSearchAsync(searchLogId, query, searchQuery, results);
+        } catch (err) {
+          console.error('Async search logging failed:', err);
+        }
+      });
+    }
   } catch (error) {
     console.error('Search API error:', error);
     res.status(500).json({
@@ -431,31 +475,30 @@ async function enrichWithContext(results) {
 }
 
 /**
- * Log search query (best-effort, no failure)
+ * Log search query asynchronously (best-effort, no failure)
+ * @param {mongoose.Types.ObjectId} id - Pre-generated ObjectId
+ * @param {string} query - Original query
+ * @param {string} searchQuery - Normalized query
+ * @param {Array} results - Search results
  */
-async function logSearch(query, searchQuery, results) {
-  try {
-    const SearchLog = getSearchLog();
-    if (!SearchLog) {
-      console.warn('[SearchLog] Model not initialized - search not logged');
-      return null;
-    }
-
-    console.log('[SearchLog] Creating log for query:', query);
-    const log = await SearchLog.create({
-      query,
-      normalizedQuery: searchQuery,
-      resultCount: results.length,
-      topLectureIds: results.slice(0, 5).map(r => r.lectureId?.toString()).filter(Boolean),
-      searchMode: SEARCH_MODE,
-      relevant: null
-    });
-    console.log('[SearchLog] Saved successfully - ID:', log._id.toString(), 'Results:', results.length);
-    return log._id.toString();
-  } catch (error) {
-    console.error('[SearchLog] Error saving:', error.message);
-    return null;
+async function logSearchAsync(id, query, searchQuery, results) {
+  const SearchLog = getSearchLog();
+  if (!SearchLog) {
+    console.warn('[SearchLog] Model not initialized - search not logged');
+    return;
   }
+
+  console.log('[SearchLog] Creating log for query:', query);
+  await SearchLog.create({
+    _id: id,
+    query,
+    normalizedQuery: searchQuery,
+    resultCount: results.length,
+    topLectureIds: results.slice(0, 5).map(r => r.lectureId?.toString()).filter(Boolean),
+    searchMode: SEARCH_MODE,
+    relevant: null
+  });
+  console.log('[SearchLog] Saved successfully - ID:', id.toString(), 'Results:', results.length);
 }
 
 module.exports = router;
