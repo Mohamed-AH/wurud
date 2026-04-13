@@ -19,6 +19,7 @@ const CONTEXT_ITEMS = parseInt(process.env.CONTEXT_ITEMS, 10) || 2;
 const LOG_SEARCHES = process.env.LOG_SEARCHES !== 'false';
 const SEARCH_CACHE_TTL = parseInt(process.env.SEARCH_CACHE_TTL, 10) || 300; // 5 minutes
 const isProduction = process.env.NODE_ENV === 'production';
+const isTest = process.env.NODE_ENV === 'test';
 
 // Helper to get search models (lazy access since they're initialized async)
 const getTranscript = () => models.Transcript;
@@ -152,7 +153,8 @@ router.get('/api', async (req, res) => {
     });
 
     // Log asynchronously (don't block response)
-    if (LOG_SEARCHES && searchLogId) {
+    // Skip async logging in test environment to prevent Jest warnings
+    if (LOG_SEARCHES && searchLogId && !isTest) {
       setImmediate(async () => {
         try {
           await logSearchAsync(searchLogId, query, searchQuery, results);
