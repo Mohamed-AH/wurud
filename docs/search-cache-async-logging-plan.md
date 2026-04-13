@@ -141,13 +141,13 @@ function invalidateHomepageCache() {
 
 ## Implementation Checklist
 
-- [ ] Add cache import and TTL config to search.js
-- [ ] Implement cache check before search
-- [ ] Cache enriched results after search
-- [ ] Replace `logSearch()` with `logSearchAsync()` 
-- [ ] Pre-generate ObjectId and send response before logging
-- [ ] Wrap async logging in try/catch
-- [ ] Add search cache invalidation to admin routes
-- [ ] Add integration tests for cache hits/misses
-- [ ] Add integration tests for async logging
+- [x] Add cache import and TTL config to search.js
+- [x] Implement cache check before search
+- [x] Cache enriched results after search
+- [x] Replace `logSearch()` with `logSearchAsync()` 
+- [x] Pre-generate ObjectId and send response before logging
+- [x] Wrap async logging in try/catch
+- [x] Add search cache invalidation to admin routes
+- [x] Add integration tests for cache hits/misses
+- [x] Add integration tests for async logging
 - [ ] Manual browser testing
