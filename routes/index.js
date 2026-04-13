@@ -254,29 +254,18 @@ async function fetchSectionsData() {
 // @access  Public
 router.get('/', async (req, res) => {
   try {
-    // PERFORMANCE: Only load schedule initially, series loaded via API
-    // Get schedule data from cache or fetch (lightweight)
-    const weeklySchedule = await cache.getOrSet(
-      'homepage:schedule',
-      fetchScheduleData,
-      CACHE_TTL.SCHEDULE
-    );
+    // PERFORMANCE: Execute all independent queries in parallel
+    const [weeklySchedule, totalLectureCount, homepageSections, settings] = await Promise.all([
+      cache.getOrSet('homepage:schedule', fetchScheduleData, CACHE_TTL.SCHEDULE),
+      cache.getOrSet('homepage:lectureCount', () => Lecture.countDocuments({ published: true }), CACHE_TTL.HOMEPAGE),
+      cache.getOrSet('homepage:sections', fetchSectionsData, CACHE_TTL.HOMEPAGE),
+      SiteSettings.getSettings().catch(err => {
+        console.error('Failed to get site settings:', err.message);
+        return null;
+      })
+    ]);
 
-    // Get total lecture count (lightweight query)
-    const totalLectureCount = await cache.getOrSet(
-      'homepage:lectureCount',
-      () => Lecture.countDocuments({ published: true }),
-      CACHE_TTL.HOMEPAGE
-    );
-
-    // Get homepage sections (cached)
-    const homepageSections = await cache.getOrSet(
-      'homepage:sections',
-      fetchSectionsData,
-      CACHE_TTL.HOMEPAGE
-    );
-
-    // Get site settings for homepage config and stats
+    // Process site settings (handle null from catch)
     let showPublicStats = false;
     let homepageConfig = {
       showSchedule: true,
@@ -284,8 +273,7 @@ router.get('/', async (req, res) => {
       showStandaloneTab: true,
       showKhutbasTab: true
     };
-    try {
-      const settings = await SiteSettings.getSettings();
+    if (settings) {
       showPublicStats = settings.shouldShowPublicStats();
       if (settings.homepage) {
         homepageConfig = {
@@ -295,8 +283,6 @@ router.get('/', async (req, res) => {
           showKhutbasTab: settings.homepage.showKhutbasTab !== false
         };
       }
-    } catch (err) {
-      console.error('Failed to get site settings:', err.message);
     }
 
     // Get active tab from URL query parameter (default to 'series')
@@ -433,55 +419,48 @@ router.get('/lectures/:shortId(\\d+)/:slug_en?/:slug_ar?', async (req, res) => {
       }
     }
 
-    // Get related lectures from the same series only, sorted by lectureNumber
-    let relatedLectures = [];
-
-    if (lecture.seriesId) {
-      relatedLectures = await Lecture.find({
-        _id: { $ne: lecture._id },
-        seriesId: lecture.seriesId._id,
-        published: true
-      })
-        .sort({ lectureNumber: 1, dateRecorded: 1, createdAt: 1 })
-        .populate('sheikhId', 'nameArabic nameEnglish honorific shortId slug_en slug_ar')
-        .populate('seriesId', 'titleArabic titleEnglish shortId slug_en slug_ar')
-        .lean();
-    }
-
     const canonicalPath = buildCanonicalUrl('lectures', lecture);
 
-    // Fetch transcript excerpt for SEO (first ~500 words)
-    let transcriptExcerpt = '';
-    let hasTranscript = false;
-    try {
-      const models = require('../models');
-      const Transcript = models.Transcript;
-      if (Transcript) {
-        // Look up transcript by shortId in searchdb
-        const transcriptCount = await Transcript.countDocuments({ shortId: lecture.shortId });
-        hasTranscript = transcriptCount > 0;
+    // PERFORMANCE: Execute related lectures and transcript queries in parallel
+    const models = require('../models');
+    const Transcript = models.Transcript;
 
-        // Debug: Log transcript lookup
-        console.log(`📝 Transcript lookup for lecture shortId ${lecture.shortId}: ${transcriptCount} segments found`);
+    // Build parallel query promises
+    const relatedLecturesPromise = lecture.seriesId
+      ? Lecture.find({
+          _id: { $ne: lecture._id },
+          seriesId: lecture.seriesId._id,
+          published: true
+        })
+          .sort({ lectureNumber: 1, dateRecorded: 1, createdAt: 1 })
+          .populate('sheikhId', 'nameArabic nameEnglish honorific shortId slug_en slug_ar')
+          .populate('seriesId', 'titleArabic titleEnglish shortId slug_en slug_ar')
+          .lean()
+      : Promise.resolve([]);
 
-        if (hasTranscript) {
-          // Get first few segments for SEO excerpt
-          const excerptSegments = await Transcript.find({ shortId: lecture.shortId })
-            .sort({ startTimeSec: 1 })
-            .limit(10)
-            .select('text')
-            .lean();
+    // Fetch transcript excerpt directly (eliminates separate countDocuments query)
+    const transcriptPromise = Transcript
+      ? Transcript.find({ shortId: lecture.shortId })
+          .sort({ startTimeSec: 1 })
+          .limit(10)
+          .select('text')
+          .lean()
+          .catch(err => {
+            console.warn('Failed to fetch transcript excerpt:', err.message);
+            return [];
+          })
+      : Promise.resolve([]);
 
-          if (excerptSegments.length > 0) {
-            transcriptExcerpt = excerptSegments.map(s => s.text).join(' ').substring(0, 1000);
-          }
-        }
-      } else {
-        console.warn('⚠️ Transcript model not available');
-      }
-    } catch (err) {
-      console.warn('❌ Failed to fetch transcript excerpt:', err.message);
-    }
+    const [relatedLectures, excerptSegments] = await Promise.all([
+      relatedLecturesPromise,
+      transcriptPromise
+    ]);
+
+    // Derive hasTranscript from result (no separate count query needed)
+    const hasTranscript = excerptSegments.length > 0;
+    const transcriptExcerpt = hasTranscript
+      ? excerptSegments.map(s => s.text).join(' ').substring(0, 1000)
+      : '';
 
     // Build meta description including transcript excerpt for SEO
     const locale = res.locals.locale || 'ar';
@@ -619,15 +598,20 @@ router.get('/sheikhs/:shortId(\\d+)/:slug_en?/:slug_ar?', async (req, res) => {
       }
     }
 
-    // Get all lectures by this sheikh
-    const lectures = await Lecture.find({
-      sheikhId: sheikh._id,
-      published: true
-    })
-      .sort({ createdAt: -1 })
-      .populate('sheikhId', 'nameArabic nameEnglish honorific shortId slug_en slug_ar')
-      .populate('seriesId', 'titleArabic titleEnglish shortId slug_en slug_ar')
-      .lean();
+    // PERFORMANCE: Execute lectures and series queries in parallel
+    const [lectures, series] = await Promise.all([
+      Lecture.find({
+        sheikhId: sheikh._id,
+        published: true
+      })
+        .sort({ createdAt: -1 })
+        .populate('sheikhId', 'nameArabic nameEnglish honorific shortId slug_en slug_ar')
+        .populate('seriesId', 'titleArabic titleEnglish shortId slug_en slug_ar')
+        .lean(),
+      Series.find({ sheikhId: sheikh._id, isVisible: { $ne: false } })
+        .sort({ titleArabic: 1 })
+        .lean()
+    ]);
 
     // Calculate statistics
     const stats = {
@@ -635,11 +619,6 @@ router.get('/sheikhs/:shortId(\\d+)/:slug_en?/:slug_ar?', async (req, res) => {
       totalPlays: lectures.reduce((sum, lecture) => sum + (lecture.playCount || 0), 0),
       totalDuration: lectures.reduce((sum, lecture) => sum + (lecture.duration || 0), 0)
     };
-
-    // Get visible series by this sheikh
-    const series = await Series.find({ sheikhId: sheikh._id, isVisible: { $ne: false } })
-      .sort({ titleArabic: 1 })
-      .lean();
 
     const canonicalPath = buildCanonicalUrl('sheikhs', sheikh);
 
@@ -769,39 +748,44 @@ router.get('/series/:shortId(\\d+)/:slug_en?/:slug_ar?', async (req, res) => {
       }
     }
 
-    // Get all lectures in this series (ordered by sortOrder, then lecture number)
+    // PERFORMANCE: Execute lectures aggregation and site settings in parallel
     const mongoose = require('mongoose');
-    const lectures = await Lecture.aggregate([
-      {
-        $match: {
-          seriesId: series._id,
-          published: true
+    const [lectures, siteSettings] = await Promise.all([
+      Lecture.aggregate([
+        {
+          $match: {
+            seriesId: series._id,
+            published: true
+          }
+        },
+        {
+          $sort: {
+            sortOrder: 1,
+            lectureNumber: 1,
+            createdAt: 1
+          }
+        },
+        {
+          $lookup: {
+            from: 'sheikhs',
+            localField: 'sheikhId',
+            foreignField: '_id',
+            as: 'sheikhData'
+          }
+        },
+        {
+          $addFields: {
+            sheikhId: { $arrayElemAt: ['$sheikhData', 0] }
+          }
+        },
+        {
+          $unset: ['sheikhData']
         }
-      },
-      {
-        $sort: {
-          sortOrder: 1,
-          lectureNumber: 1,
-          createdAt: 1
-        }
-      },
-      {
-        $lookup: {
-          from: 'sheikhs',
-          localField: 'sheikhId',
-          foreignField: '_id',
-          as: 'sheikhData'
-        }
-      },
-      {
-        $addFields: {
-          sheikhId: { $arrayElemAt: ['$sheikhData', 0] }
-        }
-      },
-      {
-        $unset: ['sheikhData']
-      }
+      ]),
+      SiteSettings.getSettings()
     ]);
+
+    const seriesStatsSettings = siteSettings.seriesStats || { minPlaysToShow: 100, showDuration: false };
 
     // Calculate statistics
     const stats = {
@@ -838,10 +822,6 @@ router.get('/series/:shortId(\\d+)/:slug_en?/:slug_ar?', async (req, res) => {
     }
 
     const canonicalPath = buildCanonicalUrl('series', series);
-
-    // Get site settings for series stats display
-    const siteSettings = await SiteSettings.getSettings();
-    const seriesStatsSettings = siteSettings.seriesStats || { minPlaysToShow: 100, showDuration: false };
 
     res.render('public/series-detail', {
       title: series.titleArabic,

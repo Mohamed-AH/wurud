@@ -14,7 +14,7 @@ A web platform for hosting and streaming ~160 Arabic Islamic lecture audio files
 
 **Live URL**: https://rasmihassan.com
 **Branch**: `claude/fix-homepage-tests-ovChk`
-**Last Updated**: 2026-04-06
+**Last Updated**: 2026-04-13
 
 The platform is live with all core features operational:
 - All lectures streaming from Oracle Cloud Object Storage
@@ -41,7 +41,7 @@ The platform is live with all core features operational:
 | 1.3 | Initial Instance Setup | PENDING | Docker installation on Ubuntu |
 | 1.4 | Firewall Configuration | PENDING | ufw setup for ports 22, 80, 443, 3000 |
 | 2 | Application Deployment | PENDING | docker-compose.prod.yml + Caddy |
-| 3 | Monitoring Setup | COMPLETE | Grafana Cloud push-based metrics |
+| 3 | Monitoring Setup | COMPLETE | Grafana Cloud + Sentry APM |
 | 4 | DNS & SSL | PENDING | Point domain, update Google OAuth |
 | 5 | Go Live & Cleanup | PENDING | Monitor, then remove Render |
 
@@ -70,6 +70,71 @@ Grafana Cloud push-based Prometheus monitoring implemented.
 ---
 
 ## Recent Completions
+
+### Route Latency Optimization (2026-04-13)
+
+Parallelized database queries across public routes for significant performance improvements.
+
+**Results:**
+| Route | Before | After | Improvement |
+|-------|--------|-------|-------------|
+| Homepage (`/`) | 4.89s | ~1.83s | 63% faster |
+| Lecture page | 1.4s | ~650ms | 54% faster |
+| Sheikh page | Sequential | Parallel | Faster |
+| Series page | Sequential | Parallel | Faster |
+
+**Commits:**
+- `0296ce2` Optimize route latency by parallelizing database queries
+
+### Sentry Integration (2026-04-07)
+
+Full Sentry error tracking, performance monitoring, and business metrics.
+
+**Features:**
+- Error tracking with stack traces
+- Performance monitoring with transaction spans
+- Business metrics (plays, downloads, searches)
+- Console logging integration
+
+**Commits:**
+- `cb96b94` Add Sentry error tracking and performance monitoring
+- `3106742` Refactor Sentry setup to use instrument.js pattern
+- `4038d76` Implement Sentry metrics for business observability
+- `a8e156f` Add consoleLoggingIntegration to enable Sentry logs
+
+### Search & Query Optimization (2026-04-08 - 2026-04-12)
+
+**Performance fixes:**
+- Search caching with async logging
+- Eliminated in-memory blocking sorts on lecture queries
+- Reduced search context fetch window (90s → 45s)
+- Fixed audio playback by adding audioFileName to aggregation stages
+
+**Commits:**
+- `2be9527` Implement search cache and async logging for improved performance
+- `f22322d` Eliminate in-memory blocking sort across all lecture queries
+- `cb3a0f6` Optimize search context fetch: reduce window from 90s to 45s
+- `a1e9f42` Fix audio playback by adding audioFileName to $project stages
+- `ccff8d8` Fix incrementPlayCount error caused by global lean middleware
+
+### Memory Optimization for 512MB Server (2026-04-07)
+
+Implemented memory optimizations for Render Free Tier (512MB RAM limit).
+
+**Commits:**
+- `77755d5` Add memory optimization plan for OOM fix on 512MB server
+- `2d47373` Implement memory optimization plan for 512MB server
+
+### Test Stability (2026-04-07 - 2026-04-08)
+
+Fixed flaky tests and MongoMemoryServer issues.
+
+**Commits:**
+- `48a4789` Fix flaky tests by sharing single MongoMemoryServer instance
+- `eb945b1` Handle MongoMemoryServer download failures gracefully
+- `91beab4` Fix search API test mock data missing required fields
+
+---
 
 ### MongoDB Resilience & Notification System (2026-04-02)
 
