@@ -214,6 +214,7 @@ router.get('/series', async (req, res) => {
           durationSeconds: 1,
           duration: 1,
           audioUrl: 1,
+          audioFileName: 1,
           slug: 1,
           shortId: 1
         }
@@ -503,6 +504,7 @@ router.get('/khutbas', async (req, res) => {
           durationSeconds: 1,
           duration: 1,
           audioUrl: 1,
+          audioFileName: 1,
           slug: 1,
           shortId: 1
         }

@@ -51,6 +51,7 @@ async function fetchHomepageData() {
             durationSeconds: 1,
             duration: 1,
             audioUrl: 1,
+            audioFileName: 1,
             slug: 1,
             shortId: 1
           }
