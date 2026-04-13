@@ -25,5 +25,10 @@ process.env.MONGOMS_VERSION = process.env.MONGOMS_VERSION || '7.0.11';
 const CONFIG_PATH = path.join(__dirname, '.mongo-config.json');
 if (fs.existsSync(CONFIG_PATH)) {
   const config = JSON.parse(fs.readFileSync(CONFIG_PATH, 'utf-8'));
-  process.env.MONGODB_URI = config.uri;
+  if (config.available && config.uri) {
+    process.env.MONGODB_URI = config.uri;
+  } else {
+    // MongoDB is not available - tests requiring it will be skipped
+    process.env.MONGODB_UNAVAILABLE = 'true';
+  }
 }

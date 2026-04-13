@@ -8,6 +8,13 @@
 // Increase timeout for MongoDB operations
 jest.setTimeout(30000);
 
+// Check if MongoDB is available
+global.mongoDbAvailable = process.env.MONGODB_UNAVAILABLE !== 'true';
+
+// Helper to skip tests that require MongoDB when it's not available
+global.describeWithMongo = global.mongoDbAvailable ? describe : describe.skip;
+global.itWithMongo = global.mongoDbAvailable ? it : it.skip;
+
 // Global test utilities
 global.testUtils = {
   // Helper to create mock request

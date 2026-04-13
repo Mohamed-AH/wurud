@@ -19,10 +19,25 @@ const mongoose = require('mongoose');
 let connectionPromise = null;
 
 /**
+ * Check if MongoDB is available
+ */
+function isAvailable() {
+  return process.env.MONGODB_UNAVAILABLE !== 'true' && !!process.env.MONGODB_URI;
+}
+
+/**
  * Connect to test database
  * Uses MONGODB_URI env var set by globalSetup.js or CI environment
  */
 async function connect() {
+  // Check if MongoDB is available
+  if (!isAvailable()) {
+    throw new Error(
+      'MongoDB is not available. MongoMemoryServer failed to start (binary download may be blocked). ' +
+      'Tests requiring MongoDB will be skipped.'
+    );
+  }
+
   // Reuse existing connection if available
   if (mongoose.connection.readyState === 1) {
     return mongoose.connection;
@@ -89,6 +104,7 @@ async function dropDatabase() {
 }
 
 module.exports = {
+  isAvailable,
   connect,
   disconnect,
   clearDatabase,
