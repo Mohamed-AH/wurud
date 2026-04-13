@@ -1,13 +1,12 @@
 /**
  * Test Database Helper
  *
- * Provides MongoDB connection for tests that works in both:
- * - Local development (uses mongodb-memory-server)
- * - CI environment (uses external MongoDB from MONGODB_URI)
+ * Provides MongoDB connection for tests.
+ * The MongoMemoryServer is started once in globalSetup.js and shared across all tests.
+ * MONGODB_URI environment variable is set by globalSetup.js (local) or CI environment.
  */
 
-// Production guard: prevent mongodb-memory-server from being loaded in production
-// This saves ~100MB RAM that would be consumed by the binary download
+// Production guard: prevent this module from being loaded in production
 if (process.env.NODE_ENV === 'production') {
   throw new Error(
     'Test database helper should never be loaded in production. ' +
@@ -17,12 +16,11 @@ if (process.env.NODE_ENV === 'production') {
 
 const mongoose = require('mongoose');
 
-let mongoServer = null;
 let connectionPromise = null;
 
 /**
  * Connect to test database
- * Uses MONGODB_URI env var if available (CI), otherwise starts mongodb-memory-server (local)
+ * Uses MONGODB_URI env var set by globalSetup.js or CI environment
  */
 async function connect() {
   // Reuse existing connection if available
@@ -38,17 +36,13 @@ async function connect() {
   connectionPromise = (async () => {
     const mongoUri = process.env.MONGODB_URI;
 
-    if (mongoUri) {
-      // CI environment - use external MongoDB
-      await mongoose.connect(mongoUri);
-    } else {
-      // Local development - use mongodb-memory-server
-      const { MongoMemoryServer } = require('mongodb-memory-server');
-      mongoServer = await MongoMemoryServer.create();
-      const uri = mongoServer.getUri();
-      await mongoose.connect(uri);
+    if (!mongoUri) {
+      throw new Error(
+        'MONGODB_URI not set. Ensure Jest globalSetup is configured correctly.'
+      );
     }
 
+    await mongoose.connect(mongoUri);
     return mongoose.connection;
   })();
 
@@ -56,18 +50,14 @@ async function connect() {
 }
 
 /**
- * Disconnect and cleanup
+ * Disconnect from database
+ * Note: MongoMemoryServer cleanup is handled by globalTeardown.js
  */
 async function disconnect() {
   connectionPromise = null;
 
   if (mongoose.connection.readyState !== 0) {
     await mongoose.disconnect();
-  }
-
-  if (mongoServer) {
-    await mongoServer.stop();
-    mongoServer = null;
   }
 }
 
