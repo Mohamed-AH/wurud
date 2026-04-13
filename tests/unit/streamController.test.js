@@ -9,7 +9,8 @@ const { EventEmitter } = require('events');
 // Mock dependencies before requiring the module
 jest.mock('../../models', () => ({
   Lecture: {
-    findById: jest.fn()
+    findById: jest.fn(),
+    updateOne: jest.fn().mockResolvedValue({ modifiedCount: 1 })
   }
 }));
 
@@ -30,6 +31,15 @@ jest.mock('../../utils/ociStorage', () => ({
 
 jest.mock('../../utils/validators', () => ({
   isValidObjectId: jest.fn()
+}));
+
+jest.mock('../../utils/metrics', () => ({
+  recordAudioPlay: jest.fn()
+}));
+
+jest.mock('../../utils/sentryMetrics', () => ({
+  audioPlay: jest.fn(),
+  audioDownload: jest.fn()
 }));
 
 const { Lecture } = require('../../models');
@@ -66,6 +76,7 @@ describe('Stream Controller', () => {
 
     isValidObjectId.mockReturnValue(true);
     isConfigured.mockReturnValue(false);
+    Lecture.updateOne.mockResolvedValue({ modifiedCount: 1 });
   });
 
   afterEach(() => {
@@ -99,21 +110,24 @@ describe('Stream Controller', () => {
 
     it('should redirect to OCI URL if audioUrl contains objectstorage', async () => {
       const mockLecture = {
-        audioUrl: 'https://objectstorage.example.com/audio.m4a',
-        incrementPlayCount: jest.fn().mockResolvedValue()
+        _id: '507f1f77bcf86cd799439011',
+        audioUrl: 'https://objectstorage.example.com/audio.m4a'
       };
       Lecture.findById.mockResolvedValue(mockLecture);
 
       await streamAudio(mockReq, mockRes);
 
       expect(mockRes.redirect).toHaveBeenCalledWith(mockLecture.audioUrl);
-      expect(mockLecture.incrementPlayCount).toHaveBeenCalled();
+      expect(Lecture.updateOne).toHaveBeenCalledWith(
+        { _id: mockLecture._id },
+        { $inc: { playCount: 1 } }
+      );
     });
 
     it('should redirect to OCI if configured and audioFileName exists', async () => {
       const mockLecture = {
-        audioFileName: 'test.m4a',
-        incrementPlayCount: jest.fn().mockResolvedValue()
+        _id: '507f1f77bcf86cd799439011',
+        audioFileName: 'test.m4a'
       };
       Lecture.findById.mockResolvedValue(mockLecture);
       isConfigured.mockReturnValue(true);
@@ -126,8 +140,8 @@ describe('Stream Controller', () => {
 
     it('should return 404 if local file not found', async () => {
       const mockLecture = {
-        audioFileName: 'test.mp3',
-        incrementPlayCount: jest.fn().mockResolvedValue()
+        _id: '507f1f77bcf86cd799439011',
+        audioFileName: 'test.mp3'
       };
       Lecture.findById.mockResolvedValue(mockLecture);
       fileExists.mockReturnValue(false);
@@ -143,10 +157,10 @@ describe('Stream Controller', () => {
 
     it('should stream local file with range request support', async () => {
       const mockLecture = {
+        _id: '507f1f77bcf86cd799439011',
         audioFileName: 'test.mp3',
         titleEnglish: 'Test Lecture',
-        titleArabic: 'محاضرة تجريبية',
-        incrementPlayCount: jest.fn().mockResolvedValue()
+        titleArabic: 'محاضرة تجريبية'
       };
       Lecture.findById.mockResolvedValue(mockLecture);
       fileExists.mockReturnValue(true);
@@ -176,10 +190,11 @@ describe('Stream Controller', () => {
 
     it('should handle play count increment errors silently', async () => {
       const mockLecture = {
-        audioUrl: 'https://objectstorage.example.com/audio.m4a',
-        incrementPlayCount: jest.fn().mockRejectedValue(new Error('Count error'))
+        _id: '507f1f77bcf86cd799439011',
+        audioUrl: 'https://objectstorage.example.com/audio.m4a'
       };
       Lecture.findById.mockResolvedValue(mockLecture);
+      Lecture.updateOne.mockRejectedValueOnce(new Error('Count error'));
 
       await streamAudio(mockReq, mockRes);
 
@@ -220,9 +235,9 @@ describe('Stream Controller', () => {
 
     it('should return 404 if local file not found', async () => {
       const mockLecture = {
+        _id: '507f1f77bcf86cd799439011',
         audioFileName: 'test.mp3',
-        titleArabic: 'محاضرة',
-        incrementDownloadCount: jest.fn().mockResolvedValue()
+        titleArabic: 'محاضرة'
       };
       Lecture.findById.mockReturnValue({
         populate: jest.fn().mockReturnValue({
@@ -245,10 +260,10 @@ describe('Stream Controller', () => {
       mockStream.pipe = jest.fn().mockReturnValue(mockStream);
 
       const mockLecture = {
+        _id: '507f1f77bcf86cd799439011',
         audioFileName: 'test.mp3',
         titleArabic: 'محاضرة',
-        fileSize: 1000000,
-        incrementDownloadCount: jest.fn().mockResolvedValue()
+        fileSize: 1000000
       };
       Lecture.findById.mockReturnValue({
         populate: jest.fn().mockReturnValue({

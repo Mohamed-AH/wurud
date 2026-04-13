@@ -107,7 +107,7 @@ const streamAudio = async (req, res) => {
     // Check if lecture has an OCI URL (stored in audioUrl field)
     if (lecture.audioUrl && lecture.audioUrl.includes('objectstorage')) {
       // Increment play count (async, don't wait)
-      lecture.incrementPlayCount().catch(err => {
+      Lecture.updateOne({ _id: lecture._id }, { $inc: { playCount: 1 } }).catch(err => {
         console.error('Error incrementing play count:', err);
       });
 
@@ -124,7 +124,7 @@ const streamAudio = async (req, res) => {
       const ociUrl = getPublicUrl(lecture.audioFileName);
 
       // Increment play count (async, don't wait)
-      lecture.incrementPlayCount().catch(err => {
+      Lecture.updateOne({ _id: lecture._id }, { $inc: { playCount: 1 } }).catch(err => {
         console.error('Error incrementing play count:', err);
       });
 
@@ -151,7 +151,7 @@ const streamAudio = async (req, res) => {
     const stat = fs.statSync(filePath);
 
     // Increment play count (async, don't wait)
-    lecture.incrementPlayCount().catch(err => {
+    Lecture.updateOne({ _id: lecture._id }, { $inc: { playCount: 1 } }).catch(err => {
       console.error('Error incrementing play count:', err);
     });
 
@@ -216,7 +216,7 @@ const downloadAudio = async (req, res) => {
     }
 
     // Increment download count (async, don't wait)
-    lecture.incrementDownloadCount().catch(err => {
+    Lecture.updateOne({ _id: lecture._id }, { $inc: { downloadCount: 1 } }).catch(err => {
       console.error('Error incrementing download count:', err);
     });
 
