@@ -10,12 +10,14 @@ const {
 const { sanitizeSearchInput, sanitizeComment } = require('../utils/validators');
 const { recordSearch } = require('../utils/metrics');
 const sentryMetrics = require('../utils/sentryMetrics');
+const cache = require('../utils/cache');
 
 // Config from environment
 const SEARCH_MODE = process.env.SEARCH_MODE || 'atlas';
-const CONTEXT_WINDOW_SEC = parseInt(process.env.CONTEXT_WINDOW_SEC, 10) || 90;
+const CONTEXT_WINDOW_SEC = parseInt(process.env.CONTEXT_WINDOW_SEC, 10) || 45;
 const CONTEXT_ITEMS = parseInt(process.env.CONTEXT_ITEMS, 10) || 2;
 const LOG_SEARCHES = process.env.LOG_SEARCHES !== 'false';
+const SEARCH_CACHE_TTL = parseInt(process.env.SEARCH_CACHE_TTL, 10) || 300; // 5 minutes
 const isProduction = process.env.NODE_ENV === 'production';
 
 // Helper to get search models (lazy access since they're initialized async)
@@ -78,7 +80,37 @@ router.get('/api', async (req, res) => {
   try {
     // Strip sheikh prefix for cleaner matching
     const searchQuery = stripSheikhPrefix(query);
+    const cacheKey = `search:${searchQuery.toLowerCase().trim()}`;
 
+    // Check cache first
+    const cachedResults = cache.get(cacheKey);
+    if (cachedResults) {
+      // Cache hit - return cached results with new log ID
+      const searchLogId = LOG_SEARCHES ? new mongoose.Types.ObjectId() : null;
+
+      // Send response immediately
+      res.json({
+        success: true,
+        query,
+        results: cachedResults,
+        resultCount: cachedResults.length,
+        searchLogId: searchLogId?.toString() || null
+      });
+
+      // Log asynchronously (don't block response)
+      if (LOG_SEARCHES && searchLogId) {
+        setImmediate(async () => {
+          try {
+            await logSearchAsync(searchLogId, query, searchQuery, cachedResults);
+          } catch (err) {
+            console.error('Async search logging failed:', err);
+          }
+        });
+      }
+      return;
+    }
+
+    // Cache miss - perform search
     let results = [];
 
     // Track search latency
@@ -95,11 +127,11 @@ router.get('/api', async (req, res) => {
     // Enrich results with context
     results = await enrichWithContext(results);
 
-    // Log search (best-effort)
-    let searchLogId = null;
-    if (LOG_SEARCHES) {
-      searchLogId = await logSearch(query, searchQuery, results);
-    }
+    // Cache enriched results
+    cache.set(cacheKey, results, SEARCH_CACHE_TTL);
+
+    // Pre-generate ObjectId for async logging
+    const searchLogId = LOG_SEARCHES ? new mongoose.Types.ObjectId() : null;
 
     // Record search metrics (term, result count, latency)
     recordSearch(query, results.length, searchLatency);
@@ -110,13 +142,25 @@ router.get('/api', async (req, res) => {
       sentryMetrics.searchEmpty(SEARCH_MODE);
     }
 
+    // Send response immediately
     res.json({
       success: true,
       query,
       results,
       resultCount: results.length,
-      searchLogId
+      searchLogId: searchLogId?.toString() || null
     });
+
+    // Log asynchronously (don't block response)
+    if (LOG_SEARCHES && searchLogId) {
+      setImmediate(async () => {
+        try {
+          await logSearchAsync(searchLogId, query, searchQuery, results);
+        } catch (err) {
+          console.error('Async search logging failed:', err);
+        }
+      });
+    }
   } catch (error) {
     console.error('Search API error:', error);
     res.status(500).json({
@@ -365,43 +409,52 @@ async function performLocalSearch(query) {
 
 /**
  * Enrich results with context (surrounding transcript lines)
+ * Optimized: Batch fetch all context in a single aggregation (40 -> 1 query for 20 results)
  */
 async function enrichWithContext(results) {
   const Transcript = getTranscript();
-  const enriched = [];
+  if (!results.length) return [];
 
-  for (const result of results) {
-    const contextBefore = await Transcript.find({
-      lectureId: result.lectureId,
-      startTimeSec: {
-        $gte: result.startTimeSec - CONTEXT_WINDOW_SEC,
-        $lt: result.startTimeSec
-      },
-      _id: { $ne: result._id }
-    })
-      .sort({ startTimeSec: -1 })
-      .limit(CONTEXT_ITEMS)
-      .lean();
+  // Build $or conditions for all results' context windows
+  const orConditions = results.map(r => ({
+    lectureId: r.lectureId,
+    startTimeSec: {
+      $gte: r.startTimeSec - CONTEXT_WINDOW_SEC,
+      $lte: r.startTimeSec + CONTEXT_WINDOW_SEC
+    },
+    _id: { $ne: r._id }
+  }));
 
-    const contextAfter = await Transcript.find({
-      lectureId: result.lectureId,
-      startTimeSec: {
-        $gt: result.startTimeSec,
-        $lte: result.startTimeSec + CONTEXT_WINDOW_SEC
-      },
-      _id: { $ne: result._id }
-    })
-      .sort({ startTimeSec: 1 })
-      .limit(CONTEXT_ITEMS)
-      .lean();
+  // Single aggregation to fetch all context segments
+  const allContext = await Transcript.aggregate([
+    { $match: { $or: orConditions } },
+    { $project: { _id: 0, text: 1, lectureId: 1, startTimeSec: 1 } },
+    { $sort: { lectureId: 1, startTimeSec: 1 } }
+  ]);
 
-    // Reverse contextBefore to get chronological order
-    const beforeText = contextBefore
-      .reverse()
+  // Group context by lectureId for efficient lookup
+  const contextMap = new Map();
+  for (const ctx of allContext) {
+    const key = ctx.lectureId.toString();
+    if (!contextMap.has(key)) contextMap.set(key, []);
+    contextMap.get(key).push(ctx);
+  }
+
+  // Enrich results using the pre-fetched context
+  return results.map(result => {
+    const lectureContext = contextMap.get(result.lectureId.toString()) || [];
+
+    // Filter and limit context before (items with smaller timestamps)
+    const contextBefore = lectureContext
+      .filter(c => c.startTimeSec < result.startTimeSec && c.startTimeSec >= result.startTimeSec - CONTEXT_WINDOW_SEC)
+      .slice(-CONTEXT_ITEMS)
       .map(c => stripTimestamps(c.text))
       .join(' ');
 
-    const afterText = contextAfter
+    // Filter and limit context after (items with larger timestamps)
+    const contextAfter = lectureContext
+      .filter(c => c.startTimeSec > result.startTimeSec && c.startTimeSec <= result.startTimeSec + CONTEXT_WINDOW_SEC)
+      .slice(0, CONTEXT_ITEMS)
       .map(c => stripTimestamps(c.text))
       .join(' ');
 
@@ -411,44 +464,41 @@ async function enrichWithContext(results) {
       formattedTime: formatTime(hit.startTimeSec)
     }));
 
-    enriched.push({
+    return {
       ...result,
-      contextBefore: beforeText,
-      contextAfter: afterText,
+      contextBefore,
+      contextAfter,
       formattedTime: formatTime(result.startTimeSec),
       additionalHits: enrichedAdditionalHits
-    });
-  }
-
-  return enriched;
+    };
+  });
 }
 
 /**
- * Log search query (best-effort, no failure)
+ * Log search query asynchronously (best-effort, no failure)
+ * @param {mongoose.Types.ObjectId} id - Pre-generated ObjectId
+ * @param {string} query - Original query
+ * @param {string} searchQuery - Normalized query
+ * @param {Array} results - Search results
  */
-async function logSearch(query, searchQuery, results) {
-  try {
-    const SearchLog = getSearchLog();
-    if (!SearchLog) {
-      console.warn('[SearchLog] Model not initialized - search not logged');
-      return null;
-    }
-
-    console.log('[SearchLog] Creating log for query:', query);
-    const log = await SearchLog.create({
-      query,
-      normalizedQuery: searchQuery,
-      resultCount: results.length,
-      topLectureIds: results.slice(0, 5).map(r => r.lectureId?.toString()).filter(Boolean),
-      searchMode: SEARCH_MODE,
-      relevant: null
-    });
-    console.log('[SearchLog] Saved successfully - ID:', log._id.toString(), 'Results:', results.length);
-    return log._id.toString();
-  } catch (error) {
-    console.error('[SearchLog] Error saving:', error.message);
-    return null;
+async function logSearchAsync(id, query, searchQuery, results) {
+  const SearchLog = getSearchLog();
+  if (!SearchLog) {
+    console.warn('[SearchLog] Model not initialized - search not logged');
+    return;
   }
+
+  console.log('[SearchLog] Creating log for query:', query);
+  await SearchLog.create({
+    _id: id,
+    query,
+    normalizedQuery: searchQuery,
+    resultCount: results.length,
+    topLectureIds: results.slice(0, 5).map(r => r.lectureId?.toString()).filter(Boolean),
+    searchMode: SEARCH_MODE,
+    relevant: null
+  });
+  console.log('[SearchLog] Saved successfully - ID:', id.toString(), 'Results:', results.length);
 }
 
 module.exports = router;

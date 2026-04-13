@@ -20,6 +20,7 @@ async function fetchHomepageData() {
     .lean();
 
   // For each series, fetch its lectures (sorted by sortOrder for correct display order)
+  // Optimized: Uses $project to limit memory usage
   const seriesList = await Promise.all(
     series.map(async (s) => {
       const lectures = await Lecture.aggregate([
@@ -30,19 +31,30 @@ async function fetchHomepageData() {
           }
         },
         {
-          $addFields: {
-            effectiveSortOrder: { $ifNull: ['$sortOrder', 999999] }
-          }
-        },
-        {
           $sort: {
-            effectiveSortOrder: 1,
+            sortOrder: 1,
             lectureNumber: 1,
             createdAt: 1
           }
         },
         {
-          $unset: ['effectiveSortOrder']
+          $project: {
+            _id: 1,
+            seriesId: 1,
+            titleArabic: 1,
+            titleEnglish: 1,
+            descriptionArabic: 1,
+            lectureNumber: 1,
+            sortOrder: 1,
+            dateRecorded: 1,
+            createdAt: 1,
+            durationSeconds: 1,
+            duration: 1,
+            audioUrl: 1,
+            audioFileName: 1,
+            slug: 1,
+            shortId: 1
+          }
         }
       ]);
 
@@ -117,92 +129,124 @@ async function fetchHomepageData() {
 }
 
 // Helper function to fetch schedule data (for caching)
+// Optimized: Uses aggregation to batch lecture counts + latest lectures (14 -> 2 queries)
 async function fetchScheduleData() {
   const scheduleItems = await Schedule.find({ isActive: true })
     .populate('seriesId', 'titleArabic titleEnglish slug')
     .sort({ sortOrder: 1 })
     .lean();
 
-  const weeklySchedule = await Promise.all(
-    scheduleItems.map(async (item) => {
-      if (!item.seriesId) return null;
+  if (!scheduleItems.length) return [];
 
-      const lectureCount = await Lecture.countDocuments({
-        seriesId: item.seriesId._id,
-        published: true
-      });
+  // Filter items with valid seriesId and get their IDs
+  const validItems = scheduleItems.filter(item => item.seriesId);
+  const seriesIds = validItems.map(item => item.seriesId._id);
 
-      const latestLecture = await Lecture.findOne({
-        seriesId: item.seriesId._id,
-        published: true
-      })
-        .sort({ dateRecorded: -1, createdAt: -1 })
-        .select('titleArabic titleEnglish slug dateRecorded createdAt lectureNumber')
-        .lean();
+  // Batch query: Get counts and latest lectures in ONE aggregation
+  const seriesStats = await Lecture.aggregate([
+    { $match: { seriesId: { $in: seriesIds }, published: true } },
+    { $sort: { seriesId: 1, dateRecorded: -1, createdAt: -1 } },
+    {
+      $group: {
+        _id: '$seriesId',
+        lectureCount: { $sum: 1 },
+        latestLecture: { $first: '$$ROOT' }
+      }
+    },
+    {
+      $project: {
+        lectureCount: 1,
+        'latestLecture.titleArabic': 1,
+        'latestLecture.titleEnglish': 1,
+        'latestLecture.slug': 1,
+        'latestLecture.dateRecorded': 1,
+        'latestLecture.createdAt': 1,
+        'latestLecture.lectureNumber': 1
+      }
+    }
+  ]);
 
-      const isNew = latestLecture && (
-        new Date() - new Date(latestLecture.dateRecorded || latestLecture.createdAt) < 7 * 24 * 60 * 60 * 1000
-      );
+  const statsMap = new Map(seriesStats.map(s => [s._id.toString(), s]));
 
-      return {
-        ...item,
-        latestLecture,
-        lectureCount,
-        isNew
-      };
-    })
-  );
+  const weeklySchedule = validItems.map(item => {
+    const stats = statsMap.get(item.seriesId._id.toString()) || {};
+    const latestLecture = stats.latestLecture || null;
+    const isNew = latestLecture && (
+      Date.now() - new Date(latestLecture.dateRecorded || latestLecture.createdAt) < 7 * 24 * 60 * 60 * 1000
+    );
+    return {
+      ...item,
+      latestLecture,
+      lectureCount: stats.lectureCount || 0,
+      isNew
+    };
+  });
 
   const dayOrder = ['السبت', 'الأحد', 'الاثنين', 'الثلاثاء', 'الأربعاء', 'الخميس', 'الجمعة'];
-  return weeklySchedule
-    .filter(item => item !== null)
-    .sort((a, b) => dayOrder.indexOf(a.dayOfWeek) - dayOrder.indexOf(b.dayOfWeek));
+  return weeklySchedule.sort((a, b) => dayOrder.indexOf(a.dayOfWeek) - dayOrder.indexOf(b.dayOfWeek));
 }
 
 // Helper function to fetch homepage sections with their series
+// Optimized: Uses aggregation pipeline instead of N+1 queries (55+ -> 1 query)
 async function fetchSectionsData() {
-  const sections = await Section.find({ isVisible: true })
-    .sort({ displayOrder: 1 })
-    .lean();
+  const sections = await Section.aggregate([
+    { $match: { isVisible: true } },
+    { $sort: { displayOrder: 1 } },
+    // Lookup series for each section
+    {
+      $lookup: {
+        from: 'series',
+        let: { sectionId: '$_id' },
+        pipeline: [
+          {
+            $match: {
+              $expr: { $eq: ['$sectionId', '$$sectionId'] },
+              isVisible: { $ne: false }
+            }
+          },
+          { $sort: { sectionOrder: 1 } },
+          // Lookup sheikh for each series
+          {
+            $lookup: {
+              from: 'sheikhs',
+              localField: 'sheikhId',
+              foreignField: '_id',
+              as: 'sheikhData',
+              pipeline: [{ $project: { nameArabic: 1, nameEnglish: 1, honorific: 1 } }]
+            }
+          },
+          { $addFields: { sheikh: { $arrayElemAt: ['$sheikhData', 0] } } },
+          // Lookup lecture count for each series
+          {
+            $lookup: {
+              from: 'lectures',
+              let: { seriesId: '$_id' },
+              pipeline: [
+                { $match: { $expr: { $eq: ['$seriesId', '$$seriesId'] }, published: true } },
+                { $count: 'count' }
+              ],
+              as: 'lectureCountArr'
+            }
+          },
+          {
+            $addFields: {
+              lectureCount: { $ifNull: [{ $arrayElemAt: ['$lectureCountArr.count', 0] }, 0] }
+            }
+          },
+          // Filter out series with no published lectures
+          { $match: { lectureCount: { $gt: 0 } } },
+          // Clean up temporary fields
+          { $project: { lectureCountArr: 0, sheikhData: 0, sheikhId: 0 } }
+        ],
+        as: 'series'
+      }
+    },
+    // Only keep sections with at least one series
+    { $match: { 'series.0': { $exists: true } } },
+    { $addFields: { totalSeriesCount: { $size: '$series' } } }
+  ]);
 
-  const sectionsWithSeries = await Promise.all(
-    sections.map(async (section) => {
-      const seriesInSection = await Series.find({
-        sectionId: section._id,
-        isVisible: { $ne: false }
-      })
-        .populate('sheikhId', 'nameArabic nameEnglish honorific')
-        .sort({ sectionOrder: 1 })
-        .lean();
-
-      // Get lecture counts for each series
-      const seriesWithCounts = await Promise.all(
-        seriesInSection.map(async (s) => {
-          const lectureCount = await Lecture.countDocuments({
-            seriesId: s._id,
-            published: true
-          });
-          return {
-            ...s,
-            sheikh: s.sheikhId,
-            lectureCount
-          };
-        })
-      );
-
-      // Filter out series with no published lectures
-      const filteredSeries = seriesWithCounts.filter(s => s.lectureCount > 0);
-
-      return {
-        ...section,
-        series: filteredSeries,
-        totalSeriesCount: filteredSeries.length
-      };
-    })
-  );
-
-  // Only return sections that have at least one series
-  return sectionsWithSeries.filter(s => s.totalSeriesCount > 0);
+  return sections;
 }
 
 // @route   GET /
@@ -735,13 +779,8 @@ router.get('/series/:shortId(\\d+)/:slug_en?/:slug_ar?', async (req, res) => {
         }
       },
       {
-        $addFields: {
-          effectiveSortOrder: { $ifNull: ['$sortOrder', 999999] }
-        }
-      },
-      {
         $sort: {
-          effectiveSortOrder: 1,
+          sortOrder: 1,
           lectureNumber: 1,
           createdAt: 1
         }
@@ -760,7 +799,7 @@ router.get('/series/:shortId(\\d+)/:slug_en?/:slug_ar?', async (req, res) => {
         }
       },
       {
-        $unset: ['sheikhData', 'effectiveSortOrder']
+        $unset: ['sheikhData']
       }
     ]);
 
@@ -773,6 +812,7 @@ router.get('/series/:shortId(\\d+)/:slug_en?/:slug_ar?', async (req, res) => {
     };
 
     // For consolidated Khutba series, also find related multi-lecture Khutba series
+    // Optimized: Bulk count with $in instead of N+1 queries
     let relatedKhutbaSeries = [];
     if (series.titleArabic === 'خطب الجمعة') {
       relatedKhutbaSeries = await Series.find({
@@ -784,12 +824,16 @@ router.get('/series/:shortId(\\d+)/:slug_en?/:slug_ar?', async (req, res) => {
         _id: { $ne: series._id }
       }).lean();
 
-      for (const relSeries of relatedKhutbaSeries) {
-        const count = await Lecture.countDocuments({
-          seriesId: relSeries._id,
-          published: true
+      if (relatedKhutbaSeries.length > 0) {
+        const relatedIds = relatedKhutbaSeries.map(s => s._id);
+        const counts = await Lecture.aggregate([
+          { $match: { seriesId: { $in: relatedIds }, published: true } },
+          { $group: { _id: '$seriesId', count: { $sum: 1 } } }
+        ]);
+        const countMap = new Map(counts.map(c => [c._id.toString(), c.count]));
+        relatedKhutbaSeries.forEach(s => {
+          s.actualLectureCount = countMap.get(s._id.toString()) || 0;
         });
-        relSeries.actualLectureCount = count;
       }
     }
 
@@ -853,13 +897,8 @@ router.get('/series/:idOrSlug', async (req, res) => {
         }
       },
       {
-        $addFields: {
-          effectiveSortOrder: { $ifNull: ['$sortOrder', 999999] }
-        }
-      },
-      {
         $sort: {
-          effectiveSortOrder: 1,
+          sortOrder: 1,
           lectureNumber: 1,
           createdAt: 1
         }
@@ -878,7 +917,7 @@ router.get('/series/:idOrSlug', async (req, res) => {
         }
       },
       {
-        $unset: ['sheikhData', 'effectiveSortOrder']
+        $unset: ['sheikhData']
       }
     ]);
 
@@ -889,6 +928,7 @@ router.get('/series/:idOrSlug', async (req, res) => {
       completeLectures: lectures.filter(l => l.lectureNumber).length
     };
 
+    // Optimized: Bulk count with $in instead of N+1 queries
     let relatedKhutbaSeries = [];
     if (series.titleArabic === 'خطب الجمعة') {
       relatedKhutbaSeries = await Series.find({
@@ -900,12 +940,16 @@ router.get('/series/:idOrSlug', async (req, res) => {
         _id: { $ne: series._id }
       }).lean();
 
-      for (const relSeries of relatedKhutbaSeries) {
-        const count = await Lecture.countDocuments({
-          seriesId: relSeries._id,
-          published: true
+      if (relatedKhutbaSeries.length > 0) {
+        const relatedIds = relatedKhutbaSeries.map(s => s._id);
+        const counts = await Lecture.aggregate([
+          { $match: { seriesId: { $in: relatedIds }, published: true } },
+          { $group: { _id: '$seriesId', count: { $sum: 1 } } }
+        ]);
+        const countMap = new Map(counts.map(c => [c._id.toString(), c.count]));
+        relatedKhutbaSeries.forEach(s => {
+          s.actualLectureCount = countMap.get(s._id.toString()) || 0;
         });
-        relSeries.actualLectureCount = count;
       }
     }
 

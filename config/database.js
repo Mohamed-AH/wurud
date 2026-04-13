@@ -1,5 +1,24 @@
 const mongoose = require('mongoose');
 
+/**
+ * Global Lean Middleware Plugin
+ * Defaults all find/findOne queries to .lean() for memory efficiency.
+ * To override in routes that need Mongoose documents, use { lean: false }
+ * or use findOneAndUpdate() which is unaffected.
+ */
+mongoose.plugin((schema) => {
+  schema.pre('find', function() {
+    if (this.options.lean === undefined) {
+      this.lean();
+    }
+  });
+  schema.pre('findOne', function() {
+    if (this.options.lean === undefined) {
+      this.lean();
+    }
+  });
+});
+
 const connectDB = async () => {
   try {
     const conn = await mongoose.connect(process.env.MONGODB_URI, {

@@ -7,9 +7,11 @@
 const mockConnect = jest.fn();
 const mockOn = jest.fn();
 const mockClose = jest.fn();
+const mockPlugin = jest.fn();
 
 jest.mock('mongoose', () => ({
   connect: mockConnect,
+  plugin: mockPlugin,
   connection: {
     host: 'localhost',
     name: 'test-db',
@@ -36,6 +38,7 @@ describe('Database Configuration', () => {
     mockConnect.mockReset();
     mockOn.mockReset();
     mockClose.mockReset();
+    mockPlugin.mockReset();
   });
 
   afterEach(() => {

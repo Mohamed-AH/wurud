@@ -74,7 +74,7 @@ module.exports = {
   // Module paths
   moduleDirectories: ['node_modules', '<rootDir>'],
 
-  // Global setup/teardown (runs in separate process - not used for env vars)
-  // globalSetup: '<rootDir>/tests/globalSetup.js',
-  // globalTeardown: '<rootDir>/tests/globalTeardown.js',
+  // Global setup/teardown - starts a single MongoMemoryServer shared across all tests
+  globalSetup: '<rootDir>/tests/globalSetup.js',
+  globalTeardown: '<rootDir>/tests/globalTeardown.js',
 };

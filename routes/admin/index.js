@@ -11,6 +11,7 @@ router.use(adminI18nMiddleware);
 // Helper function to invalidate homepage cache after admin changes
 function invalidateHomepageCache() {
   cache.invalidatePattern('homepage:*');
+  cache.invalidatePattern('search:*');
   cache.del('sitemap:xml');
 }
 
@@ -428,13 +429,8 @@ router.get('/series/:id/edit', isAdmin, async (req, res) => {
         $match: { seriesId: new mongoose.Types.ObjectId(req.params.id) }
       },
       {
-        $addFields: {
-          effectiveSortOrder: { $ifNull: ['$sortOrder', 999999] }
-        }
-      },
-      {
         $sort: {
-          effectiveSortOrder: 1,
+          sortOrder: 1,
           lectureNumber: 1,
           createdAt: 1
         }
@@ -1196,6 +1192,7 @@ router.put('/api/lectures/:id/transcript/:segmentId', isAdmin, async (req, res) 
 // @route   PUT /admin/api/lectures/:id/transcript
 // @desc    Bulk update transcript segments
 // @access  Private (Admin only)
+// Optimized: Uses bulkWrite with chunking instead of N individual updates
 router.put('/api/lectures/:id/transcript', isAdmin, async (req, res) => {
   try {
     const { Lecture, Transcript } = require('../../models');
@@ -1215,29 +1212,42 @@ router.put('/api/lectures/:id/transcript', isAdmin, async (req, res) => {
       return res.status(400).json({ success: false, error: 'Segments array is required' });
     }
 
-    // Update each segment
-    const updateResults = await Promise.all(
-      segments.map(async (seg) => {
-        if (!seg._id || !seg.text) return { success: false, id: seg._id };
-
-        try {
-          await Transcript.findByIdAndUpdate(seg._id, {
-            text: seg.text.trim(),
-            speaker: seg.speaker ? seg.speaker.trim() : undefined
-          });
-          return { success: true, id: seg._id };
-        } catch (err) {
-          return { success: false, id: seg._id, error: err.message };
+    // Build bulk operations
+    const bulkOps = segments
+      .filter(seg => seg._id && seg.text)
+      .map(seg => ({
+        updateOne: {
+          filter: { _id: seg._id },
+          update: {
+            $set: {
+              text: seg.text.trim(),
+              ...(seg.speaker ? { speaker: seg.speaker.trim() } : {})
+            }
+          }
         }
-      })
-    );
+      }));
 
-    const successCount = updateResults.filter(r => r.success).length;
+    if (bulkOps.length === 0) {
+      return res.json({
+        success: true,
+        message: 'No valid segments to update',
+        results: []
+      });
+    }
+
+    // Chunked bulkWrite to prevent memory spikes on large updates
+    const CHUNK_SIZE = 100;
+    let modifiedCount = 0;
+
+    for (let i = 0; i < bulkOps.length; i += CHUNK_SIZE) {
+      const chunk = bulkOps.slice(i, i + CHUNK_SIZE);
+      const result = await Transcript.bulkWrite(chunk);
+      modifiedCount += result.modifiedCount || 0;
+    }
 
     res.json({
       success: true,
-      message: `Updated ${successCount} of ${segments.length} segments`,
-      results: updateResults
+      message: `Updated ${modifiedCount} of ${segments.length} segments`
     });
   } catch (error) {
     console.error('Bulk update transcript error:', error);
@@ -1549,6 +1559,7 @@ router.post('/lectures/:id/assign-to-series', isAdmin, async (req, res) => {
 // @route   GET /admin/sheikhs
 // @desc    Manage sheikhs page
 // @access  Private (Admin only)
+// Optimized: Bulk count lectures per sheikh in ONE aggregation (N -> 2 queries)
 router.get('/sheikhs', isAdmin, async (req, res) => {
   try {
     const { Sheikh, Lecture } = require('../../models');
@@ -1557,13 +1568,17 @@ router.get('/sheikhs', isAdmin, async (req, res) => {
       .sort({ nameArabic: 1 })
       .lean();
 
-    // Get lecture count for each sheikh
-    for (const sheikh of sheikhs) {
-      sheikh.actualLectureCount = await Lecture.countDocuments({
-        sheikhId: sheikh._id,
-        published: true
-      });
-    }
+    // Bulk count lectures per sheikh in ONE query
+    const sheikhIds = sheikhs.map(s => s._id);
+    const lectureCounts = await Lecture.aggregate([
+      { $match: { sheikhId: { $in: sheikhIds }, published: true } },
+      { $group: { _id: '$sheikhId', count: { $sum: 1 } } }
+    ]);
+
+    const countMap = new Map(lectureCounts.map(c => [c._id.toString(), c.count]));
+    sheikhs.forEach(sheikh => {
+      sheikh.actualLectureCount = countMap.get(sheikh._id.toString()) || 0;
+    });
 
     res.render('admin/sheikhs', {
       title: 'Manage Sheikhs',
@@ -2136,20 +2151,26 @@ router.post('/analytics/refresh-stats', isAdmin, async (req, res) => {
 // @route   GET /admin/sections
 // @desc    List all sections
 // @access  Private (Admin only)
+// Optimized: Bulk count series per section in ONE aggregation (N -> 2 queries)
 router.get('/sections', isAdmin, async (req, res) => {
   try {
     const { Section, Series } = require('../../models');
 
-    // Get all sections with series counts
+    // Get all sections
     const sections = await Section.find().sort({ displayOrder: 1 }).lean();
+    const sectionIds = sections.map(s => s._id);
 
-    // Get series count for each section
-    const sectionsWithCounts = await Promise.all(
-      sections.map(async (section) => {
-        const seriesCount = await Series.countDocuments({ sectionId: section._id });
-        return { ...section, seriesCount };
-      })
-    );
+    // Bulk count series per section in ONE aggregation
+    const seriesCounts = await Series.aggregate([
+      { $match: { sectionId: { $in: sectionIds } } },
+      { $group: { _id: '$sectionId', count: { $sum: 1 } } }
+    ]);
+
+    const countMap = new Map(seriesCounts.map(c => [c._id?.toString(), c.count]));
+    const sectionsWithCounts = sections.map(s => ({
+      ...s,
+      seriesCount: countMap.get(s._id.toString()) || 0
+    }));
 
     // Get count of unassigned series
     const unassignedCount = await Series.countDocuments({ sectionId: null });
