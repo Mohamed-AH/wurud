@@ -76,11 +76,22 @@ const stats = {
 
 /**
  * Get content disposition header value for a filename
+ * Uses RFC 5987 encoding for non-ASCII characters (e.g., Arabic)
  */
 function getContentDisposition(objectName) {
   // Extract just the filename without path
   const filename = path.basename(objectName);
-  // Use attachment to force download
+
+  // Check if filename contains non-ASCII characters
+  const hasNonAscii = /[^\x00-\x7F]/.test(filename);
+
+  if (hasNonAscii) {
+    // Use RFC 5987 encoding for non-ASCII filenames
+    // Format: filename*=UTF-8''encoded_filename
+    return `attachment; filename*=UTF-8''${encodeURIComponent(filename)}`;
+  }
+
+  // Simple format for ASCII-only filenames
   return `attachment; filename="${filename}"`;
 }
 
@@ -105,43 +116,6 @@ async function hasContentDisposition(client, namespace, bucketName, objectName) 
   }
 }
 
-/**
- * Update object metadata by copying to itself with new headers
- * OCI requires copy-to-self to update metadata
- */
-async function updateObjectMetadata(client, namespace, bucketName, objectName) {
-  const contentDisposition = getContentDisposition(objectName);
-
-  // In OCI, to update metadata you copy the object to itself
-  // Using CopyObject with metadataDirective: 'REPLACE'
-  const copyObjectRequest = {
-    namespaceName: namespace,
-    bucketName: bucketName,
-    copyObjectDetails: {
-      sourceObjectName: objectName,
-      destinationRegion: oci.getRegion(),
-      destinationNamespace: namespace,
-      destinationBucket: bucketName,
-      destinationObjectName: objectName,
-      // New metadata
-      destinationObjectMetadata: {
-        'content-disposition': contentDisposition
-      }
-    }
-  };
-
-  try {
-    const response = await client.copyObject(copyObjectRequest);
-    return {
-      success: true,
-      workRequestId: response.opcWorkRequestId
-    };
-  } catch (error) {
-    // If copyObject doesn't support content-disposition directly,
-    // we need to use a different approach - re-upload with headers
-    throw error;
-  }
-}
 
 /**
  * Alternative: Update using putObject with streaming copy
@@ -334,18 +308,9 @@ async function migrate() {
       } else {
         console.log(`${progress} ⬆️  ${obj.name} - Updating...`);
 
-        try {
-          // Try copyObject first (more efficient)
-          await updateObjectMetadata(client, namespace, bucketName, obj.name);
-          console.log(`${progress} ✅ ${obj.name} - Updated via copy`);
-        } catch (copyError) {
-          // Fall back to re-upload method
-          if (VERBOSE) {
-            console.log(`${progress} ⚠️  Copy failed, trying re-upload: ${copyError.message}`);
-          }
-          await updateObjectWithReupload(client, namespace, bucketName, obj.name);
-          console.log(`${progress} ✅ ${obj.name} - Updated via re-upload`);
-        }
+        // Use re-upload method (copyObject doesn't support contentDisposition header)
+        await updateObjectWithReupload(client, namespace, bucketName, obj.name);
+        console.log(`${progress} ✅ ${obj.name} - Updated`);
 
         stats.updated++;
       }

@@ -55,7 +55,12 @@ async function uploadToOCI(filePath, objectName, options = {}) {
 
   // Generate content-disposition for direct downloads via PAR
   // This enables "Save As" dialog when accessing via presigned URL
-  const contentDisposition = `attachment; filename="${path.basename(objectName)}"`;
+  // Use RFC 5987 encoding for non-ASCII characters (e.g., Arabic filenames)
+  const filename = path.basename(objectName);
+  const hasNonAscii = /[^\x00-\x7F]/.test(filename);
+  const contentDisposition = hasNonAscii
+    ? `attachment; filename*=UTF-8''${encodeURIComponent(filename)}`
+    : `attachment; filename="${filename}"`;
 
   // Don't pre-encode objectName - OCI SDK handles encoding internally
   const putObjectRequest = {
