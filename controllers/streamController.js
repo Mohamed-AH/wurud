@@ -188,7 +188,8 @@ const streamAudio = async (req, res) => {
 
 /**
  * Download audio file with forced "Save As" dialog
- * Uses PAR for authenticated OCI access, proxied to set Content-Disposition header
+ * Uses PAR redirect for fast OCI downloads (~250ms vs ~5s with proxy)
+ * OCI objects have Content-Disposition: attachment header set
  * Falls back to local file streaming if OCI is not configured
  * @route GET /download/:id
  */
@@ -223,17 +224,17 @@ const downloadAudio = async (req, res) => {
     const mimeType = getMimeType(lecture.audioFileName || 'audio.m4a');
     const downloadFilename = generateDownloadFilename(lecture, ext);
 
-    // Check if OCI is configured and lecture has audioFileName - proxy download for proper headers
+    // Check if OCI is configured and lecture has audioFileName - use PAR redirect
     if (isOciConfigured() && lecture.audioFileName) {
       try {
         // Generate presigned URL with 1-hour expiry for authenticated access
         const parUrl = await createPreAuthenticatedRequest(lecture.audioFileName, 1);
 
-        // Proxy the download to set Content-Disposition: attachment header
-        // This triggers "Save As" dialog instead of playing in browser
-        await proxyOciDownload(parUrl, res, downloadFilename, mimeType);
+        // Redirect to PAR URL - OCI object has Content-Disposition: attachment header
+        // This triggers "Save As" dialog and avoids server proxy latency (~5s -> ~250ms)
+        res.redirect(302, parUrl);
 
-        // Increment download count AFTER successful download start (fire-and-forget)
+        // Increment download count AFTER redirect sent (fire-and-forget)
         Lecture.updateOne({ _id: lecture._id }, { $inc: { downloadCount: 1 } }).catch(err => {
           console.error('Error incrementing download count:', err);
         });
@@ -250,20 +251,19 @@ const downloadAudio = async (req, res) => {
       }
     }
 
-    // Fallback: If lecture has direct OCI URL but no audioFileName, proxy with URL parsing
+    // Fallback: If lecture has direct OCI URL but no audioFileName, use PAR redirect
     if (lecture.audioUrl && lecture.audioUrl.includes('objectstorage')) {
       try {
-        // Use the direct URL for proxy (authenticated via PAR if available)
-        let downloadUrl = lecture.audioUrl;
-
-        // Try to create PAR for authenticated access
+        // Try to create PAR for authenticated access with Content-Disposition
         const urlMatch = lecture.audioUrl.match(/\/o\/(.+)$/);
         if (urlMatch && isOciConfigured()) {
           const objectName = decodeURIComponent(urlMatch[1]);
-          downloadUrl = await createPreAuthenticatedRequest(objectName, 1);
+          const parUrl = await createPreAuthenticatedRequest(objectName, 1);
+          res.redirect(302, parUrl);
+        } else {
+          // No PAR available, redirect to direct URL
+          res.redirect(302, lecture.audioUrl);
         }
-
-        await proxyOciDownload(downloadUrl, res, downloadFilename, mimeType);
 
         Lecture.updateOne({ _id: lecture._id }, { $inc: { downloadCount: 1 } }).catch(err => {
           console.error('Error incrementing download count:', err);

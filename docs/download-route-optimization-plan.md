@@ -204,26 +204,19 @@ The local file path (lines 261-295) should remain unchanged since it doesn't hav
 
 | Metric | Before | After |
 |--------|--------|-------|
-| **Total Response Time** | 5,250ms | Similar (proxy still required for Content-Disposition) |
+| **Total Response Time** | 5,250ms | ~250ms (PAR redirect) |
 | **OCI Access** | Public URL | PAR (authenticated, more secure) |
-| **Filename** | Proper Arabic names | Proper Arabic names (preserved) |
-| **Save As Dialog** | Works | Works |
-
-**Note:** Full performance optimization requires setting `contentDisposition` in OCI object metadata during upload. Current implementation prioritizes correct UX (Save As dialog) over raw performance.
+| **Filename** | Proper Arabic names | Proper Arabic names (RFC 5987 encoded) |
+| **Save As Dialog** | Works | Works (via Content-Disposition header on OCI objects) |
 
 ---
 
-## Rollout Plan
+## Implementation Status: COMPLETE
 
-1. **Phase 1:** Implement in development, run full test suite
-2. **Phase 2:** Deploy to staging, test with real OCI files
-3. **Phase 3:** Deploy to production with feature flag (optional)
-4. **Phase 4:** Monitor Sentry traces for new baseline
+**Completed Steps:**
 
----
+1. **Migration script** (`scripts/migrate-oci-content-disposition.js`) - Updated 202 existing OCI objects with Content-Disposition headers
+2. **Upload fix** (`utils/ociStorage.js`) - New uploads automatically include Content-Disposition with RFC 5987 encoding for Arabic filenames
+3. **Download route** (`controllers/streamController.js`) - Now uses PAR redirect instead of proxy
 
-## Open Questions
-
-1. Should we add a feature flag to toggle between proxy and redirect?
-2. What PAR expiry time is appropriate? (Proposed: 1 hour)
-3. Do we need to update CSP headers for PAR URLs? (Likely no, same domain)
+**PAR expiry:** 1 hour (sufficient for large file downloads)
