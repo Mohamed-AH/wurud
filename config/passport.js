@@ -79,16 +79,23 @@ if (process.env.GOOGLE_CLIENT_ID && process.env.GOOGLE_CLIENT_SECRET && process.
         }
 
         if (admin) {
-          // Update existing admin
+          // Update existing admin using findOneAndUpdate (avoids lean plugin issues)
           debug('  ✏️  Updating existing admin...');
-          admin.googleId = profile.id; // Link Google account if not already linked
-          admin.email = email;
-          admin.displayName = profile.displayName;
-          admin.firstName = profile.name?.givenName || '';
-          admin.lastName = profile.name?.familyName || '';
-          admin.profilePhoto = profile.photos?.[0]?.value || '';
-          admin.lastLogin = new Date();
-          await admin.save();
+          admin = await Admin.findOneAndUpdate(
+            { _id: admin._id },
+            {
+              $set: {
+                googleId: profile.id,
+                email: email,
+                displayName: profile.displayName,
+                firstName: profile.name?.givenName || '',
+                lastName: profile.name?.familyName || '',
+                profilePhoto: profile.photos?.[0]?.value || '',
+                lastLogin: new Date()
+              }
+            },
+            { new: true }
+          );
           debug('  ✅ Admin updated successfully');
         } else {
           // Create new admin (only if email is whitelisted)
