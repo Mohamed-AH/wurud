@@ -15,9 +15,10 @@ passport.serializeUser((user, done) => {
 });
 
 // Deserialize user from session
+// Use lean(false) to get Mongoose document (overrides global lean plugin)
 passport.deserializeUser(async (id, done) => {
   try {
-    const user = await Admin.findById(id);
+    const user = await Admin.findById(id).lean(false);
     done(null, user);
   } catch (error) {
     done(error, null);
@@ -47,7 +48,8 @@ if (process.env.GOOGLE_CLIENT_ID && process.env.GOOGLE_CLIENT_SECRET && process.
         debug('  In whitelist:', isWhitelisted);
 
         // Check if user exists in database (pre-created by admin)
-        const existingUser = await Admin.findOne({ email: email });
+        // Use lean(false) to get Mongoose document with methods (overrides global lean plugin)
+        const existingUser = await Admin.findOne({ email: email }).lean(false);
         debug('  Pre-created in DB:', existingUser ? 'YES' : 'NO');
 
         if (!isWhitelisted && !existingUser) {
@@ -59,8 +61,9 @@ if (process.env.GOOGLE_CLIENT_ID && process.env.GOOGLE_CLIENT_SECRET && process.
 
         // Find or create admin user
         // First try to find by googleId
+        // Use lean(false) to get Mongoose document with methods (overrides global lean plugin)
         debug('  🔍 Searching by googleId...');
-        let admin = await Admin.findOne({ googleId: profile.id });
+        let admin = await Admin.findOne({ googleId: profile.id }).lean(false);
         debug('  Found by googleId:', admin ? 'YES' : 'NO');
 
         if (!admin) {
