@@ -53,6 +53,10 @@ async function uploadToOCI(filePath, objectName, options = {}) {
   // Base64 encode the original filename for metadata (HTTP headers require ASCII)
   const originalNameBase64 = Buffer.from(path.basename(filePath)).toString('base64');
 
+  // Generate content-disposition for direct downloads via PAR
+  // This enables "Save As" dialog when accessing via presigned URL
+  const contentDisposition = `attachment; filename="${path.basename(objectName)}"`;
+
   // Don't pre-encode objectName - OCI SDK handles encoding internally
   const putObjectRequest = {
     namespaceName: namespace,
@@ -61,6 +65,7 @@ async function uploadToOCI(filePath, objectName, options = {}) {
     putObjectBody: fileStream,
     contentLength: stats.size,
     contentType: contentType,
+    contentDisposition: contentDisposition,  // Enable direct PAR downloads
     opcMeta: {
       'uploaded-at': new Date().toISOString(),
       'original-name-b64': originalNameBase64
