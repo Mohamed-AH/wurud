@@ -84,7 +84,8 @@ if (process.env.GOOGLE_CLIENT_ID && process.env.GOOGLE_CLIENT_SECRET && process.
           admin.firstName = profile.name?.givenName || '';
           admin.lastName = profile.name?.familyName || '';
           admin.profilePhoto = profile.photos?.[0]?.value || '';
-          await admin.updateLastLogin();
+          admin.lastLogin = new Date();
+          await admin.save();
           debug('  ✅ Admin updated successfully');
         } else {
           // Create new admin (only if email is whitelisted)
