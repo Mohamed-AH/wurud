@@ -127,9 +127,37 @@
     .site-notice a{color:var(--primary-brown);font-weight:600;text-decoration:underline;text-underline-offset:2px;transition:color 0.2s ease}
     .site-notice a:hover{color:var(--accent-gold)}
     @media(max-width:480px){.site-notice{padding:10px 16px;font-size:14px}}
+    /* Maintenance Mode Overlay */
+    .maintenance-overlay{position:fixed;top:0;left:0;right:0;bottom:0;z-index:9999;background:linear-gradient(135deg,#1a1a2e 0%,#16213e 100%);display:flex;align-items:center;justify-content:center;padding:20px}
+    .maintenance-content{text-align:center;max-width:600px;color:#fff}
+    .maintenance-icon{font-size:64px;margin-bottom:24px;animation:pulse 2s infinite}
+    @keyframes pulse{0%,100%{opacity:1}50%{opacity:0.6}}
+    .maintenance-title{font-size:32px;font-weight:700;color:#f0c14b;margin-bottom:16px}
+    .maintenance-message{font-size:18px;color:#ccc;line-height:1.8;margin-bottom:32px}
+    .maintenance-telegram{display:inline-flex;align-items:center;gap:10px;background:#0088cc;color:#fff;padding:14px 28px;border-radius:8px;text-decoration:none;font-weight:600;font-size:16px;transition:transform 0.2s,box-shadow 0.2s}
+    .maintenance-telegram:hover{transform:translateY(-2px);box-shadow:0 8px 20px rgba(0,136,204,0.3)}
+    .maintenance-telegram svg{width:24px;height:24px;fill:currentColor}
+    [dir="rtl"] .maintenance-telegram{flex-direction:row-reverse}
+    @media(max-width:480px){.maintenance-title{font-size:24px}.maintenance-message{font-size:16px}.maintenance-telegram{padding:12px 20px;font-size:14px}}
   </style>
 </head>
 <body>
+  <!-- Maintenance Mode Overlay -->
+  <% if (typeof maintenanceMode !== 'undefined' && maintenanceMode.enabled) { %>
+  <div class="maintenance-overlay" dir="<%= isRTL ? 'rtl' : 'ltr' %>">
+    <div class="maintenance-content">
+      <div class="maintenance-icon">🔧</div>
+      <h1 class="maintenance-title"><%= locale === 'ar' ? maintenanceMode.titleAr : maintenanceMode.titleEn %></h1>
+      <p class="maintenance-message"><%= locale === 'ar' ? maintenanceMode.messageAr : maintenanceMode.messageEn %></p>
+      <% if (maintenanceMode.telegramUrl) { %>
+      <a href="<%= maintenanceMode.telegramUrl %>" target="_blank" rel="noopener noreferrer" class="maintenance-telegram">
+        <svg viewBox="0 0 24 24"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm4.64 6.8c-.15 1.58-.8 5.42-1.13 7.19-.14.75-.42 1-.68 1.03-.58.05-1.02-.38-1.58-.75-.88-.58-1.38-.94-2.23-1.5-.99-.65-.35-1.01.22-1.59.15-.15 2.71-2.48 2.76-2.69a.2.2 0 00-.05-.18c-.06-.05-.14-.03-.21-.02-.09.02-1.49.95-4.22 2.79-.4.27-.76.41-1.08.4-.36-.01-1.04-.2-1.55-.37-.63-.2-1.12-.31-1.08-.66.02-.18.27-.36.74-.55 2.92-1.27 4.86-2.11 5.83-2.51 2.78-1.16 3.35-1.36 3.73-1.36.08 0 .27.02.39.12.1.08.13.19.14.27-.01.06.01.24 0 .38z"/></svg>
+        <span><%= locale === 'ar' ? maintenanceMode.telegramTextAr : maintenanceMode.telegramTextEn %></span>
+      </a>
+      <% } %>
+    </div>
+  </div>
+  <% } else { %>
   <!-- Site Notice Banner -->
   <% if (typeof noticeBanner !== 'undefined' && noticeBanner.enabled) { %>
   <div class="site-notice" role="alert">
@@ -229,5 +257,6 @@
       }
     })();
   </script>
+  <% } %> <!-- End maintenance mode else block -->
 </body>
 </html>

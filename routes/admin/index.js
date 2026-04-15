@@ -2565,6 +2565,63 @@ router.post('/homepage-config', isAdmin, async (req, res) => {
 });
 
 // ============================================
+// MAINTENANCE MODE CONFIGURATION ROUTES
+// ============================================
+
+// @route   GET /admin/maintenance-mode
+// @desc    Maintenance mode configuration page
+// @access  Private (Admin only)
+router.get('/maintenance-mode', isAdmin, async (req, res) => {
+  try {
+    const { SiteSettings } = require('../../models');
+
+    const siteSettings = await SiteSettings.getSettings();
+
+    res.render('admin/maintenance-mode', {
+      title: 'Maintenance Mode',
+      user: req.user,
+      settings: siteSettings.maintenanceMode || {},
+      success: req.query.success,
+      error: req.query.error
+    });
+  } catch (error) {
+    console.error('Maintenance mode config error:', error);
+    res.status(500).send('Error loading maintenance mode configuration');
+  }
+});
+
+// @route   POST /admin/maintenance-mode
+// @desc    Update maintenance mode configuration
+// @access  Private (Admin only)
+router.post('/maintenance-mode', isAdmin, async (req, res) => {
+  try {
+    const { SiteSettings } = require('../../models');
+    const { invalidateMaintenanceModeCache } = require('../../utils/i18n');
+
+    const settings = await SiteSettings.getSettings();
+
+    settings.maintenanceMode = {
+      enabled: req.body.enabled === 'on',
+      titleAr: req.body.titleAr || '',
+      titleEn: req.body.titleEn || '',
+      messageAr: req.body.messageAr || '',
+      messageEn: req.body.messageEn || '',
+      telegramUrl: req.body.telegramUrl || '',
+      telegramTextAr: req.body.telegramTextAr || '',
+      telegramTextEn: req.body.telegramTextEn || ''
+    };
+
+    await settings.save();
+    invalidateMaintenanceModeCache();
+
+    res.redirect('/admin/maintenance-mode?success=settings_updated');
+  } catch (error) {
+    console.error('Maintenance mode config update error:', error);
+    res.redirect('/admin/maintenance-mode?error=update_failed');
+  }
+});
+
+// ============================================
 // NOTICE BANNER CONFIGURATION ROUTES
 // ============================================
 
