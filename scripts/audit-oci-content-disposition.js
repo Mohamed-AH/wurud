@@ -291,11 +291,15 @@ async function audit() {
 
   results.total = objects.length;
 
+  // Check if stdout is interactive (TTY)
+  const isInteractive = process.stdout.isTTY;
+
   // Check each object
   for (let i = 0; i < objects.length; i++) {
     const obj = objects[i];
 
-    if (!QUIET && FORMAT === 'report') {
+    // Only show progress updates in interactive mode
+    if (!QUIET && FORMAT === 'report' && isInteractive) {
       process.stdout.write(`\r   Checking ${i + 1}/${objects.length}...`);
     }
 
@@ -334,7 +338,11 @@ async function audit() {
   }
 
   if (!QUIET && FORMAT === 'report') {
-    console.log('\r   Done!                              \n');
+    if (isInteractive) {
+      console.log('\r   Done!                              \n');
+    } else {
+      console.log('   Done!\n');
+    }
   }
 
   outputResults();
