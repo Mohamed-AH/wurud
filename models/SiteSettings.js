@@ -105,6 +105,50 @@ const siteSettingsSchema = new mongoose.Schema({
     }
   },
 
+  // Full-page maintenance mode configuration
+  maintenanceMode: {
+    // Whether maintenance mode is enabled (shows full-page overlay)
+    enabled: {
+      type: Boolean,
+      default: false
+    },
+    // Arabic title
+    titleAr: {
+      type: String,
+      default: 'الموقع تحت الصيانة'
+    },
+    // English title
+    titleEn: {
+      type: String,
+      default: 'Site Under Maintenance'
+    },
+    // Arabic message
+    messageAr: {
+      type: String,
+      default: 'نعمل حالياً على تحسين الموقع. يرجى العودة قريباً.'
+    },
+    // English message
+    messageEn: {
+      type: String,
+      default: 'We are currently improving the site. Please check back soon.'
+    },
+    // Telegram link URL
+    telegramUrl: {
+      type: String,
+      default: 'https://t.me/daririhasan'
+    },
+    // Arabic Telegram text
+    telegramTextAr: {
+      type: String,
+      default: 'تابعنا على تيليجرام للتحديثات'
+    },
+    // English Telegram text
+    telegramTextEn: {
+      type: String,
+      default: 'Follow us on Telegram for updates'
+    }
+  },
+
   // Cached aggregate stats (updated periodically)
   cachedStats: {
     totalPlays: {

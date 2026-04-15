@@ -614,6 +614,58 @@ function invalidateNoticeBannerCache() {
   noticeBannerCacheTime = 0;
 }
 
+// Maintenance mode cache
+let maintenanceModeCache = null;
+let maintenanceModeCacheTime = 0;
+const MAINTENANCE_MODE_CACHE_TTL = 60000; // 60 seconds
+
+/**
+ * Get maintenance mode settings with caching
+ */
+async function getMaintenanceModeSettings() {
+  const now = Date.now();
+  if (maintenanceModeCache && (now - maintenanceModeCacheTime) < MAINTENANCE_MODE_CACHE_TTL) {
+    return maintenanceModeCache;
+  }
+
+  try {
+    const SiteSettings = require('../models/SiteSettings');
+    const settings = await SiteSettings.getSettings();
+    maintenanceModeCache = settings.maintenanceMode || {
+      enabled: false,
+      titleAr: 'الموقع تحت الصيانة',
+      titleEn: 'Site Under Maintenance',
+      messageAr: 'نعمل حالياً على تحسين الموقع. يرجى العودة قريباً.',
+      messageEn: 'We are currently improving the site. Please check back soon.',
+      telegramUrl: 'https://t.me/daririhasan',
+      telegramTextAr: 'تابعنا على تيليجرام للتحديثات',
+      telegramTextEn: 'Follow us on Telegram for updates'
+    };
+    maintenanceModeCacheTime = now;
+    return maintenanceModeCache;
+  } catch (error) {
+    // Return default settings if database is unavailable
+    return {
+      enabled: false,
+      titleAr: 'الموقع تحت الصيانة',
+      titleEn: 'Site Under Maintenance',
+      messageAr: 'نعمل حالياً على تحسين الموقع.',
+      messageEn: 'We are currently improving the site.',
+      telegramUrl: 'https://t.me/daririhasan',
+      telegramTextAr: 'تابعنا على تيليجرام',
+      telegramTextEn: 'Follow us on Telegram'
+    };
+  }
+}
+
+/**
+ * Invalidate maintenance mode cache (call when settings are updated)
+ */
+function invalidateMaintenanceModeCache() {
+  maintenanceModeCache = null;
+  maintenanceModeCacheTime = 0;
+}
+
 /**
  * Middleware to set locale and inject translation function into templates
  */
@@ -651,6 +703,13 @@ async function i18nMiddleware(req, res, next) {
     res.locals.noticeBanner = await getNoticeBannerSettings();
   } catch (error) {
     res.locals.noticeBanner = { enabled: false };
+  }
+
+  // Inject maintenance mode settings
+  try {
+    res.locals.maintenanceMode = await getMaintenanceModeSettings();
+  } catch (error) {
+    res.locals.maintenanceMode = { enabled: false };
   }
 
   next();
@@ -798,5 +857,6 @@ module.exports = {
   categoryMap,
   toArabicNumerals,
   formatHijriDate,
-  invalidateNoticeBannerCache
+  invalidateNoticeBannerCache,
+  invalidateMaintenanceModeCache
 };
