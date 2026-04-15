@@ -127,31 +127,29 @@ sentryMetrics.audioDownload('oci', lecture.fileSize ? lecture.fileSize / 1024 / 
 
 **Note:** The counter increment is already fire-and-forget (no `await`). We just move it after the redirect is sent.
 
-### 3. Handle Content-Disposition for Redirect
+### 3. Handle Content-Disposition for Download
 
-**Challenge:** When redirecting, we can't force the browser to use our filename since OCI serves the file. The browser will use OCI's response headers.
+**Challenge:** PAR redirect doesn't trigger "Save As" dialog because OCI serves files without `Content-Disposition: attachment` header.
 
-**Solutions (in order of preference):**
+**Solution Implemented: PAR + Proxy Hybrid**
+- Generate PAR URL for authenticated OCI access (security benefit)
+- Proxy the download through server to set `Content-Disposition: attachment` header
+- This ensures proper filename and forces "Save As" dialog
 
-**Option A: Accept OCI Object Name as Filename (Simplest)**
-- Files are already stored with meaningful names (`audioFileName` field)
-- Example: `1234-lecture-title.mp3`
-- User gets a functional download; filename is less pretty but works
-- **Recommended for initial implementation**
+```javascript
+// Generate PAR for authenticated access
+const parUrl = await createPreAuthenticatedRequest(lecture.audioFileName, 1);
 
-**Option B: Store Content-Disposition Metadata in OCI**
-- When uploading files, set `contentDisposition` header in OCI object metadata
-- Requires updating `uploadToOCI()` in `utils/ociStorage.js`
-- Future uploads will have correct filenames; existing files need migration
-- **Recommended as follow-up enhancement**
+// Proxy to set Content-Disposition header
+await proxyOciDownload(parUrl, res, downloadFilename, mimeType);
+```
 
-**Option C: Hybrid Approach - PAR for Large Files Only**
-- Use redirect for files > 50MB (where latency matters most)
-- Keep proxy for smaller files (acceptable latency, better UX)
-- Adds complexity but balances performance and UX
+**Trade-off:** Still proxies through server (latency remains), but:
+- PAR provides authenticated access (more secure than public URL)
+- Proper Arabic filenames preserved
+- "Save As" dialog works correctly
 
-**Option D: Keep Proxy (Not Recommended)**
-- Maintains current UX but doesn't solve the performance issue
+**Future Enhancement:** Set `contentDisposition` in OCI object metadata during upload, then PAR redirect would work directly.
 
 ### 4. Fallback for Local Files
 
@@ -206,10 +204,12 @@ The local file path (lines 261-295) should remain unchanged since it doesn't hav
 
 | Metric | Before | After |
 |--------|--------|-------|
-| **Total Response Time** | 5,250ms | ~250ms |
-| **OCI Wait Time** | 4,780ms | 0ms (moved to browser) |
-| **Server CPU Usage** | High (piping bytes) | Minimal (redirect only) |
-| **Concurrent Downloads** | Limited by server bandwidth | Limited by OCI bandwidth |
+| **Total Response Time** | 5,250ms | Similar (proxy still required for Content-Disposition) |
+| **OCI Access** | Public URL | PAR (authenticated, more secure) |
+| **Filename** | Proper Arabic names | Proper Arabic names (preserved) |
+| **Save As Dialog** | Works | Works |
+
+**Note:** Full performance optimization requires setting `contentDisposition` in OCI object metadata during upload. Current implementation prioritizes correct UX (Save As dialog) over raw performance.
 
 ---
 
