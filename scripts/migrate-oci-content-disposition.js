@@ -2,22 +2,31 @@
 /**
  * Migrate OCI Objects to Include Content-Disposition Header
  *
- * This script updates all audio objects in OCI to include the
+ * This script updates audio objects in OCI to include the
  * Content-Disposition: attachment header, enabling direct PAR downloads
  * with proper "Save As" dialog behavior.
  *
  * Usage:
- *   node scripts/migrate-oci-content-disposition.js [--dry-run] [--limit N] [--env FILE]
+ *   node scripts/migrate-oci-content-disposition.js [options]
  *
  * Options:
- *   --dry-run   Show what would be updated without making changes
- *   --limit N   Process only N objects (for testing)
- *   --env FILE  Path to .env file (default: .env)
- *   --verbose   Show detailed progress
+ *   --dry-run      Show what would be updated without making changes
+ *   --limit N      Process only N objects (for testing)
+ *   --env FILE     Path to .env file (default: .env)
+ *   --verbose      Show detailed progress
+ *   --from-file F  Process only files listed in F (one per line)
+ *   --from-stdin   Read file list from stdin (for piping from audit)
  *
  * Examples:
+ *   # Process all files
  *   node scripts/migrate-oci-content-disposition.js --dry-run --limit 5
- *   node scripts/migrate-oci-content-disposition.js --env .env.production
+ *
+ *   # Process specific files from a list
+ *   node scripts/migrate-oci-content-disposition.js --from-file missing-files.txt
+ *
+ *   # Pipe from audit script
+ *   node scripts/audit-oci-content-disposition.js --format list | \
+ *     node scripts/migrate-oci-content-disposition.js --from-stdin
  */
 
 // Parse --env argument first
@@ -42,6 +51,8 @@ if (missingVars.length > 0) {
   process.exit(1);
 }
 
+const fs = require('fs');
+const readline = require('readline');
 const path = require('path');
 const oci = require('../config/oci');
 
@@ -49,8 +60,11 @@ const oci = require('../config/oci');
 const args = process.argv.slice(2);
 const DRY_RUN = args.includes('--dry-run');
 const VERBOSE = args.includes('--verbose');
+const FROM_STDIN = args.includes('--from-stdin');
 const limitIndex = args.indexOf('--limit');
 const LIMIT = limitIndex !== -1 ? parseInt(args[limitIndex + 1]) : null;
+const fromFileIndex = args.indexOf('--from-file');
+const FROM_FILE = fromFileIndex !== -1 ? args[fromFileIndex + 1] : null;
 
 // Stats
 const stats = {
@@ -187,12 +201,50 @@ async function listAllObjects(client, namespace, bucketName) {
 }
 
 /**
+ * Read file list from stdin
+ */
+async function readFromStdin() {
+  return new Promise((resolve) => {
+    const lines = [];
+    const rl = readline.createInterface({
+      input: process.stdin,
+      output: process.stdout,
+      terminal: false
+    });
+
+    rl.on('line', (line) => {
+      const trimmed = line.trim();
+      if (trimmed && !trimmed.startsWith('#')) {
+        lines.push(trimmed);
+      }
+    });
+
+    rl.on('close', () => {
+      resolve(lines);
+    });
+  });
+}
+
+/**
+ * Read file list from a file
+ */
+function readFromFile(filePath) {
+  const content = fs.readFileSync(filePath, 'utf-8');
+  return content
+    .split('\n')
+    .map(line => line.trim())
+    .filter(line => line && !line.startsWith('#'));
+}
+
+/**
  * Main migration function
  */
 async function migrate() {
   console.log('\n🚀 OCI Content-Disposition Migration');
   console.log('=====================================');
   console.log(`Mode: ${DRY_RUN ? '🔍 DRY RUN (no changes)' : '⚡ LIVE'}`);
+  if (FROM_STDIN) console.log('Source: stdin (targeted mode)');
+  if (FROM_FILE) console.log(`Source: ${FROM_FILE} (targeted mode)`);
   if (LIMIT) console.log(`Limit: ${LIMIT} objects`);
   console.log('');
 
@@ -210,22 +262,44 @@ async function migrate() {
   console.log(`🌍 Region: ${oci.getRegion()}`);
   console.log('');
 
-  // List all objects
-  console.log('📋 Listing objects...');
   let objects;
-  try {
-    objects = await listAllObjects(client, namespace, bucketName);
-  } catch (error) {
-    console.error('❌ Failed to list objects:', error.message);
-    process.exit(1);
-  }
 
-  console.log(`   Found ${objects.length} objects\n`);
+  // Determine source of file list
+  if (FROM_STDIN) {
+    console.log('📋 Reading file list from stdin...');
+    const fileNames = await readFromStdin();
+    objects = fileNames.map(name => ({ name }));
+    console.log(`   Received ${objects.length} files\n`);
+  } else if (FROM_FILE) {
+    console.log(`📋 Reading file list from ${FROM_FILE}...`);
+    if (!fs.existsSync(FROM_FILE)) {
+      console.error(`❌ File not found: ${FROM_FILE}`);
+      process.exit(1);
+    }
+    const fileNames = readFromFile(FROM_FILE);
+    objects = fileNames.map(name => ({ name }));
+    console.log(`   Loaded ${objects.length} files\n`);
+  } else {
+    // List all objects from bucket
+    console.log('📋 Listing all objects in bucket...');
+    try {
+      objects = await listAllObjects(client, namespace, bucketName);
+    } catch (error) {
+      console.error('❌ Failed to list objects:', error.message);
+      process.exit(1);
+    }
+    console.log(`   Found ${objects.length} objects\n`);
+  }
 
   // Apply limit if specified
   if (LIMIT && objects.length > LIMIT) {
     objects = objects.slice(0, LIMIT);
     console.log(`   Processing first ${LIMIT} objects\n`);
+  }
+
+  if (objects.length === 0) {
+    console.log('⚠️  No objects to process\n');
+    return;
   }
 
   stats.total = objects.length;
