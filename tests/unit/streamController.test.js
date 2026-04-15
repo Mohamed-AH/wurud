@@ -26,7 +26,8 @@ jest.mock('../../middleware/streamHandler', () => ({
 
 jest.mock('../../utils/ociStorage', () => ({
   getPublicUrl: jest.fn(),
-  isConfigured: jest.fn()
+  isConfigured: jest.fn(),
+  createPreAuthenticatedRequest: jest.fn()
 }));
 
 jest.mock('../../utils/validators', () => ({
@@ -45,7 +46,7 @@ jest.mock('../../utils/sentryMetrics', () => ({
 const { Lecture } = require('../../models');
 const { getFilePath, fileExists } = require('../../utils/fileManager');
 const { getMimeType, handleRangeRequest } = require('../../middleware/streamHandler');
-const { getPublicUrl, isConfigured } = require('../../utils/ociStorage');
+const { getPublicUrl, isConfigured, createPreAuthenticatedRequest } = require('../../utils/ociStorage');
 const { isValidObjectId } = require('../../utils/validators');
 
 const {
@@ -299,6 +300,73 @@ describe('Stream Controller', () => {
         success: false,
         message: 'Failed to download audio'
       }));
+    });
+
+    it('should generate PAR URL when OCI is configured', async () => {
+      const mockLecture = {
+        _id: '507f1f77bcf86cd799439011',
+        audioFileName: 'test.m4a',
+        titleArabic: 'محاضرة',
+        fileSize: 1000000
+      };
+      Lecture.findById.mockReturnValue({
+        populate: jest.fn().mockReturnValue({
+          populate: jest.fn().mockResolvedValue(mockLecture)
+        })
+      });
+      isConfigured.mockReturnValue(true);
+      createPreAuthenticatedRequest.mockResolvedValue('https://objectstorage.me-jeddah-1.oraclecloud.com/p/secret-token/test.m4a');
+      getMimeType.mockReturnValue('audio/mp4');
+
+      // proxyOciDownload will fail since https is not mocked, but PAR should be generated
+      await downloadAudio(mockReq, mockRes);
+
+      expect(createPreAuthenticatedRequest).toHaveBeenCalledWith('test.m4a', 1);
+    });
+
+    it('should handle PAR generation error gracefully', async () => {
+      const mockLecture = {
+        _id: '507f1f77bcf86cd799439011',
+        audioFileName: 'test.m4a',
+        titleArabic: 'محاضرة'
+      };
+      Lecture.findById.mockReturnValue({
+        populate: jest.fn().mockReturnValue({
+          populate: jest.fn().mockResolvedValue(mockLecture)
+        })
+      });
+      isConfigured.mockReturnValue(true);
+      createPreAuthenticatedRequest.mockRejectedValue(new Error('OCI API error'));
+
+      await downloadAudio(mockReq, mockRes);
+
+      expect(mockRes.status).toHaveBeenCalledWith(500);
+      expect(mockRes.json).toHaveBeenCalledWith({
+        success: false,
+        message: 'Download failed from cloud storage'
+      });
+    });
+
+    it('should extract object name from audioUrl for PAR when no audioFileName', async () => {
+      const mockLecture = {
+        _id: '507f1f77bcf86cd799439011',
+        audioUrl: 'https://objectstorage.me-jeddah-1.oraclecloud.com/n/ns/b/bucket/o/audio-file.m4a',
+        titleArabic: 'محاضرة',
+        fileSize: 1000000
+      };
+      Lecture.findById.mockReturnValue({
+        populate: jest.fn().mockReturnValue({
+          populate: jest.fn().mockResolvedValue(mockLecture)
+        })
+      });
+      isConfigured.mockReturnValue(true);
+      createPreAuthenticatedRequest.mockResolvedValue('https://objectstorage.me-jeddah-1.oraclecloud.com/p/token/audio-file.m4a');
+      getMimeType.mockReturnValue('audio/mp4');
+
+      // proxyOciDownload will fail since https is not mocked, but PAR should be generated
+      await downloadAudio(mockReq, mockRes);
+
+      expect(createPreAuthenticatedRequest).toHaveBeenCalledWith('audio-file.m4a', 1);
     });
   });
 
