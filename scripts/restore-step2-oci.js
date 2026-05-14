@@ -65,7 +65,8 @@ const stats = {
   uploaded: 0,
   errors: 0,
   unmatched: [],
-  unmatchedBackups: []
+  unmatchedBackups: [],
+  successfulUploads: []
 };
 
 /**
@@ -305,12 +306,26 @@ async function restore() {
       const info = matchType === 'direct' ? '' : ` (${matchType})`;
       console.log(`${progress} 🔍 Would upload: ${filename}${info}`);
       stats.uploaded++;
+      stats.successfulUploads.push({
+        filename,
+        title,
+        localPath,
+        status: 'dry-run'
+      });
     } else {
       try {
         if (VERBOSE) console.log(`${progress} ⬆️  Uploading: ${filename}`);
 
-        await uploadToOCI(client, namespace, bucketName, filename, localPath);
+        const result = await uploadToOCI(client, namespace, bucketName, filename, localPath);
         stats.uploaded++;
+        stats.successfulUploads.push({
+          filename,
+          title,
+          localPath,
+          size: result.size,
+          etag: result.etag,
+          uploadedAt: new Date().toISOString()
+        });
 
         if (!VERBOSE) {
           process.stdout.write(`\r${progress} Uploaded ${stats.uploaded} files...`);
@@ -355,6 +370,38 @@ async function restore() {
   if (stats.unmatchedBackups.length > 0) {
     fs.writeFileSync('unused-backups.txt', stats.unmatchedBackups.join('\n'));
     console.log('📄 Unused backups saved to: unused-backups.txt');
+  }
+
+  // Save successful uploads log
+  if (stats.successfulUploads.length > 0) {
+    const logData = {
+      completedAt: new Date().toISOString(),
+      mode: DRY_RUN ? 'dry-run' : 'live',
+      totalUploaded: stats.successfulUploads.length,
+      bucket: process.env.OCI_BUCKET || 'wurud-audio',
+      region: process.env.OCI_REGION || 'us-ashburn-1',
+      files: stats.successfulUploads
+    };
+    fs.writeFileSync('upload-log.json', JSON.stringify(logData, null, 2));
+
+    // Also create simple text log
+    let textLog = `UPLOAD LOG - ${logData.completedAt}\n`;
+    textLog += `Mode: ${logData.mode}\n`;
+    textLog += `Total: ${logData.totalUploaded} files\n`;
+    textLog += `Bucket: ${logData.bucket}\n`;
+    textLog += '='.repeat(60) + '\n\n';
+    stats.successfulUploads.forEach((f, i) => {
+      textLog += `${i + 1}. ${f.filename}\n`;
+      if (f.title) textLog += `   Title: ${f.title}\n`;
+      if (f.size) textLog += `   Size: ${(f.size / 1024).toFixed(1)} KB\n`;
+      if (f.uploadedAt) textLog += `   Uploaded: ${f.uploadedAt}\n`;
+      textLog += '\n';
+    });
+    fs.writeFileSync('upload-log.txt', textLog);
+
+    console.log(`\n✅ Upload log saved:`);
+    console.log(`   upload-log.json (${stats.successfulUploads.length} files)`);
+    console.log(`   upload-log.txt`);
   }
 
   if (DRY_RUN) {
