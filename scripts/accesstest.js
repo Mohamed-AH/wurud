@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 /**
- * Access Test - Verify MongoDB and OCI connectivity
+ * Access Test - Verify MongoDB and OCI connectivity (Standalone)
  * Fetches first 5 records from each to confirm access
  *
  * Usage: node scripts/accesstest.js [--env .env.production]
@@ -12,6 +12,10 @@ const envPath = envIndex !== -1 ? argsForEnv[envIndex + 1] : '.env';
 
 require('dotenv').config({ path: envPath });
 
+const mongoose = require('mongoose');
+const common = require('oci-common');
+const os = require('oci-objectstorage');
+
 async function testAccess() {
   console.log('\n🔍 Access Test\n');
 
@@ -21,11 +25,16 @@ async function testAccess() {
   console.log('═══════════════════════════════════');
 
   try {
-    const mongoose = require('mongoose');
     await mongoose.connect(process.env.MONGODB_URI);
     console.log('✅ Connected to MongoDB\n');
 
-    const { Lecture } = require('../models');
+    const lectureSchema = new mongoose.Schema({
+      audioFileName: String,
+      titleArabic: String
+    }, { collection: 'lectures', strict: false });
+
+    const Lecture = mongoose.model('Lecture', lectureSchema);
+
     const lectures = await Lecture.find(
       { audioFileName: { $exists: true, $ne: null } },
       'audioFileName titleArabic'
@@ -49,20 +58,36 @@ async function testAccess() {
   console.log('═══════════════════════════════════');
 
   try {
-    const oci = require('../config/oci');
-    const client = oci.client;
+    let provider;
 
-    if (!client) {
-      console.log('❌ OCI client not initialized\n');
+    if (process.env.OCI_PRIVATE_KEY && process.env.OCI_TENANCY) {
+      const privateKey = process.env.OCI_PRIVATE_KEY.replace(/\\n/g, '\n');
+      provider = new common.SimpleAuthenticationDetailsProvider(
+        process.env.OCI_TENANCY,
+        process.env.OCI_USER,
+        process.env.OCI_FINGERPRINT,
+        privateKey,
+        null,
+        common.Region.fromRegionId(process.env.OCI_REGION || 'us-ashburn-1')
+      );
+    } else if (process.env.OCI_CONFIG_FILE) {
+      provider = new common.ConfigFileAuthenticationDetailsProvider(
+        process.env.OCI_CONFIG_FILE,
+        process.env.OCI_PROFILE || 'DEFAULT'
+      );
+    } else {
+      console.log('❌ OCI credentials not configured\n');
       return;
     }
 
-    const namespace = oci.getNamespace();
-    const bucketName = oci.getBucketName();
+    const client = new os.ObjectStorageClient({ authenticationDetailsProvider: provider });
+    const namespace = process.env.OCI_NAMESPACE;
+    const bucketName = process.env.OCI_BUCKET || 'wurud-audio';
+    const region = process.env.OCI_REGION || 'us-ashburn-1';
 
     console.log(`Namespace: ${namespace}`);
     console.log(`Bucket: ${bucketName}`);
-    console.log(`Region: ${oci.getRegion()}\n`);
+    console.log(`Region: ${region}\n`);
 
     const response = await client.listObjects({
       namespaceName: namespace,
