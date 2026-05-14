@@ -139,11 +139,20 @@ function compareFilenames(mongoFiles, ociFiles) {
   stats.mongoCount = mongoFiles.size;
   stats.ociCount = ociFiles.size;
 
+  const matchedFiles = [];
+
   // Check each MongoDB filename
   for (const [filename, data] of mongoFiles) {
     if (ociFiles.has(filename)) {
       const ociData = ociFiles.get(filename);
       stats.matched++;
+
+      matchedFiles.push({
+        filename,
+        title: data.title,
+        ociSize: ociData.size,
+        isZeroByte: ociData.size === 0
+      });
 
       // Check for zero-byte files
       if (ociData.size === 0) {
@@ -160,12 +169,14 @@ function compareFilenames(mongoFiles, ociFiles) {
       stats.inOciOnly.push(filename);
     }
   }
+
+  return matchedFiles;
 }
 
 /**
- * Print results
+ * Print results and save matched files
  */
-function printResults() {
+function printResults(matchedFiles) {
   console.log('═══════════════════════════════════════════');
   console.log('📊 Comparison Results');
   console.log('═══════════════════════════════════════════\n');
@@ -176,6 +187,26 @@ function printResults() {
   console.log(`Zero-byte in OCI:     ${stats.zeroByteFiles.length}`);
   console.log(`In MongoDB only:      ${stats.inMongoOnly.length}`);
   console.log(`In OCI only:          ${stats.inOciOnly.length}`);
+
+  // Save matched files list
+  const fs = require('fs');
+
+  // JSON with full details
+  const matchedData = {
+    exportedAt: new Date().toISOString(),
+    totalMatched: matchedFiles.length,
+    zeroByteCount: stats.zeroByteFiles.length,
+    files: matchedFiles
+  };
+  fs.writeFileSync('matched-files.json', JSON.stringify(matchedData, null, 2));
+
+  // Simple text list (filenames only)
+  const textList = matchedFiles.map(f => f.filename).join('\n');
+  fs.writeFileSync('matched-files.txt', textList);
+
+  console.log(`\n📄 Saved matched files:`);
+  console.log(`   matched-files.json (${matchedFiles.length} files with details)`);
+  console.log(`   matched-files.txt (filenames only)`);
 
   // Zero-byte files (corrupted)
   if (stats.zeroByteFiles.length > 0) {
@@ -238,8 +269,8 @@ async function main() {
     const mongoFiles = await fetchMongoFilenames();
     const ociFiles = await fetchOciObjects();
 
-    compareFilenames(mongoFiles, ociFiles);
-    printResults();
+    const matchedFiles = compareFilenames(mongoFiles, ociFiles);
+    printResults(matchedFiles);
 
   } catch (error) {
     console.error('\n❌ Error:', error.message);
