@@ -44,7 +44,8 @@ const stats = {
   zeroByteFiles: 0,
   foundLocally: 0,
   missingLocally: [],
-  readyToRestore: []
+  readyToRestore: [],
+  potentialMatches: []  // For manual review
 };
 
 /**
@@ -90,19 +91,62 @@ function normalizeFilename(filename) {
 }
 
 /**
- * Find backup match
+ * Extract core identifier from filename (remove suffixes, normalize separators)
+ * Example: 'Mp3-Editor-251013152911-1769324610319-341315626.m4a' -> 'mp3editor251013152911'
+ */
+function extractCoreId(filename) {
+  const base = path.basename(filename, path.extname(filename));
+  return base
+    .toLowerCase()
+    .replace(/[-_\s]+/g, '')  // Remove separators
+    .replace(/\d{10,}/g, (match, offset, str) => {
+      // Keep first long number sequence (likely original ID), remove later ones (upload suffixes)
+      const before = str.slice(0, offset).replace(/\d{10,}/g, '');
+      return before.includes(match.slice(0, 6)) ? '' : match;
+    });
+}
+
+/**
+ * Calculate similarity score between two strings (0-1)
+ */
+function similarityScore(str1, str2) {
+  const s1 = str1.toLowerCase();
+  const s2 = str2.toLowerCase();
+
+  if (s1 === s2) return 1;
+  if (s1.length === 0 || s2.length === 0) return 0;
+
+  // Check if one contains the other
+  if (s1.includes(s2) || s2.includes(s1)) {
+    return Math.min(s1.length, s2.length) / Math.max(s1.length, s2.length);
+  }
+
+  // Count matching characters in sequence
+  let matches = 0;
+  const shorter = s1.length < s2.length ? s1 : s2;
+  const longer = s1.length < s2.length ? s2 : s1;
+
+  for (let i = 0; i < shorter.length; i++) {
+    if (longer.includes(shorter[i])) matches++;
+  }
+
+  return matches / longer.length;
+}
+
+/**
+ * Find backup match (exact, normalized, or potential)
  */
 function findBackupMatch(targetFilename, backupFiles) {
   // Exact match
   if (backupFiles.has(targetFilename)) {
-    return { match: targetFilename, ...backupFiles.get(targetFilename), type: 'exact' };
+    return { match: targetFilename, ...backupFiles.get(targetFilename), type: 'exact', confidence: 1 };
   }
 
   // Normalized match
   const normalizedTarget = normalizeFilename(targetFilename);
   for (const [backupName, data] of backupFiles) {
     if (normalizeFilename(backupName) === normalizedTarget) {
-      return { match: backupName, ...data, type: 'normalized' };
+      return { match: backupName, ...data, type: 'normalized', confidence: 1 };
     }
   }
 
@@ -111,11 +155,55 @@ function findBackupMatch(targetFilename, backupFiles) {
   for (const [backupName, data] of backupFiles) {
     const backupBase = path.basename(backupName, path.extname(backupName));
     if (normalizeFilename(backupBase) === normalizeFilename(targetBase)) {
-      return { match: backupName, ...data, type: 'basename' };
+      return { match: backupName, ...data, type: 'basename', confidence: 1 };
     }
   }
 
   return null;
+}
+
+/**
+ * Find potential matches using partial/fuzzy matching
+ */
+function findPotentialMatches(targetFilename, backupFiles) {
+  const potentials = [];
+  const targetBase = path.basename(targetFilename, path.extname(targetFilename));
+  const targetExt = path.extname(targetFilename).toLowerCase();
+
+  // Normalize target: remove separators and extra suffixes
+  const targetNorm = targetBase.toLowerCase().replace(/[-_\s]+/g, '');
+
+  for (const [backupName, data] of backupFiles) {
+    const backupBase = path.basename(backupName, path.extname(backupName));
+    const backupExt = path.extname(backupName).toLowerCase();
+
+    // Skip if extensions don't match (or are compatible audio formats)
+    const audioExts = ['.mp3', '.m4a', '.aac', '.wav'];
+    if (targetExt !== backupExt && !(audioExts.includes(targetExt) && audioExts.includes(backupExt))) {
+      continue;
+    }
+
+    // Normalize backup filename
+    const backupNorm = backupBase.toLowerCase().replace(/[-_\s]+/g, '');
+
+    // Check if backup filename is contained in target (common pattern: local name + suffix)
+    // Example: 'mp3editor251013152911' is in 'mp3editor2510131529111769324610319341315626'
+    if (targetNorm.includes(backupNorm) || backupNorm.includes(targetNorm.slice(0, Math.min(20, targetNorm.length)))) {
+      const score = similarityScore(backupNorm, targetNorm);
+      if (score > 0.3) {  // At least 30% similarity
+        potentials.push({
+          localFile: backupName,
+          localPath: data.path,
+          localSize: data.size,
+          score: Math.round(score * 100),
+          reason: backupNorm.length < targetNorm.length ? 'local_is_shorter' : 'local_is_longer'
+        });
+      }
+    }
+  }
+
+  // Sort by score descending
+  return potentials.sort((a, b) => b.score - a.score);
 }
 
 /**
@@ -157,11 +245,23 @@ function main() {
         });
       }
     } else {
-      stats.missingLocally.push({
-        filename: file.filename,
-        title: file.title,
-        isZeroByte: file.isZeroByte
-      });
+      // No exact match - try partial matching
+      const potentials = findPotentialMatches(file.filename, backupFiles);
+
+      if (potentials.length > 0) {
+        stats.potentialMatches.push({
+          dbFilename: file.filename,
+          title: file.title,
+          isZeroByte: file.isZeroByte,
+          candidates: potentials.slice(0, 3)  // Top 3 candidates
+        });
+      } else {
+        stats.missingLocally.push({
+          filename: file.filename,
+          title: file.title,
+          isZeroByte: file.isZeroByte
+        });
+      }
     }
   }
 
@@ -172,9 +272,51 @@ function main() {
 
   console.log(`Files in MongoDB+OCI:     ${stats.totalMatched}`);
   console.log(`Zero-byte (corrupted):    ${stats.zeroByteFiles}`);
-  console.log(`Found locally:            ${stats.foundLocally}`);
-  console.log(`Missing locally:          ${stats.missingLocally.length}`);
+  console.log(`Exact matches:            ${stats.foundLocally}`);
+  console.log(`Potential matches:        ${stats.potentialMatches.length} (need review)`);
+  console.log(`No match found:           ${stats.missingLocally.length}`);
   console.log(`Ready to restore:         ${stats.readyToRestore.length}`);
+
+  // Save potential matches for manual review
+  if (stats.potentialMatches.length > 0) {
+    fs.writeFileSync('potential-matches.json', JSON.stringify(stats.potentialMatches, null, 2));
+
+    // Create a readable review file
+    let reviewContent = 'POTENTIAL MATCHES - MANUAL REVIEW REQUIRED\n';
+    reviewContent += '='.repeat(60) + '\n\n';
+    reviewContent += 'Instructions: Review each match and add confirmed pairs to confirmed-matches.json\n\n';
+
+    stats.potentialMatches.forEach((item, idx) => {
+      reviewContent += `--- #${idx + 1} ---\n`;
+      reviewContent += `DB Filename: ${item.dbFilename}\n`;
+      reviewContent += `Title: ${item.title || 'N/A'}\n`;
+      reviewContent += `Zero-byte: ${item.isZeroByte ? 'YES - NEEDS RESTORE' : 'No'}\n`;
+      reviewContent += `Candidates:\n`;
+      item.candidates.forEach((c, i) => {
+        reviewContent += `  ${i + 1}. [${c.score}%] ${c.localFile}\n`;
+        reviewContent += `     Path: ${c.localPath}\n`;
+        reviewContent += `     Size: ${(c.localSize / 1024).toFixed(1)} KB\n`;
+      });
+      reviewContent += '\n';
+    });
+
+    fs.writeFileSync('potential-matches-review.txt', reviewContent);
+
+    console.log(`\n🔍 Potential matches (need manual review):`);
+    console.log(`   potential-matches.json (${stats.potentialMatches.length} files)`);
+    console.log(`   potential-matches-review.txt (human readable)`);
+
+    // Show sample
+    const zeroByteP = stats.potentialMatches.filter(p => p.isZeroByte);
+    if (zeroByteP.length > 0) {
+      console.log(`\n   ⚠️  ${zeroByteP.length} zero-byte files have potential matches:`);
+      zeroByteP.slice(0, 5).forEach(p => {
+        console.log(`   - ${p.dbFilename}`);
+        console.log(`     → ${p.candidates[0]?.localFile} (${p.candidates[0]?.score}%)`);
+      });
+      if (zeroByteP.length > 5) console.log(`   ... and ${zeroByteP.length - 5} more`);
+    }
+  }
 
   // Save ready-to-restore list
   if (stats.readyToRestore.length > 0) {
