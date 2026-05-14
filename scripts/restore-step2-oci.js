@@ -228,7 +228,13 @@ async function restore() {
   // Load filenames from JSON
   console.log('📋 Loading filenames from JSON...');
   const data = JSON.parse(fs.readFileSync(FILENAMES_FILE, 'utf-8'));
-  let records = data.records || [];
+  let records = data.records || data.files || [];
+
+  // Handle direct array format
+  if (Array.isArray(data)) {
+    records = data;
+  }
+
   stats.totalRecords = records.length;
   console.log(`   Found ${records.length} records\n`);
 
@@ -264,28 +270,46 @@ async function restore() {
   for (let i = 0; i < records.length; i++) {
     const record = records[i];
     const progress = `[${i + 1}/${records.length}]`;
-    const filename = record.audioFileName;
+    const filename = record.audioFileName || record.filename;
+    const title = record.titleArabic || record.titleEnglish || record.title;
 
-    const match = findBackupMatch(filename, backupFiles);
+    // Check if localPath is already provided (from ready-to-restore.json)
+    let localPath = record.localPath;
+    let matchType = 'direct';
 
-    if (!match) {
-      stats.unmatched.push({ filename, title: record.titleArabic || record.titleEnglish });
-      if (VERBOSE) console.log(`${progress} ❌ No match: ${filename}`);
-      continue;
+    if (!localPath) {
+      // Fall back to backup directory matching
+      const match = findBackupMatch(filename, backupFiles);
+
+      if (!match) {
+        stats.unmatched.push({ filename, title });
+        if (VERBOSE) console.log(`${progress} ❌ No match: ${filename}`);
+        continue;
+      }
+
+      localPath = match.path;
+      matchType = match.type;
+      usedBackupFiles.add(match.match);
+    } else {
+      // Verify localPath exists
+      if (!fs.existsSync(localPath)) {
+        stats.unmatched.push({ filename, title, error: 'localPath not found' });
+        if (VERBOSE) console.log(`${progress} ❌ File not found: ${localPath}`);
+        continue;
+      }
     }
 
     stats.matched++;
-    usedBackupFiles.add(match.match);
 
     if (DRY_RUN) {
-      const info = match.type === 'exact' ? '' : ` (${match.type}: ${match.match})`;
+      const info = matchType === 'direct' ? '' : ` (${matchType})`;
       console.log(`${progress} 🔍 Would upload: ${filename}${info}`);
       stats.uploaded++;
     } else {
       try {
         if (VERBOSE) console.log(`${progress} ⬆️  Uploading: ${filename}`);
 
-        await uploadToOCI(client, namespace, bucketName, filename, match.path);
+        await uploadToOCI(client, namespace, bucketName, filename, localPath);
         stats.uploaded++;
 
         if (!VERBOSE) {
