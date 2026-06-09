@@ -921,7 +921,7 @@
                       <%= adminLocale === 'ar' ? 'التاريخ' : 'Date' %>: <%= new Date(lecture.dateRecorded).toLocaleDateString(adminLocale === 'ar' ? 'ar-SA' : 'en-US') %>
                     <% } %>
                     <% if (lecture.durationSeconds) { %>
-                      | <%= adminLocale === 'ar' ? 'المدة' : 'Duration' %>: <%= Math.floor(lecture.durationSeconds / 60) %>:<%= String(lecture.durationSeconds % 60).padStart(2, '0') %>
+                      | <%= adminLocale === 'ar' ? 'المدة' : 'Duration' %>: <% const hrs = Math.floor(lecture.durationSeconds / 3600); const mins = Math.floor((lecture.durationSeconds % 3600) / 60); const secs = lecture.durationSeconds % 60; %><%= hrs > 0 ? hrs + ':' + String(mins).padStart(2, '0') : mins %>:<%= String(secs).padStart(2, '0') %>
                     <% } %>
                   </div>
                   <div class="inline-progress" id="progress-<%= lecture._id %>">
@@ -1443,8 +1443,12 @@
 
     function formatDuration(seconds) {
       if (!seconds) return '';
-      const mins = Math.floor(seconds / 60);
+      const hrs = Math.floor(seconds / 3600);
+      const mins = Math.floor((seconds % 3600) / 60);
       const secs = Math.floor(seconds % 60);
+      if (hrs > 0) {
+        return `${hrs}:${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
+      }
       return `${mins}:${secs.toString().padStart(2, '0')}`;
     }
 
@@ -1682,9 +1686,13 @@
           const metaDiv = lectureItem.querySelector('.lecture-meta');
           const durationLabel = msgs.duration;
           if (metaDiv && !metaDiv.textContent.includes(durationLabel)) {
-            const mins = Math.floor(duration / 60);
+            const hrs = Math.floor(duration / 3600);
+            const mins = Math.floor((duration % 3600) / 60);
             const secs = duration % 60;
-            metaDiv.innerHTML += ` | ${durationLabel}: ${mins}:${String(secs).padStart(2, '0')}`;
+            const timeStr = hrs > 0
+              ? `${hrs}:${String(mins).padStart(2, '0')}:${String(secs).padStart(2, '0')}`
+              : `${mins}:${String(secs).padStart(2, '0')}`;
+            metaDiv.innerHTML += ` | ${durationLabel}: ${timeStr}`;
           }
         }
 
