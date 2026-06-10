@@ -227,9 +227,9 @@ async function findOrCreateSheikh(name) {
       bioArabic: `الشيخ ${name}`, bioEnglish: `Sheikh ${name}`
     });
     console.log(`  ✅ Created sheikh: ${name}`);
-    return { ...sheikh.toObject(), isNew: true };
+    return { _id: sheikh._id, nameArabic: sheikh.nameArabic, isNew: true };
   }
-  return { ...sheikh, isNew: false };
+  return { _id: sheikh._id, nameArabic: sheikh.nameArabic, isNew: false };
 }
 
 async function findOrCreateSeries(title, sheikhId, category, description, tags) {
@@ -248,9 +248,9 @@ async function findOrCreateSeries(title, sheikhId, category, description, tags) 
       tags: tags || [], lectureCount: 0
     });
     console.log(`  ✅ Created series: ${fullTitle}`);
-    return { ...series.toObject(), isNew: true };
+    return { _id: series._id, titleArabic: series.titleArabic, isNew: true };
   }
-  return { ...series, isNew: false };
+  return { _id: series._id, titleArabic: series.titleArabic, isNew: false };
 }
 
 async function createLecture(data, stats) {
