@@ -57,6 +57,7 @@
  *   - SeriesName        : Series title
  *   - SequenceInSeries  : Lecture sequence (Arabic ordinal or number)
  *   - Serial            : Alternative to SequenceInSeries
+ *   - TitleEnglish      : English title (falls back to Arabic if missing)
  *   - Category          : Aqeedah, Fiqh, Tafsir, Hadith, Seerah, Akhlaq, Other
  *   - Type              : "Series" or "Khutba"
  *   - ClipLength        : Duration (MM:SS or HH:MM:SS)
@@ -281,7 +282,7 @@ async function createLecture(data, stats) {
   await Lecture.create({
     audioFileName: data.audioFileName,
     titleArabic: data.titleArabic,
-    titleEnglish: data.titleArabic,
+    titleEnglish: data.titleEnglish || data.titleArabic,
     sheikhId: data.sheikhId,
     seriesId: data.seriesId,
     lectureNumber: data.lectureNumber,
@@ -382,19 +383,23 @@ async function main() {
         // Title
         const seq = String(row.SequenceInSeries || row.Serial || '').trim();
         const isKhutba = row.Type === 'Khutba';
-        let title;
+        let titleAr;
         if (isKhutba) {
           const parts = seriesTitle.split('-');
-          title = parts.length > 1 ? parts.slice(1).join('-').trim() : seriesTitle;
+          titleAr = parts.length > 1 ? parts.slice(1).join('-').trim() : seriesTitle;
         } else if (seq && seriesTitle) {
-          title = `${seriesTitle} - ${seq}`;
+          titleAr = `${seriesTitle} - ${seq}`;
         } else {
-          title = seq || seriesTitle || 'محاضرة';
+          titleAr = seq || seriesTitle || 'محاضرة';
         }
+
+        // English title from Excel or fallback to Arabic
+        const titleEn = row.TitleEnglish ? String(row.TitleEnglish).trim() : titleAr;
 
         await createLecture({
           audioFileName: filename,
-          titleArabic: title,
+          titleArabic: titleAr,
+          titleEnglish: titleEn,
           seriesTitle: seriesTitle,
           sheikhId: sheikh._id,
           seriesId: series?._id || null,
