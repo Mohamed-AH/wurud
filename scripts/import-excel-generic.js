@@ -78,6 +78,7 @@ const path = require('path');
 const fs = require('fs');
 const mongoose = require('mongoose');
 const { Lecture, Sheikh, Series } = require('../models');
+const { generateSlug } = require('../utils/slugify');
 
 // ============================================================================
 // Parse Arguments
@@ -267,6 +268,16 @@ async function createLecture(data, stats) {
     return null;
   }
 
+  // Generate unique slug
+  const lectureNum = data.lectureNumber || 'x';
+  const baseSlug = generateSlug(`${data.seriesTitle || data.titleArabic}-الدرس-${lectureNum}`);
+  let slug = baseSlug;
+  let suffix = 1;
+  while (await Lecture.exists({ slug })) {
+    suffix++;
+    slug = `${baseSlug}-${suffix}`;
+  }
+
   await Lecture.create({
     audioFileName: data.audioFileName,
     titleArabic: data.titleArabic,
@@ -274,6 +285,7 @@ async function createLecture(data, stats) {
     sheikhId: data.sheikhId,
     seriesId: data.seriesId,
     lectureNumber: data.lectureNumber,
+    slug,
     duration: data.duration,
     durationSeconds: data.duration,
     fileSize: 0,
@@ -383,6 +395,7 @@ async function main() {
         await createLecture({
           audioFileName: filename,
           titleArabic: title,
+          seriesTitle: seriesTitle,
           sheikhId: sheikh._id,
           seriesId: series?._id || null,
           lectureNumber: extractLectureNumber(seq),
