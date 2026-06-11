@@ -59,9 +59,10 @@ async function updateHijriDates() {
           console.log(`    Hijri: ${hijriDate}\n`);
           updated++;
         } else {
-          // Actually update
-          lecture.dateRecordedHijri = hijriDate;
-          await lecture.save();
+          // Actually update using findByIdAndUpdate (works with global .lean() plugin)
+          await Lecture.findByIdAndUpdate(lecture._id, {
+            dateRecordedHijri: hijriDate
+          });
 
           updated++;
           console.log(`  ✓ Updated: ${lecture.titleArabic.substring(0, 50)}...`);
