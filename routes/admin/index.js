@@ -470,11 +470,13 @@ router.get('/series/:id/edit', isAdmin, async (req, res) => {
 router.post('/series/:id/edit', isAdmin, async (req, res) => {
   try {
     const { Series } = require('../../models');
+    const mongoose = require('mongoose');
     const {
       titleArabic, titleEnglish, category, descriptionArabic, descriptionEnglish,
-      tags, bookAuthor, isVisible,
+      tags, bookAuthor, isVisible, parentSeriesId,
       // Display options for search/filter
-      showSearch, showYearFilter, showSortOptions, minLecturesForSearch, minLecturesForYearFilter
+      showSearch, showYearFilter, showSortOptions, minLecturesForSearch, minLecturesForYearFilter,
+      defaultSortOrder
     } = req.body;
 
     // Handle tags - can be a string (single tag) or array (multiple tags)
@@ -490,16 +492,27 @@ router.post('/series/:id/edit', isAdmin, async (req, res) => {
     // Handle visibility - checkbox sends 'on' when checked, undefined when not
     const isVisibleBool = isVisible === 'on' || isVisible === 'true' || isVisible === true;
 
+    // Validate parentSeriesId
+    let validParentId = null;
+    if (parentSeriesId && parentSeriesId !== '' && parentSeriesId !== req.params.id) {
+      // Ensure parent exists and is a top-level series
+      const parentSeries = await Series.findById(parentSeriesId);
+      if (parentSeries && !parentSeries.parentSeriesId) {
+        validParentId = new mongoose.Types.ObjectId(parentSeriesId);
+      }
+    }
+
     // Handle display options for search/filter
     const displayOptions = {
       showSearch: showSearch === 'on' || showSearch === 'true' || showSearch === true,
       showYearFilter: showYearFilter === 'on' || showYearFilter === 'true' || showYearFilter === true,
       showSortOptions: showSortOptions === 'on' || showSortOptions === 'true' || showSortOptions === true,
       minLecturesForSearch: parseInt(minLecturesForSearch) || 15,
-      minLecturesForYearFilter: parseInt(minLecturesForYearFilter) || 15
+      minLecturesForYearFilter: parseInt(minLecturesForYearFilter) || 15,
+      defaultSortOrder: defaultSortOrder === 'newest' ? 'newest' : 'oldest'
     };
 
-    console.log(`[Series Edit] ID: ${req.params.id}, Category: ${category} -> ${validCategory}, isVisible: ${isVisibleBool}, Tags: ${JSON.stringify(tagsArray)}, DisplayOptions: ${JSON.stringify(displayOptions)}`);
+    console.log(`[Series Edit] ID: ${req.params.id}, Category: ${category} -> ${validCategory}, isVisible: ${isVisibleBool}, parentSeriesId: ${validParentId}, Tags: ${JSON.stringify(tagsArray)}, DisplayOptions: ${JSON.stringify(displayOptions)}`);
 
     await Series.findByIdAndUpdate(req.params.id, {
       titleArabic,
@@ -510,6 +523,7 @@ router.post('/series/:id/edit', isAdmin, async (req, res) => {
       tags: tagsArray,
       bookAuthor: bookAuthor || null,
       isVisible: isVisibleBool,
+      parentSeriesId: validParentId,
       displayOptions
     });
 

@@ -769,6 +769,51 @@
           </p>
         </div>
 
+        <!-- Parent Series (for mini-series/sub-series) -->
+        <div class="form-group">
+          <label for="parentSeriesId"><%= adminLocale === 'ar' ? 'السلسلة الأم (اختياري)' : 'Parent Series (Optional)' %></label>
+          <select
+            id="parentSeriesId"
+            name="parentSeriesId"
+            class="form-control"
+            style="padding: 10px 14px;"
+          >
+            <option value=""><%= adminLocale === 'ar' ? '-- بدون سلسلة أم --' : '-- No Parent Series --' %></option>
+          </select>
+          <p style="font-size: 12px; color: #666; margin-top: 4px;">
+            💡 <%= adminLocale === 'ar' ? 'اختر السلسلة الأم إذا كانت هذه سلسلة فرعية (مثل: سلاسل ضمن خطب الجمعة)' : 'Select parent series if this is a sub-series (e.g., mini-series within Friday Sermons)' %>
+          </p>
+        </div>
+
+        <script>
+          // Load parent series options
+          (function() {
+            const currentSeriesId = '<%= series._id %>';
+            const currentParentId = '<%= series.parentSeriesId || "" %>';
+            const select = document.getElementById('parentSeriesId');
+
+            fetch('/api/series/parents')
+              .then(res => res.json())
+              .then(data => {
+                if (data.success && data.series) {
+                  data.series.forEach(s => {
+                    // Skip current series (prevent self-reference)
+                    if (s._id === currentSeriesId) return;
+
+                    const option = document.createElement('option');
+                    option.value = s._id;
+                    option.textContent = s.titleArabic;
+                    if (s._id === currentParentId) {
+                      option.selected = true;
+                    }
+                    select.appendChild(option);
+                  });
+                }
+              })
+              .catch(err => console.error('Error loading parent series:', err));
+          })();
+        </script>
+
         <div class="form-group">
           <label><%= adminLocale === 'ar' ? 'إظهار السلسلة للعموم' : 'Series Visibility' %></label>
           <div class="toggle-container <%= series.isVisible === false ? 'hidden-series' : '' %>" id="visibilityContainer">
@@ -870,6 +915,27 @@
               <div style="flex: 1;">
                 <div class="toggle-label"><%= adminLocale === 'ar' ? '↕️ إظهار خيارات الترتيب' : '↕️ Show Sort Options' %></div>
                 <div class="toggle-description"><%= adminLocale === 'ar' ? 'السماح للزوار بترتيب المحاضرات (الأحدث/الأقدم/حسب الرقم)' : 'Allow visitors to sort lectures (newest/oldest/by number)' %></div>
+              </div>
+            </div>
+
+            <!-- Default Sort Order -->
+            <%
+              const defaultSortOrder = displayOptions.defaultSortOrder || 'oldest';
+            %>
+            <div style="background: #f8f9fa; padding: 16px; border-radius: 8px; display: flex; align-items: center; gap: 16px;">
+              <div style="flex: 1;">
+                <div class="toggle-label" style="margin-bottom: 4px;"><%= adminLocale === 'ar' ? '📊 الترتيب الافتراضي' : '📊 Default Sort Order' %></div>
+                <div class="toggle-description"><%= adminLocale === 'ar' ? 'ترتيب المحاضرات عند فتح الصفحة لأول مرة' : 'Lecture order when page first loads' %></div>
+              </div>
+              <div style="display: flex; gap: 8px;">
+                <label style="display: flex; align-items: center; gap: 6px; cursor: pointer; padding: 8px 12px; border-radius: 6px; background: <%= defaultSortOrder !== 'newest' ? '#1A5F5A' : '#fff' %>; color: <%= defaultSortOrder !== 'newest' ? '#fff' : '#333' %>; border: 1px solid #ddd;">
+                  <input type="radio" name="defaultSortOrder" value="oldest" <%= defaultSortOrder !== 'newest' ? 'checked' : '' %> style="display: none;">
+                  <%= adminLocale === 'ar' ? 'الأقدم أولاً' : 'Oldest First' %>
+                </label>
+                <label style="display: flex; align-items: center; gap: 6px; cursor: pointer; padding: 8px 12px; border-radius: 6px; background: <%= defaultSortOrder === 'newest' ? '#1A5F5A' : '#fff' %>; color: <%= defaultSortOrder === 'newest' ? '#fff' : '#333' %>; border: 1px solid #ddd;">
+                  <input type="radio" name="defaultSortOrder" value="newest" <%= defaultSortOrder === 'newest' ? 'checked' : '' %> style="display: none;">
+                  <%= adminLocale === 'ar' ? 'الأحدث أولاً' : 'Newest First' %>
+                </label>
               </div>
             </div>
           </div>

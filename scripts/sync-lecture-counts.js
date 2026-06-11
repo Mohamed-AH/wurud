@@ -5,6 +5,9 @@
  * Updates lectureCount on all Series and Sheikh documents to match
  * the actual number of published lectures in the database.
  *
+ * For parent series (with child mini-series), the count includes
+ * both own lectures AND all child series lectures.
+ *
  * Usage:
  *   node scripts/sync-lecture-counts.js [options]
  *
@@ -35,28 +38,51 @@ async function main() {
   await mongoose.connect(process.env.MONGODB_URI);
   console.log('  Connected to MongoDB\n');
 
-  // Get actual counts per series
+  // Get actual counts per series (own lectures only)
   const seriesCounts = await Lecture.aggregate([
     { $match: { published: true } },
     { $group: { _id: '$seriesId', count: { $sum: 1 } } }
   ]);
 
-  const seriesCountMap = new Map(seriesCounts.map(s => [s._id?.toString(), s.count]));
+  const ownCountMap = new Map(seriesCounts.map(s => [s._id?.toString(), s.count]));
 
-  // Get all series
-  const allSeries = await Series.find({}).select('_id titleArabic lectureCount');
+  // Get all series with parent info
+  const allSeries = await Series.find({}).select('_id titleArabic lectureCount parentSeriesId').lean();
+
+  // Build parent -> children map
+  const childrenMap = new Map();
+  for (const series of allSeries) {
+    if (series.parentSeriesId) {
+      const parentId = series.parentSeriesId.toString();
+      if (!childrenMap.has(parentId)) {
+        childrenMap.set(parentId, []);
+      }
+      childrenMap.get(parentId).push(series._id.toString());
+    }
+  }
 
   let seriesUpdated = 0;
   console.log('  Series updates:');
 
   for (const series of allSeries) {
-    const actualCount = seriesCountMap.get(series._id.toString()) || 0;
+    const seriesId = series._id.toString();
+    let ownCount = ownCountMap.get(seriesId) || 0;
+
+    // For parent series, add children's lecture counts
+    let childCount = 0;
+    const children = childrenMap.get(seriesId) || [];
+    for (const childId of children) {
+      childCount += ownCountMap.get(childId) || 0;
+    }
+
+    const totalCount = ownCount + childCount;
     const currentCount = series.lectureCount || 0;
 
-    if (actualCount !== currentCount) {
-      console.log(`    ${series.titleArabic}: ${currentCount} → ${actualCount}`);
+    if (totalCount !== currentCount) {
+      const suffix = children.length > 0 ? ` (own: ${ownCount}, children: ${childCount})` : '';
+      console.log(`    ${series.titleArabic}: ${currentCount} → ${totalCount}${suffix}`);
       if (!DRY_RUN) {
-        await Series.findByIdAndUpdate(series._id, { lectureCount: actualCount });
+        await Series.findByIdAndUpdate(series._id, { lectureCount: totalCount });
       }
       seriesUpdated++;
     }
@@ -97,11 +123,22 @@ async function main() {
     console.log('    All sheikh counts are correct.');
   }
 
+  // Summary: show parent series with children
+  const parentSeries = allSeries.filter(s => childrenMap.has(s._id.toString()));
+  if (parentSeries.length > 0) {
+    console.log('\n  Parent series with children:');
+    for (const ps of parentSeries) {
+      const children = childrenMap.get(ps._id.toString()) || [];
+      console.log(`    ${ps.titleArabic}: ${children.length} child series`);
+    }
+  }
+
   console.log('\n' + '═'.repeat(60));
   console.log('  SUMMARY');
   console.log('═'.repeat(60));
   console.log(`  Series updated:  ${seriesUpdated}`);
   console.log(`  Sheikhs updated: ${sheikhUpdated}`);
+  console.log(`  Parent series:   ${parentSeries.length}`);
 
   if (DRY_RUN) {
     console.log('\n  ⚠️  DRY RUN - No changes made.');

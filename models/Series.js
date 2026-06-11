@@ -34,6 +34,13 @@ const seriesSchema = new mongoose.Schema({
     required: true,
     index: true
   },
+  // Parent series for nested mini-series (e.g., Khutba sub-series)
+  parentSeriesId: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'Series',
+    default: null,
+    index: true
+  },
   category: {
     type: String,
     enum: ['Aqeedah', 'Fiqh', 'Tafsir', 'Hadith', 'Seerah', 'Akhlaq', 'Other'],
@@ -121,6 +128,12 @@ const seriesSchema = new mongoose.Schema({
     minLecturesForYearFilter: {
       type: Number,
       default: 15
+    },
+    // Default sort order for lectures (oldest = chronological, newest = reverse)
+    defaultSortOrder: {
+      type: String,
+      enum: ['oldest', 'newest'],
+      default: 'oldest'
     }
   }
 }, {

@@ -129,7 +129,8 @@ async function fetchHomepageData() {
 }
 
 // Helper function to fetch schedule data (for caching)
-// Optimized: Uses aggregation to batch lecture counts + latest lectures (14 -> 2 queries)
+// Optimized: Uses aggregation to batch lecture counts + latest lectures
+// Includes child series lectures in parent's count
 async function fetchScheduleData() {
   const scheduleItems = await Schedule.find({ isActive: true })
     .populate('seriesId', 'titleArabic titleEnglish slug')
@@ -142,9 +143,29 @@ async function fetchScheduleData() {
   const validItems = scheduleItems.filter(item => item.seriesId);
   const seriesIds = validItems.map(item => item.seriesId._id);
 
-  // Batch query: Get counts and latest lectures in ONE aggregation
+  // Find child series for scheduled parent series
+  const childSeries = await Series.find({
+    parentSeriesId: { $in: seriesIds },
+    isVisible: true
+  }).select('_id parentSeriesId').lean();
+
+  // Build parent -> children map
+  const childrenMap = new Map();
+  for (const child of childSeries) {
+    const parentId = child.parentSeriesId.toString();
+    if (!childrenMap.has(parentId)) {
+      childrenMap.set(parentId, []);
+    }
+    childrenMap.get(parentId).push(child._id);
+  }
+
+  // Get all series IDs we need counts for (parents + children)
+  const allChildIds = childSeries.map(c => c._id);
+  const allSeriesIds = [...seriesIds, ...allChildIds];
+
+  // Batch query: Get counts and latest lectures
   const seriesStats = await Lecture.aggregate([
-    { $match: { seriesId: { $in: seriesIds }, published: true } },
+    { $match: { seriesId: { $in: allSeriesIds }, published: true } },
     { $sort: { seriesId: 1, dateRecorded: -1, createdAt: -1 } },
     {
       $group: {
@@ -169,15 +190,30 @@ async function fetchScheduleData() {
   const statsMap = new Map(seriesStats.map(s => [s._id.toString(), s]));
 
   const weeklySchedule = validItems.map(item => {
-    const stats = statsMap.get(item.seriesId._id.toString()) || {};
-    const latestLecture = stats.latestLecture || null;
+    const seriesId = item.seriesId._id.toString();
+    const ownStats = statsMap.get(seriesId) || {};
+    let ownCount = ownStats.lectureCount || 0;
+
+    // Add child series lecture counts
+    let childCount = 0;
+    const children = childrenMap.get(seriesId) || [];
+    for (const childId of children) {
+      const childStats = statsMap.get(childId.toString());
+      if (childStats) {
+        childCount += childStats.lectureCount || 0;
+      }
+    }
+
+    const totalCount = ownCount + childCount;
+    const latestLecture = ownStats.latestLecture || null;
     const isNew = latestLecture && (
       Date.now() - new Date(latestLecture.dateRecorded || latestLecture.createdAt) < 7 * 24 * 60 * 60 * 1000
     );
+
     return {
       ...item,
       latestLecture,
-      lectureCount: stats.lectureCount || 0,
+      lectureCount: totalCount,
       isNew
     };
   });
@@ -787,38 +823,49 @@ router.get('/series/:shortId(\\d+)/:slug_en?/:slug_ar?', async (req, res) => {
 
     const seriesStatsSettings = siteSettings.seriesStats || { minPlaysToShow: 100, showDuration: false };
 
-    // Calculate statistics
+    // Fetch child series (mini-series under this parent)
+    let childSeries = [];
+    let childLectureCount = 0;
+
+    const children = await Series.find({
+      parentSeriesId: series._id,
+      isVisible: true
+    }).select('_id titleArabic titleEnglish shortId slug_en slug_ar lectureCount').lean();
+
+    if (children.length > 0) {
+      // Get actual lecture counts for children
+      const childIds = children.map(s => s._id);
+      const childCounts = await Lecture.aggregate([
+        { $match: { seriesId: { $in: childIds }, published: true } },
+        { $group: { _id: '$seriesId', count: { $sum: 1 } } }
+      ]);
+      const countMap = new Map(childCounts.map(c => [c._id.toString(), c.count]));
+
+      childSeries = children.map(child => ({
+        ...child,
+        actualLectureCount: countMap.get(child._id.toString()) || 0
+      }));
+
+      // Sum up child lecture counts
+      childLectureCount = childSeries.reduce((sum, c) => sum + c.actualLectureCount, 0);
+    }
+
+    // Calculate statistics (including child series lectures in total)
     const stats = {
-      totalLectures: lectures.length,
+      ownLectures: lectures.length,
+      childLectures: childLectureCount,
+      totalLectures: lectures.length + childLectureCount,
       totalPlays: lectures.reduce((sum, lecture) => sum + (lecture.playCount || 0), 0),
       totalDuration: lectures.reduce((sum, lecture) => sum + (lecture.duration || 0), 0),
       completeLectures: lectures.filter(l => l.lectureNumber).length
     };
 
-    // For consolidated Khutba series, also find related multi-lecture Khutba series
-    // Optimized: Bulk count with $in instead of N+1 queries
-    let relatedKhutbaSeries = [];
-    if (series.titleArabic === 'خطب الجمعة') {
-      relatedKhutbaSeries = await Series.find({
-        sheikhId: series.sheikhId._id,
-        titleArabic: {
-          $regex: 'خطبة.*جمعة',
-          $options: 'i'
-        },
-        _id: { $ne: series._id }
-      }).lean();
-
-      if (relatedKhutbaSeries.length > 0) {
-        const relatedIds = relatedKhutbaSeries.map(s => s._id);
-        const counts = await Lecture.aggregate([
-          { $match: { seriesId: { $in: relatedIds }, published: true } },
-          { $group: { _id: '$seriesId', count: { $sum: 1 } } }
-        ]);
-        const countMap = new Map(counts.map(c => [c._id.toString(), c.count]));
-        relatedKhutbaSeries.forEach(s => {
-          s.actualLectureCount = countMap.get(s._id.toString()) || 0;
-        });
-      }
+    // Check if this series is a child (has parent)
+    let parentSeries = null;
+    if (series.parentSeriesId) {
+      parentSeries = await Series.findById(series.parentSeriesId)
+        .select('titleArabic titleEnglish shortId slug_en slug_ar')
+        .lean();
     }
 
     const canonicalPath = buildCanonicalUrl('series', series);
@@ -828,7 +875,8 @@ router.get('/series/:shortId(\\d+)/:slug_en?/:slug_ar?', async (req, res) => {
       series,
       lectures,
       stats,
-      relatedKhutbaSeries,
+      childSeries,
+      parentSeries,
       canonicalPath: canonicalPath || `/series/${series._id}`,
       seriesStatsSettings
     });
