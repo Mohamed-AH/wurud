@@ -425,14 +425,13 @@ async function main() {
       }
     }
 
-    // Update counts
+    // Update counts for all series that received lectures
     if (!DRY_RUN) {
       for (const [, s] of seriesMap) {
-        if (!s.isNew) continue;
-        const count = await Lecture.countDocuments({ seriesId: s._id });
+        const count = await Lecture.countDocuments({ seriesId: s._id, published: true });
         await Series.findByIdAndUpdate(s._id, { lectureCount: count });
       }
-      const total = await Lecture.countDocuments({ sheikhId: sheikh._id });
+      const total = await Lecture.countDocuments({ sheikhId: sheikh._id, published: true });
       await Sheikh.findByIdAndUpdate(sheikh._id, { lectureCount: total });
     }
 
