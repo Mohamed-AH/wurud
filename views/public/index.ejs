@@ -2314,12 +2314,8 @@
               </a>
             </td>
             <td style="text-align: center;">
-              <% if (item.latestLecture && item.latestLecture.lectureNumber) { %>
-              <a href="/lectures/<%= item.latestLecture.slug ? encodeURIComponent(item.latestLecture.slug) : item.latestLecture._id %>" style="text-decoration: none;">
-                <span class="schedule-lesson-num"><%= item.latestLecture.lectureNumber %></span>
-              </a>
-              <% } else if (item.lectureCount > 0) { %>
-              <a href="/series/<%= item.seriesId.slug ? encodeURIComponent(item.seriesId.slug) : item.seriesId._id %>" style="text-decoration: none;">
+              <% if (item.lectureCount > 0) { %>
+              <a href="<%= item.latestLecture ? '/lectures/' + (item.latestLecture.slug ? encodeURIComponent(item.latestLecture.slug) : item.latestLecture._id) : '/series/' + (item.seriesId.slug ? encodeURIComponent(item.seriesId.slug) : item.seriesId._id) %>" style="text-decoration: none;">
                 <span class="schedule-lesson-num"><%= item.lectureCount %></span>
               </a>
               <% } else { %>
@@ -2367,12 +2363,8 @@
               </a>
             </td>
             <td style="text-align: center;">
-              <% if (item.latestLecture && item.latestLecture.lectureNumber) { %>
-              <a href="/lectures/<%= item.latestLecture.slug ? encodeURIComponent(item.latestLecture.slug) : item.latestLecture._id %>" style="text-decoration: none;">
-                <span class="schedule-lesson-num"><%= item.latestLecture.lectureNumber %></span>
-              </a>
-              <% } else if (item.lectureCount > 0) { %>
-              <a href="/series/<%= item.seriesId.slug ? encodeURIComponent(item.seriesId.slug) : item.seriesId._id %>" style="text-decoration: none;">
+              <% if (item.lectureCount > 0) { %>
+              <a href="<%= item.latestLecture ? '/lectures/' + (item.latestLecture.slug ? encodeURIComponent(item.latestLecture.slug) : item.latestLecture._id) : '/series/' + (item.seriesId.slug ? encodeURIComponent(item.seriesId.slug) : item.seriesId._id) %>" style="text-decoration: none;">
                 <span class="schedule-lesson-num"><%= item.lectureCount %></span>
               </a>
               <% } else { %>

@@ -303,7 +303,7 @@
               <source src="<%= lecture.audioUrl %>" type="audio/mp4">
             </audio>
             <p style="font-size: 12px; color: #666; margin-top: 8px;">
-              <%= adminLocale === 'ar' ? 'المدة:' : 'Duration:' %> <span id="currentDuration"><%= lecture.durationSeconds ? Math.floor(lecture.durationSeconds / 60) + ':' + String(lecture.durationSeconds % 60).padStart(2, '0') : (adminLocale === 'ar' ? 'غير معروفة' : 'Unknown') %></span>
+              <%= adminLocale === 'ar' ? 'المدة:' : 'Duration:' %> <span id="currentDuration"><% if (lecture.durationSeconds) { const hrs = Math.floor(lecture.durationSeconds / 3600); const mins = Math.floor((lecture.durationSeconds % 3600) / 60); const secs = lecture.durationSeconds % 60; %><%= hrs > 0 ? hrs + ':' + String(mins).padStart(2, '0') : mins %>:<%= String(secs).padStart(2, '0') %><% } else { %><%= adminLocale === 'ar' ? 'غير معروفة' : 'Unknown' %><% } %></span>
               | <%= adminLocale === 'ar' ? 'الحجم:' : 'Size:' %> <%= lecture.fileSize ? (lecture.fileSize / (1024 * 1024)).toFixed(2) + ' MB' : (adminLocale === 'ar' ? 'غير معروف' : 'Unknown') %>
             </p>
           </div>
@@ -449,9 +449,13 @@
         audio.src = audioUrl;
         audio.addEventListener('loadedmetadata', () => {
           const duration = Math.floor(audio.duration);
-          const minutes = Math.floor(duration / 60);
-          const seconds = duration % 60;
-          localDurationValue.textContent = minutes + ':' + String(seconds).padStart(2, '0');
+          const hrs = Math.floor(duration / 3600);
+          const mins = Math.floor((duration % 3600) / 60);
+          const secs = duration % 60;
+          const timeStr = hrs > 0
+            ? hrs + ':' + String(mins).padStart(2, '0') + ':' + String(secs).padStart(2, '0')
+            : mins + ':' + String(secs).padStart(2, '0');
+          localDurationValue.textContent = timeStr;
           localDuration.style.display = 'block';
           URL.revokeObjectURL(audioUrl);
         });
@@ -613,13 +617,17 @@
       audio.src = audioUrl;
       audio.addEventListener('loadedmetadata', () => {
         const duration = Math.floor(audio.duration);
-        const minutes = Math.floor(duration / 60);
-        const seconds = duration % 60;
+        const hrs = Math.floor(duration / 3600);
+        const mins = Math.floor((duration % 3600) / 60);
+        const secs = duration % 60;
+        const timeStr = hrs > 0
+          ? hrs + ':' + String(mins).padStart(2, '0') + ':' + String(secs).padStart(2, '0')
+          : mins + ':' + String(secs).padStart(2, '0');
 
         // Update display
         const durationSpan = document.getElementById('currentDuration');
         if (durationSpan) {
-          durationSpan.textContent = minutes + ':' + String(seconds).padStart(2, '0');
+          durationSpan.textContent = timeStr;
         }
 
         // Send to server to update database

@@ -75,45 +75,39 @@ sheikhSchema.set('toJSON', { virtuals: true });
 sheikhSchema.set('toObject', { virtuals: true });
 
 // Pre-save middleware for auto-generating shortId and slugs
-sheikhSchema.pre('save', async function(next) {
-  try {
-    // Auto-assign shortId using atomic counter increment
-    if (this.isNew && !this.shortId) {
-      this.shortId = await Counter.getNextSequence('sheikh');
+sheikhSchema.pre('save', async function() {
+  // Auto-assign shortId using atomic counter increment
+  if (this.isNew && !this.shortId) {
+    this.shortId = await Counter.getNextSequence('sheikh');
+  }
+
+  // Auto-generate slug_en if missing (remove honorifics for cleaner URLs)
+  if (!this.slug_en) {
+    const cleanName = (this.nameEnglish || this.nameArabic || '')
+      .replace(/الشيخ\s*/g, '')
+      .replace(/حفظه الله/g, '')
+      .replace(/رحمه الله/g, '')
+      .trim();
+
+    if (cleanName) {
+      this.slug_en = generateSlugEn(cleanName);
     }
-
-    // Auto-generate slug_en if missing (remove honorifics for cleaner URLs)
-    if (!this.slug_en) {
-      const cleanName = (this.nameEnglish || this.nameArabic || '')
-        .replace(/الشيخ\s*/g, '')
-        .replace(/حفظه الله/g, '')
-        .replace(/رحمه الله/g, '')
-        .trim();
-
-      if (cleanName) {
-        this.slug_en = generateSlugEn(cleanName);
-      }
-      if (!this.slug_en && this.shortId) {
-        this.slug_en = `sheikh-${this.shortId}`;
-      }
+    if (!this.slug_en && this.shortId) {
+      this.slug_en = `sheikh-${this.shortId}`;
     }
+  }
 
-    // Auto-generate slug_ar if missing (remove honorifics)
-    if (!this.slug_ar && this.nameArabic) {
-      const cleanNameAr = this.nameArabic
-        .replace(/الشيخ\s*/g, '')
-        .replace(/حفظه الله/g, '')
-        .replace(/رحمه الله/g, '')
-        .trim();
+  // Auto-generate slug_ar if missing (remove honorifics)
+  if (!this.slug_ar && this.nameArabic) {
+    const cleanNameAr = this.nameArabic
+      .replace(/الشيخ\s*/g, '')
+      .replace(/حفظه الله/g, '')
+      .replace(/رحمه الله/g, '')
+      .trim();
 
-      if (cleanNameAr) {
-        this.slug_ar = generateSlugAr(cleanNameAr);
-      }
+    if (cleanNameAr) {
+      this.slug_ar = generateSlugAr(cleanNameAr);
     }
-
-    next();
-  } catch (error) {
-    next(error);
   }
 });
 

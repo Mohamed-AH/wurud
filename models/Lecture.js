@@ -200,35 +200,29 @@ lectureSchema.set('toJSON', { virtuals: true });
 lectureSchema.set('toObject', { virtuals: true });
 
 // Pre-save middleware for auto-generating shortId and slugs
-lectureSchema.pre('save', async function(next) {
-  try {
-    // Auto-assign shortId using atomic counter increment
-    if (this.isNew && !this.shortId) {
-      this.shortId = await Counter.getNextSequence('lecture');
-    }
+lectureSchema.pre('save', async function() {
+  // Auto-assign shortId using atomic counter increment
+  if (this.isNew && !this.shortId) {
+    this.shortId = await Counter.getNextSequence('lecture');
+  }
 
-    // Auto-generate slug_en if missing
-    if (!this.slug_en) {
-      if (this.titleEnglish) {
-        this.slug_en = generateSlugEn(this.titleEnglish);
-      } else if (this.titleArabic) {
-        // Fallback: transliterate Arabic title
-        this.slug_en = generateSlugEn(this.titleArabic);
-      }
-      // Ultimate fallback: use shortId
-      if (!this.slug_en && this.shortId) {
-        this.slug_en = `lecture-${this.shortId}`;
-      }
+  // Auto-generate slug_en if missing
+  if (!this.slug_en) {
+    if (this.titleEnglish) {
+      this.slug_en = generateSlugEn(this.titleEnglish);
+    } else if (this.titleArabic) {
+      // Fallback: transliterate Arabic title
+      this.slug_en = generateSlugEn(this.titleArabic);
     }
-
-    // Auto-generate slug_ar if missing
-    if (!this.slug_ar && this.titleArabic) {
-      this.slug_ar = generateSlugAr(this.titleArabic);
+    // Ultimate fallback: use shortId
+    if (!this.slug_en && this.shortId) {
+      this.slug_en = `lecture-${this.shortId}`;
     }
+  }
 
-    next();
-  } catch (error) {
-    next(error);
+  // Auto-generate slug_ar if missing
+  if (!this.slug_ar && this.titleArabic) {
+    this.slug_ar = generateSlugAr(this.titleArabic);
   }
 });
 

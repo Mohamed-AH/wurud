@@ -328,19 +328,23 @@ router.post('/bulk-upload-audio', [isAdminAPI, upload.single('audioFile')], asyn
     // Extract audio metadata
     const metadata = await extractAudioMetadata(req.file.path);
 
-    // Update lecture with audio file info
-    lecture.audioFileName = req.file.filename;
-    lecture.duration = Math.floor(metadata.duration || 0);
-    lecture.fileSize = req.file.size;
-    lecture.bitrate = metadata.bitrate || null;
-    lecture.format = metadata.format || path.extname(req.file.filename).substring(1);
-
-    await lecture.save();
+    // Update lecture with audio file info (use findByIdAndUpdate to avoid lean plugin issue)
+    const updatedLecture = await Lecture.findByIdAndUpdate(
+      lectureId,
+      {
+        audioFileName: req.file.filename,
+        duration: Math.floor(metadata.duration || 0),
+        fileSize: req.file.size,
+        bitrate: metadata.bitrate || null,
+        format: metadata.format || path.extname(req.file.filename).substring(1)
+      },
+      { new: true }
+    );
 
     res.json({
       success: true,
       message: 'Audio file uploaded successfully',
-      lecture: lecture
+      lecture: updatedLecture
     });
 
   } catch (error) {

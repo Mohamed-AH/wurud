@@ -805,11 +805,12 @@ router.post('/lectures/:id/upload-audio', isAdmin, async (req, res) => {
       // Upload to OCI
       const result = await uploadToOCI(req.file.path, objectName);
 
-      // Update lecture with audio URL
-      lecture.audioUrl = result.url;
-      lecture.audioFileName = objectName;
-      lecture.fileSize = result.size;
-      await lecture.save();
+      // Update lecture with audio URL (use findByIdAndUpdate to avoid lean plugin issue)
+      await Lecture.findByIdAndUpdate(req.params.id, {
+        audioUrl: result.url,
+        audioFileName: objectName,
+        fileSize: result.size
+      });
 
       console.log(`[Audio Upload] Success: ${objectName} -> ${result.url}`);
 
@@ -817,7 +818,7 @@ router.post('/lectures/:id/upload-audio', isAdmin, async (req, res) => {
       fs.unlinkSync(req.file.path);
 
       // Redirect back to edit page with success
-      res.redirect(`/admin/lectures/${lecture._id}/edit?success=audio-uploaded`);
+      res.redirect(`/admin/lectures/${req.params.id}/edit?success=audio-uploaded`);
     } catch (error) {
       console.error('OCI upload error:', error);
 
@@ -885,12 +886,13 @@ router.post('/api/lectures/:id/upload-audio', isAdmin, async (req, res) => {
         throw new Error('فشل التحقق من الملف في السحابة');
       }
 
-      // Update lecture with audio URL
-      lecture.audioUrl = result.url;
-      lecture.audioFileName = objectName;
-      lecture.fileSize = result.size;
-      lecture.durationVerified = false; // Reset verification for new file
-      await lecture.save();
+      // Update lecture with audio URL (use findByIdAndUpdate to avoid lean plugin issue)
+      await Lecture.findByIdAndUpdate(req.params.id, {
+        audioUrl: result.url,
+        audioFileName: objectName,
+        fileSize: result.size,
+        durationVerified: false
+      });
 
       console.log(`[Audio Upload API] Success: ${objectName} -> ${result.url}`);
 
@@ -933,15 +935,15 @@ router.post('/lectures/:id/toggle-published', isAdmin, async (req, res) => {
       return res.status(404).json({ success: false, message: 'Lecture not found' });
     }
 
-    lecture.published = !lecture.published;
-    await lecture.save();
+    const newPublished = !lecture.published;
+    await Lecture.findByIdAndUpdate(req.params.id, { published: newPublished });
 
     // Invalidate homepage cache
     invalidateHomepageCache();
 
     res.json({
       success: true,
-      published: lecture.published
+      published: newPublished
     });
   } catch (error) {
     console.error('Toggle published error:', error);
@@ -963,9 +965,8 @@ router.post('/lectures/:id/remove-from-series', isAdmin, async (req, res) => {
 
     const previousSeriesId = lecture.seriesId;
 
-    // Remove from series
-    lecture.seriesId = null;
-    await lecture.save();
+    // Remove from series (use findByIdAndUpdate to avoid lean plugin issue)
+    await Lecture.findByIdAndUpdate(req.params.id, { seriesId: null });
 
     // Decrement lecture count on the previous series
     if (previousSeriesId) {
@@ -1512,26 +1513,30 @@ router.post('/lectures/:id/assign-to-series', isAdmin, async (req, res) => {
     // Store previous series ID if any
     const previousSeriesId = lecture.seriesId;
 
-    // Update lecture
-    lecture.seriesId = series._id;
-    lecture.sheikhId = series.sheikhId;
-    lecture.category = series.category;
+    // Prepare update data
+    const updateData = {
+      seriesId: series._id,
+      sheikhId: series.sheikhId,
+      category: series.category
+    };
 
     if (lectureNumber) {
-      lecture.lectureNumber = parseInt(lectureNumber);
+      updateData.lectureNumber = parseInt(lectureNumber);
     }
 
     // Regenerate slug to include series name
-    const baseSlug = generateSlug(`${series.titleArabic}-الدرس-${lecture.lectureNumber || 'x'}`);
+    const lectureNum = lectureNumber ? parseInt(lectureNumber) : lecture.lectureNumber || 'x';
+    const baseSlug = generateSlug(`${series.titleArabic}-الدرس-${lectureNum}`);
     let slug = baseSlug;
     let suffix = 1;
     while (await Lecture.exists({ slug, _id: { $ne: lecture._id } })) {
       suffix++;
       slug = `${baseSlug}-${suffix}`;
     }
-    lecture.slug = slug;
+    updateData.slug = slug;
 
-    await lecture.save();
+    // Update lecture (use findByIdAndUpdate to avoid lean plugin issue)
+    await Lecture.findByIdAndUpdate(req.params.id, updateData);
 
     // Update lecture counts
     if (previousSeriesId) {
@@ -1855,12 +1860,12 @@ router.post('/users/:id/toggle-active', isSuperAdmin, async (req, res) => {
       return res.status(404).json({ success: false, message: 'User not found' });
     }
 
-    user.isActive = !user.isActive;
-    await user.save();
+    const newIsActive = !user.isActive;
+    await Admin.findByIdAndUpdate(req.params.id, { isActive: newIsActive });
 
     res.json({
       success: true,
-      isActive: user.isActive
+      isActive: newIsActive
     });
   } catch (error) {
     console.error('Toggle active error:', error);
@@ -2294,14 +2299,15 @@ router.post('/sections/:id', isAdmin, async (req, res) => {
       return res.redirect('/admin/sections?error=not_found');
     }
 
-    section.title = { ar: titleAr, en: titleEn };
-    section.description = { ar: descriptionAr, en: descriptionEn };
-    section.icon = icon || '📚';
-    section.maxVisible = parseInt(maxVisible) || 5;
-    section.collapsedByDefault = collapsedByDefault === 'on';
-    section.isVisible = isVisible === 'on';
-
-    await section.save();
+    // Update section (use findByIdAndUpdate to avoid lean plugin issue)
+    await Section.findByIdAndUpdate(req.params.id, {
+      title: { ar: titleAr, en: titleEn },
+      description: { ar: descriptionAr, en: descriptionEn },
+      icon: icon || '📚',
+      maxVisible: parseInt(maxVisible) || 5,
+      collapsedByDefault: collapsedByDefault === 'on',
+      isVisible: isVisible === 'on'
+    });
     invalidateHomepageCache();
 
     res.redirect('/admin/sections?success=section_updated');
@@ -2402,9 +2408,11 @@ router.post('/sections/:id/series/add', isAdmin, async (req, res) => {
     const lastSeries = await Series.findOne({ sectionId: section._id }).sort({ sectionOrder: -1 });
     const sectionOrder = lastSeries ? lastSeries.sectionOrder + 1 : 0;
 
-    series.sectionId = section._id;
-    series.sectionOrder = sectionOrder;
-    await series.save();
+    // Update series (use findByIdAndUpdate to avoid lean plugin issue)
+    await Series.findByIdAndUpdate(seriesId, {
+      sectionId: section._id,
+      sectionOrder: sectionOrder
+    });
     invalidateHomepageCache();
 
     res.redirect(`/admin/sections/${req.params.id}/series?success=series_added`);
@@ -2477,6 +2485,7 @@ router.post('/series/:id/assign-section', isAdmin, async (req, res) => {
 
     const { sectionId } = req.body;
 
+    let updateData;
     if (sectionId && sectionId !== '') {
       // Verify section exists
       const section = await Section.findById(sectionId);
@@ -2488,14 +2497,13 @@ router.post('/series/:id/assign-section', isAdmin, async (req, res) => {
       const lastSeries = await Series.findOne({ sectionId: section._id }).sort({ sectionOrder: -1 });
       const sectionOrder = lastSeries ? lastSeries.sectionOrder + 1 : 0;
 
-      series.sectionId = section._id;
-      series.sectionOrder = sectionOrder;
+      updateData = { sectionId: section._id, sectionOrder: sectionOrder };
     } else {
-      series.sectionId = null;
-      series.sectionOrder = 0;
+      updateData = { sectionId: null, sectionOrder: 0 };
     }
 
-    await series.save();
+    // Update series (use findByIdAndUpdate to avoid lean plugin issue)
+    await Series.findByIdAndUpdate(req.params.id, updateData);
     invalidateHomepageCache();
 
     res.redirect(`/admin/series/${req.params.id}/edit?success=section_assigned`);

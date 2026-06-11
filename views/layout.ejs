@@ -142,8 +142,8 @@
   </style>
 </head>
 <body>
-  <!-- Maintenance Mode Overlay -->
-  <% if (typeof maintenanceMode !== 'undefined' && maintenanceMode.enabled) { %>
+  <!-- Maintenance Mode Overlay (exempt admin and auth routes) -->
+  <% if (typeof maintenanceMode !== 'undefined' && maintenanceMode.enabled && !(currentPath && (currentPath.startsWith('/admin') || currentPath.startsWith('/auth')))) { %>
   <div class="maintenance-overlay" dir="<%= isRTL ? 'rtl' : 'ltr' %>">
     <div class="maintenance-content">
       <div class="maintenance-icon">🔧</div>

@@ -134,33 +134,27 @@ seriesSchema.index({ sheikhId: 1, titleArabic: 1 }, { unique: true });
 seriesSchema.index({ titleArabic: 'text', titleEnglish: 'text' });
 
 // Pre-save middleware for auto-generating shortId and slugs
-seriesSchema.pre('save', async function(next) {
-  try {
-    // Auto-assign shortId using atomic counter increment
-    if (this.isNew && !this.shortId) {
-      this.shortId = await Counter.getNextSequence('series');
-    }
+seriesSchema.pre('save', async function() {
+  // Auto-assign shortId using atomic counter increment
+  if (this.isNew && !this.shortId) {
+    this.shortId = await Counter.getNextSequence('series');
+  }
 
-    // Auto-generate slug_en if missing
-    if (!this.slug_en) {
-      if (this.titleEnglish) {
-        this.slug_en = generateSlugEn(this.titleEnglish);
-      } else if (this.titleArabic) {
-        this.slug_en = generateSlugEn(this.titleArabic);
-      }
-      if (!this.slug_en && this.shortId) {
-        this.slug_en = `series-${this.shortId}`;
-      }
+  // Auto-generate slug_en if missing
+  if (!this.slug_en) {
+    if (this.titleEnglish) {
+      this.slug_en = generateSlugEn(this.titleEnglish);
+    } else if (this.titleArabic) {
+      this.slug_en = generateSlugEn(this.titleArabic);
     }
-
-    // Auto-generate slug_ar if missing
-    if (!this.slug_ar && this.titleArabic) {
-      this.slug_ar = generateSlugAr(this.titleArabic);
+    if (!this.slug_en && this.shortId) {
+      this.slug_en = `series-${this.shortId}`;
     }
+  }
 
-    next();
-  } catch (error) {
-    next(error);
+  // Auto-generate slug_ar if missing
+  if (!this.slug_ar && this.titleArabic) {
+    this.slug_ar = generateSlugAr(this.titleArabic);
   }
 });
 
