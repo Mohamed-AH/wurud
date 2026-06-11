@@ -967,6 +967,161 @@
       flex-wrap: wrap;
     }
   }
+
+  /* Child Series (Mini-Series) Cards */
+  .child-series-section {
+    background: var(--cream);
+    padding: 24px 0;
+    border-bottom: 2px solid var(--accent-amber);
+  }
+
+  .child-series-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 16px;
+  }
+
+  .child-series-title {
+    font-family: var(--font-arabic-display);
+    font-size: 20px;
+    color: var(--primary-brown);
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+
+  .child-series-count {
+    background: var(--accent-gold);
+    color: var(--primary-dark);
+    font-size: 12px;
+    padding: 2px 8px;
+    border-radius: 10px;
+  }
+
+  .child-series-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+    gap: 16px;
+  }
+
+  .child-series-card {
+    background: white;
+    border: 2px solid var(--accent-amber);
+    border-radius: 12px;
+    padding: 16px;
+    text-decoration: none;
+    transition: all 0.3s ease;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+  }
+
+  .child-series-card:hover {
+    border-color: var(--accent-gold);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+    transform: translateY(-2px);
+  }
+
+  .child-series-card-title {
+    font-family: var(--font-arabic-display);
+    font-size: 16px;
+    color: var(--primary-brown);
+    line-height: 1.4;
+  }
+
+  .child-series-card-count {
+    font-size: 13px;
+    color: var(--text-secondary);
+  }
+
+  /* Desktop: show max 6 cards, rest hidden */
+  .child-series-card.hidden-desktop {
+    display: none;
+  }
+
+  .show-more-btn {
+    background: var(--primary-brown);
+    color: var(--cream);
+    border: none;
+    padding: 10px 20px;
+    border-radius: 8px;
+    cursor: pointer;
+    font-family: var(--font-arabic);
+    font-size: 14px;
+    margin-top: 12px;
+    transition: background 0.3s;
+  }
+
+  .show-more-btn:hover {
+    background: var(--accent-gold);
+    color: var(--primary-dark);
+  }
+
+  /* Mobile: hide grid, show toggle button */
+  .mobile-toggle-btn {
+    display: none;
+    width: 100%;
+    background: var(--primary-brown);
+    color: var(--cream);
+    border: none;
+    padding: 12px 16px;
+    border-radius: 8px;
+    cursor: pointer;
+    font-family: var(--font-arabic);
+    font-size: 14px;
+    margin-bottom: 12px;
+    transition: background 0.3s;
+  }
+
+  .mobile-toggle-btn:hover {
+    background: var(--accent-gold);
+    color: var(--primary-dark);
+  }
+
+  .mobile-toggle-btn svg {
+    transition: transform 0.3s;
+  }
+
+  .mobile-toggle-btn.expanded svg {
+    transform: rotate(180deg);
+  }
+
+  @media (max-width: 768px) {
+    .child-series-section {
+      padding: 16px 0;
+    }
+
+    .mobile-toggle-btn {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .child-series-grid {
+      display: none;
+      grid-template-columns: 1fr;
+    }
+
+    .child-series-grid.mobile-visible {
+      display: grid;
+    }
+
+    .child-series-card.hidden-desktop {
+      display: flex;
+    }
+
+    .show-more-btn {
+      display: none;
+    }
+  }
+
+  /* Parent breadcrumb link styling */
+  .breadcrumb .parent-link {
+    color: var(--accent-gold);
+    font-weight: 500;
+  }
 </style>
 
 <div class="series-detail-page">
@@ -975,6 +1130,12 @@
     <div class="container">
       <a href="/"><%= locale === 'ar' ? 'الرئيسية' : 'Home' %></a>
       <span class="separator">›</span>
+      <% if (typeof parentSeries !== 'undefined' && parentSeries) { %>
+        <a href="/series/<%= parentSeries.shortId %>/<%= parentSeries.slug_en || '' %>/<%= encodeURIComponent(parentSeries.slug_ar || '') %>" class="parent-link">
+          <%= locale === 'ar' ? parentSeries.titleArabic : (parentSeries.titleEnglish || parentSeries.titleArabic) %>
+        </a>
+        <span class="separator">›</span>
+      <% } %>
       <span class="current"><%= locale === 'ar' ? series.titleArabic : (series.titleEnglish || series.titleArabic) %></span>
     </div>
   </nav>
@@ -1102,45 +1263,96 @@
     </div>
   <% } %>
 
-  <!-- Related Khutba Series (for consolidated خطب الجمعة only) -->
-  <% if (relatedKhutbaSeries && relatedKhutbaSeries.length > 0) { %>
-    <div class="content-section">
+  <!-- Child Series (Mini-Series) Section -->
+  <% if (typeof childSeries !== 'undefined' && childSeries && childSeries.length > 0) { %>
+    <%
+      const MAX_VISIBLE_CARDS = 6;
+      const hasMoreCards = childSeries.length > MAX_VISIBLE_CARDS;
+      const isKhutba = (series.titleArabic || '').includes('خطب');
+    %>
+    <div class="child-series-section">
       <div class="container">
-        <h2 class="section-title"><%= locale === 'ar' ? 'سلاسل الخطب' : 'Khutbah Series' %></h2>
-        <div class="series-grid">
-          <% relatedKhutbaSeries.forEach(relSeries => { %>
-            <a href="/series/<%= relSeries.shortId ? relSeries.shortId + '/' + (relSeries.slug_en || '') + '/' + encodeURIComponent(relSeries.slug_ar || '') : (relSeries.slug ? encodeURIComponent(relSeries.slug) : relSeries._id) %>" class="series-card">
-              <div class="series-icon">
-                <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                  <path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"></path>
-                  <path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"></path>
-                </svg>
+        <div class="child-series-header">
+          <h3 class="child-series-title">
+            <%= locale === 'ar' ? (isKhutba ? 'سلاسل الخطب' : 'السلاسل الفرعية') : 'Sub-Series' %>
+            <span class="child-series-count"><%= childSeries.length %></span>
+          </h3>
+        </div>
+
+        <!-- Mobile Toggle Button -->
+        <button class="mobile-toggle-btn" onclick="toggleChildSeries(this)">
+          <span><%= locale === 'ar' ? 'عرض السلاسل الفرعية' : 'Show Sub-Series' %> (<%= childSeries.length %>)</span>
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <polyline points="6 9 12 15 18 9"></polyline>
+          </svg>
+        </button>
+
+        <!-- Cards Grid -->
+        <div class="child-series-grid" id="childSeriesGrid">
+          <% childSeries.forEach((child, index) => { %>
+            <a href="/series/<%= child.shortId %>/<%= child.slug_en || '' %>/<%= encodeURIComponent(child.slug_ar || '') %>"
+               class="child-series-card<%= index >= MAX_VISIBLE_CARDS ? ' hidden-desktop' : '' %>">
+              <div class="child-series-card-title">
+                <%= locale === 'ar' ? child.titleArabic : (child.titleEnglish || child.titleArabic) %>
               </div>
-              <div class="series-content">
-                <h3 class="series-title"><%= locale === 'ar' ? relSeries.titleArabic : (relSeries.titleEnglish || relSeries.titleArabic) %></h3>
-                <% if (locale === 'en' && relSeries.titleEnglish && relSeries.titleArabic !== relSeries.titleEnglish) { %>
-                  <p class="series-title-en"><%= relSeries.titleArabic %></p>
-                <% } else if (locale === 'ar' && relSeries.titleEnglish && relSeries.titleEnglish !== relSeries.titleArabic) { %>
-                  <p class="series-title-en"><%= relSeries.titleEnglish %></p>
-                <% } %>
-                <div class="series-meta">
-                  <% if (relSeries.category) { %>
-                    <span class="series-category"><%= translateCategory(relSeries.category) %></span>
-                  <% } %>
-                  <span class="series-count"><%= relSeries.actualLectureCount || 0 %> <%= locale === 'ar' ? 'محاضرة' : 'lectures' %></span>
-                </div>
+              <div class="child-series-card-count">
+                <%= child.actualLectureCount || 0 %> <%= locale === 'ar' ? (isKhutba ? 'خطبة' : 'درس') : 'lectures' %>
               </div>
             </a>
           <% }); %>
         </div>
+
+        <% if (hasMoreCards) { %>
+          <button class="show-more-btn" onclick="toggleMoreCards(this)">
+            <%= locale === 'ar' ? 'عرض المزيد' : 'Show More' %> (<%= childSeries.length - MAX_VISIBLE_CARDS %>)
+          </button>
+        <% } %>
       </div>
     </div>
+
+    <script>
+      function toggleChildSeries(btn) {
+        const grid = document.getElementById('childSeriesGrid');
+        grid.classList.toggle('mobile-visible');
+        btn.classList.toggle('expanded');
+        const textSpan = btn.querySelector('span');
+        if (grid.classList.contains('mobile-visible')) {
+          textSpan.textContent = '<%= locale === "ar" ? "إخفاء السلاسل الفرعية" : "Hide Sub-Series" %>';
+        } else {
+          textSpan.textContent = '<%= locale === "ar" ? "عرض السلاسل الفرعية" : "Show Sub-Series" %> (<%= childSeries.length %>)';
+        }
+      }
+
+      function toggleMoreCards(btn) {
+        const hiddenCards = document.querySelectorAll('.child-series-card.hidden-desktop');
+        const isShowing = btn.dataset.showing === 'true';
+
+        hiddenCards.forEach(card => {
+          card.style.display = isShowing ? 'none' : 'flex';
+        });
+
+        btn.dataset.showing = isShowing ? 'false' : 'true';
+        btn.textContent = isShowing
+          ? '<%= locale === "ar" ? "عرض المزيد" : "Show More" %> (<%= childSeries.length - MAX_VISIBLE_CARDS %>)'
+          : '<%= locale === "ar" ? "عرض أقل" : "Show Less" %>';
+      }
+    </script>
   <% } %>
 
   <!-- Lectures Section -->
   <div class="content-section">
     <div class="container">
-      <h2 class="section-title"><%= relatedKhutbaSeries && relatedKhutbaSeries.length > 0 ? (locale === 'ar' ? 'خطب متفرقة' : 'Miscellaneous Khutbahs') : (locale === 'ar' ? 'دروس السلسلة' : 'Series Lectures') %> (<%= lectures.length %>)</h2>
+      <%
+        const hasChildSeries = typeof childSeries !== 'undefined' && childSeries && childSeries.length > 0;
+        const isKhutbaSection = (series.titleArabic || '').includes('خطب');
+        let sectionTitle;
+        if (hasChildSeries) {
+          sectionTitle = locale === 'ar' ? (isKhutbaSection ? 'خطب متفرقة' : 'دروس متفرقة') : 'Individual Lectures';
+        } else {
+          sectionTitle = locale === 'ar' ? (isKhutbaSection ? 'الخطب' : 'دروس السلسلة') : 'Series Lectures';
+        }
+      %>
+      <h2 class="section-title"><%= sectionTitle %> (<%= lectures.length %>)</h2>
 
       <%
         // Get display options from series (with defaults)
@@ -1385,9 +1597,29 @@
   }
 
   // State
-  let currentSort = 'order';
+  // Get default sort from series settings (newest for Khutba, oldest/order for others)
+  const defaultSortOrder = '<%= (series.displayOptions && series.displayOptions.defaultSortOrder) || "oldest" %>';
+  let currentSort = defaultSortOrder === 'newest' ? 'newest' : 'order';
   let currentSearch = '';
   let currentYear = '';
+
+  // Apply default sort on page load
+  (function() {
+    if (defaultSortOrder === 'newest') {
+      // Delay to ensure DOM is ready
+      setTimeout(function() {
+        sortLectures('newest');
+        // Update sort button state
+        const sortChips = document.querySelectorAll('.sort-chip');
+        sortChips.forEach(chip => {
+          chip.classList.remove('active');
+          if (chip.dataset.sort === 'newest') {
+            chip.classList.add('active');
+          }
+        });
+      }, 0);
+    }
+  })();
 
   // Filter and display lectures
   function filterLectures() {
@@ -1542,8 +1774,18 @@
     currentSearch = '';
     currentYear = '';
 
-    // Reset sort to default
-    sortLectures('order');
+    // Reset sort to series default
+    const resetSort = defaultSortOrder === 'newest' ? 'newest' : 'order';
+    sortLectures(resetSort);
+
+    // Update sort button state
+    const sortChips = document.querySelectorAll('.sort-chip');
+    sortChips.forEach(chip => {
+      chip.classList.remove('active');
+      if (chip.dataset.sort === resetSort) {
+        chip.classList.add('active');
+      }
+    });
 
     // Re-apply filters (will show all)
     filterLectures();

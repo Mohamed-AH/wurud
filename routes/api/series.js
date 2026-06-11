@@ -82,6 +82,29 @@ router.get('/', async (req, res) => {
   }
 });
 
+// @route   GET /api/series/parents
+// @desc    Get available parent series (top-level only, for dropdown)
+// @access  Private (Admin only)
+router.get('/parents', isAdminAPI, async (req, res) => {
+  try {
+    // Only return top-level series (no parent) that can be parents
+    const parentSeries = await Series.find({
+      parentSeriesId: null
+    }).select('_id titleArabic titleEnglish shortId').sort({ titleArabic: 1 }).lean();
+
+    res.json({
+      success: true,
+      series: parentSeries
+    });
+  } catch (error) {
+    console.error('Get parent series error:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Failed to fetch parent series'
+    });
+  }
+});
+
 // @route   POST /api/series
 // @desc    Create new series
 // @access  Private (Admin only)
@@ -95,7 +118,8 @@ router.post('/', isAdminAPI, async (req, res) => {
       sheikhId,
       category,
       bookTitle,
-      bookAuthor
+      bookAuthor,
+      parentSeriesId
     } = req.body;
 
     if (!titleArabic) {
@@ -112,6 +136,23 @@ router.post('/', isAdminAPI, async (req, res) => {
       });
     }
 
+    // Validate parentSeriesId if provided
+    if (parentSeriesId) {
+      const parentSeries = await Series.findById(parentSeriesId);
+      if (!parentSeries) {
+        return res.status(400).json({
+          success: false,
+          message: 'Parent series not found'
+        });
+      }
+      if (parentSeries.parentSeriesId) {
+        return res.status(400).json({
+          success: false,
+          message: 'Cannot nest under a child series'
+        });
+      }
+    }
+
     const series = await Series.create({
       titleArabic,
       titleEnglish: titleEnglish || '',
@@ -120,7 +161,8 @@ router.post('/', isAdminAPI, async (req, res) => {
       sheikhId,
       category: category || 'Other',
       bookTitle: bookTitle || '',
-      bookAuthor: bookAuthor || ''
+      bookAuthor: bookAuthor || '',
+      parentSeriesId: parentSeriesId || null
     });
 
     await series.populate('sheikhId', 'nameArabic nameEnglish');
@@ -160,20 +202,70 @@ router.put('/:id', isAdminAPI, async (req, res) => {
       descriptionEnglish,
       category,
       bookTitle,
-      bookAuthor
+      bookAuthor,
+      parentSeriesId,
+      displayOptions
     } = req.body;
+
+    // Prevent self-reference for parentSeriesId
+    if (parentSeriesId && parentSeriesId === req.params.id) {
+      return res.status(400).json({
+        success: false,
+        message: 'A series cannot be its own parent'
+      });
+    }
+
+    // Validate parentSeriesId exists and is a top-level series
+    if (parentSeriesId) {
+      const parentSeries = await Series.findById(parentSeriesId);
+      if (!parentSeries) {
+        return res.status(400).json({
+          success: false,
+          message: 'Parent series not found'
+        });
+      }
+      if (parentSeries.parentSeriesId) {
+        return res.status(400).json({
+          success: false,
+          message: 'Cannot nest under a child series. Select a top-level parent.'
+        });
+      }
+    }
+
+    const updateData = {
+      titleArabic,
+      titleEnglish,
+      descriptionArabic,
+      descriptionEnglish,
+      category,
+      bookTitle,
+      bookAuthor
+    };
+
+    // Handle parentSeriesId (null to clear, ObjectId to set)
+    if (parentSeriesId !== undefined) {
+      updateData.parentSeriesId = parentSeriesId || null;
+    }
+
+    // Handle displayOptions updates
+    if (displayOptions) {
+      if (displayOptions.defaultSortOrder !== undefined) {
+        updateData['displayOptions.defaultSortOrder'] = displayOptions.defaultSortOrder;
+      }
+      if (displayOptions.showSearch !== undefined) {
+        updateData['displayOptions.showSearch'] = displayOptions.showSearch;
+      }
+      if (displayOptions.showYearFilter !== undefined) {
+        updateData['displayOptions.showYearFilter'] = displayOptions.showYearFilter;
+      }
+      if (displayOptions.showSortOptions !== undefined) {
+        updateData['displayOptions.showSortOptions'] = displayOptions.showSortOptions;
+      }
+    }
 
     const series = await Series.findByIdAndUpdate(
       req.params.id,
-      {
-        titleArabic,
-        titleEnglish,
-        descriptionArabic,
-        descriptionEnglish,
-        category,
-        bookTitle,
-        bookAuthor
-      },
+      updateData,
       { new: true, runValidators: true }
     ).populate('sheikhId', 'nameArabic nameEnglish');
 
