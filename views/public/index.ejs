@@ -1044,18 +1044,42 @@
     min-width: 100px;
   }
 
-  .schedule-day-cell .day-short {
-    display: none;
-  }
-
   .schedule-time-cell {
     color: var(--text-muted);
     font-size: 13px;
     white-space: nowrap;
   }
 
-  .schedule-time-cell .time-short {
-    display: none;
+  /* Varying times in time column */
+  .schedule-time-cell.varying-times {
+    white-space: normal;
+  }
+
+  .time-pairs {
+    display: flex;
+    flex-direction: column;
+    gap: 3px;
+  }
+
+  .time-pair {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    font-size: 12px;
+    line-height: 1.3;
+  }
+
+  .time-pair .tp-day {
+    font-weight: 500;
+    color: var(--text-secondary);
+  }
+
+  .time-pair .tp-sep {
+    color: var(--text-muted);
+  }
+
+  .time-pair .tp-time {
+    color: var(--text-muted);
   }
 
   .schedule-series-cell a {
@@ -1151,15 +1175,16 @@
     }
 
     .schedule-day-cell.multi-day {
-      min-width: 70px;
+      min-width: 80px;
     }
 
-    .schedule-time-cell .time-full {
-      display: none;
+    /* Time column - keep full times on mobile for clarity */
+    .schedule-time-cell.varying-times {
+      min-width: 100px;
     }
 
-    .schedule-time-cell .time-short {
-      display: inline;
+    .time-pair {
+      font-size: 11px;
     }
 
     .schedule-lesson-num {
@@ -2217,28 +2242,48 @@
   const getDay = (day) => locale === 'en' ? (dayTranslations[day] || day) : day;
   const getDayShort = (day) => locale === 'en' ? (dayShortEn[day] || day) : (dayShortAr[day] || day);
 
-  // Group schedule items by series + time + location
+  // Group schedule items by series + location (regardless of time)
   const groupScheduleItems = (items) => {
     const dayOrder = ['السبت', 'الأحد', 'الاثنين', 'الثلاثاء', 'الأربعاء', 'الخميس', 'الجمعة'];
     const groups = {};
 
     items.forEach(item => {
-      const key = `${item.seriesId._id}-${item.time}-${item.location}`;
+      // Group by series + location only (not time)
+      const key = `${item.seriesId._id}-${item.location}`;
       if (!groups[key]) {
         groups[key] = {
           ...item,
+          dayTimes: [{ day: item.dayOfWeek, time: item.time }],
           days: [item.dayOfWeek]
         };
       } else {
+        groups[key].dayTimes.push({ day: item.dayOfWeek, time: item.time });
         groups[key].days.push(item.dayOfWeek);
         // Keep the "newest" isNew flag
         if (item.isNew) groups[key].isNew = true;
+        // Keep highest lecture count
+        if (item.lectureCount > (groups[key].lectureCount || 0)) {
+          groups[key].lectureCount = item.lectureCount;
+          groups[key].latestLecture = item.latestLecture;
+        }
       }
     });
 
-    // Sort days within each group and sort groups by first day
+    // Sort days within each group and determine if times vary
     return Object.values(groups).map(group => {
+      // Sort dayTimes by day order
+      group.dayTimes.sort((a, b) => dayOrder.indexOf(a.day) - dayOrder.indexOf(b.day));
       group.days.sort((a, b) => dayOrder.indexOf(a) - dayOrder.indexOf(b));
+
+      // Check if all times are the same
+      const uniqueTimes = new Set(group.dayTimes.map(dt => dt.time));
+      group.hasVaryingTimes = uniqueTimes.size > 1;
+
+      // If all times same, keep the single time value
+      if (!group.hasVaryingTimes) {
+        group.time = group.dayTimes[0].time;
+      }
+
       return group;
     }).sort((a, b) => dayOrder.indexOf(a.days[0]) - dayOrder.indexOf(b.days[0]));
   };
@@ -2299,14 +2344,28 @@
         <tbody>
           <% groupedInPerson.forEach(function(item) { %>
           <tr>
+            <!-- Day column: always show combined days -->
             <td class="schedule-day-cell<%= item.days.length > 1 ? ' multi-day' : '' %>">
               <span class="day-full"><%= formatDays(item.days, false) %></span>
-              <span class="day-short"><%= formatDays(item.days, true) %></span>
             </td>
+            <% if (item.hasVaryingTimes) { %>
+            <!-- Varying times: show day:time pairs in time column -->
+            <td class="schedule-time-cell varying-times">
+              <div class="time-pairs">
+                <% item.dayTimes.forEach(function(dt) { %>
+                <span class="time-pair">
+                  <span class="tp-day"><%= getDay(dt.day) %></span><span class="tp-sep">:</span>
+                  <span class="tp-time"><%= translateTime(dt.time) %></span>
+                </span>
+                <% }); %>
+              </div>
+            </td>
+            <% } else { %>
+            <!-- Same time: show single time -->
             <td class="schedule-time-cell">
               <span class="time-full"><%= translateTime(item.time) %></span>
-              <span class="time-short"><%= timeShort(item.time) %></span>
             </td>
+            <% } %>
             <td class="schedule-series-cell">
               <% if (item.isNew) { %><span class="new-badge"><%= locale === 'ar' ? 'جديد' : 'NEW' %></span><% } %>
               <a href="/series/<%= item.seriesId.slug ? encodeURIComponent(item.seriesId.slug) : item.seriesId._id %>">
@@ -2348,14 +2407,28 @@
         <tbody>
           <% groupedOnline.forEach(function(item) { %>
           <tr>
+            <!-- Day column: always show combined days -->
             <td class="schedule-day-cell<%= item.days.length > 1 ? ' multi-day' : '' %>">
               <span class="day-full"><%= formatDays(item.days, false) %></span>
-              <span class="day-short"><%= formatDays(item.days, true) %></span>
             </td>
+            <% if (item.hasVaryingTimes) { %>
+            <!-- Varying times: show day:time pairs in time column -->
+            <td class="schedule-time-cell varying-times">
+              <div class="time-pairs">
+                <% item.dayTimes.forEach(function(dt) { %>
+                <span class="time-pair">
+                  <span class="tp-day"><%= getDay(dt.day) %></span><span class="tp-sep">:</span>
+                  <span class="tp-time"><%= translateTime(dt.time) %></span>
+                </span>
+                <% }); %>
+              </div>
+            </td>
+            <% } else { %>
+            <!-- Same time: show single time -->
             <td class="schedule-time-cell">
               <span class="time-full"><%= translateTime(item.time) %></span>
-              <span class="time-short"><%= timeShort(item.time) %></span>
             </td>
+            <% } %>
             <td class="schedule-series-cell">
               <% if (item.isNew) { %><span class="new-badge"><%= locale === 'ar' ? 'جديد' : 'NEW' %></span><% } %>
               <a href="/series/<%= item.seriesId.slug ? encodeURIComponent(item.seriesId.slug) : item.seriesId._id %>">
