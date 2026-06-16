@@ -1048,6 +1048,42 @@
     display: none;
   }
 
+  /* Varying times: day+time pairs in combined cell */
+  .schedule-day-cell.varying-times {
+    min-width: 180px;
+  }
+
+  .day-time-pairs {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+  }
+
+  .day-time-pairs-short {
+    display: none;
+  }
+
+  .day-time-pair {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    font-size: 13px;
+  }
+
+  .day-time-pair .dt-day {
+    font-weight: 600;
+    color: var(--primary-brown);
+  }
+
+  .day-time-pair .dt-sep {
+    color: var(--text-muted);
+  }
+
+  .day-time-pair .dt-time {
+    color: var(--text-secondary);
+    font-weight: 400;
+  }
+
   .schedule-time-cell {
     color: var(--text-muted);
     font-size: 13px;
@@ -1152,6 +1188,25 @@
 
     .schedule-day-cell.multi-day {
       min-width: 70px;
+    }
+
+    /* Varying times mobile */
+    .schedule-day-cell.varying-times {
+      min-width: 120px;
+    }
+
+    .day-time-pairs {
+      display: none;
+    }
+
+    .day-time-pairs-short {
+      display: flex;
+      flex-direction: column;
+      gap: 2px;
+    }
+
+    .day-time-pair {
+      font-size: 11px;
     }
 
     .schedule-time-cell .time-full {
@@ -2217,28 +2272,48 @@
   const getDay = (day) => locale === 'en' ? (dayTranslations[day] || day) : day;
   const getDayShort = (day) => locale === 'en' ? (dayShortEn[day] || day) : (dayShortAr[day] || day);
 
-  // Group schedule items by series + time + location
+  // Group schedule items by series + location (regardless of time)
   const groupScheduleItems = (items) => {
     const dayOrder = ['السبت', 'الأحد', 'الاثنين', 'الثلاثاء', 'الأربعاء', 'الخميس', 'الجمعة'];
     const groups = {};
 
     items.forEach(item => {
-      const key = `${item.seriesId._id}-${item.time}-${item.location}`;
+      // Group by series + location only (not time)
+      const key = `${item.seriesId._id}-${item.location}`;
       if (!groups[key]) {
         groups[key] = {
           ...item,
+          dayTimes: [{ day: item.dayOfWeek, time: item.time }],
           days: [item.dayOfWeek]
         };
       } else {
+        groups[key].dayTimes.push({ day: item.dayOfWeek, time: item.time });
         groups[key].days.push(item.dayOfWeek);
         // Keep the "newest" isNew flag
         if (item.isNew) groups[key].isNew = true;
+        // Keep highest lecture count
+        if (item.lectureCount > (groups[key].lectureCount || 0)) {
+          groups[key].lectureCount = item.lectureCount;
+          groups[key].latestLecture = item.latestLecture;
+        }
       }
     });
 
-    // Sort days within each group and sort groups by first day
+    // Sort days within each group and determine if times vary
     return Object.values(groups).map(group => {
+      // Sort dayTimes by day order
+      group.dayTimes.sort((a, b) => dayOrder.indexOf(a.day) - dayOrder.indexOf(b.day));
       group.days.sort((a, b) => dayOrder.indexOf(a) - dayOrder.indexOf(b));
+
+      // Check if all times are the same
+      const uniqueTimes = new Set(group.dayTimes.map(dt => dt.time));
+      group.hasVaryingTimes = uniqueTimes.size > 1;
+
+      // If all times same, keep the single time value
+      if (!group.hasVaryingTimes) {
+        group.time = group.dayTimes[0].time;
+      }
+
       return group;
     }).sort((a, b) => dayOrder.indexOf(a.days[0]) - dayOrder.indexOf(b.days[0]));
   };
@@ -2259,6 +2334,16 @@
     return locale === 'ar'
       ? `${dayNames.join('، ')} و${last}`
       : `${dayNames.join(', ')} & ${last}`;
+  };
+
+  // Format day-time pairs when times vary
+  const formatDayTimes = (dayTimes, short = false) => {
+    const getDayFn = short ? getDayShort : getDay;
+    return dayTimes.map(dt => {
+      const dayName = getDayFn(dt.day);
+      const timeName = short ? timeShort(dt.time) : translateTime(dt.time);
+      return { day: dayName, time: timeName };
+    });
   };
 
   // Create grouped schedules
@@ -2299,6 +2384,28 @@
         <tbody>
           <% groupedInPerson.forEach(function(item) { %>
           <tr>
+            <% if (item.hasVaryingTimes) { %>
+            <!-- Varying times: show day+time pairs in combined cell -->
+            <td class="schedule-day-cell multi-day varying-times" colspan="2">
+              <div class="day-time-pairs">
+                <% item.dayTimes.forEach(function(dt, idx) { %>
+                <span class="day-time-pair">
+                  <span class="dt-day"><%= getDay(dt.day) %></span><span class="dt-sep">:</span>
+                  <span class="dt-time"><%= translateTime(dt.time) %></span>
+                </span>
+                <% }); %>
+              </div>
+              <div class="day-time-pairs-short">
+                <% item.dayTimes.forEach(function(dt, idx) { %>
+                <span class="day-time-pair">
+                  <span class="dt-day"><%= getDayShort(dt.day) %></span><span class="dt-sep">:</span>
+                  <span class="dt-time"><%= timeShort(dt.time) %></span>
+                </span>
+                <% }); %>
+              </div>
+            </td>
+            <% } else { %>
+            <!-- Same time: show days and time separately -->
             <td class="schedule-day-cell<%= item.days.length > 1 ? ' multi-day' : '' %>">
               <span class="day-full"><%= formatDays(item.days, false) %></span>
               <span class="day-short"><%= formatDays(item.days, true) %></span>
@@ -2307,6 +2414,7 @@
               <span class="time-full"><%= translateTime(item.time) %></span>
               <span class="time-short"><%= timeShort(item.time) %></span>
             </td>
+            <% } %>
             <td class="schedule-series-cell">
               <% if (item.isNew) { %><span class="new-badge"><%= locale === 'ar' ? 'جديد' : 'NEW' %></span><% } %>
               <a href="/series/<%= item.seriesId.slug ? encodeURIComponent(item.seriesId.slug) : item.seriesId._id %>">
@@ -2348,6 +2456,28 @@
         <tbody>
           <% groupedOnline.forEach(function(item) { %>
           <tr>
+            <% if (item.hasVaryingTimes) { %>
+            <!-- Varying times: show day+time pairs in combined cell -->
+            <td class="schedule-day-cell multi-day varying-times" colspan="2">
+              <div class="day-time-pairs">
+                <% item.dayTimes.forEach(function(dt, idx) { %>
+                <span class="day-time-pair">
+                  <span class="dt-day"><%= getDay(dt.day) %></span><span class="dt-sep">:</span>
+                  <span class="dt-time"><%= translateTime(dt.time) %></span>
+                </span>
+                <% }); %>
+              </div>
+              <div class="day-time-pairs-short">
+                <% item.dayTimes.forEach(function(dt, idx) { %>
+                <span class="day-time-pair">
+                  <span class="dt-day"><%= getDayShort(dt.day) %></span><span class="dt-sep">:</span>
+                  <span class="dt-time"><%= timeShort(dt.time) %></span>
+                </span>
+                <% }); %>
+              </div>
+            </td>
+            <% } else { %>
+            <!-- Same time: show days and time separately -->
             <td class="schedule-day-cell<%= item.days.length > 1 ? ' multi-day' : '' %>">
               <span class="day-full"><%= formatDays(item.days, false) %></span>
               <span class="day-short"><%= formatDays(item.days, true) %></span>
@@ -2356,6 +2486,7 @@
               <span class="time-full"><%= translateTime(item.time) %></span>
               <span class="time-short"><%= timeShort(item.time) %></span>
             </td>
+            <% } %>
             <td class="schedule-series-cell">
               <% if (item.isNew) { %><span class="new-badge"><%= locale === 'ar' ? 'جديد' : 'NEW' %></span><% } %>
               <a href="/series/<%= item.seriesId.slug ? encodeURIComponent(item.seriesId.slug) : item.seriesId._id %>">
