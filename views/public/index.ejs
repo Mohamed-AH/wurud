@@ -1050,36 +1050,26 @@
     white-space: nowrap;
   }
 
-  /* Varying times in time column */
-  .schedule-time-cell.varying-times {
-    white-space: normal;
+  /* Stacked day/time cells for varying times */
+  .schedule-day-cell.stacked,
+  .schedule-time-cell.stacked {
+    vertical-align: top;
+    white-space: nowrap;
   }
 
-  .time-pairs {
-    display: flex;
-    flex-direction: column;
-    gap: 3px;
+  .stacked-day,
+  .stacked-time {
+    line-height: 1.6;
   }
 
-  .time-pair {
-    display: inline-flex;
-    align-items: center;
-    gap: 4px;
-    font-size: 12px;
-    line-height: 1.3;
+  .stacked-day {
+    font-weight: 600;
+    color: var(--primary-brown);
   }
 
-  .time-pair .tp-day {
-    font-weight: 500;
-    color: var(--text-secondary);
-  }
-
-  .time-pair .tp-sep {
+  .stacked-time {
     color: var(--text-muted);
-  }
-
-  .time-pair .tp-time {
-    color: var(--text-muted);
+    font-size: 13px;
   }
 
   .schedule-series-cell a {
@@ -1175,16 +1165,14 @@
     }
 
     .schedule-day-cell.multi-day {
-      min-width: 80px;
+      min-width: 70px;
     }
 
-    /* Time column - keep full times on mobile for clarity */
-    .schedule-time-cell.varying-times {
-      min-width: 100px;
-    }
-
-    .time-pair {
-      font-size: 11px;
+    /* Stacked cells on mobile */
+    .stacked-day,
+    .stacked-time {
+      font-size: 12px;
+      line-height: 1.5;
     }
 
     .schedule-lesson-num {
@@ -2344,24 +2332,23 @@
         <tbody>
           <% groupedInPerson.forEach(function(item) { %>
           <tr>
-            <!-- Day column: always show combined days -->
+            <% if (item.hasVaryingTimes) { %>
+            <!-- Varying times: stack days and times vertically, aligned -->
+            <td class="schedule-day-cell multi-day stacked">
+              <% item.dayTimes.forEach(function(dt) { %>
+              <div class="stacked-day"><%= getDay(dt.day) %></div>
+              <% }); %>
+            </td>
+            <td class="schedule-time-cell stacked">
+              <% item.dayTimes.forEach(function(dt) { %>
+              <div class="stacked-time"><%= translateTime(dt.time) %></div>
+              <% }); %>
+            </td>
+            <% } else { %>
+            <!-- Same time: show combined days and single time -->
             <td class="schedule-day-cell<%= item.days.length > 1 ? ' multi-day' : '' %>">
               <span class="day-full"><%= formatDays(item.days, false) %></span>
             </td>
-            <% if (item.hasVaryingTimes) { %>
-            <!-- Varying times: show day:time pairs in time column -->
-            <td class="schedule-time-cell varying-times">
-              <div class="time-pairs">
-                <% item.dayTimes.forEach(function(dt) { %>
-                <span class="time-pair">
-                  <span class="tp-day"><%= getDay(dt.day) %></span><span class="tp-sep">:</span>
-                  <span class="tp-time"><%= translateTime(dt.time) %></span>
-                </span>
-                <% }); %>
-              </div>
-            </td>
-            <% } else { %>
-            <!-- Same time: show single time -->
             <td class="schedule-time-cell">
               <span class="time-full"><%= translateTime(item.time) %></span>
             </td>
@@ -2407,24 +2394,23 @@
         <tbody>
           <% groupedOnline.forEach(function(item) { %>
           <tr>
-            <!-- Day column: always show combined days -->
+            <% if (item.hasVaryingTimes) { %>
+            <!-- Varying times: stack days and times vertically, aligned -->
+            <td class="schedule-day-cell multi-day stacked">
+              <% item.dayTimes.forEach(function(dt) { %>
+              <div class="stacked-day"><%= getDay(dt.day) %></div>
+              <% }); %>
+            </td>
+            <td class="schedule-time-cell stacked">
+              <% item.dayTimes.forEach(function(dt) { %>
+              <div class="stacked-time"><%= translateTime(dt.time) %></div>
+              <% }); %>
+            </td>
+            <% } else { %>
+            <!-- Same time: show combined days and single time -->
             <td class="schedule-day-cell<%= item.days.length > 1 ? ' multi-day' : '' %>">
               <span class="day-full"><%= formatDays(item.days, false) %></span>
             </td>
-            <% if (item.hasVaryingTimes) { %>
-            <!-- Varying times: show day:time pairs in time column -->
-            <td class="schedule-time-cell varying-times">
-              <div class="time-pairs">
-                <% item.dayTimes.forEach(function(dt) { %>
-                <span class="time-pair">
-                  <span class="tp-day"><%= getDay(dt.day) %></span><span class="tp-sep">:</span>
-                  <span class="tp-time"><%= translateTime(dt.time) %></span>
-                </span>
-                <% }); %>
-              </div>
-            </td>
-            <% } else { %>
-            <!-- Same time: show single time -->
             <td class="schedule-time-cell">
               <span class="time-full"><%= translateTime(item.time) %></span>
             </td>
