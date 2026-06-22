@@ -65,6 +65,7 @@ const SERIES_SUFFIX = getArg('--series-suffix') || '';
 const DEFAULT_LOCATION = getArg('--location') || '';
 const CHUNK_SIZE = parseInt(getArg('--chunk-size')) || 100;
 const VERBOSE = args.includes('--verbose');
+const REPLACE = args.includes('--replace');
 
 if (!EXCEL_FILE || !BATCH_NAME) {
   console.log(`
@@ -76,6 +77,7 @@ Required:
 
 Options:
   --dry-run             Preview without writing to database
+  --replace             Delete existing lectures with same filenames before import
   --verbose             Show skipped files and reasons
   --tags <t1,t2,...>    Comma-separated tags for all lectures
   --series-suffix <s>   Suffix for series names
@@ -275,7 +277,7 @@ async function main() {
   console.log('═'.repeat(70));
   console.log(`\n  Batch:      ${BATCH_NAME}`);
   console.log(`  File:       ${EXCEL_FILE}`);
-  console.log(`  Mode:       ${DRY_RUN ? 'DRY RUN' : 'LIVE'}${VERBOSE ? ' (verbose)' : ''}`);
+  console.log(`  Mode:       ${DRY_RUN ? 'DRY RUN' : 'LIVE'}${REPLACE ? ' (replace)' : ''}${VERBOSE ? ' (verbose)' : ''}`);
   console.log(`  Chunk Size: ${CHUNK_SIZE}`);
   if (TAGS.length) console.log(`  Tags:       ${TAGS.join(', ')}`);
   if (SERIES_SUFFIX) console.log(`  Suffix:     "${SERIES_SUFFIX}"`);
@@ -309,6 +311,30 @@ async function main() {
   console.log('   Connected');
 
   // =========================================================================
+  // REPLACE MODE: Delete existing lectures with matching filenames
+  // =========================================================================
+  let deletedCount = 0;
+  if (REPLACE) {
+    const filenamesToDelete = data
+      .map(row => getFilename(row.TelegramFileName))
+      .filter(Boolean);
+
+    if (DRY_RUN) {
+      deletedCount = await Lecture.countDocuments({
+        audioFileName: { $in: filenamesToDelete }
+      });
+      console.log(`\n🗑️  [DRY-RUN] Would delete ${deletedCount} existing lectures`);
+    } else {
+      console.log('\n🗑️  Deleting existing lectures with matching filenames...');
+      const deleteResult = await Lecture.deleteMany({
+        audioFileName: { $in: filenamesToDelete }
+      });
+      deletedCount = deleteResult.deletedCount;
+      console.log(`   Deleted ${deletedCount} existing lectures`);
+    }
+  }
+
+  // =========================================================================
   // OPTIMIZATION 1: Pre-fetch existing audioFileNames and slugs into memory
   // =========================================================================
   console.log('\n🔍 Pre-fetching existing records (RAM-optimized)...');
@@ -320,7 +346,7 @@ async function main() {
   console.log(`   Loaded ${existingFiles.size} existing files, ${existingSlugs.size} slugs into memory`);
   console.log(`   Memory usage: ~${Math.round((existingFiles.size + existingSlugs.size) * 100 / 1024)} KB`);
 
-  const stats = { sheikhNew: false, series: 0, created: 0, skipped: 0, errors: [] };
+  const stats = { sheikhNew: false, series: 0, created: 0, skipped: 0, deleted: 0, errors: [] };
   const seriesMap = new Map();
   const bulkOps = [];
 
@@ -466,6 +492,7 @@ async function main() {
   console.log(`  Batch:           ${BATCH_NAME}`);
   console.log(`  Sheikh created:  ${stats.sheikhNew ? 'Yes' : 'No'}`);
   console.log(`  Series created:  ${stats.series}`);
+  if (REPLACE) console.log(`  Deleted:         ${deletedCount}`);
   console.log(`  Lectures:        ${stats.created}`);
   console.log(`  Skipped:         ${stats.skipped}`);
   console.log(`  Errors:          ${stats.errors.length}`);
