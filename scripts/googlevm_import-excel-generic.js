@@ -314,20 +314,20 @@ async function main() {
   // REPLACE MODE: Delete existing lectures with matching filenames
   // =========================================================================
   let deletedCount = 0;
-  if (REPLACE) {
-    const filenamesToDelete = data
-      .map(row => getFilename(row.TelegramFileName))
-      .filter(Boolean);
+  const filenamesToReplace = REPLACE
+    ? new Set(data.map(row => getFilename(row.TelegramFileName)).filter(Boolean))
+    : new Set();
 
+  if (REPLACE) {
     if (DRY_RUN) {
       deletedCount = await Lecture.countDocuments({
-        audioFileName: { $in: filenamesToDelete }
+        audioFileName: { $in: [...filenamesToReplace] }
       });
       console.log(`\n🗑️  [DRY-RUN] Would delete ${deletedCount} existing lectures`);
     } else {
       console.log('\n🗑️  Deleting existing lectures with matching filenames...');
       const deleteResult = await Lecture.deleteMany({
-        audioFileName: { $in: filenamesToDelete }
+        audioFileName: { $in: [...filenamesToReplace] }
       });
       deletedCount = deleteResult.deletedCount;
       console.log(`   Deleted ${deletedCount} existing lectures`);
@@ -342,6 +342,13 @@ async function main() {
   const existingLectures = await Lecture.find({}, { audioFileName: 1, slug: 1 }).lean();
   const existingFiles = new Set(existingLectures.map(l => l.audioFileName));
   const existingSlugs = new Set(existingLectures.map(l => l.slug).filter(Boolean));
+
+  // In dry-run replace mode, simulate deletion by removing files from the set
+  if (REPLACE && DRY_RUN) {
+    for (const filename of filenamesToReplace) {
+      existingFiles.delete(filename);
+    }
+  }
 
   console.log(`   Loaded ${existingFiles.size} existing files, ${existingSlugs.size} slugs into memory`);
   console.log(`   Memory usage: ~${Math.round((existingFiles.size + existingSlugs.size) * 100 / 1024)} KB`);
