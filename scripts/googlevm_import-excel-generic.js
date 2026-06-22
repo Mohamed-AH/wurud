@@ -64,6 +64,7 @@ const TAGS = getArg('--tags') ? getArg('--tags').split(',').map(t => t.trim()) :
 const SERIES_SUFFIX = getArg('--series-suffix') || '';
 const DEFAULT_LOCATION = getArg('--location') || '';
 const CHUNK_SIZE = parseInt(getArg('--chunk-size')) || 100;
+const VERBOSE = args.includes('--verbose');
 
 if (!EXCEL_FILE || !BATCH_NAME) {
   console.log(`
@@ -75,6 +76,7 @@ Required:
 
 Options:
   --dry-run             Preview without writing to database
+  --verbose             Show skipped files and reasons
   --tags <t1,t2,...>    Comma-separated tags for all lectures
   --series-suffix <s>   Suffix for series names
   --location <loc>      Default location
@@ -273,7 +275,7 @@ async function main() {
   console.log('═'.repeat(70));
   console.log(`\n  Batch:      ${BATCH_NAME}`);
   console.log(`  File:       ${EXCEL_FILE}`);
-  console.log(`  Mode:       ${DRY_RUN ? 'DRY RUN' : 'LIVE'}`);
+  console.log(`  Mode:       ${DRY_RUN ? 'DRY RUN' : 'LIVE'}${VERBOSE ? ' (verbose)' : ''}`);
   console.log(`  Chunk Size: ${CHUNK_SIZE}`);
   if (TAGS.length) console.log(`  Tags:       ${TAGS.join(', ')}`);
   if (SERIES_SUFFIX) console.log(`  Suffix:     "${SERIES_SUFFIX}"`);
@@ -338,12 +340,14 @@ async function main() {
       try {
         const filename = getFilename(row.TelegramFileName);
         if (!filename) {
+          if (VERBOSE) console.log(`  [SKIP] No filename: row ${row.LectureNumber || '?'}`);
           stats.skipped++;
           continue;
         }
 
         // OPTIMIZATION 1: Check existence in memory O(1)
         if (existingFiles.has(filename)) {
+          if (VERBOSE) console.log(`  [SKIP] Already exists: ${filename}`);
           stats.skipped++;
           continue;
         }
