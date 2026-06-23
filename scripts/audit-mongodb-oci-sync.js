@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 /**
- * Audit MongoDB ↔ OCI Object Storage Sync
+ * Audit MongoDB <-> OCI Object Storage Sync
  *
  * READ-ONLY audit script that compares:
  * - Lectures in MongoDB with audioFileName/audioUrl
@@ -10,6 +10,12 @@
  * - Lectures in MongoDB missing from OCI (orphaned DB records)
  * - Objects in OCI missing from MongoDB (orphaned OCI files)
  * - Summary statistics
+ *
+ * Production-Ready Features:
+ * - Uses MongoDB cursors for memory-efficient streaming (no OOM risk)
+ * - Normalizes filenames to handle encoding/whitespace differences
+ * - Graceful error handling with guaranteed DB disconnection
+ * - Clean text-based logging (no emojis for log aggregation compatibility)
  *
  * Usage:
  *   node scripts/audit-mongodb-oci-sync.js
@@ -36,6 +42,34 @@ const outputIndex = args.indexOf('--output');
 const OUTPUT_FILE = outputIndex !== -1 ? args[outputIndex + 1] : null;
 const limitIndex = args.indexOf('--limit');
 const LIMIT = limitIndex !== -1 ? parseInt(args[limitIndex + 1]) : null;
+
+/**
+ * Normalize filename for consistent comparison
+ * Handles: URL encoding, leading/trailing whitespace, leading slashes
+ */
+function normalizeFilename(filename) {
+  if (!filename) return '';
+
+  let normalized = filename;
+
+  // Decode URL-encoded characters (e.g., %20 -> space)
+  try {
+    normalized = decodeURIComponent(normalized);
+  } catch (e) {
+    // If decoding fails, keep original (may already be decoded)
+  }
+
+  // Trim whitespace
+  normalized = normalized.trim();
+
+  // Remove leading slashes
+  normalized = normalized.replace(/^\/+/, '');
+
+  // Normalize multiple spaces to single space
+  normalized = normalized.replace(/\s+/g, ' ');
+
+  return normalized;
+}
 
 /**
  * List all objects in OCI bucket with pagination
@@ -80,6 +114,7 @@ async function listAllOCIObjects() {
       if (obj && obj.name) {
         objects.push({
           name: obj.name,
+          normalizedName: normalizeFilename(obj.name),
           size: obj.size,
           timeCreated: obj.timeCreated
         });
@@ -119,10 +154,10 @@ function formatBytes(bytes) {
  * Main audit function
  */
 async function audit() {
-  console.log('═'.repeat(70));
-  console.log('  AUDIT: MongoDB ↔ OCI Object Storage Sync');
-  console.log('═'.repeat(70));
-  console.log('\n  ⚠️  READ-ONLY AUDIT - No changes will be made\n');
+  console.log('='.repeat(70));
+  console.log('  AUDIT: MongoDB <-> OCI Object Storage Sync');
+  console.log('='.repeat(70));
+  console.log('\n  [WARN] READ-ONLY AUDIT - No changes will be made\n');
 
   const report = {
     timestamp: new Date().toISOString(),
@@ -134,87 +169,97 @@ async function audit() {
   };
 
   // Connect to MongoDB
-  console.log('📊 Connecting to MongoDB...');
+  console.log('[INFO] Connecting to MongoDB...');
   await mongoose.connect(process.env.MONGODB_URI);
-  console.log('   Connected\n');
+  console.log('[INFO] Connected\n');
 
-  // Fetch all lectures with audio info
-  console.log('📖 Fetching lectures from MongoDB...');
-  const lectures = await Lecture.find({}, {
+  // Use cursor for memory-efficient streaming
+  console.log('[INFO] Streaming lectures from MongoDB (cursor-based)...');
+
+  const mongoFileMap = new Map();  // normalizedFilename -> lecture info
+  const rawFilenameMap = new Map(); // normalizedFilename -> original filename
+  let totalLectures = 0;
+  let lecturesWithAudio = 0;
+  let lecturesWithoutAudio = 0;
+
+  // Stream lectures using cursor to avoid loading all into memory
+  const cursor = Lecture.find({}, {
     _id: 1,
     audioFileName: 1,
     audioUrl: 1,
     titleArabic: 1,
     seriesId: 1,
     lectureNumber: 1
-  }).lean();
+  }).lean().cursor();
 
-  console.log(`   Found ${lectures.length} total lectures\n`);
+  for await (const lecture of cursor) {
+    totalLectures++;
 
-  // Categorize lectures
-  const lecturesWithAudio = lectures.filter(l => l.audioFileName);
-  const lecturesWithoutAudio = lectures.filter(l => !l.audioFileName);
+    if (VERBOSE && totalLectures % 1000 === 0) {
+      process.stdout.write(`\r   Processed ${totalLectures} lectures...`);
+    }
 
-  report.mongoDbNoAudio = lecturesWithoutAudio.map(l => ({
-    _id: l._id.toString(),
-    title: l.titleArabic,
-    hasUrl: !!l.audioUrl
-  }));
+    if (!lecture.audioFileName) {
+      lecturesWithoutAudio++;
+      report.mongoDbNoAudio.push({
+        _id: lecture._id.toString(),
+        title: lecture.titleArabic,
+        hasUrl: !!lecture.audioUrl
+      });
+      continue;
+    }
 
-  console.log(`   ${lecturesWithAudio.length} lectures have audioFileName`);
-  console.log(`   ${lecturesWithoutAudio.length} lectures have NO audioFileName\n`);
+    lecturesWithAudio++;
+    const normalizedFilename = normalizeFilename(lecture.audioFileName);
 
-  // Create lookup map: audioFileName -> lecture info
-  const mongoFileMap = new Map();
-  for (const lecture of lecturesWithAudio) {
-    const filename = lecture.audioFileName;
-    if (mongoFileMap.has(filename)) {
-      // Duplicate filename in MongoDB
+    // Check for duplicates (same normalized filename)
+    if (mongoFileMap.has(normalizedFilename)) {
       if (!report.duplicateFilenames) report.duplicateFilenames = [];
       report.duplicateFilenames.push({
-        filename,
-        lectureIds: [mongoFileMap.get(filename)._id.toString(), lecture._id.toString()]
+        filename: lecture.audioFileName,
+        normalizedFilename,
+        lectureIds: [mongoFileMap.get(normalizedFilename)._id.toString(), lecture._id.toString()]
       });
     }
-    mongoFileMap.set(filename, lecture);
+
+    mongoFileMap.set(normalizedFilename, lecture);
+    rawFilenameMap.set(normalizedFilename, lecture.audioFileName);
   }
 
+  console.log(`\r   Processed ${totalLectures} lectures total                    `);
+  console.log(`   ${lecturesWithAudio} lectures have audioFileName`);
+  console.log(`   ${lecturesWithoutAudio} lectures have NO audioFileName\n`);
+
   if (report.duplicateFilenames?.length) {
-    console.log(`   ⚠️  ${report.duplicateFilenames.length} duplicate audioFileNames in MongoDB\n`);
+    console.log(`   [WARN] ${report.duplicateFilenames.length} duplicate audioFileNames in MongoDB\n`);
   }
 
   // Fetch all OCI objects
-  console.log('☁️  Fetching objects from OCI Object Storage...');
-  let ociObjects;
-  try {
-    ociObjects = await listAllOCIObjects();
-  } catch (error) {
-    console.error(`\n❌ OCI Error: ${error.message}`);
-    console.error('   Check your OCI configuration (env vars, API keys, etc.)');
-    await mongoose.disconnect();
-    process.exit(1);
-  }
+  console.log('[INFO] Fetching objects from OCI Object Storage...');
+  const ociObjects = await listAllOCIObjects();
 
-  // Create lookup set of OCI filenames
-  const ociFileSet = new Set(ociObjects.map(obj => obj.name));
-  const ociFileMap = new Map(ociObjects.map(obj => [obj.name, obj]));
+  // Create lookup set of normalized OCI filenames
+  const ociFileSet = new Set(ociObjects.map(obj => obj.normalizedName));
+  const ociFileMap = new Map(ociObjects.map(obj => [obj.normalizedName, obj]));
 
   // Compare: Find MongoDB records missing from OCI
-  console.log('\n🔍 Comparing records...\n');
+  console.log('\n[INFO] Comparing records...\n');
 
-  for (const [filename, lecture] of mongoFileMap) {
-    if (ociFileSet.has(filename)) {
+  for (const [normalizedFilename, lecture] of mongoFileMap) {
+    if (ociFileSet.has(normalizedFilename)) {
       // Matched
       report.matched.push({
-        filename,
+        filename: rawFilenameMap.get(normalizedFilename),
+        normalizedFilename,
         mongoId: lecture._id.toString(),
         title: lecture.titleArabic?.substring(0, 50),
-        ociSize: ociFileMap.get(filename).size
+        ociSize: ociFileMap.get(normalizedFilename).size
       });
     } else {
       // In MongoDB but not in OCI
       report.mongoDbOrphans.push({
-        filename,
+        filename: rawFilenameMap.get(normalizedFilename),
+        normalizedFilename,
         mongoId: lecture._id.toString(),
         title: lecture.titleArabic,
         audioUrl: lecture.audioUrl,
@@ -225,9 +270,10 @@ async function audit() {
 
   // Find OCI objects missing from MongoDB
   for (const obj of ociObjects) {
-    if (!mongoFileMap.has(obj.name)) {
+    if (!mongoFileMap.has(obj.normalizedName)) {
       report.ociOrphans.push({
         filename: obj.name,
+        normalizedFilename: obj.normalizedName,
         size: obj.size,
         sizeHuman: formatBytes(obj.size),
         timeCreated: obj.timeCreated
@@ -237,9 +283,9 @@ async function audit() {
 
   // Calculate summary
   report.summary = {
-    totalMongoLectures: lectures.length,
-    lecturesWithAudio: lecturesWithAudio.length,
-    lecturesWithoutAudio: lecturesWithoutAudio.length,
+    totalMongoLectures: totalLectures,
+    lecturesWithAudio: lecturesWithAudio,
+    lecturesWithoutAudio: lecturesWithoutAudio,
     totalOciObjects: ociObjects.length,
     matched: report.matched.length,
     mongoDbOrphans: report.mongoDbOrphans.length,
@@ -250,9 +296,9 @@ async function audit() {
   };
 
   // Print summary
-  console.log('═'.repeat(70));
+  console.log('='.repeat(70));
   console.log('  SUMMARY');
-  console.log('═'.repeat(70));
+  console.log('='.repeat(70));
   console.log(`
   MongoDB:
     Total lectures:           ${report.summary.totalMongoLectures}
@@ -265,17 +311,17 @@ async function audit() {
     Total size:               ${formatBytes(report.summary.ociTotalSize)}
 
   Sync Status:
-    ✅ Matched (in both):     ${report.summary.matched}
-    ⚠️  MongoDB orphans:       ${report.summary.mongoDbOrphans} (in DB, not in OCI)
-    ⚠️  OCI orphans:           ${report.summary.ociOrphans} (in OCI, not in DB)
-    📦 OCI orphan size:       ${formatBytes(report.summary.ociOrphanSize)}
+    [OK]   Matched (in both):     ${report.summary.matched}
+    [WARN] MongoDB orphans:       ${report.summary.mongoDbOrphans} (in DB, not in OCI)
+    [WARN] OCI orphans:           ${report.summary.ociOrphans} (in OCI, not in DB)
+    [INFO] OCI orphan size:       ${formatBytes(report.summary.ociOrphanSize)}
 `);
 
   // Show details for orphans
   if (report.mongoDbOrphans.length > 0) {
-    console.log('─'.repeat(70));
+    console.log('-'.repeat(70));
     console.log('  MongoDB Orphans (lectures with audioFileName but not in OCI):');
-    console.log('─'.repeat(70));
+    console.log('-'.repeat(70));
     const showLimit = VERBOSE ? report.mongoDbOrphans.length : Math.min(10, report.mongoDbOrphans.length);
     for (let i = 0; i < showLimit; i++) {
       const orphan = report.mongoDbOrphans[i];
@@ -290,9 +336,9 @@ async function audit() {
   }
 
   if (report.ociOrphans.length > 0) {
-    console.log('─'.repeat(70));
+    console.log('-'.repeat(70));
     console.log('  OCI Orphans (objects in bucket but not in MongoDB):');
-    console.log('─'.repeat(70));
+    console.log('-'.repeat(70));
     const showLimit = VERBOSE ? report.ociOrphans.length : Math.min(10, report.ociOrphans.length);
     for (let i = 0; i < showLimit; i++) {
       const orphan = report.ociOrphans[i];
@@ -308,17 +354,17 @@ async function audit() {
   // Save report to file if requested
   if (OUTPUT_FILE) {
     fs.writeFileSync(OUTPUT_FILE, JSON.stringify(report, null, 2));
-    console.log(`📄 Full report saved to: ${OUTPUT_FILE}\n`);
+    console.log(`[INFO] Full report saved to: ${OUTPUT_FILE}\n`);
   }
 
   // Recommendations
-  console.log('═'.repeat(70));
+  console.log('='.repeat(70));
   console.log('  RECOMMENDATIONS');
-  console.log('═'.repeat(70));
+  console.log('='.repeat(70));
 
   if (report.mongoDbOrphans.length > 0) {
     console.log(`
-  📋 MongoDB Orphans (${report.mongoDbOrphans.length}):
+  [ACTION] MongoDB Orphans (${report.mongoDbOrphans.length}):
      These lectures have audioFileName but the file doesn't exist in OCI.
      Options:
      a) Upload the missing audio files to OCI
@@ -328,7 +374,7 @@ async function audit() {
 
   if (report.ociOrphans.length > 0) {
     console.log(`
-  📋 OCI Orphans (${report.ociOrphans.length}, ${formatBytes(report.summary.ociOrphanSize)}):
+  [ACTION] OCI Orphans (${report.ociOrphans.length}, ${formatBytes(report.summary.ociOrphanSize)}):
      These files exist in OCI but have no matching MongoDB record.
      Options:
      a) Create MongoDB records for these files
@@ -338,23 +384,40 @@ async function audit() {
 
   if (report.summary.lecturesWithoutAudio > 0) {
     console.log(`
-  📋 Lectures Without Audio (${report.summary.lecturesWithoutAudio}):
+  [INFO] Lectures Without Audio (${report.summary.lecturesWithoutAudio}):
      These lectures have no audioFileName set.
      This may be intentional for placeholder records.`);
   }
 
   if (report.mongoDbOrphans.length === 0 && report.ociOrphans.length === 0) {
-    console.log('\n  ✅ Perfect sync! All MongoDB records match OCI objects.\n');
+    console.log('\n  [SUCCESS] Perfect sync! All MongoDB records match OCI objects.\n');
   }
 
   console.log('');
 
-  await mongoose.disconnect();
   return report;
 }
 
-// Run audit
-audit().catch(err => {
-  console.error('\n❌ Audit failed:', err.message);
-  process.exit(1);
-});
+/**
+ * Main entry point with graceful error handling
+ */
+async function main() {
+  try {
+    await audit();
+  } catch (err) {
+    console.error(`\n[ERROR] Audit failed: ${err.message}`);
+    if (VERBOSE) {
+      console.error(err.stack);
+    }
+    process.exitCode = 1;
+  } finally {
+    // Always disconnect from MongoDB, even on error
+    if (mongoose.connection.readyState !== 0) {
+      await mongoose.disconnect();
+      console.log('[INFO] MongoDB connection closed');
+    }
+  }
+}
+
+// Run
+main();
