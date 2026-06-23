@@ -10,6 +10,18 @@ const oci = require(path.join(__dirname, '..', 'config', 'oci'));
 
 const ARCHIVE_BUCKET = process.argv[2] || 'wurud-archive';
 
+// Load a sample of MongoDB audioFileNames to compare
+async function getMongoSample() {
+  const mongoose = require('mongoose');
+  const { Lecture } = require(path.join(__dirname, '..', 'models'));
+
+  await mongoose.connect(process.env.MONGODB_URI);
+  const lectures = await Lecture.find({ audioFileName: { $ne: null } }, { audioFileName: 1 }).limit(10).lean();
+  await mongoose.disconnect();
+
+  return new Set(lectures.map(l => l.audioFileName));
+}
+
 async function checkBuckets() {
   console.log('='.repeat(60));
   console.log('  OCI BUCKET DIAGNOSTIC');
@@ -57,6 +69,33 @@ async function checkBuckets() {
 
     console.log('');
     console.log(`  Zero-byte files: ${zeroByteCount} / ${sourceObjects.length}`);
+
+  } catch (error) {
+    console.log(`  [ERROR] ${error.message}`);
+  }
+
+  // Check files that ARE in MongoDB (should have content)
+  console.log('\n' + '-'.repeat(60));
+  console.log('  MONGODB-LINKED FILES (should have content):');
+  console.log('-'.repeat(60));
+
+  try {
+    const mongoFiles = await getMongoSample();
+    console.log(`  Checking ${mongoFiles.size} files from MongoDB...\n`);
+
+    for (const filename of mongoFiles) {
+      try {
+        const headResponse = await client.headObject({
+          namespaceName: namespace,
+          bucketName: sourceBucket,
+          objectName: filename
+        });
+        const size = headResponse.contentLength || 0;
+        console.log(`  ${formatBytes(size).padStart(10)} | ${filename.substring(0, 50)}`);
+      } catch (err) {
+        console.log(`  [MISSING] | ${filename.substring(0, 50)}`);
+      }
+    }
 
   } catch (error) {
     console.log(`  [ERROR] ${error.message}`);
