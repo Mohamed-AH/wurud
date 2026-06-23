@@ -88,39 +88,40 @@ function sleep(ms) {
 }
 
 /**
- * Move object to archive bucket using get+put (avoids service principal permissions)
+ * Move object to archive bucket using streaming (minimal memory usage)
+ * Pipes directly from source to destination without buffering entire file
  */
 async function moveToArchive(client, namespace, sourceBucket, objectName, retries = 3) {
   for (let attempt = 1; attempt <= retries; attempt++) {
     try {
-      // Step 1: Get object from source bucket
+      // Step 1: Get object metadata for content-length
+      const headResponse = await client.headObject({
+        namespaceName: namespace,
+        bucketName: sourceBucket,
+        objectName: objectName
+      });
+
+      const contentLength = headResponse.contentLength;
+      const contentType = headResponse.contentType || 'audio/mp4';
+
+      // Step 2: Get object stream
       const getResponse = await client.getObject({
         namespaceName: namespace,
         bucketName: sourceBucket,
         objectName: objectName
       });
 
-      // Read the stream into a buffer
-      const chunks = [];
-      for await (const chunk of getResponse.value) {
-        chunks.push(chunk);
-      }
-      const buffer = Buffer.concat(chunks);
-
-      // Step 2: Put object to archive bucket
-      const { Readable } = require('stream');
-      const uploadStream = Readable.from(buffer);
-
+      // Step 3: Put object directly using the stream (no buffering)
       await client.putObject({
         namespaceName: namespace,
         bucketName: ARCHIVE_BUCKET,
         objectName: objectName,
-        putObjectBody: uploadStream,
-        contentLength: buffer.length,
-        contentType: getResponse.contentType || 'audio/mp4'
+        putObjectBody: getResponse.value,
+        contentLength: contentLength,
+        contentType: contentType
       });
 
-      return { success: true, size: buffer.length };
+      return { success: true, size: contentLength };
 
     } catch (error) {
       if (attempt < retries && (error.statusCode === 429 || error.statusCode >= 500)) {
