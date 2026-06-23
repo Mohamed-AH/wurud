@@ -88,40 +88,25 @@ function sleep(ms) {
 }
 
 /**
- * Move object to archive bucket using streaming (minimal memory usage)
- * Pipes directly from source to destination without buffering entire file
+ * Copy object to archive bucket using server-side copyObject (no bandwidth used)
+ * Requires IAM policy: Allow service objectstorage-<region> to manage object-family in compartment/tenancy
  */
-async function moveToArchive(client, namespace, sourceBucket, objectName, retries = 3) {
+async function copyToArchive(client, namespace, sourceBucket, objectName, retries = 3) {
   for (let attempt = 1; attempt <= retries; attempt++) {
     try {
-      // Step 1: Get object metadata for content-length
-      const headResponse = await client.headObject({
+      await client.copyObject({
         namespaceName: namespace,
         bucketName: sourceBucket,
-        objectName: objectName
+        copyObjectDetails: {
+          sourceObjectName: objectName,
+          destinationRegion: oci.getRegion(),
+          destinationNamespace: namespace,
+          destinationBucket: ARCHIVE_BUCKET,
+          destinationObjectName: objectName
+        }
       });
 
-      const contentLength = headResponse.contentLength;
-      const contentType = headResponse.contentType || 'audio/mp4';
-
-      // Step 2: Get object stream
-      const getResponse = await client.getObject({
-        namespaceName: namespace,
-        bucketName: sourceBucket,
-        objectName: objectName
-      });
-
-      // Step 3: Put object directly using the stream (no buffering)
-      await client.putObject({
-        namespaceName: namespace,
-        bucketName: ARCHIVE_BUCKET,
-        objectName: objectName,
-        putObjectBody: getResponse.value,
-        contentLength: contentLength,
-        contentType: contentType
-      });
-
-      return { success: true, size: contentLength };
+      return { success: true };
 
     } catch (error) {
       if (attempt < retries && (error.statusCode === 429 || error.statusCode >= 500)) {
@@ -259,7 +244,7 @@ async function archiveOrphans() {
 
     try {
       // Copy to archive bucket
-      await moveToArchive(client, namespace, sourceBucket, filename);
+      await copyToArchive(client, namespace, sourceBucket, filename);
       stats.copied++;
 
       // Delete from source (unless --keep-source)
