@@ -30,10 +30,13 @@
 
 require('dotenv').config();
 
+const path = require('path');
 const mongoose = require('mongoose');
 const fs = require('fs');
-const { Lecture } = require('../models');
-const oci = require('../config/oci');
+
+// Use __dirname for paths relative to script location
+const { Lecture } = require(path.join(__dirname, '..', 'models'));
+const oci = require(path.join(__dirname, '..', 'config', 'oci'));
 
 // Parse arguments
 const args = process.argv.slice(2);
