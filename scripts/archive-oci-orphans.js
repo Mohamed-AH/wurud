@@ -88,30 +88,40 @@ function sleep(ms) {
 }
 
 /**
- * Copy object to archive bucket with retry
+ * Move object to archive bucket using get+put (avoids service principal permissions)
  */
-async function copyToArchive(client, namespace, sourceBucket, objectName, retries = 3) {
-  const copyObjectRequest = {
-    namespaceName: namespace,
-    bucketName: ARCHIVE_BUCKET,
-    copyObjectDetails: {
-      sourceObjectName: objectName,
-      destinationRegion: oci.getRegion(),
-      destinationNamespace: namespace,
-      destinationBucket: sourceBucket,
-      destinationObjectName: objectName
-    }
-  };
-
-  // Fix: source and destination are swapped in OCI SDK
-  // We copy FROM sourceBucket TO ARCHIVE_BUCKET
-  copyObjectRequest.copyObjectDetails.destinationBucket = ARCHIVE_BUCKET;
-  copyObjectRequest.bucketName = sourceBucket;
-
+async function moveToArchive(client, namespace, sourceBucket, objectName, retries = 3) {
   for (let attempt = 1; attempt <= retries; attempt++) {
     try {
-      await client.copyObject(copyObjectRequest);
-      return { success: true };
+      // Step 1: Get object from source bucket
+      const getResponse = await client.getObject({
+        namespaceName: namespace,
+        bucketName: sourceBucket,
+        objectName: objectName
+      });
+
+      // Read the stream into a buffer
+      const chunks = [];
+      for await (const chunk of getResponse.value) {
+        chunks.push(chunk);
+      }
+      const buffer = Buffer.concat(chunks);
+
+      // Step 2: Put object to archive bucket
+      const { Readable } = require('stream');
+      const uploadStream = Readable.from(buffer);
+
+      await client.putObject({
+        namespaceName: namespace,
+        bucketName: ARCHIVE_BUCKET,
+        objectName: objectName,
+        putObjectBody: uploadStream,
+        contentLength: buffer.length,
+        contentType: getResponse.contentType || 'audio/mp4'
+      });
+
+      return { success: true, size: buffer.length };
+
     } catch (error) {
       if (attempt < retries && (error.statusCode === 429 || error.statusCode >= 500)) {
         const delay = Math.pow(2, attempt) * 1000;
@@ -252,7 +262,7 @@ async function archiveOrphans() {
         console.log(`${progress} Copying: ${filename.substring(0, 50)}...`);
       }
 
-      await copyToArchive(client, namespace, sourceBucket, filename);
+      await moveToArchive(client, namespace, sourceBucket, filename);
       stats.copied++;
 
       // Delete from source (unless --keep-source)
