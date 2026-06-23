@@ -90,11 +90,13 @@ function sleep(ms) {
 /**
  * Copy object to archive bucket using server-side copyObject (no bandwidth used)
  * Requires IAM policy: Allow service objectstorage-<region> to manage object-family in compartment/tenancy
+ *
+ * NOTE: copyObject is ASYNC - must wait for work request to complete before deleting source
  */
 async function copyToArchive(client, namespace, sourceBucket, objectName, retries = 3) {
   for (let attempt = 1; attempt <= retries; attempt++) {
     try {
-      await client.copyObject({
+      const response = await client.copyObject({
         namespaceName: namespace,
         bucketName: sourceBucket,
         copyObjectDetails: {
@@ -105,6 +107,12 @@ async function copyToArchive(client, namespace, sourceBucket, objectName, retrie
           destinationObjectName: objectName
         }
       });
+
+      // copyObject is async - wait for work request to complete
+      const workRequestId = response.opcWorkRequestId;
+      if (workRequestId) {
+        await waitForWorkRequest(client, workRequestId);
+      }
 
       return { success: true };
 
@@ -118,6 +126,37 @@ async function copyToArchive(client, namespace, sourceBucket, objectName, retrie
       }
     }
   }
+}
+
+/**
+ * Wait for OCI work request to complete
+ */
+async function waitForWorkRequest(client, workRequestId, maxWaitMs = 60000) {
+  const startTime = Date.now();
+
+  while (Date.now() - startTime < maxWaitMs) {
+    try {
+      const response = await client.getWorkRequest({ workRequestId });
+      const status = response.workRequest.status;
+
+      if (status === 'COMPLETED') {
+        return { success: true };
+      } else if (status === 'FAILED' || status === 'CANCELED') {
+        throw new Error(`Work request ${status}`);
+      }
+
+      // Still in progress, wait and retry
+      await sleep(1000);
+    } catch (error) {
+      if (error.statusCode === 404) {
+        // Work request not found - might have completed already
+        return { success: true };
+      }
+      throw error;
+    }
+  }
+
+  throw new Error('Work request timeout');
 }
 
 /**
