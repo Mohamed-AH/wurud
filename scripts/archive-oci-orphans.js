@@ -259,10 +259,6 @@ async function archiveOrphans() {
 
     try {
       // Copy to archive bucket
-      if (VERBOSE) {
-        console.log(`${progress} Copying: ${filename.substring(0, 50)}...`);
-      }
-
       await moveToArchive(client, namespace, sourceBucket, filename);
       stats.copied++;
 
@@ -272,20 +268,13 @@ async function archiveOrphans() {
         stats.deleted++;
       }
 
-      if (VERBOSE) {
-        console.log(`${progress} [OK] Archived: ${filename.substring(0, 50)}...`);
-      } else if ((i + 1) % 10 === 0) {
-        process.stdout.write(`\r   Processed ${i + 1}/${filesToProcess.length} files...`);
-      }
+      // Always show moved files
+      console.log(`${progress} [MOVED] ${filename}`);
 
     } catch (error) {
       stats.errors++;
-      console.log(`${progress} [ERROR] ${filename.substring(0, 40)}: ${error.message}`);
+      console.log(`${progress} [ERROR] ${filename.substring(0, 50)}: ${error.message}`);
     }
-  }
-
-  if (!DRY_RUN && !VERBOSE) {
-    console.log(`\r   Processed ${filesToProcess.length}/${filesToProcess.length} files      `);
   }
 
   // Summary
