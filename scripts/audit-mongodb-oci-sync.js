@@ -103,7 +103,8 @@ async function listAllOCIObjects() {
     const request = {
       namespaceName: namespace,
       bucketName: bucketName,
-      limit: LIMIT ? Math.min(LIMIT - objects.length, pageSize) : pageSize
+      limit: LIMIT ? Math.min(LIMIT - objects.length, pageSize) : pageSize,
+      fields: 'name,size,timeCreated'
     };
 
     if (nextStartWith) {
