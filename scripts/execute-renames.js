@@ -289,6 +289,7 @@ async function main() {
     let localRenamed = false;
     let localOldPath = null;
     let localNewPath = null;
+    let dbCommitted = false;
 
     console.log(`\n${progressStr} Processing: ${r.filename}`);
     console.log(`         To: ${r.newFilename}`);
@@ -371,6 +372,9 @@ async function main() {
       }
       console.log('           MongoDB: OK');
 
+      // COMMIT POINT: MongoDB is now updated. Do not rollback after this.
+      dbCommitted = true;
+
       // Step 7: Delete old OCI file
       console.log('  Step 7/7: Deleting old OCI file...');
       await client.deleteObject({
@@ -391,48 +395,66 @@ async function main() {
     } catch (error) {
       console.log(`  [ERROR] ${error.message}`);
 
-      // Rollback local file system if renamed
-      if (localRenamed && localOldPath && localNewPath) {
-        try {
-          if (fs.existsSync(localNewPath)) {
-            console.log('           [ROLLBACK] Reverting local rename...');
-            fs.renameSync(localNewPath, localOldPath);
-            console.log('           [ROLLBACK] Local file restored');
+      if (dbCommitted) {
+        // MongoDB transaction succeeded - the rename is legally complete.
+        // Do NOT rollback local or OCI copies - that would corrupt the state.
+        // The old file cleanup failed but the app will work correctly.
+        console.warn('  [WARNING] MongoDB committed, but old file cleanup failed.');
+        console.warn(`            Old OCI file "${r.filename}" may still exist.`);
+        console.warn('            Manual cleanup required, but rename succeeded.');
+
+        // Mark as completed because MongoDB points to the correct new file
+        progress.completed.push(r.filename);
+        progress.lastProcessedIndex = i;
+        saveProgress(progress);
+        successCount++;
+
+      } else {
+        // MongoDB was NOT updated - safe to rollback everything
+
+        // Rollback local file system if renamed
+        if (localRenamed && localOldPath && localNewPath) {
+          try {
+            if (fs.existsSync(localNewPath)) {
+              console.log('           [ROLLBACK] Reverting local rename...');
+              fs.renameSync(localNewPath, localOldPath);
+              console.log('           [ROLLBACK] Local file restored');
+            }
+          } catch (fsErr) {
+            console.error(`           [FATAL] Local rollback failed: ${fsErr.message}`);
           }
-        } catch (fsErr) {
-          console.error(`           [FATAL] Local rollback failed: ${fsErr.message}`);
         }
-      }
 
-      // Rollback OCI (delete orphan copy) if copy succeeded but later steps failed
-      if (ociCopySucceeded) {
-        try {
-          console.log('           [ROLLBACK] Deleting orphan copy in OCI...');
-          await client.deleteObject({
-            namespaceName: namespace,
-            bucketName: bucketName,
-            objectName: r.newFilename
-          });
-          console.log('           [ROLLBACK] OCI orphan copy deleted');
-        } catch (ociErr) {
-          console.error(`           [FATAL] OCI rollback failed: ${ociErr.message}`);
+        // Rollback OCI (delete orphan copy) if copy succeeded but DB never updated
+        if (ociCopySucceeded) {
+          try {
+            console.log('           [ROLLBACK] Deleting orphan copy in OCI...');
+            await client.deleteObject({
+              namespaceName: namespace,
+              bucketName: bucketName,
+              objectName: r.newFilename
+            });
+            console.log('           [ROLLBACK] OCI orphan copy deleted');
+          } catch (ociErr) {
+            console.error(`           [FATAL] OCI rollback failed: ${ociErr.message}`);
+          }
         }
+
+        // Record failure
+        progress.failed.push({
+          filename: r.filename,
+          error: error.message,
+          timestamp: new Date().toISOString()
+        });
+        saveProgress(progress);
+
+        errorCount++;
+
+        // Stop on first error for safety
+        console.log('\n[STOPPED] Halting on first error for safety.');
+        console.log('[INFO] Fix the issue and re-run to resume from this point.\n');
+        break;
       }
-
-      // Record failure
-      progress.failed.push({
-        filename: r.filename,
-        error: error.message,
-        timestamp: new Date().toISOString()
-      });
-      saveProgress(progress);
-
-      errorCount++;
-
-      // Stop on first error for safety
-      console.log('\n[STOPPED] Halting on first error for safety.');
-      console.log('[INFO] Fix the issue and re-run to resume from this point.\n');
-      break;
     }
   }
 
