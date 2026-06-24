@@ -82,6 +82,18 @@ function applyRenameRules(filename) {
 }
 
 async function main() {
+  // Validate required environment variables
+  if (!process.env.MONGODB_URI) {
+    console.error('[ERROR] MONGODB_URI environment variable is missing.');
+    process.exit(1);
+  }
+
+  if (!oci.isConfigured()) {
+    console.error('[ERROR] OCI credentials not configured.');
+    console.error('[INFO] Set OCI_PRIVATE_KEY + OCI_TENANCY or OCI_CONFIG_FILE.');
+    process.exit(1);
+  }
+
   console.log('='.repeat(70));
   console.log('  PHASE 1: RENAME PLAN GENERATOR (READ-ONLY)');
   console.log('='.repeat(70));

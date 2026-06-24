@@ -58,27 +58,28 @@ function sleep(ms) {
 /**
  * Wait for OCI work request to complete
  * CRITICAL: Do not proceed until copy is confirmed
+ * Uses WorkRequestClient (not ObjectStorageClient)
  */
-async function waitForWorkRequest(client, workRequestId, maxWaitMs = 120000) {
+async function waitForWorkRequest(wrClient, workRequestId, maxWaitMs = 120000) {
   const startTime = Date.now();
   let lastStatus = '';
 
   while (Date.now() - startTime < maxWaitMs) {
     try {
-      const response = await client.getWorkRequest({ workRequestId });
-      const status = response.workRequest.status;
+      const response = await wrClient.getWorkRequest({ workRequestId });
+      const status = (response.workRequest.status || '').toUpperCase();
       lastStatus = status;
 
-      if (status === 'SUCCEEDED' || status === 'COMPLETED') {
+      if (status === 'SUCCEEDED') {
         return { success: true, status };
       } else if (status === 'FAILED' || status === 'CANCELED') {
-        return { success: false, status, error: `Work request ${status}` };
+        return { success: false, status, error: `Work request ended with state: ${status}` };
       }
 
       await sleep(1000);
     } catch (error) {
       if (error.statusCode === 404) {
-        return { success: true, status: 'COMPLETED_NO_RECORD' };
+        return { success: true, status: 'SUCCEEDED_NO_RECORD' };
       }
       throw error;
     }
@@ -139,6 +140,18 @@ function saveProgress(progress) {
 }
 
 async function main() {
+  // Validate required environment variables
+  if (!process.env.MONGODB_URI) {
+    console.error('[ERROR] MONGODB_URI environment variable is missing.');
+    process.exit(1);
+  }
+
+  if (!oci.isConfigured()) {
+    console.error('[ERROR] OCI credentials not configured.');
+    console.error('[INFO] Set OCI_PRIVATE_KEY + OCI_TENANCY or OCI_CONFIG_FILE.');
+    process.exit(1);
+  }
+
   console.log('='.repeat(70));
   console.log('  PHASE 3: EXECUTE RENAMES');
   console.log('='.repeat(70));
@@ -195,10 +208,18 @@ async function main() {
   await mongoose.connect(process.env.MONGODB_URI);
   console.log('[INFO] Connected\n');
 
-  // Initialize OCI
+  // Initialize OCI ObjectStorage client
   const client = oci.client;
   if (!client) {
-    console.error('[ERROR] OCI client not initialized');
+    console.error('[ERROR] OCI ObjectStorage client not initialized');
+    await mongoose.disconnect();
+    process.exit(1);
+  }
+
+  // Initialize OCI WorkRequest client (for polling async operations)
+  const wrClient = oci.workRequestClient;
+  if (!wrClient) {
+    console.error('[ERROR] OCI WorkRequest client not initialized');
     await mongoose.disconnect();
     process.exit(1);
   }
@@ -263,6 +284,12 @@ async function main() {
     const r = pending[i];
     const progressStr = `[${i + 1}/${pending.length}]`;
 
+    // Track step states for rollback
+    let ociCopySucceeded = false;
+    let localRenamed = false;
+    let localOldPath = null;
+    let localNewPath = null;
+
     console.log(`\n${progressStr} Processing: ${r.filename}`);
     console.log(`         To: ${r.newFilename}`);
 
@@ -281,15 +308,16 @@ async function main() {
         }
       });
 
-      // Step 2: Wait for copy to complete
+      // Step 2: Wait for copy to complete (using WorkRequestClient)
       console.log('  Step 2/7: Waiting for OCI copy...');
       if (copyResponse.opcWorkRequestId) {
-        const waitResult = await waitForWorkRequest(client, copyResponse.opcWorkRequestId);
+        const waitResult = await waitForWorkRequest(wrClient, copyResponse.opcWorkRequestId);
         if (!waitResult.success) {
           throw new Error(`OCI copy failed: ${waitResult.error}`);
         }
         console.log(`           Status: ${waitResult.status}`);
       }
+      ociCopySucceeded = true;
 
       // Step 3: Verify new file exists with correct size
       console.log('  Step 3/7: Verifying OCI copy...');
@@ -303,16 +331,16 @@ async function main() {
       console.log(`           Size: ${verifyResult.actualSize} bytes [OK]`);
 
       // Step 4: Rename local file (if applicable)
-      let localRenamed = false;
-      let localOldPath = null;
-      let localNewPath = null;
-
       if (LOCAL_DIR) {
         console.log('  Step 4/7: Renaming local file...');
         localOldPath = path.join(LOCAL_DIR, r.filename);
         localNewPath = path.join(LOCAL_DIR, r.newFilename);
 
         if (fs.existsSync(localOldPath)) {
+          // Check if destination already exists (prevent silent overwrite)
+          if (fs.existsSync(localNewPath)) {
+            throw new Error(`Local destination path already exists: ${localNewPath}`);
+          }
           fs.renameSync(localOldPath, localNewPath);
           localRenamed = true;
           console.log('           Local rename: OK');
@@ -332,11 +360,6 @@ async function main() {
       ).lean();
 
       if (!updateResult) {
-        // ROLLBACK local if MongoDB fails
-        if (localRenamed && localOldPath && localNewPath) {
-          console.log('           [ROLLBACK] Reverting local rename...');
-          fs.renameSync(localNewPath, localOldPath);
-        }
         throw new Error('MongoDB update returned null - record not found');
       }
 
@@ -344,11 +367,6 @@ async function main() {
       console.log('  Step 6/7: Verifying MongoDB...');
       const verifyMongo = await Lecture.findById(r.mongoId, { audioFileName: 1 }).lean();
       if (!verifyMongo || verifyMongo.audioFileName !== r.newFilename) {
-        // ROLLBACK local if verification fails
-        if (localRenamed && localOldPath && localNewPath) {
-          console.log('           [ROLLBACK] Reverting local rename...');
-          fs.renameSync(localNewPath, localOldPath);
-        }
         throw new Error('MongoDB verification failed - audioFileName mismatch');
       }
       console.log('           MongoDB: OK');
@@ -372,6 +390,34 @@ async function main() {
 
     } catch (error) {
       console.log(`  [ERROR] ${error.message}`);
+
+      // Rollback local file system if renamed
+      if (localRenamed && localOldPath && localNewPath) {
+        try {
+          if (fs.existsSync(localNewPath)) {
+            console.log('           [ROLLBACK] Reverting local rename...');
+            fs.renameSync(localNewPath, localOldPath);
+            console.log('           [ROLLBACK] Local file restored');
+          }
+        } catch (fsErr) {
+          console.error(`           [FATAL] Local rollback failed: ${fsErr.message}`);
+        }
+      }
+
+      // Rollback OCI (delete orphan copy) if copy succeeded but later steps failed
+      if (ociCopySucceeded) {
+        try {
+          console.log('           [ROLLBACK] Deleting orphan copy in OCI...');
+          await client.deleteObject({
+            namespaceName: namespace,
+            bucketName: bucketName,
+            objectName: r.newFilename
+          });
+          console.log('           [ROLLBACK] OCI orphan copy deleted');
+        } catch (ociErr) {
+          console.error(`           [FATAL] OCI rollback failed: ${ociErr.message}`);
+        }
+      }
 
       // Record failure
       progress.failed.push({

@@ -7,8 +7,11 @@
 
 const common = require('oci-common');
 const os = require('oci-objectstorage');
+const wr = require('oci-workrequests');
 
 let objectStorageClient = null;
+let workRequestClient = null;
+let authProvider = null;
 
 /**
  * Initialize OCI Object Storage client
@@ -20,16 +23,14 @@ function initializeClient() {
   }
 
   try {
-    let provider;
-
     // Check if using environment variables (recommended for Render)
     if (process.env.OCI_PRIVATE_KEY && process.env.OCI_TENANCY) {
-      console.log('🔐 Using OCI environment variable authentication');
+      console.log('Using OCI environment variable authentication');
 
       // Clean up private key (handle newlines in env var)
       const privateKey = process.env.OCI_PRIVATE_KEY.replace(/\\n/g, '\n');
 
-      provider = new common.SimpleAuthenticationDetailsProvider(
+      authProvider = new common.SimpleAuthenticationDetailsProvider(
         process.env.OCI_TENANCY,
         process.env.OCI_USER,
         process.env.OCI_FINGERPRINT,
@@ -39,21 +40,21 @@ function initializeClient() {
       );
     } else if (process.env.OCI_CONFIG_FILE) {
       // Use config file authentication (for local development)
-      console.log('🔐 Using OCI config file authentication');
-      provider = new common.ConfigFileAuthenticationDetailsProvider(
+      console.log('Using OCI config file authentication');
+      authProvider = new common.ConfigFileAuthenticationDetailsProvider(
         process.env.OCI_CONFIG_FILE,
         process.env.OCI_PROFILE || 'DEFAULT'
       );
     } else {
-      console.warn('⚠️ OCI credentials not configured - object storage disabled');
+      console.warn('OCI credentials not configured - object storage disabled');
       return null;
     }
 
     objectStorageClient = new os.ObjectStorageClient({
-      authenticationDetailsProvider: provider
+      authenticationDetailsProvider: authProvider
     });
 
-    console.log('✅ OCI Object Storage client initialized');
+    console.log('OCI Object Storage client initialized');
     return objectStorageClient;
   } catch (error) {
     console.error('❌ Failed to initialize OCI client:', error.message);
@@ -89,13 +90,45 @@ function isConfigured() {
   return !!(process.env.OCI_NAMESPACE && (process.env.OCI_PRIVATE_KEY || process.env.OCI_CONFIG_FILE));
 }
 
+/**
+ * Initialize and return WorkRequest client for polling async operations
+ */
+function initializeWorkRequestClient() {
+  if (workRequestClient) {
+    return workRequestClient;
+  }
+
+  // Ensure auth provider is initialized
+  if (!authProvider) {
+    initializeClient();
+  }
+
+  if (!authProvider) {
+    return null;
+  }
+
+  try {
+    workRequestClient = new wr.WorkRequestClient({
+      authenticationDetailsProvider: authProvider
+    });
+    return workRequestClient;
+  } catch (error) {
+    console.error('Failed to initialize WorkRequest client:', error.message);
+    return null;
+  }
+}
+
 module.exports = {
   initializeClient,
+  initializeWorkRequestClient,
   getNamespace,
   getBucketName,
   getRegion,
   isConfigured,
   get client() {
     return initializeClient();
+  },
+  get workRequestClient() {
+    return initializeWorkRequestClient();
   }
 };
