@@ -2759,7 +2759,7 @@ function showMoreSeries(slug) {
     %>
       <div class="series-card" data-category="<%= series.category %>" data-date="<%= latestDate %>" data-hijri="<%= hijriDate %>" data-series-type="<%= seriesType %>">
         <div class="series-header" onclick="toggleSeries('<%= series._id %>')">
-          <h2 class="series-title"><a href="/series/<%= series.slug ? encodeURIComponent(series.slug) : series._id %>" onclick="event.stopPropagation()"><%= locale === 'ar' ? series.titleArabic : (series.titleEnglish || series.titleArabic) %></a></h2>
+          <h2 class="series-title"><a href="/series/<%= series.shortId %><%= series.slug_en ? '/' + series.slug_en : '' %><%= series.slug_ar ? '/' + encodeURIComponent(series.slug_ar) : '' %>" onclick="event.stopPropagation()"><%= locale === 'ar' ? series.titleArabic : (series.titleEnglish || series.titleArabic) %></a></h2>
 
           <div class="series-meta">
             <% if (series.originalAuthor) { %>
@@ -2951,7 +2951,7 @@ function showMoreSeries(slug) {
       %>
         <div class="series-card" data-category="<%= series.category %>" data-date="<%= latestDate %>" data-hijri="<%= hijriDate %>">
           <div class="series-header" onclick="toggleKhutba('<%= series._id %>')">
-            <h2 class="series-title"><a href="/series/<%= series.slug ? encodeURIComponent(series.slug) : series._id %>" onclick="event.stopPropagation()"><%= locale === 'ar' ? series.titleArabic : (series.titleEnglish || series.titleArabic) %></a></h2>
+            <h2 class="series-title"><a href="/series/<%= series.shortId %><%= series.slug_en ? '/' + series.slug_en : '' %><%= series.slug_ar ? '/' + encodeURIComponent(series.slug_ar) : '' %>" onclick="event.stopPropagation()"><%= locale === 'ar' ? series.titleArabic : (series.titleEnglish || series.titleArabic) %></a></h2>
             <div class="series-meta">
               <div class="series-sheikh">
                 <%= locale === 'ar' ? 'الشيخ:' : 'Sheikh:' %> <%= series.sheikh ? (locale === 'ar' ? series.sheikh.nameArabic : (series.sheikh.nameEnglish || series.sheikh.nameArabic)) : '' %>
