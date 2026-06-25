@@ -2355,13 +2355,13 @@
             <% } %>
             <td class="schedule-series-cell">
               <% if (item.isNew) { %><span class="new-badge"><%= locale === 'ar' ? 'جديد' : 'NEW' %></span><% } %>
-              <a href="/series/<%= item.seriesId.slug ? encodeURIComponent(item.seriesId.slug) : item.seriesId._id %>">
+              <a href="/series/<%= item.seriesId.shortId %><%= item.seriesId.slug_en ? '/' + item.seriesId.slug_en : '' %><%= item.seriesId.slug_ar ? '/' + encodeURIComponent(item.seriesId.slug_ar) : '' %>">
                 <%= locale === 'ar' ? item.seriesId.titleArabic : (item.seriesId.titleEnglish || item.seriesId.titleArabic) %>
               </a>
             </td>
             <td style="text-align: center;">
               <% if (item.lectureCount > 0) { %>
-              <a href="<%= item.latestLecture ? '/lectures/' + (item.latestLecture.slug ? encodeURIComponent(item.latestLecture.slug) : item.latestLecture._id) : '/series/' + (item.seriesId.slug ? encodeURIComponent(item.seriesId.slug) : item.seriesId._id) %>" style="text-decoration: none;">
+              <a href="<%= item.latestLecture ? '/lectures/' + (item.latestLecture.slug ? encodeURIComponent(item.latestLecture.slug) : item.latestLecture._id) : '/series/' + item.seriesId.shortId + (item.seriesId.slug_en ? '/' + item.seriesId.slug_en : '') + (item.seriesId.slug_ar ? '/' + encodeURIComponent(item.seriesId.slug_ar) : '') %>" style="text-decoration: none;">
                 <span class="schedule-lesson-num"><%= item.lectureCount %></span>
               </a>
               <% } else { %>
@@ -2417,13 +2417,13 @@
             <% } %>
             <td class="schedule-series-cell">
               <% if (item.isNew) { %><span class="new-badge"><%= locale === 'ar' ? 'جديد' : 'NEW' %></span><% } %>
-              <a href="/series/<%= item.seriesId.slug ? encodeURIComponent(item.seriesId.slug) : item.seriesId._id %>">
+              <a href="/series/<%= item.seriesId.shortId %><%= item.seriesId.slug_en ? '/' + item.seriesId.slug_en : '' %><%= item.seriesId.slug_ar ? '/' + encodeURIComponent(item.seriesId.slug_ar) : '' %>">
                 <%= locale === 'ar' ? item.seriesId.titleArabic : (item.seriesId.titleEnglish || item.seriesId.titleArabic) %>
               </a>
             </td>
             <td style="text-align: center;">
               <% if (item.lectureCount > 0) { %>
-              <a href="<%= item.latestLecture ? '/lectures/' + (item.latestLecture.slug ? encodeURIComponent(item.latestLecture.slug) : item.latestLecture._id) : '/series/' + (item.seriesId.slug ? encodeURIComponent(item.seriesId.slug) : item.seriesId._id) %>" style="text-decoration: none;">
+              <a href="<%= item.latestLecture ? '/lectures/' + (item.latestLecture.slug ? encodeURIComponent(item.latestLecture.slug) : item.latestLecture._id) : '/series/' + item.seriesId.shortId + (item.seriesId.slug_en ? '/' + item.seriesId.slug_en : '') + (item.seriesId.slug_ar ? '/' + encodeURIComponent(item.seriesId.slug_ar) : '') %>" style="text-decoration: none;">
                 <span class="schedule-lesson-num"><%= item.lectureCount %></span>
               </a>
               <% } else { %>
@@ -2475,7 +2475,7 @@ function switchScheduleTab(tab) {
         <% visibleSeries.forEach(function(s) { %>
         <tr>
           <td style="width:60%">
-            <a href="/series/<%= s.slug %>" class="section-series-title"><%= locale === 'ar' ? s.titleArabic : (s.titleEnglish || s.titleArabic) %></a>
+            <a href="/series/<%= s.shortId %><%= s.slug_en ? '/' + s.slug_en : '' %><%= s.slug_ar ? '/' + encodeURIComponent(s.slug_ar) : '' %>" class="section-series-title"><%= locale === 'ar' ? s.titleArabic : (s.titleEnglish || s.titleArabic) %></a>
             <% if (locale === 'en' && s.titleArabic) { %>
               <div class="section-series-subtitle"><%= s.titleArabic %></div>
             <% } %>
@@ -2489,14 +2489,14 @@ function switchScheduleTab(tab) {
             <span class="section-lecture-count"><%= s.lectureCount %> <%= locale === 'ar' ? 'درس' : '' %></span>
           </td>
           <td class="hide-mobile" style="width:10%;text-align:center;">
-            <a href="/series/<%= s.slug %>" class="section-view-btn"><%= locale === 'ar' ? 'عرض' : 'View' %></a>
+            <a href="/series/<%= s.shortId %><%= s.slug_en ? '/' + s.slug_en : '' %><%= s.slug_ar ? '/' + encodeURIComponent(s.slug_ar) : '' %>" class="section-view-btn"><%= locale === 'ar' ? 'عرض' : 'View' %></a>
           </td>
         </tr>
         <% }) %>
         <% hiddenSeries.forEach(function(s) { %>
         <tr class="section-hidden-row" data-section="<%= section.slug %>" style="display:none;">
           <td style="width:60%">
-            <a href="/series/<%= s.slug %>" class="section-series-title"><%= locale === 'ar' ? s.titleArabic : (s.titleEnglish || s.titleArabic) %></a>
+            <a href="/series/<%= s.shortId %><%= s.slug_en ? '/' + s.slug_en : '' %><%= s.slug_ar ? '/' + encodeURIComponent(s.slug_ar) : '' %>" class="section-series-title"><%= locale === 'ar' ? s.titleArabic : (s.titleEnglish || s.titleArabic) %></a>
             <% if (locale === 'en' && s.titleArabic) { %>
               <div class="section-series-subtitle"><%= s.titleArabic %></div>
             <% } %>
@@ -2510,7 +2510,7 @@ function switchScheduleTab(tab) {
             <span class="section-lecture-count"><%= s.lectureCount %> <%= locale === 'ar' ? 'درس' : '' %></span>
           </td>
           <td class="hide-mobile" style="width:10%;text-align:center;">
-            <a href="/series/<%= s.slug %>" class="section-view-btn"><%= locale === 'ar' ? 'عرض' : 'View' %></a>
+            <a href="/series/<%= s.shortId %><%= s.slug_en ? '/' + s.slug_en : '' %><%= s.slug_ar ? '/' + encodeURIComponent(s.slug_ar) : '' %>" class="section-view-btn"><%= locale === 'ar' ? 'عرض' : 'View' %></a>
           </td>
         </tr>
         <% }) %>
@@ -2759,7 +2759,7 @@ function showMoreSeries(slug) {
     %>
       <div class="series-card" data-category="<%= series.category %>" data-date="<%= latestDate %>" data-hijri="<%= hijriDate %>" data-series-type="<%= seriesType %>">
         <div class="series-header" onclick="toggleSeries('<%= series._id %>')">
-          <h2 class="series-title"><a href="/series/<%= series.slug ? encodeURIComponent(series.slug) : series._id %>" onclick="event.stopPropagation()"><%= locale === 'ar' ? series.titleArabic : (series.titleEnglish || series.titleArabic) %></a></h2>
+          <h2 class="series-title"><a href="/series/<%= series.shortId %><%= series.slug_en ? '/' + series.slug_en : '' %><%= series.slug_ar ? '/' + encodeURIComponent(series.slug_ar) : '' %>" onclick="event.stopPropagation()"><%= locale === 'ar' ? series.titleArabic : (series.titleEnglish || series.titleArabic) %></a></h2>
 
           <div class="series-meta">
             <% if (series.originalAuthor) { %>
@@ -2951,7 +2951,7 @@ function showMoreSeries(slug) {
       %>
         <div class="series-card" data-category="<%= series.category %>" data-date="<%= latestDate %>" data-hijri="<%= hijriDate %>">
           <div class="series-header" onclick="toggleKhutba('<%= series._id %>')">
-            <h2 class="series-title"><a href="/series/<%= series.slug ? encodeURIComponent(series.slug) : series._id %>" onclick="event.stopPropagation()"><%= locale === 'ar' ? series.titleArabic : (series.titleEnglish || series.titleArabic) %></a></h2>
+            <h2 class="series-title"><a href="/series/<%= series.shortId %><%= series.slug_en ? '/' + series.slug_en : '' %><%= series.slug_ar ? '/' + encodeURIComponent(series.slug_ar) : '' %>" onclick="event.stopPropagation()"><%= locale === 'ar' ? series.titleArabic : (series.titleEnglish || series.titleArabic) %></a></h2>
             <div class="series-meta">
               <div class="series-sheikh">
                 <%= locale === 'ar' ? 'الشيخ:' : 'Sheikh:' %> <%= series.sheikh ? (locale === 'ar' ? series.sheikh.nameArabic : (series.sheikh.nameEnglish || series.sheikh.nameArabic)) : '' %>
