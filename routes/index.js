@@ -133,7 +133,7 @@ async function fetchHomepageData() {
 // Includes child series lectures in parent's count
 async function fetchScheduleData() {
   const scheduleItems = await Schedule.find({ isActive: true })
-    .populate('seriesId', 'titleArabic titleEnglish slug')
+    .populate('seriesId', 'titleArabic titleEnglish slug shortId slug_en slug_ar')
     .sort({ sortOrder: 1 })
     .lean();
 
