@@ -1,6 +1,6 @@
 const express = require('express');
 const router = express.Router();
-const { Lecture, Sheikh, Series, Section, Schedule, SiteSettings } = require('../models');
+const { Lecture, Sheikh, Series, Section, Schedule, SiteSettings, Article } = require('../models');
 const cache = require('../utils/cache');
 
 // Cache TTLs (in seconds)
@@ -8,7 +8,8 @@ const CACHE_TTL = {
   HOMEPAGE: 300,        // 5 minutes for homepage data
   SERIES_LIST: 600,     // 10 minutes for series list
   SITEMAP: 3600,        // 1 hour for sitemap
-  SCHEDULE: 300         // 5 minutes for schedule
+  SCHEDULE: 300,        // 5 minutes for schedule
+  ARTICLES: 600         // 10 minutes for articles
 };
 
 // Helper function to fetch homepage data (for caching)
@@ -222,6 +223,15 @@ async function fetchScheduleData() {
   return weeklySchedule.sort((a, b) => dayOrder.indexOf(a.dayOfWeek) - dayOrder.indexOf(b.dayOfWeek));
 }
 
+// Helper function to fetch recent articles for homepage
+async function fetchRecentArticles(limit = 10) {
+  return Article.find({ isPublished: true })
+    .sort({ publishedAt: -1 })
+    .limit(limit)
+    .select('shortId type publishedAt sourceUrl title summary slug slug_ar')
+    .lean();
+}
+
 // Helper function to fetch homepage sections with their series
 // Optimized: Uses aggregation pipeline instead of N+1 queries (55+ -> 1 query)
 async function fetchSectionsData() {
@@ -291,14 +301,15 @@ async function fetchSectionsData() {
 router.get('/', async (req, res) => {
   try {
     // PERFORMANCE: Execute all independent queries in parallel
-    const [weeklySchedule, totalLectureCount, homepageSections, settings] = await Promise.all([
+    const [weeklySchedule, totalLectureCount, homepageSections, settings, recentArticles] = await Promise.all([
       cache.getOrSet('homepage:schedule', fetchScheduleData, CACHE_TTL.SCHEDULE),
       cache.getOrSet('homepage:lectureCount', () => Lecture.countDocuments({ published: true }), CACHE_TTL.HOMEPAGE),
       cache.getOrSet('homepage:sections', fetchSectionsData, CACHE_TTL.HOMEPAGE),
       SiteSettings.getSettings().catch(err => {
         console.error('Failed to get site settings:', err.message);
         return null;
-      })
+      }),
+      cache.getOrSet('homepage:articles', () => fetchRecentArticles(10), CACHE_TTL.ARTICLES)
     ]);
 
     // Process site settings (handle null from catch)
@@ -347,7 +358,8 @@ router.get('/', async (req, res) => {
       homepageConfig,
       showPublicStats,
       lazyLoadSeries: true,     // Flag for template to show loading state
-      activeTab                 // Pass active tab for server-side rendering
+      activeTab,                // Pass active tab for server-side rendering
+      recentArticles: recentArticles || []  // Recent articles for sidebar
     });
   } catch (error) {
     console.error('Homepage error:', error);

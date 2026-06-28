@@ -1,0 +1,292 @@
+<style>
+  .articles-header {
+    background: #2C1508;
+    padding: 20px 0;
+    text-align: center;
+  }
+
+  .articles-header h1 {
+    color: #FDF8F2;
+    font-size: 24px;
+    font-weight: 800;
+    margin: 0;
+  }
+
+  .articles-header p {
+    color: #DEC99A;
+    font-size: 13px;
+    margin-top: 6px;
+  }
+
+  .articles-search {
+    background: #F5EDE0;
+    padding: 12px 16px;
+    border-bottom: 1px solid #DEC99A;
+  }
+
+  .articles-search-input {
+    width: 100%;
+    background: #FDF8F2;
+    border: 1px solid #DEC99A;
+    border-radius: 10px;
+    padding: 10px 12px;
+    font-family: inherit;
+    font-size: 14px;
+    color: #2C1508;
+  }
+
+  .articles-search-input::placeholder {
+    color: #A89070;
+  }
+
+  .articles-search-input:focus {
+    outline: none;
+    border-color: #C49A3C;
+  }
+
+  .articles-list {
+    padding: 16px;
+    max-width: 900px;
+    margin: 0 auto;
+  }
+
+  .article-card {
+    background: #FDF8F2;
+    border: 1px solid #DEC99A;
+    border-radius: 12px;
+    padding: 16px;
+    margin-bottom: 12px;
+    text-decoration: none;
+    display: block;
+    transition: all 0.3s ease;
+  }
+
+  .article-card:hover {
+    border-color: #C49A3C;
+    box-shadow: 0 4px 16px rgba(44, 21, 8, 0.1);
+    transform: translateY(-2px);
+  }
+
+  .article-meta {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 10px;
+  }
+
+  .article-type {
+    background: #E8D5A0;
+    color: #7A5C3A;
+    font-size: 11px;
+    font-weight: 600;
+    padding: 3px 10px;
+    border-radius: 8px;
+  }
+
+  .article-type.telegram {
+    background: #6B7A4E;
+    color: #FDF8F2;
+  }
+
+  .article-date {
+    color: #A89070;
+    font-size: 12px;
+  }
+
+  .article-title {
+    color: #2C1508;
+    font-size: 16px;
+    font-weight: 700;
+    line-height: 1.5;
+    margin-bottom: 8px;
+  }
+
+  .article-summary {
+    color: #7A5C3A;
+    font-size: 13px;
+    line-height: 1.6;
+    margin-bottom: 12px;
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+  }
+
+  .article-read-more {
+    display: flex;
+    justify-content: flex-end;
+    align-items: center;
+    gap: 4px;
+    color: #C49A3C;
+    font-size: 12px;
+    font-weight: 600;
+  }
+
+  .pagination {
+    display: flex;
+    justify-content: center;
+    gap: 8px;
+    padding: 20px;
+  }
+
+  .pagination a,
+  .pagination span {
+    display: inline-block;
+    padding: 8px 14px;
+    border-radius: 8px;
+    font-size: 14px;
+    font-weight: 600;
+    text-decoration: none;
+    transition: all 0.2s ease;
+  }
+
+  .pagination a {
+    background: #FDF8F2;
+    color: #7A5C3A;
+    border: 1px solid #DEC99A;
+  }
+
+  .pagination a:hover {
+    background: #E8D5A0;
+    border-color: #C49A3C;
+  }
+
+  .pagination .active {
+    background: #C49A3C;
+    color: #FDF8F2;
+    border: 1px solid #C49A3C;
+  }
+
+  .pagination .disabled {
+    background: #F5EDE0;
+    color: #A89070;
+    border: 1px solid #DEC99A;
+    cursor: not-allowed;
+  }
+
+  .empty-state {
+    text-align: center;
+    padding: 60px 20px;
+    color: #A89070;
+  }
+
+  .empty-icon {
+    font-size: 48px;
+    margin-bottom: 12px;
+    opacity: 0.5;
+  }
+
+  .empty-title {
+    font-size: 18px;
+    font-weight: 600;
+    color: #7A5C3A;
+  }
+
+  @media (max-width: 768px) {
+    .articles-list {
+      padding: 12px;
+    }
+
+    .article-card {
+      padding: 14px;
+    }
+
+    .article-title {
+      font-size: 15px;
+    }
+
+    .article-summary {
+      font-size: 12px;
+    }
+  }
+</style>
+
+<div class="articles-header">
+  <h1><%= locale === 'ar' ? 'المقالات' : 'Articles' %></h1>
+  <p><%= locale === 'ar' ? 'مقالات ومواضيع علمية مختارة' : 'Selected scholarly articles and topics' %></p>
+</div>
+
+<div class="articles-search">
+  <input type="text" class="articles-search-input" placeholder="<%= locale === 'ar' ? 'ابحث في المقالات...' : 'Search articles...' %>" id="articleSearch" />
+</div>
+
+<div class="articles-list" id="articlesList">
+  <% if (articles && articles.length > 0) { %>
+    <% articles.forEach(article => { %>
+      <a href="/articles/<%= article.slug || article.shortId || article._id %>" class="article-card" data-title="<%= article.title %>">
+        <div class="article-meta">
+          <span class="article-type <%= article.type === 'TelegramArticle' ? 'telegram' : '' %>">
+            <%= article.type === 'TelegramArticle' ? 'تليجرام' : 'أصداء' %>
+          </span>
+          <span class="article-date">
+            <%
+              const pubDate = new Date(article.publishedAt);
+              const hijriFormatter = new Intl.DateTimeFormat('ar-SA-u-ca-islamic', {
+                day: 'numeric',
+                month: 'long',
+                year: 'numeric'
+              });
+            %>
+            <%= hijriFormatter.format(pubDate) %>
+          </span>
+        </div>
+        <h3 class="article-title"><%= article.title %></h3>
+        <% if (article.summary) { %>
+          <p class="article-summary"><%= article.summary %></p>
+        <% } %>
+        <div class="article-read-more">
+          <span><%= locale === 'ar' ? 'قراءة المقال' : 'Read Article' %></span>
+          <span>←</span>
+        </div>
+      </a>
+    <% }); %>
+  <% } else { %>
+    <div class="empty-state">
+      <div class="empty-icon">📝</div>
+      <div class="empty-title"><%= locale === 'ar' ? 'لا توجد مقالات حالياً' : 'No articles yet' %></div>
+    </div>
+  <% } %>
+</div>
+
+<% if (totalPages > 1) { %>
+  <div class="pagination">
+    <% if (currentPage > 1) { %>
+      <a href="/articles?page=<%= currentPage - 1 %>">←</a>
+    <% } else { %>
+      <span class="disabled">←</span>
+    <% } %>
+
+    <% for (let i = 1; i <= totalPages; i++) { %>
+      <% if (i === currentPage) { %>
+        <span class="active"><%= i %></span>
+      <% } else { %>
+        <a href="/articles?page=<%= i %>"><%= i %></a>
+      <% } %>
+    <% } %>
+
+    <% if (currentPage < totalPages) { %>
+      <a href="/articles?page=<%= currentPage + 1 %>">→</a>
+    <% } else { %>
+      <span class="disabled">→</span>
+    <% } %>
+  </div>
+<% } %>
+
+<script>
+  const searchInput = document.getElementById('articleSearch');
+  const articlesList = document.getElementById('articlesList');
+  const articleCards = articlesList.querySelectorAll('.article-card');
+
+  searchInput.addEventListener('input', function() {
+    const query = this.value.toLowerCase().trim();
+
+    articleCards.forEach(card => {
+      const title = card.dataset.title.toLowerCase();
+      if (query === '' || title.includes(query)) {
+        card.style.display = 'block';
+      } else {
+        card.style.display = 'none';
+      }
+    });
+  });
+</script>

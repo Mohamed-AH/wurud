@@ -31,6 +31,7 @@ module.exports = {
   SiteSettings: require('./SiteSettings'),
   PageView: require('./PageView'),
   Counter: require('./Counter'),
+  Article: require('./Article'),
   // Search models (getter functions to ensure they're initialized)
   get Transcript() { return Transcript; },
   get SearchLog() { return SearchLog; },
