@@ -2475,7 +2475,7 @@ function switchScheduleTab(tab) {
         <% visibleSeries.forEach(function(s) { %>
         <tr>
           <td style="width:60%">
-            <a href="/series/<%= s.slug %>" class="section-series-title"><%= locale === 'ar' ? s.titleArabic : (s.titleEnglish || s.titleArabic) %></a>
+            <a href="/series/<%= s.slug ? encodeURIComponent(s.slug) : s._id %>" class="section-series-title"><%= locale === 'ar' ? s.titleArabic : (s.titleEnglish || s.titleArabic) %></a>
             <% if (locale === 'en' && s.titleArabic) { %>
               <div class="section-series-subtitle"><%= s.titleArabic %></div>
             <% } %>
@@ -2489,14 +2489,14 @@ function switchScheduleTab(tab) {
             <span class="section-lecture-count"><%= s.lectureCount %> <%= locale === 'ar' ? 'درس' : '' %></span>
           </td>
           <td class="hide-mobile" style="width:10%;text-align:center;">
-            <a href="/series/<%= s.slug %>" class="section-view-btn"><%= locale === 'ar' ? 'عرض' : 'View' %></a>
+            <a href="/series/<%= s.slug ? encodeURIComponent(s.slug) : s._id %>" class="section-view-btn"><%= locale === 'ar' ? 'عرض' : 'View' %></a>
           </td>
         </tr>
         <% }) %>
         <% hiddenSeries.forEach(function(s) { %>
         <tr class="section-hidden-row" data-section="<%= section.slug %>" style="display:none;">
           <td style="width:60%">
-            <a href="/series/<%= s.slug %>" class="section-series-title"><%= locale === 'ar' ? s.titleArabic : (s.titleEnglish || s.titleArabic) %></a>
+            <a href="/series/<%= s.slug ? encodeURIComponent(s.slug) : s._id %>" class="section-series-title"><%= locale === 'ar' ? s.titleArabic : (s.titleEnglish || s.titleArabic) %></a>
             <% if (locale === 'en' && s.titleArabic) { %>
               <div class="section-series-subtitle"><%= s.titleArabic %></div>
             <% } %>
@@ -2510,7 +2510,7 @@ function switchScheduleTab(tab) {
             <span class="section-lecture-count"><%= s.lectureCount %> <%= locale === 'ar' ? 'درس' : '' %></span>
           </td>
           <td class="hide-mobile" style="width:10%;text-align:center;">
-            <a href="/series/<%= s.slug %>" class="section-view-btn"><%= locale === 'ar' ? 'عرض' : 'View' %></a>
+            <a href="/series/<%= s.slug ? encodeURIComponent(s.slug) : s._id %>" class="section-view-btn"><%= locale === 'ar' ? 'عرض' : 'View' %></a>
           </td>
         </tr>
         <% }) %>
