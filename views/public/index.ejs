@@ -2177,6 +2177,61 @@
 <!-- Hidden audio player for search results -->
 <audio id="searchAudioPlayer" preload="none"></audio>
 
+<!-- Categories Grid -->
+<section class="quick-categories-section">
+  <div class="container">
+    <h3 class="quick-categories-title"><%= locale === 'ar' ? 'التصنيفات' : 'Categories' %></h3>
+    <div class="categories-grid">
+      <a href="/browse?category=Aqeedah" class="category-card">
+        <div class="category-card-icon">🌙</div>
+        <div class="category-card-name"><%= locale === 'ar' ? 'العقيدة' : 'Aqeedah' %></div>
+      </a>
+      <a href="/browse?category=Fiqh" class="category-card">
+        <div class="category-card-icon">📖</div>
+        <div class="category-card-name"><%= locale === 'ar' ? 'الفقه' : 'Fiqh' %></div>
+      </a>
+      <a href="/browse?category=Tafsir" class="category-card">
+        <div class="category-card-icon">✨</div>
+        <div class="category-card-name"><%= locale === 'ar' ? 'التفسير' : 'Tafsir' %></div>
+      </a>
+      <a href="/browse?category=Hadith" class="category-card">
+        <div class="category-card-icon">📜</div>
+        <div class="category-card-name"><%= locale === 'ar' ? 'الحديث' : 'Hadith' %></div>
+      </a>
+      <a href="/browse?category=Seerah" class="category-card">
+        <div class="category-card-icon">🕌</div>
+        <div class="category-card-name"><%= locale === 'ar' ? 'السيرة' : 'Seerah' %></div>
+      </a>
+      <a href="/browse?category=Other" class="category-card">
+        <div class="category-card-icon">💎</div>
+        <div class="category-card-name"><%= locale === 'ar' ? 'أخرى' : 'Other' %></div>
+      </a>
+    </div>
+  </div>
+</section>
+<style>
+  .quick-categories-section {
+    padding: 16px 0;
+    background: var(--paper);
+  }
+  .quick-categories-title {
+    color: var(--redesign-brown-dark, #2C1508);
+    font-size: 16px;
+    font-weight: 700;
+    margin: 0 0 12px 0;
+    padding: 0 16px;
+  }
+  @media (max-width: 768px) {
+    .quick-categories-section {
+      padding: 12px 0;
+    }
+    .quick-categories-title {
+      font-size: 15px;
+      margin-bottom: 10px;
+    }
+  }
+</style>
+
 <!-- Weekly Schedule Section -->
 <% if (typeof homepageConfig === 'undefined' || homepageConfig.showSchedule !== false) { %>
 <% if (typeof weeklySchedule !== 'undefined' && weeklySchedule && weeklySchedule.length > 0) { %>
@@ -2453,6 +2508,156 @@ function switchScheduleTab(tab) {
 }
 </script>
 <% } %>
+<% } %>
+
+<!-- Featured Articles Section -->
+<% if (typeof recentArticles !== 'undefined' && recentArticles && recentArticles.length > 0) { %>
+<section class="featured-articles-section">
+  <div class="container">
+    <div class="featured-articles-header">
+      <h2 class="featured-articles-title">
+        ✍️ <%= locale === 'ar' ? 'أحدث المقالات' : 'Latest Articles' %>
+      </h2>
+      <a href="/articles" class="featured-articles-link">
+        <%= locale === 'ar' ? 'عرض الكل' : 'View All' %> →
+      </a>
+    </div>
+    <div class="featured-articles-grid">
+      <% recentArticles.slice(0, 4).forEach(function(article) { %>
+        <a href="/articles/<%= article.slug || article.shortId || article._id %>" class="featured-article-card">
+          <div class="featured-article-meta">
+            <span class="featured-article-type <%= article.type === 'TelegramArticle' ? 'telegram' : '' %>">
+              <%= article.type === 'TelegramArticle' ? 'تليجرام' : 'أصداء' %>
+            </span>
+            <span class="featured-article-date">
+              <%
+                const pubDate = new Date(article.publishedAt);
+                const hijriFormatter = new Intl.DateTimeFormat('ar-SA-u-ca-islamic', {
+                  day: 'numeric',
+                  month: 'short'
+                });
+              %>
+              <%= hijriFormatter.format(pubDate) %>
+            </span>
+          </div>
+          <h3 class="featured-article-title"><%= article.title %></h3>
+          <% if (article.summary) { %>
+            <p class="featured-article-summary"><%= article.summary %></p>
+          <% } %>
+        </a>
+      <% }); %>
+    </div>
+  </div>
+</section>
+<style>
+  .featured-articles-section {
+    background: var(--redesign-cream-bg, #F5EDE0);
+    padding: 24px 0;
+    margin-bottom: 24px;
+    border-top: 2px solid var(--redesign-gold-light, #DEC99A);
+    border-bottom: 2px solid var(--redesign-gold-light, #DEC99A);
+  }
+  .featured-articles-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 16px;
+  }
+  .featured-articles-title {
+    color: var(--redesign-brown-dark, #2C1508);
+    font-size: 20px;
+    font-weight: 700;
+    margin: 0;
+  }
+  .featured-articles-link {
+    color: var(--redesign-gold-primary, #C49A3C);
+    font-size: 14px;
+    font-weight: 600;
+    text-decoration: none;
+  }
+  .featured-articles-link:hover {
+    text-decoration: underline;
+  }
+  .featured-articles-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+    gap: 16px;
+  }
+  .featured-article-card {
+    background: var(--redesign-card-bg, #FDF8F2);
+    border: 1px solid var(--redesign-gold-light, #DEC99A);
+    border-radius: 12px;
+    padding: 16px;
+    text-decoration: none;
+    transition: all 0.2s ease;
+  }
+  .featured-article-card:hover {
+    border-color: var(--redesign-gold-primary, #C49A3C);
+    transform: translateY(-3px);
+    box-shadow: 0 6px 20px rgba(44, 21, 8, 0.1);
+  }
+  .featured-article-meta {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 10px;
+  }
+  .featured-article-type {
+    background: var(--redesign-badge-bg, #E8D5A0);
+    color: var(--redesign-text-mid, #7A5C3A);
+    font-size: 11px;
+    font-weight: 600;
+    padding: 3px 10px;
+    border-radius: 8px;
+  }
+  .featured-article-type.telegram {
+    background: var(--redesign-sage, #6B7A4E);
+    color: var(--redesign-card-bg, #FDF8F2);
+  }
+  .featured-article-date {
+    color: var(--redesign-text-muted, #A89070);
+    font-size: 11px;
+  }
+  .featured-article-title {
+    color: var(--redesign-brown-dark, #2C1508);
+    font-size: 15px;
+    font-weight: 700;
+    line-height: 1.5;
+    margin: 0 0 8px 0;
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+  }
+  .featured-article-summary {
+    color: var(--redesign-text-mid, #7A5C3A);
+    font-size: 13px;
+    line-height: 1.6;
+    margin: 0;
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+  }
+  @media (max-width: 768px) {
+    .featured-articles-section {
+      padding: 16px 0;
+    }
+    .featured-articles-title {
+      font-size: 18px;
+    }
+    .featured-articles-grid {
+      grid-template-columns: 1fr;
+      gap: 12px;
+    }
+    .featured-article-card {
+      padding: 14px;
+    }
+    .featured-article-title {
+      font-size: 14px;
+    }
+  }
+</style>
 <% } %>
 
 <!-- Homepage Sections -->
