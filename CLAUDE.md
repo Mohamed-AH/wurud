@@ -84,29 +84,19 @@ Implemented design from `/tmp/design-handoff/audio-archives-redesign/project/Aud
 - `views/partials/bottomNav.ejs` - Bottom navigation bar
 - `views/partials/articlesSidebar.ejs` - Articles sidebar for 65/35 layout
 
-### 4. RTL Layout Fixes (Commit: 8daa5d9)
-Fixed Arabic mobile layout issues:
+### 4. RTL Architecture Note
+**IMPORTANT**: This site is **RTL-first** (Arabic is the default).
 
-**Search Hero Section** - `views/public/index.ejs`:
-- Added `[dir="rtl"]` CSS selectors for text alignment and padding
-- Fixed text overflow/clipping in search hero quote and subheading
-- Proper padding for RTL at 768px, 480px, and 360px breakpoints
-
-**Header & Logo** - `views/layout.ejs`:
-- RTL header content flex-direction: row-reverse
-- Logo overflow handling for Arabic text
-- Mobile nav slides from left in RTL mode
+- Base CSS styles are written for RTL/Arabic
+- LTR overrides use `html[dir="ltr"]` selectors in `main.css`
+- Do NOT add `[dir="rtl"]` overrides - they conflict with base RTL styles
+- The browser handles RTL layout automatically when `dir="rtl"` is set on `<html>`
 
 **Bottom Navigation** - `views/partials/bottomNav.ejs`:
-- Set `direction: ltr` to keep icon order consistent
-- Added `min-width: 0` for flex item shrinking
-- Horizontal padding to prevent overflow
+- Uses `direction: ltr` to keep icon order consistent across languages
+- This is an exception because icon order should be fixed regardless of text direction
 
-**Other Fixes**:
-- Navigation tabs RTL direction
-- Filter chips RTL alignment
-- Title search input icon positioning for RTL
-- Removed redundant categories grid section
+**Removed**: Redundant categories grid section from homepage
 
 ## Pending Tasks
 
