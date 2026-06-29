@@ -101,6 +101,19 @@ Implemented design from `/tmp/design-handoff/audio-archives-redesign/project/Aud
 
 **Removed**: Redundant categories grid section from homepage
 
+### 5. Search Container Width Fix (Commit: aabc9b9)
+**Problem**: Arabic and English mobile layouts rendered search box differently despite identical CSS:
+- Arabic: 361px (full width - correct)
+- English: 191px (narrow - incorrect)
+
+**Root Cause**: Flex behavior differences between RTL and LTR. The `flex: 1` on search-input relies on flexbox width distribution which behaves differently under different direction contexts.
+
+**Solution**: Added explicit `width: 100%` and `box-sizing: border-box` to both `.search-input` and `.search-btn` within the 768px media query. This forces consistent full-width rendering regardless of direction.
+
+**Files Modified**:
+- `views/public/index.ejs` - lines 615-619 (768px media query)
+- `public/css/main.css` - lines 94-102 (768px media query)
+
 ## Pending Tasks
 
 ### Articles Import
