@@ -301,9 +301,10 @@ async function fetchSectionsData() {
 router.get('/', async (req, res) => {
   try {
     // PERFORMANCE: Execute all independent queries in parallel
-    const [weeklySchedule, totalLectureCount, homepageSections, settings, recentArticles] = await Promise.all([
+    const [weeklySchedule, totalLectureCount, totalArticleCount, homepageSections, settings, recentArticles] = await Promise.all([
       cache.getOrSet('homepage:schedule', fetchScheduleData, CACHE_TTL.SCHEDULE),
       cache.getOrSet('homepage:lectureCount', () => Lecture.countDocuments({ published: true }), CACHE_TTL.HOMEPAGE),
+      cache.getOrSet('homepage:articleCount', () => Article.countDocuments({ isPublished: true }), CACHE_TTL.ARTICLES),
       cache.getOrSet('homepage:sections', fetchSectionsData, CACHE_TTL.HOMEPAGE),
       SiteSettings.getSettings().catch(err => {
         console.error('Failed to get site settings:', err.message);
@@ -354,6 +355,7 @@ router.get('/', async (req, res) => {
       khutbaSeries: [],         // Empty - loaded via API
       weeklySchedule,
       totalLectureCount,
+      totalArticleCount,
       homepageSections,
       homepageConfig,
       showPublicStats,
