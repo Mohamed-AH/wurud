@@ -61,10 +61,6 @@ Implemented design from `/tmp/design-handoff/audio-archives-redesign/project/Aud
 - Mobile only (max-width: 768px)
 - Included in `views/layout.ejs`
 
-**Categories Grid** - Added to `views/public/index.ejs`:
-- 6 categories with icons: العقيدة, الفقه, التفسير, الحديث, السيرة, أخرى
-- 3-column responsive grid
-
 **Featured Articles Section** - Added to `views/public/index.ejs`:
 - Shows up to 4 recent articles
 - Responsive grid layout
@@ -87,6 +83,30 @@ Implemented design from `/tmp/design-handoff/audio-archives-redesign/project/Aud
 **Partials Created**:
 - `views/partials/bottomNav.ejs` - Bottom navigation bar
 - `views/partials/articlesSidebar.ejs` - Articles sidebar for 65/35 layout
+
+### 4. RTL Layout Fixes (Commit: 8daa5d9)
+Fixed Arabic mobile layout issues:
+
+**Search Hero Section** - `views/public/index.ejs`:
+- Added `[dir="rtl"]` CSS selectors for text alignment and padding
+- Fixed text overflow/clipping in search hero quote and subheading
+- Proper padding for RTL at 768px, 480px, and 360px breakpoints
+
+**Header & Logo** - `views/layout.ejs`:
+- RTL header content flex-direction: row-reverse
+- Logo overflow handling for Arabic text
+- Mobile nav slides from left in RTL mode
+
+**Bottom Navigation** - `views/partials/bottomNav.ejs`:
+- Set `direction: ltr` to keep icon order consistent
+- Added `min-width: 0` for flex item shrinking
+- Horizontal padding to prevent overflow
+
+**Other Fixes**:
+- Navigation tabs RTL direction
+- Filter chips RTL alignment
+- Title search input icon positioning for RTL
+- Removed redundant categories grid section
 
 ## Pending Tasks
 
