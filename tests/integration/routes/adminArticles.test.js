@@ -176,7 +176,7 @@ describeIfMongo('Admin Articles Routes Integration Tests', () => {
       ]);
 
       const response = await request(app)
-        .get('/admin/articles?search=أحكام')
+        .get(`/admin/articles?search=${encodeURIComponent('أحكام')}`)
         .expect(200);
 
       expect(response.body.articles).toHaveLength(2);
@@ -190,7 +190,7 @@ describeIfMongo('Admin Articles Routes Integration Tests', () => {
       ]);
 
       const response = await request(app)
-        .get('/admin/articles?search=ملخص')
+        .get(`/admin/articles?search=${encodeURIComponent('ملخص')}`)
         .expect(200);
 
       expect(response.body.articles).toHaveLength(2);
@@ -298,7 +298,7 @@ describeIfMongo('Admin Articles Routes Integration Tests', () => {
       ]);
 
       const response = await request(app)
-        .get('/admin/articles?search=فقه&type=Asdaa&status=published')
+        .get(`/admin/articles?search=${encodeURIComponent('فقه')}&type=Asdaa&status=published`)
         .expect(200);
 
       expect(response.body.articles).toHaveLength(1);
