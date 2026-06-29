@@ -35,6 +35,8 @@
     overflow: hidden;
     text-overflow: ellipsis;
     white-space: nowrap;
+    direction: rtl;
+    text-align: right;
   }
 
   .reading-progress {
@@ -93,6 +95,8 @@
     font-weight: 800;
     line-height: 1.5;
     margin-bottom: 16px;
+    direction: rtl;
+    text-align: right;
   }
 
   .article-body {
@@ -101,6 +105,8 @@
     line-height: 2;
     white-space: pre-wrap;
     margin-bottom: 24px;
+    direction: rtl;
+    text-align: right;
   }
 
   .article-body p {
@@ -196,6 +202,32 @@
       font-size: 14px;
       line-height: 1.9;
     }
+  }
+
+  /* LTR UI adjustments - keep Arabic content RTL */
+  html[dir="ltr"] .article-nav {
+    flex-direction: row-reverse;
+  }
+
+  html[dir="ltr"] .back-btn {
+    transform: scaleX(-1);
+  }
+
+  html[dir="ltr"] .article-meta-top {
+    justify-content: flex-end;
+  }
+
+  html[dir="ltr"] .source-link-section {
+    flex-direction: row-reverse;
+  }
+
+  html[dir="ltr"] .related-card:hover {
+    transform: translateX(2px);
+  }
+
+  .related-card-title {
+    direction: rtl;
+    text-align: right;
   }
 </style>
 
