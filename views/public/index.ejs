@@ -1464,6 +1464,139 @@
     100% { background-position: -200% 0; }
   }
 
+  /* RTL-Specific Fixes for Mobile */
+  [dir="rtl"] .search-hero {
+    text-align: center;
+  }
+
+  [dir="rtl"] .search-hero-quote,
+  [dir="rtl"] .search-hero-subheading {
+    text-align: center;
+    width: 100%;
+    box-sizing: border-box;
+  }
+
+  [dir="rtl"] .search-container {
+    direction: rtl;
+  }
+
+  [dir="rtl"] .search-input {
+    text-align: right;
+  }
+
+  @media (max-width: 768px) {
+    [dir="rtl"] .search-hero {
+      padding-left: var(--space-md);
+      padding-right: var(--space-md);
+    }
+
+    [dir="rtl"] .search-hero-quote {
+      padding-left: 16px;
+      padding-right: 16px;
+      word-break: keep-all;
+      overflow-wrap: break-word;
+      hyphens: none;
+    }
+
+    [dir="rtl"] .search-hero-subheading {
+      padding-left: 20px;
+      padding-right: 20px;
+    }
+
+    [dir="rtl"] .search-container {
+      padding-left: 16px;
+      padding-right: 16px;
+    }
+
+    [dir="rtl"] .nav-tabs-container {
+      direction: rtl;
+    }
+
+    [dir="rtl"] .filter-chips {
+      direction: rtl;
+    }
+
+    [dir="rtl"] .filters-section {
+      padding-left: var(--space-md);
+      padding-right: var(--space-md);
+    }
+
+    [dir="rtl"] .series-list {
+      padding-left: var(--space-md);
+      padding-right: var(--space-md);
+    }
+
+    [dir="rtl"] .title-search-wrapper {
+      direction: rtl;
+    }
+
+    [dir="rtl"] .title-search-input {
+      padding-left: 16px;
+      padding-right: 40px;
+      text-align: right;
+    }
+
+    [dir="rtl"] .title-search-icon {
+      left: auto;
+      right: 12px;
+    }
+  }
+
+  @media (max-width: 480px) {
+    [dir="rtl"] .search-hero-quote {
+      font-size: 18px;
+      line-height: 1.6;
+      padding-left: 12px;
+      padding-right: 12px;
+    }
+
+    [dir="rtl"] .search-hero-subheading {
+      font-size: 13px;
+      padding-left: 16px;
+      padding-right: 16px;
+    }
+
+    [dir="rtl"] .search-container {
+      padding-left: 12px;
+      padding-right: 12px;
+    }
+
+    [dir="rtl"] .nav-tab {
+      min-width: auto;
+      flex: 1;
+    }
+
+    [dir="rtl"] .chip {
+      white-space: nowrap;
+    }
+  }
+
+  @media (max-width: 360px) {
+    [dir="rtl"] .search-hero-quote {
+      font-size: 16px;
+      line-height: 1.5;
+      padding-left: 8px;
+      padding-right: 8px;
+    }
+
+    [dir="rtl"] .search-hero-subheading {
+      font-size: 12px;
+      padding-left: 12px;
+      padding-right: 12px;
+    }
+
+    [dir="rtl"] .nav-tabs-container {
+      overflow-x: auto;
+      -webkit-overflow-scrolling: touch;
+      flex-wrap: nowrap;
+    }
+
+    [dir="rtl"] .nav-tab {
+      flex: none;
+      white-space: nowrap;
+    }
+  }
+
   /* Enhanced Search Results Section */
   .enhanced-search-results {
     display: none;
@@ -2176,61 +2309,6 @@
 
 <!-- Hidden audio player for search results -->
 <audio id="searchAudioPlayer" preload="none"></audio>
-
-<!-- Categories Grid -->
-<section class="quick-categories-section">
-  <div class="container">
-    <h3 class="quick-categories-title"><%= locale === 'ar' ? 'التصنيفات' : 'Categories' %></h3>
-    <div class="categories-grid">
-      <a href="/browse?category=Aqeedah" class="category-card">
-        <div class="category-card-icon">🌙</div>
-        <div class="category-card-name"><%= locale === 'ar' ? 'العقيدة' : 'Aqeedah' %></div>
-      </a>
-      <a href="/browse?category=Fiqh" class="category-card">
-        <div class="category-card-icon">📖</div>
-        <div class="category-card-name"><%= locale === 'ar' ? 'الفقه' : 'Fiqh' %></div>
-      </a>
-      <a href="/browse?category=Tafsir" class="category-card">
-        <div class="category-card-icon">✨</div>
-        <div class="category-card-name"><%= locale === 'ar' ? 'التفسير' : 'Tafsir' %></div>
-      </a>
-      <a href="/browse?category=Hadith" class="category-card">
-        <div class="category-card-icon">📜</div>
-        <div class="category-card-name"><%= locale === 'ar' ? 'الحديث' : 'Hadith' %></div>
-      </a>
-      <a href="/browse?category=Seerah" class="category-card">
-        <div class="category-card-icon">🕌</div>
-        <div class="category-card-name"><%= locale === 'ar' ? 'السيرة' : 'Seerah' %></div>
-      </a>
-      <a href="/browse?category=Other" class="category-card">
-        <div class="category-card-icon">💎</div>
-        <div class="category-card-name"><%= locale === 'ar' ? 'أخرى' : 'Other' %></div>
-      </a>
-    </div>
-  </div>
-</section>
-<style>
-  .quick-categories-section {
-    padding: 16px 0;
-    background: var(--paper);
-  }
-  .quick-categories-title {
-    color: var(--redesign-brown-dark, #2C1508);
-    font-size: 16px;
-    font-weight: 700;
-    margin: 0 0 12px 0;
-    padding: 0 16px;
-  }
-  @media (max-width: 768px) {
-    .quick-categories-section {
-      padding: 12px 0;
-    }
-    .quick-categories-title {
-      font-size: 15px;
-      margin-bottom: 10px;
-    }
-  }
-</style>
 
 <!-- Weekly Schedule Section -->
 <% if (typeof homepageConfig === 'undefined' || homepageConfig.showSchedule !== false) { %>
