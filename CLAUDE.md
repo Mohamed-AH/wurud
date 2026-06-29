@@ -101,7 +101,7 @@ Implemented design from `/tmp/design-handoff/audio-archives-redesign/project/Aud
 
 **Removed**: Redundant categories grid section from homepage
 
-### 5. Search Container Width Fix (Commit: aabc9b9)
+### 5. Search Container Width Fix (Commit: aabc9b9/7924dd1)
 **Problem**: Arabic and English mobile layouts rendered search box differently despite identical CSS:
 - Arabic: 361px (full width - correct)
 - English: 191px (narrow - incorrect)
@@ -113,6 +113,18 @@ Implemented design from `/tmp/design-handoff/audio-archives-redesign/project/Aud
 **Files Modified**:
 - `views/public/index.ejs` - lines 615-619 (768px media query)
 - `public/css/main.css` - lines 94-102 (768px media query)
+
+### 6. Articles Page Mobile Redesign (Commit: 7b386ad)
+Aligned `/articles` page with design handoff specs:
+- Header: 18px title (was 24px), 11px subtitle (was 13px)
+- Search: Added magnifier icon with styled wrapper container
+- Cards: Tighter padding (12px 14px), 10px gap between cards
+- Title: 14px font-size, line-height 1.4
+- Summary: 12px font-size, line-height 1.55
+- Read more: 11px font-size, 3px gap
+- Added 480px breakpoint for smaller phones
+
+**Files Modified**: `views/public/articles.ejs`
 
 ## Pending Tasks
 
