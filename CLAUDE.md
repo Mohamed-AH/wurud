@@ -129,11 +129,19 @@ Aligned `/articles` page with design handoff specs:
 ### 7. Articles Import (Completed)
 338 articles imported successfully using `scripts/import-articles.js`.
 
+### 8. Articles RTL/LTR Layout Fix (Commit: 046fc52)
+Arabic article content now stays RTL even in English (LTR) UI mode:
+- Article titles, summaries, body text always `direction: rtl; text-align: right`
+- UI elements (meta, navigation, buttons) adjust to page direction
+- Arrows flip appropriately in LTR mode
+- Related article titles stay RTL
+
+**Files Modified**: `views/public/articles.ejs`, `views/public/article-detail.ejs`
+
 ## Pending Tasks
 
 ### Articles Enhancement
-1. **Language & Layout**: Articles content is in Arabic. Even when page language is English, article text must remain Arabic. Layouts must adjust automatically between RTL (Arabic UI) and LTR (English UI) while preserving Arabic article content direction.
-2. **Admin Panel**: Implement complete article management:
+1. **Admin Panel**: Implement complete article management:
    - Full editing capabilities (create, update, delete)
    - Sorting functions (by date, title, type)
    - Display/page settings (articles per page, featured articles, visibility)
