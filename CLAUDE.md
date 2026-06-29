@@ -138,6 +138,16 @@ Arabic article content now stays RTL even in English (LTR) UI mode:
 
 **Files Modified**: `views/public/articles.ejs`, `views/public/article-detail.ejs`
 
+### 9. Lecture Page Mobile Redesign (Commit: 9fe52fb)
+Implemented mobile-first lecture player per design handoff:
+- **Mobile nav bar**: Sticky with back button ← and truncated title
+- **Sticky player**: Below nav, shows play button, title, duration, series
+- **Action grid**: Download/Share in `grid-template-columns: 1fr 1fr`
+- **Hidden on mobile**: Breadcrumb, hero section, desktop play section
+- Breakpoint: 768px
+
+**Files Modified**: `views/public/lecture.ejs`
+
 ## Pending Tasks
 
 ### Articles Enhancement
@@ -147,8 +157,8 @@ Arabic article content now stays RTL even in English (LTR) UI mode:
    - Display/page settings (articles per page, featured articles, visibility)
 
 ### Mobile Redesign (from design handoff)
-1. **Lecture Player Page**: Move player to top (sticky), remove breadcrumb, add back button
-2. **Download/Share buttons**: Below player with `grid-template-columns: 1fr 1fr`
+1. ~~**Lecture Player Page**: Move player to top (sticky), remove breadcrumb, add back button~~ ✅ Done
+2. ~~**Download/Share buttons**: Below player with `grid-template-columns: 1fr 1fr`~~ ✅ Done
 3. **Series List**: Add search field at top
 4. **Weekly Schedule**: Replace table with clickable day tabs + session cards
 5. **Cairo Font**: Design uses Cairo from Google Fonts (optional)
