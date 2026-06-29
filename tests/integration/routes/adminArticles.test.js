@@ -170,9 +170,9 @@ describeIfMongo('Admin Articles Routes Integration Tests', () => {
 
     it('should search by title', async () => {
       await Article.create([
-        { title: 'أحكام الصلاة', content: 'محتوى', type: 'Asdaa' },
-        { title: 'أحكام الزكاة', content: 'محتوى', type: 'Asdaa' },
-        { title: 'فقه الصيام', content: 'محتوى', type: 'Asdaa' }
+        { title: 'أحكام الصلاة', content: 'محتوى', type: 'Asdaa', publishedAt: new Date() },
+        { title: 'أحكام الزكاة', content: 'محتوى', type: 'Asdaa', publishedAt: new Date() },
+        { title: 'فقه الصيام', content: 'محتوى', type: 'Asdaa', publishedAt: new Date() }
       ]);
 
       const response = await request(app)
@@ -184,9 +184,9 @@ describeIfMongo('Admin Articles Routes Integration Tests', () => {
 
     it('should search by summary', async () => {
       await Article.create([
-        { title: 'مقال ١', summary: 'ملخص عن الصلاة', content: 'محتوى', type: 'Asdaa' },
-        { title: 'مقال ٢', summary: 'ملخص عن الزكاة', content: 'محتوى', type: 'Asdaa' },
-        { title: 'مقال ٣', summary: 'نص آخر', content: 'محتوى', type: 'Asdaa' }
+        { title: 'مقال ١', summary: 'ملخص عن الصلاة', content: 'محتوى', type: 'Asdaa', publishedAt: new Date() },
+        { title: 'مقال ٢', summary: 'ملخص عن الزكاة', content: 'محتوى', type: 'Asdaa', publishedAt: new Date() },
+        { title: 'مقال ٣', summary: 'نص آخر', content: 'محتوى', type: 'Asdaa', publishedAt: new Date() }
       ]);
 
       const response = await request(app)
@@ -198,9 +198,9 @@ describeIfMongo('Admin Articles Routes Integration Tests', () => {
 
     it('should filter by type (Asdaa)', async () => {
       await Article.create([
-        { title: 'أصداء ١', content: 'محتوى', type: 'Asdaa' },
-        { title: 'تليجرام ١', content: 'محتوى', type: 'TelegramArticle' },
-        { title: 'أصداء ٢', content: 'محتوى', type: 'Asdaa' }
+        { title: 'أصداء ١', content: 'محتوى', type: 'Asdaa', publishedAt: new Date() },
+        { title: 'تليجرام ١', content: 'محتوى', type: 'TelegramArticle', publishedAt: new Date() },
+        { title: 'أصداء ٢', content: 'محتوى', type: 'Asdaa', publishedAt: new Date() }
       ]);
 
       const response = await request(app)
@@ -213,9 +213,9 @@ describeIfMongo('Admin Articles Routes Integration Tests', () => {
 
     it('should filter by type (TelegramArticle)', async () => {
       await Article.create([
-        { title: 'أصداء ١', content: 'محتوى', type: 'Asdaa' },
-        { title: 'تليجرام ١', content: 'محتوى', type: 'TelegramArticle' },
-        { title: 'تليجرام ٢', content: 'محتوى', type: 'TelegramArticle' }
+        { title: 'أصداء ١', content: 'محتوى', type: 'Asdaa', publishedAt: new Date() },
+        { title: 'تليجرام ١', content: 'محتوى', type: 'TelegramArticle', publishedAt: new Date() },
+        { title: 'تليجرام ٢', content: 'محتوى', type: 'TelegramArticle', publishedAt: new Date() }
       ]);
 
       const response = await request(app)
@@ -228,9 +228,9 @@ describeIfMongo('Admin Articles Routes Integration Tests', () => {
 
     it('should filter by published status', async () => {
       await Article.create([
-        { title: 'منشور', content: 'محتوى', type: 'Asdaa', isPublished: true },
-        { title: 'مسودة', content: 'محتوى', type: 'Asdaa', isPublished: false },
-        { title: 'منشور ٢', content: 'محتوى', type: 'Asdaa', isPublished: true }
+        { title: 'منشور', content: 'محتوى', type: 'Asdaa', publishedAt: new Date(), isPublished: true },
+        { title: 'مسودة', content: 'محتوى', type: 'Asdaa', publishedAt: new Date(), isPublished: false },
+        { title: 'منشور ٢', content: 'محتوى', type: 'Asdaa', publishedAt: new Date(), isPublished: true }
       ]);
 
       const publishedResponse = await request(app)
@@ -278,9 +278,9 @@ describeIfMongo('Admin Articles Routes Integration Tests', () => {
 
     it('should sort by title', async () => {
       await Article.create([
-        { title: 'ب - مقال', content: 'محتوى', type: 'Asdaa' },
-        { title: 'أ - مقال', content: 'محتوى', type: 'Asdaa' },
-        { title: 'ج - مقال', content: 'محتوى', type: 'Asdaa' }
+        { title: 'ب - مقال', content: 'محتوى', type: 'Asdaa', publishedAt: new Date() },
+        { title: 'أ - مقال', content: 'محتوى', type: 'Asdaa', publishedAt: new Date() },
+        { title: 'ج - مقال', content: 'محتوى', type: 'Asdaa', publishedAt: new Date() }
       ]);
 
       const response = await request(app)
@@ -292,9 +292,9 @@ describeIfMongo('Admin Articles Routes Integration Tests', () => {
 
     it('should combine search and filter', async () => {
       await Article.create([
-        { title: 'فقه الصلاة', content: 'محتوى', type: 'Asdaa', isPublished: true },
-        { title: 'فقه الزكاة', content: 'محتوى', type: 'TelegramArticle', isPublished: true },
-        { title: 'فقه الصيام', content: 'محتوى', type: 'Asdaa', isPublished: false }
+        { title: 'فقه الصلاة', content: 'محتوى', type: 'Asdaa', publishedAt: new Date(), isPublished: true },
+        { title: 'فقه الزكاة', content: 'محتوى', type: 'TelegramArticle', publishedAt: new Date(), isPublished: true },
+        { title: 'فقه الصيام', content: 'محتوى', type: 'Asdaa', publishedAt: new Date(), isPublished: false }
       ]);
 
       const response = await request(app)
@@ -401,7 +401,8 @@ describeIfMongo('Admin Articles Routes Integration Tests', () => {
         title: 'مقال للتعديل',
         summary: 'ملخص',
         content: 'محتوى',
-        type: 'Asdaa'
+        type: 'Asdaa',
+        publishedAt: new Date()
       });
 
       const response = await request(app)
@@ -429,6 +430,7 @@ describeIfMongo('Admin Articles Routes Integration Tests', () => {
         title: 'قبل التعديل',
         content: 'محتوى قديم',
         type: 'Asdaa',
+        publishedAt: new Date(),
         isPublished: false
       });
 
@@ -458,6 +460,7 @@ describeIfMongo('Admin Articles Routes Integration Tests', () => {
         title: 'مقال',
         content: 'محتوى',
         type: 'Asdaa',
+        publishedAt: new Date(),
         slug: 'original-slug'
       });
 
@@ -492,7 +495,8 @@ describeIfMongo('Admin Articles Routes Integration Tests', () => {
       const article = await Article.create({
         title: 'للحذف',
         content: 'محتوى',
-        type: 'Asdaa'
+        type: 'Asdaa',
+        publishedAt: new Date()
       });
 
       const response = await request(app)
@@ -508,7 +512,8 @@ describeIfMongo('Admin Articles Routes Integration Tests', () => {
       const article = await Article.create({
         title: 'للحذف',
         content: 'محتوى',
-        type: 'Asdaa'
+        type: 'Asdaa',
+        publishedAt: new Date()
       });
 
       const response = await request(app)
@@ -538,6 +543,7 @@ describeIfMongo('Admin Articles Routes Integration Tests', () => {
         title: 'مقال',
         content: 'محتوى',
         type: 'Asdaa',
+        publishedAt: new Date(),
         isPublished: false
       });
 
@@ -557,6 +563,7 @@ describeIfMongo('Admin Articles Routes Integration Tests', () => {
         title: 'مقال',
         content: 'محتوى',
         type: 'Asdaa',
+        publishedAt: new Date(),
         isPublished: true
       });
 
@@ -583,9 +590,9 @@ describeIfMongo('Admin Articles Routes Integration Tests', () => {
   describe('POST /admin/articles/bulk', () => {
     it('should bulk delete articles', async () => {
       const articles = await Article.create([
-        { title: 'للحذف ١', content: 'محتوى', type: 'Asdaa' },
-        { title: 'للحذف ٢', content: 'محتوى', type: 'Asdaa' },
-        { title: 'للإبقاء', content: 'محتوى', type: 'Asdaa' }
+        { title: 'للحذف ١', content: 'محتوى', type: 'Asdaa', publishedAt: new Date() },
+        { title: 'للحذف ٢', content: 'محتوى', type: 'Asdaa', publishedAt: new Date() },
+        { title: 'للإبقاء', content: 'محتوى', type: 'Asdaa', publishedAt: new Date() }
       ]);
 
       const response = await request(app)
@@ -605,9 +612,9 @@ describeIfMongo('Admin Articles Routes Integration Tests', () => {
 
     it('should bulk publish articles', async () => {
       const articles = await Article.create([
-        { title: 'مقال ١', content: 'محتوى', type: 'Asdaa', isPublished: false },
-        { title: 'مقال ٢', content: 'محتوى', type: 'Asdaa', isPublished: false },
-        { title: 'مقال ٣', content: 'محتوى', type: 'Asdaa', isPublished: false }
+        { title: 'مقال ١', content: 'محتوى', type: 'Asdaa', publishedAt: new Date(), isPublished: false },
+        { title: 'مقال ٢', content: 'محتوى', type: 'Asdaa', publishedAt: new Date(), isPublished: false },
+        { title: 'مقال ٣', content: 'محتوى', type: 'Asdaa', publishedAt: new Date(), isPublished: false }
       ]);
 
       const response = await request(app)
@@ -626,9 +633,9 @@ describeIfMongo('Admin Articles Routes Integration Tests', () => {
 
     it('should bulk unpublish articles', async () => {
       const articles = await Article.create([
-        { title: 'مقال ١', content: 'محتوى', type: 'Asdaa', isPublished: true },
-        { title: 'مقال ٢', content: 'محتوى', type: 'Asdaa', isPublished: true },
-        { title: 'مقال ٣', content: 'محتوى', type: 'Asdaa', isPublished: true }
+        { title: 'مقال ١', content: 'محتوى', type: 'Asdaa', publishedAt: new Date(), isPublished: true },
+        { title: 'مقال ٢', content: 'محتوى', type: 'Asdaa', publishedAt: new Date(), isPublished: true },
+        { title: 'مقال ٣', content: 'محتوى', type: 'Asdaa', publishedAt: new Date(), isPublished: true }
       ]);
 
       const response = await request(app)
@@ -672,7 +679,8 @@ describeIfMongo('Admin Articles Routes Integration Tests', () => {
       const article = await Article.create({
         title: 'مقال',
         content: 'محتوى',
-        type: 'Asdaa'
+        type: 'Asdaa',
+        publishedAt: new Date()
       });
 
       const response = await request(app)
@@ -712,7 +720,8 @@ describeIfMongo('Admin Articles Routes Integration Tests', () => {
       const article = await Article.create({
         title: 'مقال',
         content: 'محتوى',
-        type: 'Asdaa'
+        type: 'Asdaa',
+        publishedAt: new Date()
       });
 
       // Test all routes require auth
