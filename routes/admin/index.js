@@ -44,7 +44,7 @@ router.get('/login', (req, res) => {
 // @access  Private (Admin only)
 router.get('/dashboard', isAdmin, async (req, res) => {
   try {
-    const { Lecture, Sheikh, Series } = require('../../models');
+    const { Lecture, Sheikh, Series, Article } = require('../../models');
 
     // Get statistics
     const stats = {
@@ -52,6 +52,7 @@ router.get('/dashboard', isAdmin, async (req, res) => {
       publishedLectures: await Lecture.countDocuments({ published: true }),
       totalSheikhs: await Sheikh.countDocuments(),
       totalSeries: await Series.countDocuments(),
+      totalArticles: await Article.countDocuments(),
       totalPlays: await Lecture.aggregate([
         { $group: { _id: null, total: { $sum: '$playCount' } } }
       ]).then(result => result[0]?.total || 0),
@@ -2694,6 +2695,311 @@ router.post('/notice-banner', isAdmin, async (req, res) => {
   } catch (error) {
     console.error('Notice banner config update error:', error);
     res.redirect('/admin/notice-banner?error=update_failed');
+  }
+});
+
+// ============================================
+// ARTICLES MANAGEMENT ROUTES
+// ============================================
+
+// @route   GET /admin/articles
+// @desc    List all articles with pagination, search, filters
+// @access  Private (Admin only)
+router.get('/articles', isAdmin, async (req, res) => {
+  try {
+    const { Article } = require('../../models');
+    const { search, type, status, sort, page = 1 } = req.query;
+    const limit = 20;
+    const skip = (parseInt(page) - 1) * limit;
+
+    // Build query
+    const query = {};
+
+    if (search) {
+      query.$or = [
+        { title: { $regex: search, $options: 'i' } },
+        { summary: { $regex: search, $options: 'i' } }
+      ];
+    }
+
+    if (type && type !== 'all') {
+      query.type = type;
+    }
+
+    if (status === 'published') {
+      query.isPublished = true;
+    } else if (status === 'draft') {
+      query.isPublished = false;
+    }
+
+    // Sort options
+    let sortOption = { publishedAt: -1 }; // default: newest first
+    if (sort === 'oldest') {
+      sortOption = { publishedAt: 1 };
+    } else if (sort === 'title') {
+      sortOption = { title: 1 };
+    } else if (sort === 'updated') {
+      sortOption = { updatedAt: -1 };
+    }
+
+    // Get articles with pagination
+    const [articles, totalCount] = await Promise.all([
+      Article.find(query)
+        .sort(sortOption)
+        .skip(skip)
+        .limit(limit)
+        .lean(),
+      Article.countDocuments(query)
+    ]);
+
+    const totalPages = Math.ceil(totalCount / limit);
+
+    // Get stats
+    const stats = {
+      total: await Article.countDocuments(),
+      published: await Article.countDocuments({ isPublished: true }),
+      draft: await Article.countDocuments({ isPublished: false }),
+      asdaa: await Article.countDocuments({ type: 'Asdaa' }),
+      telegram: await Article.countDocuments({ type: 'TelegramArticle' })
+    };
+
+    res.render('admin/articles-list', {
+      title: 'Article Management',
+      user: req.user,
+      articles,
+      stats,
+      filters: { search, type, status, sort },
+      pagination: {
+        currentPage: parseInt(page),
+        totalPages,
+        totalCount,
+        hasNext: parseInt(page) < totalPages,
+        hasPrev: parseInt(page) > 1
+      },
+      activePage: 'articles',
+      success: req.query.success,
+      error: req.query.error
+    });
+  } catch (error) {
+    console.error('Articles list error:', error);
+    res.status(500).send('Error loading articles');
+  }
+});
+
+// @route   GET /admin/articles/new
+// @desc    Create article form
+// @access  Private (Admin only)
+router.get('/articles/new', isAdmin, (req, res) => {
+  res.render('admin/article-form', {
+    title: 'Add Article',
+    user: req.user,
+    article: null,
+    isEdit: false,
+    activePage: 'articles'
+  });
+});
+
+// @route   POST /admin/articles/new
+// @desc    Create a new article
+// @access  Private (Admin only)
+router.post('/articles/new', isAdmin, async (req, res) => {
+  try {
+    const { Article } = require('../../models');
+
+    const { title, summary, content, type, publishedAt, sourceUrl, isPublished } = req.body;
+
+    const article = new Article({
+      title,
+      summary: summary || '',
+      content,
+      type: type || 'Asdaa',
+      publishedAt: publishedAt ? new Date(publishedAt) : new Date(),
+      sourceUrl: sourceUrl || '',
+      isPublished: isPublished === 'on'
+    });
+
+    await article.save();
+
+    // Invalidate articles cache
+    cache.invalidatePattern('articles:*');
+    cache.invalidatePattern('homepage:*');
+
+    res.redirect('/admin/articles?success=article_created');
+  } catch (error) {
+    console.error('Create article error:', error);
+    res.redirect('/admin/articles/new?error=create_failed');
+  }
+});
+
+// @route   GET /admin/articles/:id/edit
+// @desc    Edit article form
+// @access  Private (Admin only)
+router.get('/articles/:id/edit', isAdmin, async (req, res) => {
+  try {
+    const { Article } = require('../../models');
+
+    const article = await Article.findById(req.params.id).lean();
+    if (!article) {
+      return res.redirect('/admin/articles?error=not_found');
+    }
+
+    res.render('admin/article-form', {
+      title: 'Edit Article',
+      user: req.user,
+      article,
+      isEdit: true,
+      activePage: 'articles'
+    });
+  } catch (error) {
+    console.error('Edit article form error:', error);
+    res.redirect('/admin/articles?error=load_failed');
+  }
+});
+
+// @route   POST /admin/articles/:id/edit
+// @desc    Update an article
+// @access  Private (Admin only)
+router.post('/articles/:id/edit', isAdmin, async (req, res) => {
+  try {
+    const { Article } = require('../../models');
+
+    const article = await Article.findById(req.params.id);
+    if (!article) {
+      return res.redirect('/admin/articles?error=not_found');
+    }
+
+    const { title, summary, content, type, publishedAt, sourceUrl, isPublished, slug } = req.body;
+
+    await Article.findByIdAndUpdate(req.params.id, {
+      title,
+      summary: summary || '',
+      content,
+      type: type || 'Asdaa',
+      publishedAt: publishedAt ? new Date(publishedAt) : article.publishedAt,
+      sourceUrl: sourceUrl || '',
+      isPublished: isPublished === 'on',
+      slug: slug || article.slug
+    });
+
+    // Invalidate articles cache
+    cache.invalidatePattern('articles:*');
+    cache.invalidatePattern('homepage:*');
+
+    res.redirect('/admin/articles?success=article_updated');
+  } catch (error) {
+    console.error('Update article error:', error);
+    res.redirect(`/admin/articles/${req.params.id}/edit?error=update_failed`);
+  }
+});
+
+// @route   POST /admin/articles/:id/delete
+// @desc    Delete an article
+// @access  Private (Admin only)
+router.post('/articles/:id/delete', isAdmin, async (req, res) => {
+  try {
+    const { Article } = require('../../models');
+
+    const article = await Article.findById(req.params.id);
+    if (!article) {
+      return res.status(404).json({ success: false, message: 'Article not found' });
+    }
+
+    await Article.findByIdAndDelete(req.params.id);
+
+    // Invalidate articles cache
+    cache.invalidatePattern('articles:*');
+    cache.invalidatePattern('homepage:*');
+
+    // Check if request expects JSON (AJAX) or redirect
+    if (req.xhr || req.headers.accept?.includes('application/json')) {
+      return res.json({ success: true, message: 'Article deleted' });
+    }
+
+    res.redirect('/admin/articles?success=article_deleted');
+  } catch (error) {
+    console.error('Delete article error:', error);
+    if (req.xhr || req.headers.accept?.includes('application/json')) {
+      return res.status(500).json({ success: false, message: error.message });
+    }
+    res.redirect('/admin/articles?error=delete_failed');
+  }
+});
+
+// @route   POST /admin/articles/:id/toggle-published
+// @desc    Toggle article published status
+// @access  Private (Admin only)
+router.post('/articles/:id/toggle-published', isAdmin, async (req, res) => {
+  try {
+    const { Article } = require('../../models');
+
+    const article = await Article.findById(req.params.id);
+    if (!article) {
+      return res.status(404).json({ success: false, message: 'Article not found' });
+    }
+
+    const newPublished = !article.isPublished;
+    await Article.findByIdAndUpdate(req.params.id, { isPublished: newPublished });
+
+    // Invalidate articles cache
+    cache.invalidatePattern('articles:*');
+    cache.invalidatePattern('homepage:*');
+
+    res.json({
+      success: true,
+      isPublished: newPublished
+    });
+  } catch (error) {
+    console.error('Toggle published error:', error);
+    res.status(500).json({ success: false, message: 'Error toggling published status' });
+  }
+});
+
+// @route   POST /admin/articles/bulk
+// @desc    Bulk operations on articles (delete, publish, unpublish)
+// @access  Private (Admin only)
+router.post('/articles/bulk', isAdmin, async (req, res) => {
+  try {
+    const { Article } = require('../../models');
+
+    const { action, articleIds } = req.body;
+
+    if (!articleIds || !Array.isArray(articleIds) || articleIds.length === 0) {
+      return res.status(400).json({ success: false, message: 'No articles selected' });
+    }
+
+    let result;
+    switch (action) {
+      case 'delete':
+        result = await Article.deleteMany({ _id: { $in: articleIds } });
+        break;
+      case 'publish':
+        result = await Article.updateMany(
+          { _id: { $in: articleIds } },
+          { $set: { isPublished: true } }
+        );
+        break;
+      case 'unpublish':
+        result = await Article.updateMany(
+          { _id: { $in: articleIds } },
+          { $set: { isPublished: false } }
+        );
+        break;
+      default:
+        return res.status(400).json({ success: false, message: 'Invalid action' });
+    }
+
+    // Invalidate articles cache
+    cache.invalidatePattern('articles:*');
+    cache.invalidatePattern('homepage:*');
+
+    res.json({
+      success: true,
+      message: `${action} completed`,
+      affected: result.modifiedCount || result.deletedCount || 0
+    });
+  } catch (error) {
+    console.error('Bulk action error:', error);
+    res.status(500).json({ success: false, message: 'Error performing bulk action' });
   }
 });
 

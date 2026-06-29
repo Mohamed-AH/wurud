@@ -61,7 +61,33 @@
         <h3><%= t('admin_total_series') %></h3>
         <div class="value"><%= stats.totalSeries %></div>
       </div>
+      <div class="stat-card">
+        <h3><%= t('admin_total_articles') %></h3>
+        <div class="value"><%= stats.totalArticles %></div>
+      </div>
     </div>
+
+    <section class="admin-section">
+      <h2><%= t('admin_manage_quick_actions') %></h2>
+      <div class="quick-actions-grid">
+        <a href="/admin/articles/new" class="quick-action-btn">
+          <span class="icon">✍️</span>
+          <span><%= t('admin_articles_add') %></span>
+        </a>
+        <a href="/admin/articles" class="quick-action-btn">
+          <span class="icon">📝</span>
+          <span><%= t('admin_articles_manage') %></span>
+        </a>
+        <a href="/admin/series/new" class="quick-action-btn">
+          <span class="icon">📚</span>
+          <span><%= t('admin_series_add') %></span>
+        </a>
+        <a href="/admin/lectures" class="quick-action-btn">
+          <span class="icon">🎙️</span>
+          <span><%= t('admin_lectures') %></span>
+        </a>
+      </div>
+    </section>
 
     <section class="admin-section">
       <h2><%= t('admin_recent_lectures') %></h2>
