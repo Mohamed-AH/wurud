@@ -252,6 +252,25 @@ const translations = {
     admin_series_visibility: 'الظهور',
     admin_series_book_author: 'مؤلف الكتاب',
 
+    // Admin - Articles
+    admin_articles: 'المقالات',
+    admin_total_articles: 'عدد المقالات',
+    admin_articles_title: 'إدارة المقالات',
+    admin_articles_add: 'إضافة مقال',
+    admin_articles_manage: 'إدارة المقالات',
+    admin_articles_edit: 'تعديل المقال',
+    admin_articles_type: 'النوع',
+    admin_articles_type_asdaa: 'أصداء',
+    admin_articles_type_telegram: 'تليجرام',
+    admin_articles_summary: 'الملخص',
+    admin_articles_content: 'المحتوى',
+    admin_articles_source_url: 'رابط المصدر',
+    admin_articles_published_at: 'تاريخ النشر',
+    admin_articles_no_articles: 'لا توجد مقالات',
+    admin_articles_bulk_delete: 'حذف المحدد',
+    admin_articles_bulk_publish: 'نشر المحدد',
+    admin_articles_bulk_unpublish: 'إلغاء نشر المحدد',
+
     // Admin - Days of Week
     admin_day_sunday: 'الأحد',
     admin_day_monday: 'الإثنين',
@@ -525,6 +544,25 @@ const translations = {
     admin_series_assign: 'Assign to Series',
     admin_series_visibility: 'Visibility',
     admin_series_book_author: 'Book Author',
+
+    // Admin - Articles
+    admin_articles: 'Articles',
+    admin_total_articles: 'Total Articles',
+    admin_articles_title: 'Article Management',
+    admin_articles_add: 'Add Article',
+    admin_articles_manage: 'Manage Articles',
+    admin_articles_edit: 'Edit Article',
+    admin_articles_type: 'Type',
+    admin_articles_type_asdaa: 'Asdaa',
+    admin_articles_type_telegram: 'Telegram',
+    admin_articles_summary: 'Summary',
+    admin_articles_content: 'Content',
+    admin_articles_source_url: 'Source URL',
+    admin_articles_published_at: 'Published Date',
+    admin_articles_no_articles: 'No articles found',
+    admin_articles_bulk_delete: 'Delete Selected',
+    admin_articles_bulk_publish: 'Publish Selected',
+    admin_articles_bulk_unpublish: 'Unpublish Selected',
 
     // Admin - Days of Week
     admin_day_sunday: 'Sunday',

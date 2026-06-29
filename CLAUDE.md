@@ -208,15 +208,61 @@ Added article count alongside lecture count on homepage:
    - Create topic/category pages for article groupings
    - Add search functionality within articles
 
+### 12. Admin Panel for Articles (Phase 1 Complete)
+Implemented full article management in admin panel:
+
+**Navigation & Dashboard**:
+- Added "Articles" link to `views/admin/partials/header.ejs` (between Manage and Schedule)
+- Added articles stats card to dashboard with quick action buttons
+- Dashboard shows total articles count alongside lectures, series, sheikhs
+
+**Routes** - `routes/admin/index.js`:
+- GET `/admin/articles` - Paginated list with search, filters, sorting
+- GET `/admin/articles/new` - Create form
+- POST `/admin/articles/new` - Create article
+- GET `/admin/articles/:id/edit` - Edit form
+- POST `/admin/articles/:id/edit` - Update article
+- POST `/admin/articles/:id/delete` - Delete article
+- POST `/admin/articles/:id/toggle-published` - Toggle publish status (AJAX)
+- POST `/admin/articles/bulk` - Bulk delete/publish/unpublish
+
+**Views Created**:
+- `views/admin/articles-list.ejs`:
+  - Stats row: Total, Published, Draft, Asdaa count, Telegram count
+  - Search by title/summary
+  - Filter by type (Asdaa/Telegram), published status
+  - Sort by date (newest/oldest), title, last updated
+  - Pagination with smart ellipsis
+  - Bulk select with checkboxes
+  - Actions: Edit, View, Delete
+  
+- `views/admin/article-form.ejs`:
+  - Title (required, RTL)
+  - Summary (textarea, RTL)
+  - Content (large textarea, RTL)
+  - Type dropdown (Asdaa/Telegram)
+  - Published date picker
+  - Source URL
+  - Slug (auto-generated, editable on edit)
+  - Is Published checkbox
+
+**i18n Keys Added** - `utils/i18n.js`:
+- Arabic & English translations for all article admin strings
+- `admin_articles`, `admin_total_articles`, `admin_articles_add`, etc.
+
+**CSS Updates** - `public/css/admin.css`:
+- Added `.quick-actions-grid` and `.quick-action-btn` styles
+
+**Files Modified**:
+- `routes/admin/index.js` - Added all article routes
+- `views/admin/partials/header.ejs` - Added Articles nav link
+- `views/admin/dashboard.ejs` - Added articles stat card + quick actions
+- `utils/i18n.js` - Added article admin translations
+- `public/css/admin.css` - Added quick action button styles
+
 ### P2 - Important Features
 
-1. **Admin Panel for Articles**
-   - Full CRUD (create, update, delete)
-   - Sorting (by date, title, type)
-   - Display settings (articles per page, featured, visibility)
-   - Bulk operations
-
-2. **Series List Search**
+1. **Series List Search**
    - Add search field at top of `/series` page
    - Filter by title (Arabic/English)
    - Real-time filtering

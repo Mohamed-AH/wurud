@@ -461,6 +461,37 @@ textarea.form-control {
   flex-direction: row-reverse;
 }
 
+.quick-actions-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+  gap: 12px;
+  margin-bottom: 24px;
+}
+
+.quick-action-btn {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 14px 18px;
+  background: var(--admin-card-bg);
+  border: 1px solid var(--admin-border);
+  border-radius: var(--admin-radius-sm);
+  text-decoration: none;
+  color: var(--admin-text);
+  font-weight: 500;
+  transition: all 0.2s;
+}
+
+.quick-action-btn:hover {
+  border-color: var(--admin-primary);
+  background: #faf8f4;
+  transform: translateY(-1px);
+}
+
+.quick-action-btn .icon {
+  font-size: 20px;
+}
+
 /* ===== Empty State ===== */
 .empty-state {
   text-align: center;
