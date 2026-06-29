@@ -126,15 +126,19 @@ Aligned `/articles` page with design handoff specs:
 
 **Files Modified**: `views/public/articles.ejs`
 
+### 7. Articles Import (Completed)
+338 articles imported successfully using `scripts/import-articles.js`.
+
 ## Pending Tasks
 
-### Articles Import
-User has 338 articles to import. Need JSON file path, then run:
-```bash
-node scripts/import-articles.js /path/to/articles.json
-```
+### Articles Enhancement
+1. **Language & Layout**: Articles content is in Arabic. Even when page language is English, article text must remain Arabic. Layouts must adjust automatically between RTL (Arabic UI) and LTR (English UI) while preserving Arabic article content direction.
+2. **Admin Panel**: Implement complete article management:
+   - Full editing capabilities (create, update, delete)
+   - Sorting functions (by date, title, type)
+   - Display/page settings (articles per page, featured articles, visibility)
 
-### Additional Mobile Redesign (from design handoff)
+### Mobile Redesign (from design handoff)
 1. **Lecture Player Page**: Move player to top (sticky), remove breadcrumb, add back button
 2. **Download/Share buttons**: Below player with `grid-template-columns: 1fr 1fr`
 3. **Series List**: Add search field at top
