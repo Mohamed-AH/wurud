@@ -1,4 +1,15 @@
 <style>
+  .articles-page {
+    min-height: 100vh;
+    padding-bottom: 90px;
+  }
+
+  @media (max-width: 768px) {
+    .articles-page {
+      padding-bottom: calc(80px + env(safe-area-inset-bottom, 0));
+    }
+  }
+
   .articles-header {
     background: #2C1508;
     padding: 14px 16px 18px;
@@ -239,6 +250,7 @@
   }
 </style>
 
+<div class="articles-page">
 <div class="articles-header">
   <h1><%= locale === 'ar' ? 'المقالات' : 'Articles' %></h1>
   <p><%= locale === 'ar' ? 'مقالات ومواضيع علمية مختارة' : 'Selected scholarly articles and topics' %></p>
@@ -315,6 +327,7 @@
     <% } %>
   </div>
 <% } %>
+</div>
 
 <script>
   const searchInput = document.getElementById('articleSearch');
