@@ -174,19 +174,37 @@
   .pagination {
     display: flex;
     justify-content: center;
+    flex-wrap: wrap;
     gap: 8px;
     padding: 20px;
+    max-width: 100%;
   }
 
   .pagination a,
   .pagination span {
     display: inline-block;
-    padding: 8px 14px;
+    padding: 6px 10px;
     border-radius: 8px;
-    font-size: 14px;
+    font-size: 13px;
     font-weight: 600;
     text-decoration: none;
     transition: all 0.2s ease;
+    min-width: 36px;
+    text-align: center;
+  }
+
+  @media (max-width: 480px) {
+    .pagination {
+      gap: 4px;
+      padding: 16px 12px;
+    }
+
+    .pagination a,
+    .pagination span {
+      padding: 5px 8px;
+      font-size: 12px;
+      min-width: 32px;
+    }
   }
 
   .pagination a {
