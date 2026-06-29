@@ -260,6 +260,16 @@ Implemented full article management in admin panel:
 - `utils/i18n.js` - Added article admin translations
 - `public/css/admin.css` - Added quick action button styles
 
+**Tests Created** - `tests/integration/routes/adminArticles.test.js`:
+- 37 integration tests covering all admin article routes
+- List view: pagination, search, filters (type, status), sorting
+- CRUD: create, read, update, delete articles
+- Toggle published status
+- Bulk operations: delete, publish, unpublish
+- Dashboard stats integration
+- Authentication requirements
+- Graceful skip when MongoDB unavailable (cloud env)
+
 ### P2 - Important Features
 
 1. **Series List Search**
