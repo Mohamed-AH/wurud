@@ -102,7 +102,54 @@
     box-shadow: 0 4px 12px var(--shadow-warm);
   }
 
-  /* Lecture Count - Archive Header Style */
+  /* Archive Stats Badge */
+  .archive-stats {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 20px;
+    margin-top: 32px;
+    padding: 20px 0;
+  }
+
+  .stat-item {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 10px 18px;
+    background: rgba(44, 21, 8, 0.4);
+    border-radius: 30px;
+    border: 1px solid rgba(193, 154, 107, 0.5);
+  }
+
+  .stat-icon {
+    font-size: 18px;
+    opacity: 0.9;
+  }
+
+  .stat-number {
+    font-family: var(--font-arabic-display);
+    font-size: 20px;
+    font-weight: 700;
+    color: #FFFFFF;
+    text-shadow: 0 1px 2px rgba(0, 0, 0, 0.3);
+  }
+
+  .stat-label {
+    font-family: var(--font-arabic-body);
+    font-size: 13px;
+    font-weight: 500;
+    color: #FFFFFF;
+    text-shadow: 0 1px 2px rgba(0, 0, 0, 0.2);
+  }
+
+  .stat-divider {
+    width: 1px;
+    height: 32px;
+    background: rgba(193, 154, 107, 0.3);
+  }
+
+  /* Legacy support */
   .lecture-count-badge {
     display: flex;
     align-items: center;
@@ -612,9 +659,37 @@
       padding: 0 8px;
     }
 
+    .search-input,
+    .search-btn {
+      width: 100%;
+      box-sizing: border-box;
+    }
+
     .search-input {
       font-size: 16px;
       padding: 14px 16px;
+    }
+
+    .archive-stats {
+      gap: 12px;
+      margin-top: 20px;
+      padding: 14px 0;
+    }
+
+    .stat-item {
+      padding: 8px 14px;
+    }
+
+    .stat-number {
+      font-size: 18px;
+    }
+
+    .stat-label {
+      font-size: 12px;
+    }
+
+    .stat-divider {
+      height: 28px;
     }
 
     .lecture-count-badge {
@@ -1225,6 +1300,21 @@
     .search-btn {
       padding: 12px 20px;
       font-size: 14px;
+    }
+
+    .archive-stats {
+      flex-direction: column;
+      gap: 10px;
+      margin-top: 16px;
+    }
+
+    .stat-item {
+      padding: 8px 16px;
+      width: auto;
+    }
+
+    .stat-divider {
+      display: none;
     }
 
     .lecture-count-badge {
@@ -2096,14 +2186,25 @@
       <%= locale === 'ar' ? 'بحث' : 'Search' %>
     </button>
   </div>
-  <% if (typeof totalLectureCount !== 'undefined' && totalLectureCount > 0) { %>
-  <div class="lecture-count-badge">
-    <span class="count-divider"></span>
-    <span class="count-text">
-      <span class="count-number"><%= totalLectureCount %>+</span>
-      <span class="count-label"><%= locale === 'ar' ? 'درس صوتي' : 'Audio Lectures' %></span>
-    </span>
-    <span class="count-divider"></span>
+  <% if ((typeof totalLectureCount !== 'undefined' && totalLectureCount > 0) || (typeof totalArticleCount !== 'undefined' && totalArticleCount > 0)) { %>
+  <div class="archive-stats">
+    <% if (typeof totalLectureCount !== 'undefined' && totalLectureCount > 0) { %>
+    <div class="stat-item">
+      <span class="stat-icon">🎧</span>
+      <span class="stat-number"><%= totalLectureCount %></span>
+      <span class="stat-label"><%= locale === 'ar' ? 'درس صوتي' : 'Lectures' %></span>
+    </div>
+    <% } %>
+    <% if ((typeof totalLectureCount !== 'undefined' && totalLectureCount > 0) && (typeof totalArticleCount !== 'undefined' && totalArticleCount > 0)) { %>
+    <span class="stat-divider"></span>
+    <% } %>
+    <% if (typeof totalArticleCount !== 'undefined' && totalArticleCount > 0) { %>
+    <div class="stat-item">
+      <span class="stat-icon">✍️</span>
+      <span class="stat-number"><%= totalArticleCount %></span>
+      <span class="stat-label"><%= locale === 'ar' ? 'مقال' : 'Articles' %></span>
+    </div>
+    <% } %>
   </div>
   <% } %>
 </div>
@@ -2355,13 +2456,13 @@
             <% } %>
             <td class="schedule-series-cell">
               <% if (item.isNew) { %><span class="new-badge"><%= locale === 'ar' ? 'جديد' : 'NEW' %></span><% } %>
-              <a href="/series/<%= item.seriesId.shortId %><%= item.seriesId.slug_en ? '/' + item.seriesId.slug_en : '' %><%= item.seriesId.slug_ar ? '/' + encodeURIComponent(item.seriesId.slug_ar) : '' %>">
+              <a href="/series/<%= item.seriesId.slug ? encodeURIComponent(item.seriesId.slug) : item.seriesId._id %>">
                 <%= locale === 'ar' ? item.seriesId.titleArabic : (item.seriesId.titleEnglish || item.seriesId.titleArabic) %>
               </a>
             </td>
             <td style="text-align: center;">
               <% if (item.lectureCount > 0) { %>
-              <a href="<%= item.latestLecture ? '/lectures/' + (item.latestLecture.slug ? encodeURIComponent(item.latestLecture.slug) : item.latestLecture._id) : '/series/' + item.seriesId.shortId + (item.seriesId.slug_en ? '/' + item.seriesId.slug_en : '') + (item.seriesId.slug_ar ? '/' + encodeURIComponent(item.seriesId.slug_ar) : '') %>" style="text-decoration: none;">
+              <a href="<%= item.latestLecture ? '/lectures/' + (item.latestLecture.slug ? encodeURIComponent(item.latestLecture.slug) : item.latestLecture._id) : '/series/' + (item.seriesId.slug ? encodeURIComponent(item.seriesId.slug) : item.seriesId._id) %>" style="text-decoration: none;">
                 <span class="schedule-lesson-num"><%= item.lectureCount %></span>
               </a>
               <% } else { %>
@@ -2417,13 +2518,13 @@
             <% } %>
             <td class="schedule-series-cell">
               <% if (item.isNew) { %><span class="new-badge"><%= locale === 'ar' ? 'جديد' : 'NEW' %></span><% } %>
-              <a href="/series/<%= item.seriesId.shortId %><%= item.seriesId.slug_en ? '/' + item.seriesId.slug_en : '' %><%= item.seriesId.slug_ar ? '/' + encodeURIComponent(item.seriesId.slug_ar) : '' %>">
+              <a href="/series/<%= item.seriesId.slug ? encodeURIComponent(item.seriesId.slug) : item.seriesId._id %>">
                 <%= locale === 'ar' ? item.seriesId.titleArabic : (item.seriesId.titleEnglish || item.seriesId.titleArabic) %>
               </a>
             </td>
             <td style="text-align: center;">
               <% if (item.lectureCount > 0) { %>
-              <a href="<%= item.latestLecture ? '/lectures/' + (item.latestLecture.slug ? encodeURIComponent(item.latestLecture.slug) : item.latestLecture._id) : '/series/' + item.seriesId.shortId + (item.seriesId.slug_en ? '/' + item.seriesId.slug_en : '') + (item.seriesId.slug_ar ? '/' + encodeURIComponent(item.seriesId.slug_ar) : '') %>" style="text-decoration: none;">
+              <a href="<%= item.latestLecture ? '/lectures/' + (item.latestLecture.slug ? encodeURIComponent(item.latestLecture.slug) : item.latestLecture._id) : '/series/' + (item.seriesId.slug ? encodeURIComponent(item.seriesId.slug) : item.seriesId._id) %>" style="text-decoration: none;">
                 <span class="schedule-lesson-num"><%= item.lectureCount %></span>
               </a>
               <% } else { %>
@@ -2455,6 +2556,156 @@ function switchScheduleTab(tab) {
 <% } %>
 <% } %>
 
+<!-- Featured Articles Section -->
+<% if (typeof recentArticles !== 'undefined' && recentArticles && recentArticles.length > 0) { %>
+<section class="featured-articles-section">
+  <div class="container">
+    <div class="featured-articles-header">
+      <h2 class="featured-articles-title">
+        ✍️ <%= locale === 'ar' ? 'أحدث المقالات' : 'Latest Articles' %>
+      </h2>
+      <a href="/articles" class="featured-articles-link">
+        <%= locale === 'ar' ? 'عرض الكل' : 'View All' %> →
+      </a>
+    </div>
+    <div class="featured-articles-grid">
+      <% recentArticles.slice(0, 4).forEach(function(article) { %>
+        <a href="/articles/<%= article.slug || article.shortId || article._id %>" class="featured-article-card">
+          <div class="featured-article-meta">
+            <span class="featured-article-type <%= article.type === 'TelegramArticle' ? 'telegram' : '' %>">
+              <%= article.type === 'TelegramArticle' ? 'تليجرام' : 'أصداء' %>
+            </span>
+            <span class="featured-article-date">
+              <%
+                const pubDate = new Date(article.publishedAt);
+                const hijriFormatter = new Intl.DateTimeFormat('ar-SA-u-ca-islamic', {
+                  day: 'numeric',
+                  month: 'short'
+                });
+              %>
+              <%= hijriFormatter.format(pubDate) %>
+            </span>
+          </div>
+          <h3 class="featured-article-title"><%= article.title %></h3>
+          <% if (article.summary) { %>
+            <p class="featured-article-summary"><%= article.summary %></p>
+          <% } %>
+        </a>
+      <% }); %>
+    </div>
+  </div>
+</section>
+<style>
+  .featured-articles-section {
+    background: var(--redesign-cream-bg, #F5EDE0);
+    padding: 24px 0;
+    margin-bottom: 24px;
+    border-top: 2px solid var(--redesign-gold-light, #DEC99A);
+    border-bottom: 2px solid var(--redesign-gold-light, #DEC99A);
+  }
+  .featured-articles-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 16px;
+  }
+  .featured-articles-title {
+    color: var(--redesign-brown-dark, #2C1508);
+    font-size: 20px;
+    font-weight: 700;
+    margin: 0;
+  }
+  .featured-articles-link {
+    color: var(--redesign-gold-primary, #C49A3C);
+    font-size: 14px;
+    font-weight: 600;
+    text-decoration: none;
+  }
+  .featured-articles-link:hover {
+    text-decoration: underline;
+  }
+  .featured-articles-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+    gap: 16px;
+  }
+  .featured-article-card {
+    background: var(--redesign-card-bg, #FDF8F2);
+    border: 1px solid var(--redesign-gold-light, #DEC99A);
+    border-radius: 12px;
+    padding: 16px;
+    text-decoration: none;
+    transition: all 0.2s ease;
+  }
+  .featured-article-card:hover {
+    border-color: var(--redesign-gold-primary, #C49A3C);
+    transform: translateY(-3px);
+    box-shadow: 0 6px 20px rgba(44, 21, 8, 0.1);
+  }
+  .featured-article-meta {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 10px;
+  }
+  .featured-article-type {
+    background: var(--redesign-badge-bg, #E8D5A0);
+    color: var(--redesign-text-mid, #7A5C3A);
+    font-size: 11px;
+    font-weight: 600;
+    padding: 3px 10px;
+    border-radius: 8px;
+  }
+  .featured-article-type.telegram {
+    background: var(--redesign-sage, #6B7A4E);
+    color: var(--redesign-card-bg, #FDF8F2);
+  }
+  .featured-article-date {
+    color: var(--redesign-text-muted, #A89070);
+    font-size: 11px;
+  }
+  .featured-article-title {
+    color: var(--redesign-brown-dark, #2C1508);
+    font-size: 15px;
+    font-weight: 700;
+    line-height: 1.5;
+    margin: 0 0 8px 0;
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+  }
+  .featured-article-summary {
+    color: var(--redesign-text-mid, #7A5C3A);
+    font-size: 13px;
+    line-height: 1.6;
+    margin: 0;
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+  }
+  @media (max-width: 768px) {
+    .featured-articles-section {
+      padding: 16px 0;
+    }
+    .featured-articles-title {
+      font-size: 18px;
+    }
+    .featured-articles-grid {
+      grid-template-columns: 1fr;
+      gap: 12px;
+    }
+    .featured-article-card {
+      padding: 14px;
+    }
+    .featured-article-title {
+      font-size: 14px;
+    }
+  }
+</style>
+<% } %>
+
 <!-- Homepage Sections -->
 <% if (typeof homepageSections !== 'undefined' && homepageSections && homepageSections.length > 0) { %>
 <div class="homepage-sections">
@@ -2475,7 +2726,7 @@ function switchScheduleTab(tab) {
         <% visibleSeries.forEach(function(s) { %>
         <tr>
           <td style="width:60%">
-            <a href="/series/<%= s.shortId %><%= s.slug_en ? '/' + s.slug_en : '' %><%= s.slug_ar ? '/' + encodeURIComponent(s.slug_ar) : '' %>" class="section-series-title"><%= locale === 'ar' ? s.titleArabic : (s.titleEnglish || s.titleArabic) %></a>
+            <a href="/series/<%= s.slug ? encodeURIComponent(s.slug) : s._id %>" class="section-series-title"><%= locale === 'ar' ? s.titleArabic : (s.titleEnglish || s.titleArabic) %></a>
             <% if (locale === 'en' && s.titleArabic) { %>
               <div class="section-series-subtitle"><%= s.titleArabic %></div>
             <% } %>
@@ -2489,14 +2740,14 @@ function switchScheduleTab(tab) {
             <span class="section-lecture-count"><%= s.lectureCount %> <%= locale === 'ar' ? 'درس' : '' %></span>
           </td>
           <td class="hide-mobile" style="width:10%;text-align:center;">
-            <a href="/series/<%= s.shortId %><%= s.slug_en ? '/' + s.slug_en : '' %><%= s.slug_ar ? '/' + encodeURIComponent(s.slug_ar) : '' %>" class="section-view-btn"><%= locale === 'ar' ? 'عرض' : 'View' %></a>
+            <a href="/series/<%= s.slug ? encodeURIComponent(s.slug) : s._id %>" class="section-view-btn"><%= locale === 'ar' ? 'عرض' : 'View' %></a>
           </td>
         </tr>
         <% }) %>
         <% hiddenSeries.forEach(function(s) { %>
         <tr class="section-hidden-row" data-section="<%= section.slug %>" style="display:none;">
           <td style="width:60%">
-            <a href="/series/<%= s.shortId %><%= s.slug_en ? '/' + s.slug_en : '' %><%= s.slug_ar ? '/' + encodeURIComponent(s.slug_ar) : '' %>" class="section-series-title"><%= locale === 'ar' ? s.titleArabic : (s.titleEnglish || s.titleArabic) %></a>
+            <a href="/series/<%= s.slug ? encodeURIComponent(s.slug) : s._id %>" class="section-series-title"><%= locale === 'ar' ? s.titleArabic : (s.titleEnglish || s.titleArabic) %></a>
             <% if (locale === 'en' && s.titleArabic) { %>
               <div class="section-series-subtitle"><%= s.titleArabic %></div>
             <% } %>
@@ -2510,7 +2761,7 @@ function switchScheduleTab(tab) {
             <span class="section-lecture-count"><%= s.lectureCount %> <%= locale === 'ar' ? 'درس' : '' %></span>
           </td>
           <td class="hide-mobile" style="width:10%;text-align:center;">
-            <a href="/series/<%= s.shortId %><%= s.slug_en ? '/' + s.slug_en : '' %><%= s.slug_ar ? '/' + encodeURIComponent(s.slug_ar) : '' %>" class="section-view-btn"><%= locale === 'ar' ? 'عرض' : 'View' %></a>
+            <a href="/series/<%= s.slug ? encodeURIComponent(s.slug) : s._id %>" class="section-view-btn"><%= locale === 'ar' ? 'عرض' : 'View' %></a>
           </td>
         </tr>
         <% }) %>
@@ -2759,7 +3010,7 @@ function showMoreSeries(slug) {
     %>
       <div class="series-card" data-category="<%= series.category %>" data-date="<%= latestDate %>" data-hijri="<%= hijriDate %>" data-series-type="<%= seriesType %>">
         <div class="series-header" onclick="toggleSeries('<%= series._id %>')">
-          <h2 class="series-title"><a href="/series/<%= series.shortId %><%= series.slug_en ? '/' + series.slug_en : '' %><%= series.slug_ar ? '/' + encodeURIComponent(series.slug_ar) : '' %>" onclick="event.stopPropagation()"><%= locale === 'ar' ? series.titleArabic : (series.titleEnglish || series.titleArabic) %></a></h2>
+          <h2 class="series-title"><a href="/series/<%= series.slug ? encodeURIComponent(series.slug) : series._id %>" onclick="event.stopPropagation()"><%= locale === 'ar' ? series.titleArabic : (series.titleEnglish || series.titleArabic) %></a></h2>
 
           <div class="series-meta">
             <% if (series.originalAuthor) { %>
@@ -2951,7 +3202,7 @@ function showMoreSeries(slug) {
       %>
         <div class="series-card" data-category="<%= series.category %>" data-date="<%= latestDate %>" data-hijri="<%= hijriDate %>">
           <div class="series-header" onclick="toggleKhutba('<%= series._id %>')">
-            <h2 class="series-title"><a href="/series/<%= series.shortId %><%= series.slug_en ? '/' + series.slug_en : '' %><%= series.slug_ar ? '/' + encodeURIComponent(series.slug_ar) : '' %>" onclick="event.stopPropagation()"><%= locale === 'ar' ? series.titleArabic : (series.titleEnglish || series.titleArabic) %></a></h2>
+            <h2 class="series-title"><a href="/series/<%= series.slug ? encodeURIComponent(series.slug) : series._id %>" onclick="event.stopPropagation()"><%= locale === 'ar' ? series.titleArabic : (series.titleEnglish || series.titleArabic) %></a></h2>
             <div class="series-meta">
               <div class="series-sheikh">
                 <%= locale === 'ar' ? 'الشيخ:' : 'Sheikh:' %> <%= series.sheikh ? (locale === 'ar' ? series.sheikh.nameArabic : (series.sheikh.nameEnglish || series.sheikh.nameArabic)) : '' %>

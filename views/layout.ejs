@@ -104,6 +104,7 @@
     :root{--primary-dark:#2C1810;--primary-brown:#5C4033;--accent-gold:#C19A6B;--accent-amber:#D4A574;--cream:#F5EBE0;--paper:#FAF7F2;--sage:#8B9D83;--text-primary:#2C1810;--text-secondary:#5C4033;--text-muted:#8B7355;--border-light:#E8DCC8;--shadow-warm:rgba(92,64,51,0.15);--font-arabic-display:'Scheherazade New',serif;--font-arabic-body:'Noto Naskh Arabic',serif;--space-xs:4px;--space-sm:8px;--space-md:16px;--space-lg:24px;--space-xl:32px;--space-2xl:48px;--space-3xl:64px}
     *{margin:0;padding:0;box-sizing:border-box}
     body{font-family:var(--font-arabic-body);background:var(--paper);color:var(--text-primary);line-height:1.9;direction:rtl;padding-bottom:140px}
+    html[dir="ltr"] body{direction:ltr;text-align:left}
     h1,h2,h3,h4,h5,h6{font-family:var(--font-arabic-display);font-weight:700}
     .container{max-width:1280px;margin:0 auto;padding:0 24px}@media(max-width:480px){.container{padding:0 16px}}@media(max-width:360px){.container{padding:0 12px}}
     .header{background:linear-gradient(135deg,#2C1810 0%,#3D2419 100%);border-bottom:3px solid #C19A6B;position:sticky;top:0;z-index:1000;box-shadow:0 4px 12px var(--shadow-warm);height:68px;display:flex;align-items:center}
@@ -121,7 +122,7 @@
     .mobile-nav.active{right:0}
     .mobile-nav-backdrop{position:fixed;top:0;left:0;width:100vw;height:100vh;background:rgba(0,0,0,0.5);z-index:1000;opacity:0;visibility:hidden;transition:all 0.3s ease}
     .mobile-nav-backdrop.active{opacity:1;visibility:visible}
-    @media(max-width:768px){.header{height:auto;min-height:56px}.header-content{padding:12px 16px;gap:12px}.logo{font-size:18px}.nav-desktop{display:none}.hamburger-btn{display:flex}.header-actions{flex-shrink:0;gap:var(--space-sm)}#langToggle{padding:6px 14px;font-size:13px}}
+    @media(max-width:768px){.header{height:auto;min-height:56px}.header-content{padding:12px 16px;gap:8px}.logo{display:block;font-size:15px;flex:1;min-width:0;line-height:1.4}.logo-text{display:block}.nav-desktop{display:none}.hamburger-btn{display:flex}.header-actions{flex-shrink:0;gap:var(--space-sm)}#langToggle{padding:6px 14px;font-size:13px}}@media(max-width:400px){.logo{font-size:14px}.header-content{padding:10px 12px}#langToggle{padding:5px 10px;font-size:12px}}
     @media(min-width:769px){.mobile-nav,.hamburger-btn{display:none!important}}
     .site-notice{position:sticky;top:0;z-index:1003;background:var(--cream);border-bottom:1px solid var(--border-light);padding:12px 24px;text-align:center;font-size:15px;line-height:1.7;color:var(--text-primary)}
     .site-notice a{color:var(--primary-brown);font-weight:600;text-decoration:underline;text-underline-offset:2px;transition:color 0.2s ease}
@@ -176,6 +177,8 @@
   <%- include('partials/footer') %>
 
   <%- include('partials/audioPlayer') %>
+
+  <%- include('partials/bottomNav') %>
 
   <!-- Admin Button (shown only if user is authenticated) - styles in main.css -->
   <% if (typeof user !== 'undefined' && user) { %>

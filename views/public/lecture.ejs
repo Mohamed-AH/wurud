@@ -526,6 +526,131 @@
     box-shadow: inset 0 0 0 2px var(--accent-gold);
   }
 
+  /* Mobile Navigation Bar */
+  .mobile-lecture-nav {
+    display: none;
+    background: #2C1508;
+    padding: 12px 14px;
+    align-items: center;
+    gap: 10px;
+    position: sticky;
+    top: 0;
+    z-index: 100;
+  }
+
+  .mobile-back-btn {
+    background: transparent;
+    border: none;
+    cursor: pointer;
+    color: #C49A3C;
+    font-size: 22px;
+    line-height: 1;
+    padding: 0 4px;
+    text-decoration: none;
+    flex-shrink: 0;
+  }
+
+  .mobile-back-btn:hover {
+    color: #DEC99A;
+  }
+
+  .mobile-nav-title {
+    color: #FDF8F2;
+    font-size: 13px;
+    font-weight: 600;
+    flex: 1;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    direction: rtl;
+    text-align: right;
+  }
+
+  /* Mobile Sticky Player */
+  .mobile-player-section {
+    display: none;
+    background: linear-gradient(135deg, var(--primary-brown) 0%, var(--sage) 100%);
+    padding: 16px;
+    position: sticky;
+    top: 46px;
+    z-index: 99;
+    border-bottom: 3px solid var(--accent-gold);
+  }
+
+  .mobile-play-row {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+  }
+
+  .mobile-play-btn {
+    background: var(--accent-gold);
+    color: var(--primary-dark);
+    border: none;
+    border-radius: 50%;
+    width: 56px;
+    height: 56px;
+    font-size: 24px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    flex-shrink: 0;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+  }
+
+  .mobile-play-info {
+    flex: 1;
+    min-width: 0;
+  }
+
+  .mobile-play-title {
+    color: var(--cream);
+    font-size: 14px;
+    font-weight: 600;
+    margin-bottom: 4px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  .mobile-play-duration {
+    color: rgba(250, 247, 242, 0.7);
+    font-size: 12px;
+  }
+
+  .mobile-action-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 10px;
+    margin-top: 14px;
+  }
+
+  .mobile-action-btn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    padding: 12px;
+    border-radius: 10px;
+    font-size: 14px;
+    font-weight: 600;
+    text-decoration: none;
+    cursor: pointer;
+    border: none;
+  }
+
+  .mobile-action-btn.download {
+    background: var(--accent-gold);
+    color: var(--primary-dark);
+  }
+
+  .mobile-action-btn.share {
+    background: rgba(255,255,255,0.15);
+    color: var(--cream);
+    border: 1px solid rgba(255,255,255,0.3);
+  }
+
   @media (max-width: 968px) {
     .content-grid {
       grid-template-columns: 1fr;
@@ -537,6 +662,39 @@
 
     .main-content {
       padding: 20px;
+    }
+  }
+
+  /* Mobile view (768px and below) */
+  @media (max-width: 768px) {
+    .mobile-lecture-nav {
+      display: flex;
+    }
+
+    .mobile-player-section {
+      display: block;
+    }
+
+    .breadcrumb {
+      display: none;
+    }
+
+    .lecture-hero {
+      display: none;
+    }
+
+    .play-section {
+      display: none;
+    }
+
+    .lecture-content {
+      padding: 20px 0;
+    }
+
+    .main-content {
+      border-radius: 0;
+      border-left: none;
+      border-right: none;
     }
   }
 
@@ -748,7 +906,55 @@
 </script>
 
 <div class="lecture-detail-page">
-  <!-- Breadcrumb -->
+  <!-- Mobile Navigation (hidden on desktop) -->
+  <nav class="mobile-lecture-nav">
+    <a href="javascript:history.back()" class="mobile-back-btn">←</a>
+    <span class="mobile-nav-title"><%= locale === 'ar' ? lecture.titleArabic : (lecture.titleEnglish || lecture.titleArabic) %></span>
+  </nav>
+
+  <!-- Mobile Sticky Player (hidden on desktop) -->
+  <% if (lecture.audioFileName) { %>
+  <div class="mobile-player-section">
+    <div class="mobile-play-row">
+      <button class="mobile-play-btn" onclick="playLecture()" title="<%= locale === 'ar' ? 'تشغيل' : 'Play' %>">
+        ▶️
+      </button>
+      <div class="mobile-play-info">
+        <div class="mobile-play-title"><%= locale === 'ar' ? lecture.titleArabic : (lecture.titleEnglish || lecture.titleArabic) %></div>
+        <div class="mobile-play-duration">
+          <% if (lecture.durationFormatted) { %>
+            <%= lecture.durationFormatted %>
+          <% } %>
+          <% if (lecture.seriesId) { %>
+            · <%= locale === 'ar' ? lecture.seriesId.titleArabic : (lecture.seriesId.titleEnglish || lecture.seriesId.titleArabic) %>
+          <% } %>
+        </div>
+      </div>
+    </div>
+    <div class="mobile-action-grid">
+      <a href="/download/<%= lecture._id %>" class="mobile-action-btn download">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+          <polyline points="7 10 12 15 17 10"></polyline>
+          <line x1="12" y1="15" x2="12" y2="3"></line>
+        </svg>
+        <%= locale === 'ar' ? 'تحميل' : 'Download' %>
+      </a>
+      <button class="mobile-action-btn share" onclick="shareLecture()">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <circle cx="18" cy="5" r="3"></circle>
+          <circle cx="6" cy="12" r="3"></circle>
+          <circle cx="18" cy="19" r="3"></circle>
+          <line x1="8.59" y1="13.51" x2="15.42" y2="17.49"></line>
+          <line x1="15.41" y1="6.51" x2="8.59" y2="10.49"></line>
+        </svg>
+        <%= locale === 'ar' ? 'مشاركة' : 'Share' %>
+      </button>
+    </div>
+  </div>
+  <% } %>
+
+  <!-- Breadcrumb (hidden on mobile) -->
   <nav class="breadcrumb">
     <div class="container">
       <a href="/"><%= locale === 'ar' ? 'الرئيسية' : 'Home' %></a>

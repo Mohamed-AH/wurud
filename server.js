@@ -273,6 +273,7 @@ const homepageApiRoutes = require('./routes/api/homepage');
 const streamRoutes = require('./routes/stream');
 const downloadRoutes = require('./routes/download');
 const searchApiRoutes = require('./routes/search');
+const articlesRoutes = require('./routes/articles');
 
 app.use('/', publicRoutes);
 app.use('/auth', authRoutes);
@@ -284,6 +285,7 @@ app.use('/api/homepage', homepageApiRoutes);
 app.use('/stream', streamRoutes);
 app.use('/download', downloadRoutes);
 app.use('/search', searchApiRoutes);
+app.use('/articles', articlesRoutes);
 
 // The Sentry error handler must be registered before any other error middleware and after all controllers
 Sentry.setupExpressErrorHandler(app);

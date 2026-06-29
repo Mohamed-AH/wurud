@@ -711,7 +711,7 @@
       : (series.titleEnglish || series.titleArabic || '');
     const categoryLabel = translateCategory(series.category);
 
-    const seriesUrl = `/series/${series.shortId}${series.slug_en ? '/' + series.slug_en : ''}${series.slug_ar ? '/' + encodeURIComponent(series.slug_ar) : ''}`;
+    const seriesUrl = series.slug ? `/series/${encodeURIComponent(series.slug)}` : `/series/${series._id}`;
 
     div.innerHTML = `
       <div class="series-header" onclick="${toggleFn}('${series._id}')">
