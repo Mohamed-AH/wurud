@@ -84,13 +84,16 @@ Implemented design from `/tmp/design-handoff/audio-archives-redesign/project/Aud
 - `views/partials/bottomNav.ejs` - Bottom navigation bar
 - `views/partials/articlesSidebar.ejs` - Articles sidebar for 65/35 layout
 
-### 4. RTL Architecture Note
+### 4. RTL Architecture & Critical Fix (Commit: c4d2580)
 **IMPORTANT**: This site is **RTL-first** (Arabic is the default).
 
 - Base CSS styles are written for RTL/Arabic
-- LTR overrides use `html[dir="ltr"]` selectors in `main.css`
+- LTR overrides use `html[dir="ltr"]` selectors
 - Do NOT add `[dir="rtl"]` overrides - they conflict with base RTL styles
-- The browser handles RTL layout automatically when `dir="rtl"` is set on `<html>`
+
+**ROOT CAUSE FIX**: The critical CSS in `layout.ejs` had `body{direction:rtl}` hardcoded, but the LTR override was in async-loaded `main.css`. This caused a race condition where English pages started with RTL direction, then flipped to LTR when main.css loaded, causing layout differences.
+
+**Solution**: Added `html[dir="ltr"] body{direction:ltr;text-align:left}` directly in critical CSS (layout.ejs line 107) so LTR direction applies immediately on page load.
 
 **Bottom Navigation** - `views/partials/bottomNav.ejs`:
 - Uses `direction: ltr` to keep icon order consistent across languages
