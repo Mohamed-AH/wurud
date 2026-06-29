@@ -95,6 +95,11 @@ body::before {
   .search-container {
     flex-direction: column;
   }
+  .search-input,
+  .search-btn {
+    width: 100%;
+    box-sizing: border-box;
+  }
 }
 
 .search-input {
