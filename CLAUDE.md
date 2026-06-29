@@ -148,20 +148,89 @@ Implemented mobile-first lecture player per design handoff:
 
 **Files Modified**: `views/public/lecture.ejs`
 
+### 10. Homepage Stats Display (Commit: 183cd9d, d71e0a1)
+Added article count alongside lecture count on homepage:
+- Pill-style badges with icons: 🎧 992 Lectures | ✍️ 338 Articles
+- High contrast white text on dark semi-transparent background
+- Responsive: stacks vertically on mobile (480px)
+- Cached articleCount query (10 min TTL)
+
+**Files Modified**: `routes/index.js`, `views/public/index.ejs`
+
+### 11. Pagination & Bottom Nav Fixes (Commit: 6f6de03)
+**Pagination overflow fix**:
+- Added `flex-wrap: wrap` for page numbers to wrap to next line
+- Smaller buttons on mobile (480px breakpoint)
+- Prevents horizontal scrolling with 300+ pages
+
+**Bottom navigation visibility fix**:
+- z-index: 9999 (was 1000)
+- GPU acceleration with `transform: translateZ(0)`
+- `backface-visibility: hidden` to prevent jitter
+- Main content z-index: 1 to prevent overlap
+
+**Files Modified**: `views/public/articles.ejs`, `views/partials/bottomNav.ejs`
+
 ## Pending Tasks
 
-### Articles Enhancement
-1. **Admin Panel**: Implement complete article management:
-   - Full editing capabilities (create, update, delete)
-   - Sorting functions (by date, title, type)
-   - Display/page settings (articles per page, featured articles, visibility)
+### P1 - SEO Strategy (Leverage 338 Articles)
 
-### Mobile Redesign (from design handoff)
-1. ~~**Lecture Player Page**: Move player to top (sticky), remove breadcrumb, add back button~~ ✅ Done
-2. ~~**Download/Share buttons**: Below player with `grid-template-columns: 1fr 1fr`~~ ✅ Done
-3. **Series List**: Add search field at top
-4. **Weekly Schedule**: Replace table with clickable day tabs + session cards
-5. **Cairo Font**: Design uses Cairo from Google Fonts (optional)
+**Goal**: Improve search visibility using the rich article content.
+
+1. **Article SEO Meta Tags**
+   - Add unique meta description per article (use summary or first 160 chars)
+   - Add Open Graph tags (og:title, og:description, og:type=article)
+   - Add Twitter Card meta tags
+   - Add article:published_time, article:author structured data
+
+2. **Sitemap Enhancement**
+   - Add all 338 articles to sitemap.xml
+   - Include lastmod dates from publishedAt
+   - Set appropriate priority (0.7 for articles vs 0.8 for lectures)
+
+3. **Internal Linking**
+   - Link related articles at bottom of each article
+   - Link articles to relevant lecture series
+   - Add "Latest Articles" section to series pages
+
+4. **Schema.org Structured Data**
+   - Add Article schema to article pages
+   - Add BreadcrumbList schema
+   - Add Organization/Person schema for the Sheikh
+
+5. **URL Optimization**
+   - Ensure all articles have clean Arabic slugs
+   - Add canonical URLs to prevent duplicate content
+   - Consider English transliterated slugs for broader reach
+
+6. **Content Discoverability**
+   - Add articles to homepage featured section ✅ Done
+   - Create topic/category pages for article groupings
+   - Add search functionality within articles
+
+### P2 - Important Features
+
+1. **Admin Panel for Articles**
+   - Full CRUD (create, update, delete)
+   - Sorting (by date, title, type)
+   - Display settings (articles per page, featured, visibility)
+   - Bulk operations
+
+2. **Series List Search**
+   - Add search field at top of `/series` page
+   - Filter by title (Arabic/English)
+   - Real-time filtering
+
+### P3 - Enhancements
+
+1. **Weekly Schedule Redesign**
+   - Replace table with clickable day tabs
+   - Session cards with lecture info
+   - Mobile-friendly layout
+
+2. **Cairo Font** (Optional)
+   - Design uses Cairo from Google Fonts
+   - Would require font loading strategy update
 
 ## Key Files Reference
 
