@@ -1597,6 +1597,35 @@
     }
   }
 
+  /* RTL Schedule Section Fixes */
+  [dir="rtl"] .weekly-schedule-section {
+    overflow: visible;
+  }
+
+  [dir="rtl"] .schedule-title {
+    word-break: keep-all;
+    white-space: nowrap;
+  }
+
+  @media (max-width: 768px) {
+    [dir="rtl"] .weekly-schedule-section {
+      padding-left: var(--space-md);
+      padding-right: var(--space-md);
+    }
+
+    [dir="rtl"] .schedule-title {
+      font-size: 18px;
+      white-space: normal;
+      word-break: keep-all;
+    }
+  }
+
+  @media (max-width: 480px) {
+    [dir="rtl"] .schedule-title {
+      font-size: 16px;
+    }
+  }
+
   /* Enhanced Search Results Section */
   .enhanced-search-results {
     display: none;
