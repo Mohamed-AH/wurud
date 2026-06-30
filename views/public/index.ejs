@@ -432,22 +432,24 @@
 
   .expand-btn {
     flex-shrink: 0;
-    width: 30px;
-    height: 30px;
-    margin-top: 4px;
+    width: 32px;
+    height: 32px;
     padding: 0;
     background: var(--redesign-card-bg, #FDF8F2);
     border: 1px solid var(--redesign-gold-light, #DEC99A);
     border-radius: 6px;
-    color: var(--redesign-gold-primary, #C49A3C);
-    font-family: var(--font-cairo, 'Cairo', sans-serif);
-    font-size: 18px;
-    font-weight: 700;
+    color: var(--redesign-brown-dark, #2C1508);
     cursor: pointer;
     transition: all 0.2s ease;
     display: flex;
     align-items: center;
     justify-content: center;
+  }
+
+  .expand-btn .expand-icon {
+    width: 18px;
+    height: 18px;
+    stroke-width: 2.5;
   }
 
   .expand-btn:hover {
@@ -589,6 +591,59 @@
   .btn-download:hover {
     background: var(--redesign-gold-primary, #C49A3C);
     color: var(--redesign-card-bg, #FDF8F2);
+  }
+
+  .btn-play .lucide, .btn-download .lucide {
+    width: 14px;
+    height: 14px;
+    stroke-width: 2;
+  }
+
+  /* Episode Sort Bar */
+  .episode-sort-bar {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 12px 16px;
+    background: var(--redesign-card-bg, #FDF8F2);
+    border-bottom: 1px solid var(--redesign-badge-bg, #E8D5A0);
+  }
+
+  .episode-sort-label {
+    font-family: var(--font-cairo, 'Cairo', sans-serif);
+    font-size: 12px;
+    font-weight: 600;
+    color: var(--redesign-text-muted, #A89070);
+    white-space: nowrap;
+  }
+
+  .episode-sort-chips {
+    display: flex;
+    gap: 6px;
+    flex-wrap: wrap;
+  }
+
+  .sort-chip {
+    padding: 5px 12px;
+    border-radius: 6px;
+    border: 1px solid var(--redesign-gold-light, #DEC99A);
+    background: var(--redesign-card-bg, #FDF8F2);
+    font-family: var(--font-cairo, 'Cairo', sans-serif);
+    font-size: 11px;
+    font-weight: 600;
+    color: var(--redesign-text-mid, #7A5C3A);
+    cursor: pointer;
+    transition: all 0.2s ease;
+  }
+
+  .sort-chip:hover {
+    background: var(--redesign-badge-bg, #E8D5A0);
+  }
+
+  .sort-chip.active {
+    background: var(--redesign-gold-primary, #C49A3C);
+    color: var(--redesign-card-bg, #FDF8F2);
+    border-color: var(--redesign-gold-primary, #C49A3C);
   }
 
   /* Empty State */
@@ -3848,24 +3903,26 @@ function showMoreSeries(slug) {
             </span>
           </div>
 
-          <button class="expand-btn" id="btn-<%= series._id %>">
-            <%= locale === 'ar' ? 'عرض الدروس ▼' : 'Show Lessons ▼' %>
+          <button class="expand-btn" id="btn-<%= series._id %>" aria-label="<%= locale === 'ar' ? 'عرض الدروس' : 'Show Lessons' %>">
+            <i data-lucide="plus" class="expand-icon"></i>
           </button>
         </div>
 
         <div class="episodes-list" id="episodes-<%= series._id %>">
           <!-- Sort controls for lectures within this series -->
-          <div style="padding: 12px; background: #f8f9fa; border-bottom: 1px solid #e9ecef; display: flex; gap: 8px; align-items: center;">
-            <span style="font-size: 13px; font-weight: 600; color: #666;"><%= locale === 'ar' ? 'ترتيب الدروس:' : 'Sort:' %></span>
-            <button class="chip" onclick="sortSeriesLectures('<%= series._id %>', 'number'); event.stopPropagation();" style="padding: 4px 12px; font-size: 12px;">
-              <%= locale === 'ar' ? 'حسب الرقم' : 'By Number' %>
-            </button>
-            <button class="chip" onclick="sortSeriesLectures('<%= series._id %>', 'oldest'); event.stopPropagation();" style="padding: 4px 12px; font-size: 12px;">
-              <%= locale === 'ar' ? 'الأقدم أولاً' : 'Oldest First' %>
-            </button>
-            <button class="chip" onclick="sortSeriesLectures('<%= series._id %>', 'newest'); event.stopPropagation();" style="padding: 4px 12px; font-size: 12px;">
-              <%= locale === 'ar' ? 'الأحدث أولاً' : 'Newest First' %>
-            </button>
+          <div class="episode-sort-bar">
+            <span class="episode-sort-label"><%= locale === 'ar' ? 'ترتيب الدروس:' : 'Sort:' %></span>
+            <div class="episode-sort-chips">
+              <button class="sort-chip active" onclick="sortSeriesLectures('<%= series._id %>', 'number'); event.stopPropagation();">
+                <%= locale === 'ar' ? 'حسب الرقم' : 'By Number' %>
+              </button>
+              <button class="sort-chip" onclick="sortSeriesLectures('<%= series._id %>', 'oldest'); event.stopPropagation();">
+                <%= locale === 'ar' ? 'الأقدم' : 'Oldest' %>
+              </button>
+              <button class="sort-chip" onclick="sortSeriesLectures('<%= series._id %>', 'newest'); event.stopPropagation();">
+                <%= locale === 'ar' ? 'الأحدث' : 'Newest' %>
+              </button>
+            </div>
           </div>
 
           <div class="episodes-container">
@@ -3890,10 +3947,10 @@ function showMoreSeries(slug) {
               </div>
               <div class="episode-actions">
                 <button class="btn-play" onclick="playAudio('<%= lecture._id %>', '<%= lecture.titleArabic.replace(/'/g, "\\'") %>', '<%= series.sheikh ? series.sheikh.nameArabic.replace(/'/g, "\\'") : "" %>')">
-                  ▶ <%= locale === 'ar' ? 'تشغيل' : 'Play' %>
+                  <i data-lucide="play"></i> <%= locale === 'ar' ? 'تشغيل' : 'Play' %>
                 </button>
                 <a href="/download/<%= lecture._id %>" class="btn-download">
-                  ⬇ <%= locale === 'ar' ? 'تحميل' : 'Download' %>
+                  <i data-lucide="download"></i> <%= locale === 'ar' ? 'تحميل' : 'Download' %>
                 </a>
               </div>
             </div>
@@ -3952,10 +4009,10 @@ function showMoreSeries(slug) {
             <div class="episode-actions" style="margin-top: 16px;">
               <% if (lecture.audioFileName) { %>
                 <button class="btn-play" onclick="playAudio('<%= lecture._id %>', '<%= lecture.titleArabic.replace(/'/g, "\\'") %>', '<%= lecture.sheikhId ? lecture.sheikhId.nameArabic.replace(/'/g, "\\'") : "" %>')">
-                  ▶ <%= locale === 'ar' ? 'تشغيل' : 'Play' %>
+                  <i data-lucide="play"></i> <%= locale === 'ar' ? 'تشغيل' : 'Play' %>
                 </button>
                 <a href="/download/<%= lecture._id %>" class="btn-download">
-                  ⬇ <%= locale === 'ar' ? 'تحميل' : 'Download' %>
+                  <i data-lucide="download"></i> <%= locale === 'ar' ? 'تحميل' : 'Download' %>
                 </a>
               <% } %>
             </div>
@@ -4027,23 +4084,25 @@ function showMoreSeries(slug) {
             <div class="series-info">
               <span><%= series.lectureCount %> <%= locale === 'ar' ? 'خطبة' : 'khutbahs' %></span>
             </div>
-            <button class="expand-btn" id="khutba-btn-<%= series._id %>">
-              <%= locale === 'ar' ? 'عرض الخطب ▼' : 'Show Khutbahs ▼' %>
+            <button class="expand-btn" id="khutba-btn-<%= series._id %>" aria-label="<%= locale === 'ar' ? 'عرض الخطب' : 'Show Khutbahs' %>">
+              <i data-lucide="plus" class="expand-icon"></i>
             </button>
           </div>
           <div class="episodes-list" id="khutba-episodes-<%= series._id %>">
             <!-- Sort controls for khutbas within this series -->
-            <div style="padding: 12px; background: #f8f9fa; border-bottom: 1px solid #e9ecef; display: flex; gap: 8px; align-items: center;">
-              <span style="font-size: 13px; font-weight: 600; color: #666;"><%= locale === 'ar' ? 'ترتيب الخطب:' : 'Sort:' %></span>
-              <button class="chip" onclick="sortSeriesLectures('khutba-<%= series._id %>', 'number'); event.stopPropagation();" style="padding: 4px 12px; font-size: 12px;">
-                <%= locale === 'ar' ? 'حسب الرقم' : 'By Number' %>
-              </button>
-              <button class="chip" onclick="sortSeriesLectures('khutba-<%= series._id %>', 'oldest'); event.stopPropagation();" style="padding: 4px 12px; font-size: 12px;">
-                <%= locale === 'ar' ? 'الأقدم أولاً' : 'Oldest First' %>
-              </button>
-              <button class="chip" onclick="sortSeriesLectures('khutba-<%= series._id %>', 'newest'); event.stopPropagation();" style="padding: 4px 12px; font-size: 12px;">
-                <%= locale === 'ar' ? 'الأحدث أولاً' : 'Newest First' %>
-              </button>
+            <div class="episode-sort-bar">
+              <span class="episode-sort-label"><%= locale === 'ar' ? 'ترتيب الخطب:' : 'Sort:' %></span>
+              <div class="episode-sort-chips">
+                <button class="sort-chip active" onclick="sortSeriesLectures('khutba-<%= series._id %>', 'number'); event.stopPropagation();">
+                  <%= locale === 'ar' ? 'حسب الرقم' : 'By Number' %>
+                </button>
+                <button class="sort-chip" onclick="sortSeriesLectures('khutba-<%= series._id %>', 'oldest'); event.stopPropagation();">
+                  <%= locale === 'ar' ? 'الأقدم' : 'Oldest' %>
+                </button>
+                <button class="sort-chip" onclick="sortSeriesLectures('khutba-<%= series._id %>', 'newest'); event.stopPropagation();">
+                  <%= locale === 'ar' ? 'الأحدث' : 'Newest' %>
+                </button>
+              </div>
             </div>
 
             <div class="episodes-container">
@@ -4068,10 +4127,10 @@ function showMoreSeries(slug) {
                   <div class="episode-actions">
                     <% if (lecture.audioFileName) { %>
                       <button class="btn-play" onclick="playAudio('<%= lecture._id %>', '<%= lecture.titleArabic.replace(/'/g, "\\'") %>', '<%= series.sheikh ? series.sheikh.nameArabic.replace(/'/g, "\\'") : "" %>')">
-                        ▶ <%= locale === 'ar' ? 'تشغيل' : 'Play' %>
+                        <i data-lucide="play"></i> <%= locale === 'ar' ? 'تشغيل' : 'Play' %>
                       </button>
                       <a href="/download/<%= lecture._id %>" class="btn-download">
-                        ⬇ <%= locale === 'ar' ? 'تحميل' : 'Download' %>
+                        <i data-lucide="download"></i> <%= locale === 'ar' ? 'تحميل' : 'Download' %>
                       </a>
                     <% } %>
                   </div>
@@ -4106,10 +4165,11 @@ function showMoreSeries(slug) {
     episodesList.classList.toggle('show');
     btn.classList.toggle('expanded');
 
-    if (episodesList.classList.contains('show')) {
-      btn.textContent = currentLocale === 'ar' ? 'إخفاء الدروس ▲' : 'Hide Lessons ▲';
-    } else {
-      btn.textContent = currentLocale === 'ar' ? 'عرض الدروس ▼' : 'Show Lessons ▼';
+    // Toggle between plus and minus icons
+    const icon = btn.querySelector('.expand-icon');
+    if (icon) {
+      icon.setAttribute('data-lucide', episodesList.classList.contains('show') ? 'minus' : 'plus');
+      if (typeof lucide !== 'undefined') lucide.createIcons();
     }
   }
 
@@ -4123,10 +4183,11 @@ function showMoreSeries(slug) {
     episodesList.classList.toggle('show');
     btn.classList.toggle('expanded');
 
-    if (episodesList.classList.contains('show')) {
-      btn.textContent = currentLocale === 'ar' ? 'إخفاء الخطب ▲' : 'Hide Khutbahs ▲';
-    } else {
-      btn.textContent = currentLocale === 'ar' ? 'عرض الخطب ▼' : 'Show Khutbahs ▼';
+    // Toggle between plus and minus icons
+    const icon = btn.querySelector('.expand-icon');
+    if (icon) {
+      icon.setAttribute('data-lucide', episodesList.classList.contains('show') ? 'minus' : 'plus');
+      if (typeof lucide !== 'undefined') lucide.createIcons();
     }
   }
 
@@ -4181,6 +4242,16 @@ function showMoreSeries(slug) {
 
     // Re-append episodes in sorted order
     episodes.forEach(episode => container.appendChild(episode));
+  }
+
+  // Initialize Lucide icons when DOM is ready
+  if (typeof lucide !== 'undefined') {
+    lucide.createIcons();
+  } else {
+    // Wait for Lucide to load
+    window.addEventListener('load', function() {
+      if (typeof lucide !== 'undefined') lucide.createIcons();
+    });
   }
 </script>
 
