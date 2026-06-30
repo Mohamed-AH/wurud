@@ -2566,6 +2566,7 @@ router.post('/homepage-config', isAdmin, async (req, res) => {
 
     settings.homepage = {
       showSchedule: req.body.showSchedule === 'on',
+      scheduleLayout: req.body.scheduleLayout || 'cards',
       showSeriesTab: req.body.showSeriesTab === 'on',
       showStandaloneTab: req.body.showStandaloneTab === 'on',
       showKhutbasTab: req.body.showKhutbasTab === 'on'
