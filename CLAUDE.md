@@ -221,14 +221,19 @@ SEO implementation deployed and submitted to Google:
   - الأمر بالمعروف والنهي عن المنكر (Enjoining Good)
   - لزوم السنة والتحذير من البدع (Following Sunnah)
 
+### 16. Series List Search (Commit: a5041ba)
+Added real-time search to `/series` page:
+- Search box with magnifier icon and clear button
+- Filters by: Arabic title, English title, sheikh name, category
+- Arabic normalization (أإآا → ا, ة → ه, ى → ي)
+- Shows "X of Y series" count while filtering
+- "No results" state with suggestion
+- Escape key clears search
+- Responsive mobile design
+
+**Files Modified**: `views/public/series.ejs`
+
 ## Pending Tasks
-
-### P2 - Important Features
-
-1. **Series List Search**
-   - Add search field at top of `/series` page
-   - Filter by title (Arabic/English)
-   - Real-time filtering
 
 ### P3 - Enhancements
 
