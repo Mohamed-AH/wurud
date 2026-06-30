@@ -245,15 +245,13 @@
 
   .search-input {
     width: 100%;
-    padding: 14px 16px 14px 48px;
+    padding: 14px 48px 14px 40px;
     border: 2px solid var(--accent-amber);
     border-radius: 12px;
     font-size: 16px;
     font-family: inherit;
     background: var(--cream);
     color: var(--primary-dark);
-    direction: rtl;
-    text-align: right;
     box-sizing: border-box;
   }
 
@@ -270,6 +268,7 @@
   .search-icon {
     position: absolute;
     right: 16px;
+    left: auto;
     top: 50%;
     transform: translateY(-50%);
     color: var(--text-muted);
@@ -279,6 +278,7 @@
   .search-clear {
     position: absolute;
     left: 12px;
+    right: auto;
     top: 50%;
     transform: translateY(-50%);
     background: none;
@@ -296,6 +296,27 @@
 
   .search-clear:hover {
     color: var(--primary-dark);
+  }
+
+  /* LTR overrides for English */
+  html[dir="ltr"] .search-wrapper {
+    margin-left: 0;
+    margin-right: auto;
+  }
+
+  html[dir="ltr"] .search-input {
+    padding: 14px 40px 14px 48px;
+    text-align: left;
+  }
+
+  html[dir="ltr"] .search-icon {
+    left: 16px;
+    right: auto;
+  }
+
+  html[dir="ltr"] .search-clear {
+    right: 12px;
+    left: auto;
   }
 
   .search-results-info {
@@ -325,8 +346,12 @@
     }
 
     .search-input {
-      padding: 12px 14px 12px 44px;
+      padding: 12px 44px 12px 36px;
       font-size: 15px;
+    }
+
+    html[dir="ltr"] .search-input {
+      padding: 12px 36px 12px 44px;
     }
   }
 
@@ -336,21 +361,41 @@
     }
 
     .search-input {
-      padding: 11px 12px 11px 40px;
+      padding: 11px 40px 11px 32px;
       font-size: 14px;
       border-radius: 10px;
     }
 
     .search-icon {
       right: 12px;
+      left: auto;
+    }
+
+    .search-clear {
+      left: 10px;
+      right: auto;
+    }
+
+    html[dir="ltr"] .search-input {
+      padding: 11px 32px 11px 40px;
+    }
+
+    html[dir="ltr"] .search-icon {
+      left: 12px;
+      right: auto;
+    }
+
+    html[dir="ltr"] .search-clear {
+      right: 10px;
+      left: auto;
     }
   }
 </style>
 
 <div class="page-header">
   <div class="container">
-    <h1 class="page-title">السلاسل</h1>
-    <p class="page-subtitle">تصفح جميع السلاسل العلمية</p>
+    <h1 class="page-title"><%= locale === 'ar' ? 'السلاسل' : 'Series' %></h1>
+    <p class="page-subtitle"><%= locale === 'ar' ? 'تصفح جميع السلاسل العلمية' : 'Browse all lecture series' %></p>
   </div>
 </div>
 
@@ -369,7 +414,7 @@
                class="search-input"
                placeholder="<%= locale === 'ar' ? 'ابحث في السلاسل...' : 'Search series...' %>"
                autocomplete="off">
-        <button type="button" class="search-clear" id="searchClear" title="مسح">×</button>
+        <button type="button" class="search-clear" id="searchClear" title="<%= locale === 'ar' ? 'مسح' : 'Clear' %>">×</button>
       </div>
       <div class="search-results-info" id="searchResultsInfo"></div>
     </div>
@@ -426,7 +471,7 @@
   <% } else { %>
     <div class="empty-state">
       <div class="empty-icon">📚</div>
-      <h3>لا توجد سلاسل حالياً</h3>
+      <h3><%= locale === 'ar' ? 'لا توجد سلاسل حالياً' : 'No series available' %></h3>
     </div>
   <% } %>
 </div>
