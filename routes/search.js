@@ -19,6 +19,7 @@ const CONTEXT_ITEMS = parseInt(process.env.CONTEXT_ITEMS, 10) || 2;
 const LOG_SEARCHES = process.env.LOG_SEARCHES !== 'false';
 const SEARCH_CACHE_TTL = parseInt(process.env.SEARCH_CACHE_TTL, 10) || 300; // 5 minutes
 const isProduction = process.env.NODE_ENV === 'production';
+const isTest = process.env.NODE_ENV === 'test';
 
 // Helper to get search models (lazy access since they're initialized async)
 const getTranscript = () => models.Transcript;
@@ -157,7 +158,7 @@ router.get('/api', async (req, res) => {
         try {
           await logSearchAsync(searchLogId, query, searchQuery, results);
         } catch (err) {
-          console.error('Async search logging failed:', err);
+          if (!isTest) console.error('Async search logging failed:', err);
         }
       });
     }
@@ -484,11 +485,11 @@ async function enrichWithContext(results) {
 async function logSearchAsync(id, query, searchQuery, results) {
   const SearchLog = getSearchLog();
   if (!SearchLog) {
-    console.warn('[SearchLog] Model not initialized - search not logged');
+    if (!isTest) console.warn('[SearchLog] Model not initialized - search not logged');
     return;
   }
 
-  console.log('[SearchLog] Creating log for query:', query);
+  if (!isTest) console.log('[SearchLog] Creating log for query:', query);
   await SearchLog.create({
     _id: id,
     query,
@@ -498,7 +499,7 @@ async function logSearchAsync(id, query, searchQuery, results) {
     searchMode: SEARCH_MODE,
     relevant: null
   });
-  console.log('[SearchLog] Saved successfully - ID:', id.toString(), 'Results:', results.length);
+  if (!isTest) console.log('[SearchLog] Saved successfully - ID:', id.toString(), 'Results:', results.length);
 }
 
 module.exports = router;
