@@ -187,17 +187,22 @@
     letter-spacing: 0.3px;
   }
 
-  /* Filter Chips */
+  /* Filter Panel - Redesigned per design handoff */
   .filters-section {
-    max-width: 1200px;
-    margin: 0 auto var(--space-xl);
-    padding: var(--space-lg);
-    background: #F5EBE0;
-    border-bottom: 2px solid #E8DCC8;
+    max-width: 960px;
+    margin: 0 auto;
+    padding: 16px 20px 14px;
+    background: var(--redesign-card-bg, #FDF8F2);
+    border: 1px solid var(--redesign-badge-bg, #E8D5A0);
+    border-top: none;
   }
 
   .filter-group {
-    margin-bottom: 16px;
+    margin-bottom: 10px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    flex-wrap: wrap;
   }
 
   .filter-group:last-child {
@@ -205,57 +210,55 @@
   }
 
   .filter-label {
-    font-family: var(--font-arabic-display);
-    font-size: 16px;
-    font-weight: 600;
-    color: #5C4033;
-    margin-bottom: 12px;
-    display: block;
+    font-family: var(--font-cairo, 'Cairo', sans-serif);
+    font-size: 12px;
+    font-weight: 500;
+    color: var(--redesign-text-muted, #A89070);
+    min-width: 50px;
+    flex-shrink: 0;
   }
 
   .filter-chips {
     display: flex;
-    gap: 8px;
+    gap: 5px;
     flex-wrap: wrap;
   }
 
   .chip {
-    padding: 8px 20px;
-    border: 2px solid #C19A6B;
-    border-radius: 25px;
+    padding: 4px 13px;
+    border: none;
+    border-radius: 3px;
     background: transparent;
-    color: #5C4033;
-    font-family: var(--font-arabic-body);
-    font-size: 15px;
+    color: var(--redesign-text-mid, #7A5C3A);
+    font-family: var(--font-cairo, 'Cairo', sans-serif);
+    font-size: 12px;
     font-weight: 500;
     cursor: pointer;
-    transition: all 0.3s ease;
+    transition: all 0.15s ease;
   }
 
   .chip:hover {
-    background: rgba(193, 154, 107, 0.1);
+    background: var(--redesign-badge-bg, #E8D5A0);
   }
 
   .chip.active {
-    background: var(--accent-gold);
-    color: var(--primary-dark);
+    background: var(--redesign-brown-dark, #2C1508);
+    color: var(--redesign-gold-primary, #C49A3C);
     font-weight: 700;
-    border-color: var(--accent-gold);
-    box-shadow: 0 4px 12px var(--shadow-warm);
   }
 
   .clear-filters-btn {
-    padding: 8px 16px;
-    border: 2px solid #dc3545;
-    border-radius: 25px;
+    padding: 4px 13px;
+    border: none;
+    border-radius: 3px;
     background: transparent;
-    color: #dc3545;
-    font-family: var(--font-arabic-body);
-    font-size: 14px;
+    color: var(--redesign-text-muted, #A89070);
+    font-family: var(--font-cairo, 'Cairo', sans-serif);
+    font-size: 12px;
     font-weight: 500;
     cursor: pointer;
-    transition: all 0.3s ease;
-    margin-right: auto;
+    transition: all 0.15s ease;
+    text-decoration: underline;
   }
 
   .clear-filters-btn:hover {
@@ -263,53 +266,50 @@
     color: white;
   }
 
-  /* Minimized Title/Name Search Section */
+  /* Minimized Title/Name Search Section - Inside filter panel */
   .title-search-section {
-    max-width: 1200px;
+    max-width: 960px;
     margin: 0 auto;
-    padding: var(--space-md) var(--space-lg);
-    background: rgba(193, 154, 107, 0.08);
-    border-bottom: 1px solid #E8DCC8;
+    padding: 0 32px;
   }
 
   .title-search-wrapper {
     position: relative;
-    max-width: 400px;
+    background: var(--redesign-cream-bg, #F5EDE0);
+    border-radius: 6px;
+    display: flex;
+    align-items: center;
+    padding: 0 12px;
+    gap: 8px;
+    margin-bottom: 14px;
   }
 
   .title-search-input {
-    width: 100%;
-    padding: 10px 16px;
-    padding-left: 40px;
-    border: 2px solid #D4A574;
-    border-radius: 8px;
-    font-family: var(--font-arabic-body);
+    flex: 1;
+    padding: 10px 0;
+    border: none;
+    font-family: var(--font-cairo, 'Cairo', sans-serif);
     font-size: 14px;
-    background: #FAF7F2;
-    color: var(--text-primary);
-    transition: all 0.3s ease;
+    background: transparent;
+    color: var(--redesign-brown-dark, #2C1508);
+    direction: rtl;
   }
 
   .title-search-input::placeholder {
-    color: #8B7355;
-    font-size: 13px;
+    color: var(--redesign-text-muted, #A89070);
+    font-size: 14px;
   }
 
   .title-search-input:focus {
     outline: none;
-    border-color: #C19A6B;
-    box-shadow: 0 0 0 3px rgba(193, 154, 107, 0.15);
   }
 
   .title-search-icon {
-    position: absolute;
-    left: 12px;
-    top: 50%;
-    transform: translateY(-50%);
     font-size: 14px;
     opacity: 0.6;
     cursor: pointer;
     transition: opacity 0.2s ease;
+    order: -1;
   }
 
   .title-search-icon:hover {
@@ -318,19 +318,26 @@
 
   @media (max-width: 768px) {
     .title-search-section {
-      padding: var(--space-sm) var(--space-md);
+      padding: 0 14px;
     }
 
     .title-search-wrapper {
-      max-width: 100%;
+      padding: 0 10px;
+      gap: 6px;
+      margin-bottom: 10px;
+    }
+
+    .title-search-input {
+      font-size: 13px;
+      padding: 9px 0;
     }
   }
 
-  /* Series Cards */
+  /* Series Cards/Rows */
   .series-list {
-    max-width: 1200px;
+    max-width: 960px;
     margin: 0 auto;
-    padding: 0 var(--space-lg) var(--space-3xl);
+    padding: 0 32px var(--space-3xl);
   }
 
   .series-card {
@@ -938,43 +945,41 @@
     }
   }
 
-  /* Navigation Tabs */
+  /* Navigation Tabs - Redesigned per design handoff */
   .nav-tabs {
-    background: white;
-    border-bottom: 2px solid var(--accent-amber);
-    margin-bottom: 24px;
+    max-width: 960px;
+    margin: 0 auto;
+    padding: 0 32px;
+    border-top: 1px solid var(--redesign-badge-bg, #E8D5A0);
   }
 
   .nav-tabs-container {
-    max-width: 1200px;
-    margin: 0 auto;
     display: flex;
-    gap: 0;
-    padding: 0 16px;
+    border-bottom: 2px solid var(--redesign-badge-bg, #E8D5A0);
   }
 
   .nav-tab {
-    flex: 1;
-    padding: 16px 24px;
+    padding: 0 28px 13px;
     border: none;
     background: transparent;
-    color: var(--text-secondary);
-    font-size: 16px;
-    font-weight: 600;
+    color: var(--redesign-text-muted, #A89070);
+    font-size: 15px;
+    font-weight: 500;
     cursor: pointer;
     position: relative;
-    transition: all 0.3s;
-    font-family: var(--font-arabic);
+    transition: all 0.2s;
+    font-family: var(--font-cairo, 'Cairo', sans-serif);
+    margin-bottom: -2px;
+    white-space: nowrap;
   }
 
   .nav-tab:hover {
-    color: var(--primary-brown);
-    background: var(--cream);
+    color: var(--redesign-text-mid, #7A5C3A);
   }
 
   .nav-tab.active {
-    color: var(--primary-brown);
-    background: var(--cream);
+    color: var(--redesign-brown-dark, #2C1508);
+    font-weight: 700;
   }
 
   .nav-tab.active::after {
@@ -983,8 +988,8 @@
     bottom: 0;
     left: 0;
     right: 0;
-    height: 3px;
-    background: var(--accent-gold);
+    height: 2px;
+    background: var(--redesign-gold-primary, #C49A3C);
   }
 
   .tab-content {
@@ -3656,16 +3661,16 @@ function showMoreSeries(slug) {
   </div>
 </div>
 
-<!-- Minimized Name/Title Search -->
+<!-- Filter Panel (includes search) -->
 <div class="title-search-section">
   <div class="title-search-wrapper">
+    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--redesign-text-muted, #A89070)" stroke-width="2.5"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
     <input
       type="text"
       class="title-search-input"
       id="titleSearchInput"
-      placeholder="<%= locale === 'ar' ? 'بحث بعنوان السلسلة أو المحاضرة...' : 'Search by series or lecture name...' %>"
+      placeholder="<%= locale === 'ar' ? 'ابحث عن سلسلة أو درس...' : 'Search series or lesson...' %>"
     >
-    <span class="title-search-icon" id="titleSearchIcon" title="<%= locale === 'ar' ? 'بحث' : 'Search' %>">🔍</span>
   </div>
 </div>
 
