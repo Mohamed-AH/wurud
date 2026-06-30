@@ -295,92 +295,72 @@ Added admin setting to switch between new card layout and classic table layout:
 ---
 
 #### Phase 1: Design System Foundation
-**Status**: Pending
+**Status**: ✅ COMPLETED (Commit: ec3535d)
 
 1. **Cairo Font Loading** (`views/layout.ejs`)
-   - Add Google Fonts preconnect and Cairo import
-   - Update `--font-arabic-display` CSS variable
-   - Test Arabic rendering
+   - Added Google Fonts preconnect and Cairo import
+   - Updated `--font-arabic-display` and `--font-arabic-body` to use Cairo with fallbacks
+   - Added `--font-cairo` variable for direct use
 
 2. **CSS Variables** (`public/css/main.css`)
-   - Verify all redesign variables exist
-   - Add any missing color tokens
+   - Verified all redesign variables exist (lines 773-781)
 
 ---
 
 #### Phase 2: Header Navigation
-**Status**: Pending
+**Status**: ✅ COMPLETED (Commit: ec3535d)
 
-1. **Desktop Header** - Add "مقالات" (Articles) to navigation
+1. **Desktop Header** - Added "مقالات" (Articles) to navigation
    - File: `views/partials/header.ejs`
-   - Add link between existing nav items
-   - Style to match: `color:#C49A3C` for active, `rgba(222,201,154,0.62)` for inactive
+   - Added between Series and Biography links
 
-2. **Mobile Menu** - Add Articles to hamburger menu
+2. **Mobile Menu** - Added Articles to hamburger menu
    - File: `views/partials/header.ejs` (mobile section)
-   - Maintain existing menu structure
+   - Same position as desktop
 
 **Admin Impact**: None - nav is not admin-controlled
 
 ---
 
 #### Phase 3: Homepage Redesign
-**Status**: Pending
+**Status**: ✅ COMPLETED (Commits: ec3535d, 2e30b43)
 
-**Files to Modify**:
-- `views/public/index.ejs` (main template, ~3200 lines)
-- `routes/index.js` (passes data to template)
+**3.1 Latest Articles Section** ✅
+- Card grid: 4 columns desktop, 2 tablet, 1 mobile
+- Cards with type badge, date, title, excerpt, "قراءة المقال" link
+- Gradient divider above section
+- Uses existing `recentArticles` (admin-controlled)
 
-**3.1 Latest Articles Section** (Replace existing)
-- Card grid: 4 columns desktop, 2 columns tablet, 1 column mobile
-- Card structure:
-  ```
-  ┌─────────────────────────────┐
-  │ [Badge: Type]    [Date]    │
-  │ Title (14px bold)          │
-  │ Excerpt (12px, 2 lines)    │
-  │ ─────────────────────────  │
-  │         قراءة المقال ←     │
-  └─────────────────────────────┘
-  ```
-- Uses existing `recentArticles` from route (admin controls this)
+**3.2 Featured Series Section** ✅
+- Collapsible gold header (#E8D5A0) with star icon
+- Count badge in dark pill
+- List items with title, sheikh name, lesson count badge
+- Uses first `homepageSection` (admin-controlled)
 
-**3.2 Featured Series Section** (Collapsible header)
-- Background: `#E8D5A0` header with expand/collapse chevron
-- Count badge: `4 سلاسل` in dark pill
-- List items: Title + "X درس" badge + sheikh name
-- Uses existing `featuredSeries` from route (admin controls featured list)
+**3.3 Content Tabs** ✅
+- Underline indicator style for tabs
+- Compact filter chips with new color scheme
+- SVG search icon integrated into filter panel
+- Max-width 960px per design
 
-**3.3 Content Tabs** (السلاسل | المنفردة | خطب الجمعة)
-- Tab bar with underline indicator
-- Filter panel:
-  - Category chips (تفسير, حديث, فقه, etc.)
-  - Type chips
-  - Sort toggle (الأحدث/الأقدم)
-- Series rows: Expandable with lessons inside
-- This is NEW functionality - not currently admin-controlled
-
-**Admin Impact for Phase 3**:
-- `recentArticles` count: Controlled by existing code (4 articles)
-- `featuredSeries`: Controlled by admin via SiteSettings
-- `schedule`: Controlled by admin toggle (cards/table)
-- Content tabs: New feature, no admin control needed initially
+**Admin Impact**: All existing admin controls preserved
 
 ---
 
 #### Phase 4: Series Pages
-**Status**: Pending
+**Status**: ✅ 4.1 COMPLETED (Commit: 4533b44), 4.2 Pending
 
-**4.1 Series List Page** (`views/public/series.ejs`)
-- Grid layout: 3 columns desktop, 2 tablet, 1 mobile
-- Card design with icon, title, subtitle, category badge, lesson count
-- Search box styling per design
+**4.1 Series List Page** (`views/public/series.ejs`) ✅
+- Grid: 3 columns desktop, 2 tablet, 1 mobile
+- Cards with icon, title, subtitle, category badge, lesson count
+- New gradient header with gold divider
+- Container max-width 960px
 
 **4.2 Series Detail Page** (`views/public/series-detail.ejs`)
 - Hero section with gradient
 - Stats bar (lesson count + play all button)
-- "About" section
-- Lesson cards with number badge, title, metadata, action buttons
+- Lesson cards with action buttons
+- Status: Pending
 
 ---
 
@@ -388,9 +368,9 @@ Added admin setting to switch between new card layout and classic table layout:
 **Status**: Pending
 
 **File**: `views/public/lecture.ejs`
-- Already has mobile redesign from earlier commit
-- Desktop needs: Player card with circular play button, waveform/progress
-- Sidebar with transcript or related lectures (if on desktop)
+- Mobile redesign already done (earlier commit)
+- Desktop: Player card, waveform/progress
+- Pending: Desktop styling audit
 
 ---
 
