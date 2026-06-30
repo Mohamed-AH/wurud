@@ -245,6 +245,30 @@ Replaced table-based schedule with modern card design:
 
 **Files Modified**: `views/public/index.ejs`
 
+### 18. Schedule Layout A/B Test (Commit: e3139b6)
+Added admin setting to switch between new card layout and classic table layout:
+
+**Model** - `models/SiteSettings.js`:
+- Added `homepage.scheduleLayout` field: 'cards' (default) or 'table'
+
+**Admin UI** - `views/admin/homepage-config.ejs`:
+- Added dropdown to select layout under "Page Sections"
+- Options: 🃏 Cards (New) | 📊 Table (Classic)
+
+**Routes**:
+- `routes/admin/index.js` - POST handler saves scheduleLayout setting
+- `routes/index.js` - Passes scheduleLayout to homepage template
+
+**Template** - `views/public/index.ejs`:
+- Conditional rendering based on `homepageConfig.scheduleLayout`
+- Table layout: Uses existing CSS for `.schedule-tabs`, `.schedule-table`, `.schedule-panel`
+- Card layout: Uses `.schedule-location-toggle`, `.session-cards`, `.day-tab`
+
+**Usage**:
+1. Go to Admin > Sections > Homepage Configuration
+2. Select "Schedule Layout" option
+3. Save settings to switch between layouts
+
 ## Pending Tasks
 
 ### P3 - Enhancements (Remaining)
