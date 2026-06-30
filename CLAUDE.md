@@ -343,6 +343,13 @@ Added admin setting to switch between new card layout and classic table layout:
 - SVG search icon integrated into filter panel
 - Max-width 960px per design
 
+**3.4 Episode Item Styling** ✅ (Commit: e5b2832)
+- Episode row layout: gold number badge | title | action buttons
+- Compact gold play/download buttons (side by side)
+- Hidden episode meta for cleaner mobile design
+- Responsive: 768px and 480px breakpoints
+- Title truncation with ellipsis
+
 **Admin Impact**: All existing admin controls preserved
 
 ---
