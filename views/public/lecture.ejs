@@ -881,7 +881,7 @@
   "@type": "AudioObject",
   "name": "<%= lecture.titleArabic.replace(/"/g, '\\"') %>",
   <% if (lecture.titleEnglish) { %>"alternateName": "<%= lecture.titleEnglish.replace(/"/g, '\\"') %>",<% } %>
-  "description": "<%= lecture.descriptionArabic ? lecture.descriptionArabic.replace(/"/g, '\\"').replace(/\n/g, ' ').substring(0, 300) : (transcriptExcerpt ? transcriptExcerpt.replace(/"/g, '\\"').replace(/\n/g, ' ').substring(0, 300) : lecture.titleArabic.replace(/"/g, '\\"')) %>",
+  "description": "<%= lecture.descriptionArabic ? lecture.descriptionArabic.replace(/"/g, '\\"').replace(/\n/g, ' ').substring(0, 300) : (typeof transcriptExcerpt !== 'undefined' && transcriptExcerpt ? transcriptExcerpt.replace(/"/g, '\\"').replace(/\n/g, ' ').substring(0, 300) : lecture.titleArabic.replace(/"/g, '\\"')) %>",
   "duration": "<%= lecture.duration ? 'PT' + Math.floor(lecture.duration / 60) + 'M' + (lecture.duration % 60) + 'S' : '' %>",
   <% if (lecture.audioUrl) { %>"contentUrl": "<%= lecture.audioUrl %>",<% } %>
   "encodingFormat": "audio/mpeg",
@@ -898,7 +898,7 @@
     "url": "<%= lecture.seriesId.shortId ? 'https://rasmihassan.com/series/' + lecture.seriesId.shortId : '' %>"
   },
   <% } %>
-  <% if (hasTranscript && transcriptExcerpt) { %>
+  <% if (typeof hasTranscript !== 'undefined' && hasTranscript && typeof transcriptExcerpt !== 'undefined' && transcriptExcerpt) { %>
   "transcript": "<%= transcriptExcerpt.replace(/"/g, '\\"').replace(/\n/g, ' ') %>",
   <% } %>
   "url": "https://rasmihassan.com<%= canonicalPath %>"
@@ -1158,7 +1158,7 @@
           <% } %>
 
           <!-- Transcript Section -->
-          <% if (hasTranscript) { %>
+          <% if (typeof hasTranscript !== 'undefined' && hasTranscript) { %>
             <div class="transcript-section">
               <h3 class="section-title">
                 <%= locale === 'ar' ? 'نص المحاضرة' : 'Lecture Transcript' %>
@@ -1183,7 +1183,7 @@
               </div>
 
               <!-- SEO-friendly excerpt (always visible to search engines) -->
-              <% if (transcriptExcerpt) { %>
+              <% if (typeof transcriptExcerpt !== 'undefined' && transcriptExcerpt) { %>
                 <div class="transcript-excerpt" id="transcriptExcerpt">
                   <p class="excerpt-text"><%= transcriptExcerpt %>...</p>
                   <p class="excerpt-hint"><%= locale === 'ar' ? 'انقر على الزر أعلاه لعرض النص الكامل' : 'Click the button above to view the full transcript' %></p>

@@ -596,7 +596,9 @@ router.get('/lectures/:idOrSlug', async (req, res) => {
       title: lecture.titleArabic,
       lecture,
       relatedLectures,
-      canonicalPath: '/lectures/' + (lecture.slug ? encodeURIComponent(lecture.slug) : lecture._id)
+      canonicalPath: '/lectures/' + (lecture.slug ? encodeURIComponent(lecture.slug) : lecture._id),
+      hasTranscript: false,
+      transcriptExcerpt: ''
     });
   } catch (error) {
     console.error('Lecture detail error:', error);
