@@ -16,6 +16,13 @@
   const isDev = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
   const log = isDev ? console.log.bind(console) : function() {};
 
+  // Reinitialize Lucide icons after dynamic content is added
+  function refreshIcons() {
+    if (typeof lucide !== 'undefined') {
+      lucide.createIcons();
+    }
+  }
+
   // State
   const state = {
     tab: 'series',
@@ -77,8 +84,8 @@
       author: 'المؤلف:',
       lesson: 'درس',
       lessons: 'درس',
-      showLessons: 'عرض الدروس ▼',
-      showKhutbahs: 'عرض الخطب ▼',
+      showLessons: '+',
+      showKhutbahs: '+',
       sortLessons: 'ترتيب الدروس:',
       byNumber: 'حسب الرقم',
       oldestFirst: 'الأقدم أولاً',
@@ -97,8 +104,8 @@
       author: 'Author:',
       lesson: 'lesson',
       lessons: 'lessons',
-      showLessons: 'Show Lessons ▼',
-      showKhutbahs: 'Show Khutbahs ▼',
+      showLessons: '+',
+      showKhutbahs: '+',
       sortLessons: 'Sort lessons:',
       byNumber: 'By Number',
       oldestFirst: 'Oldest First',
@@ -642,6 +649,7 @@
       const card = createSeriesCard(series, false);
       seriesContainer.appendChild(card);
     });
+    refreshIcons();
   }
 
   /**
@@ -663,6 +671,7 @@
       const card = createSeriesCard(series, true);
       khutbasContainer.appendChild(card);
     });
+    refreshIcons();
   }
 
   /**
@@ -684,6 +693,7 @@
       const card = createStandaloneLectureCard(lecture);
       standaloneContainer.appendChild(card);
     });
+    refreshIcons();
   }
 
   /**
@@ -734,23 +744,25 @@
           <span class="category-badge">${categoryLabel}</span>
         </div>
 
-        <button class="expand-btn" id="${btnId}">
-          ${btnText}
+        <button class="expand-btn" id="${btnId}" aria-label="${isKhutba ? 'Show Khutbahs' : 'Show Lessons'}">
+          <i data-lucide="plus" class="expand-icon"></i>
         </button>
       </div>
 
       <div class="episodes-list" id="${episodesId}">
-        <div style="padding: 12px; background: #f8f9fa; border-bottom: 1px solid #e9ecef; display: flex; gap: 8px; align-items: center;">
-          <span style="font-size: 13px; font-weight: 600; color: #666;">${t('sortLessons')}</span>
-          <button class="chip" onclick="sortSeriesLectures('${seriesIdPrefix}${series._id}', 'number'); event.stopPropagation();" style="padding: 4px 12px; font-size: 12px;">
-            ${t('byNumber')}
-          </button>
-          <button class="chip" onclick="sortSeriesLectures('${seriesIdPrefix}${series._id}', 'oldest'); event.stopPropagation();" style="padding: 4px 12px; font-size: 12px;">
-            ${t('oldestFirst')}
-          </button>
-          <button class="chip" onclick="sortSeriesLectures('${seriesIdPrefix}${series._id}', 'newest'); event.stopPropagation();" style="padding: 4px 12px; font-size: 12px;">
-            ${t('newestFirst')}
-          </button>
+        <div class="episode-sort-bar">
+          <span class="episode-sort-label">${t('sortLessons')}</span>
+          <div class="episode-sort-chips">
+            <button class="sort-chip active" onclick="sortSeriesLectures('${seriesIdPrefix}${series._id}', 'number'); event.stopPropagation();">
+              ${t('byNumber')}
+            </button>
+            <button class="sort-chip" onclick="sortSeriesLectures('${seriesIdPrefix}${series._id}', 'oldest'); event.stopPropagation();">
+              ${t('oldestFirst')}
+            </button>
+            <button class="sort-chip" onclick="sortSeriesLectures('${seriesIdPrefix}${series._id}', 'newest'); event.stopPropagation();">
+              ${t('newestFirst')}
+            </button>
+          </div>
         </div>
         <div class="episodes-container">
           ${(series.lectures || []).map((lecture, index) => createEpisodeHtml(lecture, index, sheikhName)).join('')}
@@ -767,11 +779,11 @@
   function createEpisodeHtml(lecture, index, sheikhName) {
     const locale = getLocale();
     const duration = lecture.duration && lecture.duration > 0
-      ? `⏱️ ${formatTime(lecture.duration)}`
+      ? `<i data-lucide="clock"></i> ${formatTime(lecture.duration)}`
       : '';
 
     const hijriDate = lecture.dateRecordedHijri
-      ? `📅 ${formatHijriDate(lecture.dateRecordedHijri)}`
+      ? `<i data-lucide="calendar"></i> ${formatHijriDate(lecture.dateRecordedHijri)}`
       : '';
 
     const lectureDate = lecture.dateRecorded ? new Date(lecture.dateRecorded).getTime() : 0;
@@ -794,10 +806,10 @@
         </div>
         <div class="episode-actions">
           <button class="btn-play" onclick="playAudio('${lecture._id}', '${titleEscaped}', '${sheikhEscaped}')">
-            ▶ ${t('play')}
+            <i data-lucide="play"></i> ${t('play')}
           </button>
           <a href="/download/${lecture._id}" class="btn-download">
-            ⬇ ${t('download')}
+            <i data-lucide="download"></i> ${t('download')}
           </a>
         </div>
       </div>
@@ -824,10 +836,10 @@
       ? (lecture.titleArabic || '')
       : (lecture.titleEnglish || lecture.titleArabic || '');
     const duration = lecture.duration && lecture.duration > 0
-      ? `⏱️ ${formatTime(lecture.duration)}`
+      ? `<i data-lucide="clock"></i> ${formatTime(lecture.duration)}`
       : '';
     const hijriDate = lecture.dateRecordedHijri
-      ? `📅 ${formatHijriDate(lecture.dateRecordedHijri)}`
+      ? `<i data-lucide="calendar"></i> ${formatHijriDate(lecture.dateRecordedHijri)}`
       : '';
 
     const titleEscaped = escapeHtml(lectureTitle).replace(/'/g, "\\'");
@@ -848,10 +860,10 @@
         <div class="episode-actions" style="margin-top: 16px;">
           ${lecture.audioFileName || lecture.audioUrl ? `
             <button class="btn-play" onclick="playAudio('${lecture._id}', '${titleEscaped}', '${sheikhEscaped}')">
-              ▶ ${t('play')}
+              <i data-lucide="play"></i> ${t('play')}
             </button>
             <a href="/download/${lecture._id}" class="btn-download">
-              ⬇ ${t('download')}
+              <i data-lucide="download"></i> ${t('download')}
             </a>
           ` : ''}
         </div>
@@ -875,7 +887,7 @@
 
     return `
       <div class="empty-state">
-        <div class="empty-icon">📚</div>
+        <div class="empty-icon"><i data-lucide="book-open"></i></div>
         <h3 class="empty-title">${emptyMsg}</h3>
         <p class="empty-text">${t('tryAnotherSearch')}</p>
       </div>
@@ -1076,7 +1088,7 @@
       searchAudioPlayer.addEventListener('ended', function() {
         if (searchState.currentPlayingBtn) {
           searchState.currentPlayingBtn.classList.remove('playing');
-          searchState.currentPlayingBtn.innerHTML = `<span class="play-icon">▶</span> ${ts('playFrom')}`;
+          searchState.currentPlayingBtn.innerHTML = `<span class="play-icon"><i data-lucide="play"></i></span> ${ts('playFrom')}`;
           searchState.currentPlayingBtn = null;
         }
       });
@@ -1185,7 +1197,7 @@
 
           <div class="result-meta">
             ${result.speaker ? `<span class="result-speaker">${escapeHtml(result.speaker)}</span>` : ''}
-            <span class="result-timestamp">⏱️ ${escapeHtml(result.formattedTime || '')}</span>
+            <span class="result-timestamp"><i data-lucide="clock"></i> ${escapeHtml(result.formattedTime || '')}</span>
           </div>
 
           <div class="result-context">
@@ -1203,7 +1215,7 @@
                 data-start-time="${result.startTimeSec || 0}"
                 onclick="playSearchAudio(this)"
               >
-                <span class="play-icon">▶</span> ${ts('playFrom')}
+                <span class="play-icon"><i data-lucide="play"></i></span> ${ts('playFrom')}
               </button>
             ` : ''}
 
@@ -1237,7 +1249,7 @@
                 return `
                   <div class="additional-hit">
                     <span class="additional-hit-text">
-                      <strong>⏱️ ${escapeHtml(hit.formattedTime || formatTime(hit.startTimeSec))}</strong>
+                      <strong><i data-lucide="clock"></i> ${escapeHtml(hit.formattedTime || formatTime(hit.startTimeSec))}</strong>
                       ${escapeHtml(hit.text)}
                     </span>
                     ${hitAudioUrl ? `
@@ -1261,6 +1273,7 @@
     }).join('');
 
     searchResultsList.innerHTML = html;
+    refreshIcons();
   }
 
   /**
@@ -1312,7 +1325,7 @@
     if (searchState.currentPlayingBtn === btn && !searchAudioPlayer.paused) {
       searchAudioPlayer.pause();
       btn.classList.remove('playing');
-      btn.innerHTML = `<span class="play-icon">▶</span> ${ts('playFrom')}`;
+      btn.innerHTML = `<span class="play-icon"><i data-lucide="play"></i></span> ${ts('playFrom')}`;
       searchState.currentPlayingBtn = null;
       return;
     }
@@ -1320,7 +1333,7 @@
     // Reset previous playing button
     if (searchState.currentPlayingBtn) {
       searchState.currentPlayingBtn.classList.remove('playing');
-      searchState.currentPlayingBtn.innerHTML = `<span class="play-icon">▶</span> ${ts('playFrom')}`;
+      searchState.currentPlayingBtn.innerHTML = `<span class="play-icon"><i data-lucide="play"></i></span> ${ts('playFrom')}`;
     }
 
     // Load and play new audio
