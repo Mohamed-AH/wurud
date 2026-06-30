@@ -350,13 +350,32 @@ Added admin setting to switch between new card layout and classic table layout:
 - Responsive: 768px and 480px breakpoints
 - Title truncation with ellipsis
 
-**3.5 Lucide Icons & UI Polish** ✅ (Commits: d54910f, 28eb102)
+**3.5 Lucide Icons & UI Polish** ✅ (Commits: d54910f, 28eb102, 8fada05, 6b11d62, 2281bff, 0e518c6, 8c9938a)
+
+**CSP Fix** (server.js):
+- Added `https://fonts.googleapis.com` to styleSrc
+- Added `https://fonts.gstatic.com` to fontSrc  
+- Added `https://unpkg.com` to scriptSrc for Lucide icons
+
+**Lucide Icons** (layout.ejs, index.ejs, partials):
 - Added Lucide icons library from unpkg CDN
-- Replaced emoji icons with Lucide SVG icons (play, download, plus, minus)
+- Replaced ALL emoji icons with Lucide SVG icons:
+  - Stats: 🎧→headphones, ✍️→pen-line
+  - Tabs: 📚→library, 🎙️→mic, 🕌→building-2
+  - Episodes: ⏱️→clock, 📅→calendar, ▶→play, ⬇→download
+  - Schedule: 🕌→building-2, 💻→monitor, 📭→inbox
+  - Bottom nav: 🏠→home, 📚→library, 🔍→search, ✍️→pen-line, 📅→calendar-days
 - Simplified expand button from text ("عرض الدروس ▼") to clean +/- icon
-- Styled episode sort bar with gold chips matching design
-- Fixed font consistency: updated main.css to use Cairo font variables
-- Removed hardcoded Spectral, Cormorant Garamond, Noto Naskh Arabic fonts
+
+**homepage.js Updates**:
+- Updated all dynamic content to use Lucide icons
+- Added `refreshIcons()` helper to reinitialize Lucide after dynamic render
+- Fixed formatTime scope issue (was in wrong IIFE)
+- Styled sort bar with .episode-sort-bar and .sort-chip classes
+
+**Font Fix** (main.css):
+- Updated all font-family rules to use `var(--font-cairo)`
+- Removed hardcoded Spectral, Cormorant Garamond, Noto Naskh Arabic
 
 **Admin Impact**: All existing admin controls preserved
 
