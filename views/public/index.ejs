@@ -127,6 +127,14 @@
 
   .stat-icon {
     color: var(--redesign-gold-light, #DEC99A);
+    display: flex;
+    align-items: center;
+  }
+
+  .stat-icon .lucide {
+    width: 18px;
+    height: 18px;
+    stroke-width: 2;
   }
 
   .stat-number {
@@ -599,6 +607,18 @@
     stroke-width: 2;
   }
 
+  /* General inline icons */
+  .episode-meta .lucide,
+  .hijri-date .lucide,
+  .section-header .lucide,
+  .schedule-section-header .lucide {
+    width: 14px;
+    height: 14px;
+    margin-inline-end: 4px;
+    vertical-align: -2px;
+    stroke-width: 2;
+  }
+
   /* Episode Sort Bar */
   .episode-sort-bar {
     display: flex;
@@ -654,8 +674,14 @@
   }
 
   .empty-icon {
-    font-size: 64px;
     margin-bottom: var(--space-md);
+    color: var(--redesign-text-muted, #A89070);
+  }
+
+  .empty-icon .lucide {
+    width: 64px;
+    height: 64px;
+    stroke-width: 1;
   }
 
   .empty-title {
@@ -1047,6 +1073,14 @@
     right: 0;
     height: 2px;
     background: var(--redesign-gold-primary, #C49A3C);
+  }
+
+  .nav-tab .lucide {
+    width: 16px;
+    height: 16px;
+    margin-inline-end: 6px;
+    vertical-align: -2px;
+    stroke-width: 2;
   }
 
   .tab-content {
@@ -2569,7 +2603,7 @@
   <div class="archive-stats">
     <% if (typeof totalLectureCount !== 'undefined' && totalLectureCount > 0) { %>
     <div class="stat-item">
-      <span class="stat-icon">🎧</span>
+      <span class="stat-icon"><i data-lucide="headphones"></i></span>
       <span class="stat-number"><%= totalLectureCount %></span>
       <span class="stat-label"><%= locale === 'ar' ? 'درس صوتي' : 'Lectures' %></span>
     </div>
@@ -2579,7 +2613,7 @@
     <% } %>
     <% if (typeof totalArticleCount !== 'undefined' && totalArticleCount > 0) { %>
     <div class="stat-item">
-      <span class="stat-icon">✍️</span>
+      <span class="stat-icon"><i data-lucide="pen-line"></i></span>
       <span class="stat-number"><%= totalArticleCount %></span>
       <span class="stat-label"><%= locale === 'ar' ? 'مقال' : 'Articles' %></span>
     </div>
@@ -2827,7 +2861,7 @@
 <section class="weekly-schedule-section">
   <div class="schedule-header">
     <h2 class="schedule-title">
-      📅 <%= locale === 'ar' ? 'جدول الدروس الأسبوعي' : 'Weekly Class Schedule' %>
+      <i data-lucide="calendar-days"></i> <%= locale === 'ar' ? 'جدول الدروس الأسبوعي' : 'Weekly Class Schedule' %>
     </h2>
   </div>
 
@@ -2976,7 +3010,7 @@ function switchScheduleTab(tab) {
 <section class="weekly-schedule-section">
   <div class="schedule-header">
     <h2 class="schedule-title">
-      📅 <%= locale === 'ar' ? 'جدول الدروس الأسبوعي' : 'Weekly Class Schedule' %>
+      <i data-lucide="calendar-days"></i> <%= locale === 'ar' ? 'جدول الدروس الأسبوعي' : 'Weekly Class Schedule' %>
     </h2>
   </div>
 
@@ -3026,7 +3060,7 @@ function switchScheduleTab(tab) {
           <div class="session-meta">
             <% if (item.lectureCount > 0) { %>
             <span class="session-lesson-count">
-              📚 <%= item.lectureCount %> <%= locale === 'ar' ? 'درس' : 'lessons' %>
+              <i data-lucide="book-open"></i> <%= item.lectureCount %> <%= locale === 'ar' ? 'درس' : 'lessons' %>
             </span>
             <% } %>
           </div>
@@ -3083,7 +3117,7 @@ function switchScheduleTab(tab) {
           <div class="session-meta">
             <% if (item.lectureCount > 0) { %>
             <span class="session-lesson-count">
-              📚 <%= item.lectureCount %> <%= locale === 'ar' ? 'درس' : 'lessons' %>
+              <i data-lucide="book-open"></i> <%= item.lectureCount %> <%= locale === 'ar' ? 'درس' : 'lessons' %>
             </span>
             <% } %>
           </div>
@@ -3702,17 +3736,17 @@ function showMoreSeries(slug) {
   <div class="nav-tabs-container">
     <% if (showSeriesTab) { %>
     <button class="nav-tab<%= activeTab === 'series' ? ' active' : '' %>" id="tab-series">
-      📚 <%= locale === 'ar' ? 'السلاسل' : 'Series' %>
+      <i data-lucide="library"></i> <%= locale === 'ar' ? 'السلاسل' : 'Series' %>
     </button>
     <% } %>
     <% if (showStandaloneTab) { %>
     <button class="nav-tab<%= activeTab === 'lectures' ? ' active' : '' %>" id="tab-lectures">
-      🎙️ <%= locale === 'ar' ? 'المحاضرات' : 'Standalone' %>
+      <i data-lucide="mic"></i> <%= locale === 'ar' ? 'المحاضرات' : 'Standalone' %>
     </button>
     <% } %>
     <% if (showKhutbasTab) { %>
     <button class="nav-tab<%= activeTab === 'khutbas' ? ' active' : '' %>" id="tab-khutbas">
-      🕌 <%= locale === 'ar' ? 'الخطب' : 'Khutbahs' %>
+      <i data-lucide="building-2"></i> <%= locale === 'ar' ? 'الخطب' : 'Khutbahs' %>
     </button>
     <% } %>
   </div>
@@ -3936,13 +3970,13 @@ function showMoreSeries(slug) {
               </div>
               <div class="episode-meta">
                 <% if (lecture.duration && lecture.duration > 0) { %>
-                  <span>⏱️ <%= Math.floor(lecture.duration / 60) %>:<%= String(lecture.duration % 60).padStart(2, '0') %></span>
+                  <span><i data-lucide="clock"></i> <%= Math.floor(lecture.duration / 60) %>:<%= String(lecture.duration % 60).padStart(2, '0') %></span>
                 <% } %>
                 <% if (lecture.location) { %>
                   <span><%= lecture.location %></span>
                 <% } %>
                 <% if (lecture.dateRecordedHijri) { %>
-                  <span class="hijri-date">📅 <%= formatHijriDate(lecture.dateRecordedHijri) %></span>
+                  <span class="hijri-date"><i data-lucide="calendar"></i> <%= formatHijriDate(lecture.dateRecordedHijri) %></span>
                 <% } %>
               </div>
               <div class="episode-actions">
@@ -3961,7 +3995,7 @@ function showMoreSeries(slug) {
     <% }); %>
   <% } else { %>
     <div class="empty-state">
-      <div class="empty-icon">📚</div>
+      <div class="empty-icon"><i data-lucide="book-open"></i></div>
       <h3 class="empty-title">
         <%= locale === 'ar' ? 'لا توجد محاضرات' : 'No lectures found' %>
       </h3>
@@ -4000,10 +4034,10 @@ function showMoreSeries(slug) {
             </div>
             <div class="series-info">
               <% if (lecture.duration && lecture.duration > 0) { %>
-                <span>⏱️ <%= Math.floor(lecture.duration / 60) %>:<%= String(lecture.duration % 60).padStart(2, '0') %></span>
+                <span><i data-lucide="clock"></i> <%= Math.floor(lecture.duration / 60) %>:<%= String(lecture.duration % 60).padStart(2, '0') %></span>
               <% } %>
               <% if (lecture.dateRecordedHijri) { %>
-                <span class="hijri-date">📅 <%= formatHijriDate(lecture.dateRecordedHijri) %></span>
+                <span class="hijri-date"><i data-lucide="calendar"></i> <%= formatHijriDate(lecture.dateRecordedHijri) %></span>
               <% } %>
             </div>
             <div class="episode-actions" style="margin-top: 16px;">
@@ -4021,7 +4055,7 @@ function showMoreSeries(slug) {
       <% }) %>
     <% } else { %>
       <div class="empty-state">
-        <div class="empty-icon">🎙️</div>
+        <div class="empty-icon"><i data-lucide="mic"></i></div>
         <h3 class="empty-title"><%= locale === 'ar' ? 'لا توجد محاضرات منفصلة' : 'No standalone lectures' %></h3>
       </div>
     <% } %>
@@ -4115,13 +4149,13 @@ function showMoreSeries(slug) {
                   </div>
                   <div class="episode-meta">
                     <% if (lecture.duration && lecture.duration > 0) { %>
-                      <span>⏱️ <%= Math.floor(lecture.duration / 60) %>:<%= String(lecture.duration % 60).padStart(2, '0') %></span>
+                      <span><i data-lucide="clock"></i> <%= Math.floor(lecture.duration / 60) %>:<%= String(lecture.duration % 60).padStart(2, '0') %></span>
                     <% } %>
                     <% if (lecture.location) { %>
                       <span><%= lecture.location %></span>
                     <% } %>
                     <% if (lecture.dateRecordedHijri) { %>
-                      <span class="hijri-date">📅 <%= formatHijriDate(lecture.dateRecordedHijri) %></span>
+                      <span class="hijri-date"><i data-lucide="calendar"></i> <%= formatHijriDate(lecture.dateRecordedHijri) %></span>
                     <% } %>
                   </div>
                   <div class="episode-actions">

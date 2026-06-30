@@ -34,11 +34,11 @@
         <span class="lecture-duration">⏱️ <%= lecture.durationFormatted %></span>
         <span class="lecture-divider">•</span>
       <% } %>
-      <span class="lecture-plays">▶️ <%= lecture.playCount %> <%= locale === 'ar' ? 'مرة' : 'plays' %></span>
+      <span class="lecture-plays"><i data-lucide="play"></i> <%= lecture.playCount %> <%= locale === 'ar' ? 'مرة' : 'plays' %></span>
       <% if (lecture.dateRecordedHijri) { %>
         <span class="lecture-divider">•</span>
         <span class="lecture-date" title="<%= locale === 'ar' ? 'تاريخ التسجيل (هجري)' : 'Recording Date (Hijri)' %>">
-          📅 <%= formatHijriDate(lecture.dateRecordedHijri) %>
+          <i data-lucide="calendar"></i> <%= formatHijriDate(lecture.dateRecordedHijri) %>
         </span>
       <% } %>
       <% if (lecture.category && lecture.category !== 'Other') { %>
