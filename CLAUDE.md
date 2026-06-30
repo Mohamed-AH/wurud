@@ -206,21 +206,40 @@ Created `scripts/update-article-titles.js`:
 - Only updates title field, nothing else
 - Detailed logging with old vs new titles
 
+### 15. Google Search Console Submission (Manual)
+SEO implementation deployed and submitted to Google:
+- Sitemap submitted: `sitemap.xml` with 338 articles
+- Priority articles manually submitted for indexing:
+  - جوهر العقيدة الإسلامية وأثرها (Core Aqeedah)
+  - وجوب تعلم المسائل الثلاث والعمل بها (Three Fundamentals)
+  - منهج السلف الصالح (Salafi Methodology)
+  - أخطاء شائعة في الصلاة (Prayer Corrections)
+  - شروط قبول العبادة في الإسلام (Worship Conditions)
+  - صلاح القلب وأثره في استقامة العمل (Heart Purification)
+  - أحكام زيارة القبور وآدابها (Grave Visiting Rules)
+  - فضل الاستغفار (Istighfar Virtues)
+  - الأمر بالمعروف والنهي عن المنكر (Enjoining Good)
+  - لزوم السنة والتحذير من البدع (Following Sunnah)
+
 ## Pending Tasks
 
-### P1 - SEO Strategy (Remaining)
+### P2 - Important Features
 
-1. **BreadcrumbList Schema** (Optional)
-   - Add breadcrumb structured data to article pages
+1. **Series List Search**
+   - Add search field at top of `/series` page
+   - Filter by title (Arabic/English)
+   - Real-time filtering
 
-2. **URL Optimization** (Optional)
-   - Ensure all articles have clean Arabic slugs ✅ Auto-generated
-   - Canonical URLs ✅ Done
+### P3 - Enhancements
 
-3. **Content Discoverability**
-   - Add articles to homepage featured section ✅ Done
-   - Create topic/category pages for article groupings (future)
-   - Add search functionality within articles (future)
+1. **Weekly Schedule Redesign**
+   - Replace table with clickable day tabs
+   - Session cards with lecture info
+   - Mobile-friendly layout
+
+2. **Cairo Font** (Optional)
+   - Design uses Cairo from Google Fonts
+   - Would require font loading strategy update
 
 ### 12. Admin Panel for Articles (Phase 1 Complete)
 Implemented full article management in admin panel:
@@ -283,24 +302,6 @@ Implemented full article management in admin panel:
 - Dashboard stats integration
 - Authentication requirements
 - Graceful skip when MongoDB unavailable (cloud env)
-
-### P2 - Important Features
-
-1. **Series List Search**
-   - Add search field at top of `/series` page
-   - Filter by title (Arabic/English)
-   - Real-time filtering
-
-### P3 - Enhancements
-
-1. **Weekly Schedule Redesign**
-   - Replace table with clickable day tabs
-   - Session cards with lecture info
-   - Mobile-friendly layout
-
-2. **Cairo Font** (Optional)
-   - Design uses Cairo from Google Fonts
-   - Would require font loading strategy update
 
 ## Key Files Reference
 
