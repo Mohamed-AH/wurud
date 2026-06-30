@@ -43,6 +43,12 @@ const siteSettingsSchema = new mongoose.Schema({
       type: Boolean,
       default: true
     },
+    // Schedule layout: 'cards' (new) or 'table' (classic)
+    scheduleLayout: {
+      type: String,
+      enum: ['cards', 'table'],
+      default: 'cards'
+    },
     showSeriesTab: {
       type: Boolean,
       default: true

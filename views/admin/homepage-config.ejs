@@ -249,6 +249,17 @@
               <span class="toggle-slider"></span>
             </label>
           </div>
+
+          <div class="toggle-row">
+            <div class="toggle-info">
+              <div class="toggle-title"><%= adminLocale === 'ar' ? 'تصميم الجدول' : 'Schedule Layout' %></div>
+              <div class="toggle-desc"><%= adminLocale === 'ar' ? 'اختر بين التصميم الجديد (بطاقات) أو الكلاسيكي (جدول)' : 'Choose between new (cards) or classic (table) layout' %></div>
+            </div>
+            <select name="scheduleLayout" style="padding: 8px 12px; border: 1px solid #ddd; border-radius: 6px; font-size: 14px; min-width: 140px;">
+              <option value="cards" <%= (settings.scheduleLayout || 'cards') === 'cards' ? 'selected' : '' %>><%= adminLocale === 'ar' ? '🃏 بطاقات (جديد)' : '🃏 Cards (New)' %></option>
+              <option value="table" <%= settings.scheduleLayout === 'table' ? 'selected' : '' %>><%= adminLocale === 'ar' ? '📊 جدول (كلاسيكي)' : '📊 Table (Classic)' %></option>
+            </select>
+          </div>
         </div>
 
         <div class="config-section">

@@ -317,6 +317,7 @@ router.get('/', async (req, res) => {
     let showPublicStats = false;
     let homepageConfig = {
       showSchedule: true,
+      scheduleLayout: 'cards',
       showSeriesTab: true,
       showStandaloneTab: true,
       showKhutbasTab: true
@@ -326,6 +327,7 @@ router.get('/', async (req, res) => {
       if (settings.homepage) {
         homepageConfig = {
           showSchedule: settings.homepage.showSchedule !== false,
+          scheduleLayout: settings.homepage.scheduleLayout || 'cards',
           showSeriesTab: settings.homepage.showSeriesTab !== false,
           showStandaloneTab: settings.homepage.showStandaloneTab !== false,
           showKhutbasTab: settings.homepage.showKhutbasTab !== false
@@ -594,7 +596,9 @@ router.get('/lectures/:idOrSlug', async (req, res) => {
       title: lecture.titleArabic,
       lecture,
       relatedLectures,
-      canonicalPath: '/lectures/' + (lecture.slug ? encodeURIComponent(lecture.slug) : lecture._id)
+      canonicalPath: '/lectures/' + (lecture.slug ? encodeURIComponent(lecture.slug) : lecture._id),
+      hasTranscript: false,
+      transcriptExcerpt: ''
     });
   } catch (error) {
     console.error('Lecture detail error:', error);

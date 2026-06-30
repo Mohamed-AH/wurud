@@ -206,21 +206,76 @@ Created `scripts/update-article-titles.js`:
 - Only updates title field, nothing else
 - Detailed logging with old vs new titles
 
+### 15. Google Search Console Submission (Manual)
+SEO implementation deployed and submitted to Google:
+- Sitemap submitted: `sitemap.xml` with 338 articles
+- Priority articles manually submitted for indexing:
+  - جوهر العقيدة الإسلامية وأثرها (Core Aqeedah)
+  - وجوب تعلم المسائل الثلاث والعمل بها (Three Fundamentals)
+  - منهج السلف الصالح (Salafi Methodology)
+  - أخطاء شائعة في الصلاة (Prayer Corrections)
+  - شروط قبول العبادة في الإسلام (Worship Conditions)
+  - صلاح القلب وأثره في استقامة العمل (Heart Purification)
+  - أحكام زيارة القبور وآدابها (Grave Visiting Rules)
+  - فضل الاستغفار (Istighfar Virtues)
+  - الأمر بالمعروف والنهي عن المنكر (Enjoining Good)
+  - لزوم السنة والتحذير من البدع (Following Sunnah)
+
+### 16. Series List Search (Commit: a5041ba)
+Added real-time search to `/series` page:
+- Search box with magnifier icon and clear button
+- Filters by: Arabic title, English title, sheikh name, category
+- Arabic normalization (أإآا → ا, ة → ه, ى → ي)
+- Shows "X of Y series" count while filtering
+- "No results" state with suggestion
+- Escape key clears search
+- Responsive mobile design
+
+**Files Modified**: `views/public/series.ejs`
+
+### 17. Weekly Schedule Redesign (Commit: 4a55303)
+Replaced table-based schedule with modern card design:
+- Day tabs (Sat-Fri) for quick navigation
+- Session cards showing time, series title, lesson count
+- Location toggle (In-Person / Online)
+- Disabled state for days with no sessions
+- Horizontal scrollable tabs on mobile
+- Cards link directly to series pages
+- Responsive design for all screen sizes
+
+**Files Modified**: `views/public/index.ejs`
+
+### 18. Schedule Layout A/B Test (Commit: e3139b6)
+Added admin setting to switch between new card layout and classic table layout:
+
+**Model** - `models/SiteSettings.js`:
+- Added `homepage.scheduleLayout` field: 'cards' (default) or 'table'
+
+**Admin UI** - `views/admin/homepage-config.ejs`:
+- Added dropdown to select layout under "Page Sections"
+- Options: 🃏 Cards (New) | 📊 Table (Classic)
+
+**Routes**:
+- `routes/admin/index.js` - POST handler saves scheduleLayout setting
+- `routes/index.js` - Passes scheduleLayout to homepage template
+
+**Template** - `views/public/index.ejs`:
+- Conditional rendering based on `homepageConfig.scheduleLayout`
+- Table layout: Uses existing CSS for `.schedule-tabs`, `.schedule-table`, `.schedule-panel`
+- Card layout: Uses `.schedule-location-toggle`, `.session-cards`, `.day-tab`
+
+**Usage**:
+1. Go to Admin > Sections > Homepage Configuration
+2. Select "Schedule Layout" option
+3. Save settings to switch between layouts
+
 ## Pending Tasks
 
-### P1 - SEO Strategy (Remaining)
+### P3 - Enhancements (Remaining)
 
-1. **BreadcrumbList Schema** (Optional)
-   - Add breadcrumb structured data to article pages
-
-2. **URL Optimization** (Optional)
-   - Ensure all articles have clean Arabic slugs ✅ Auto-generated
-   - Canonical URLs ✅ Done
-
-3. **Content Discoverability**
-   - Add articles to homepage featured section ✅ Done
-   - Create topic/category pages for article groupings (future)
-   - Add search functionality within articles (future)
+1. **Cairo Font** (Optional)
+   - Design uses Cairo from Google Fonts
+   - Would require font loading strategy update
 
 ### 12. Admin Panel for Articles (Phase 1 Complete)
 Implemented full article management in admin panel:
@@ -283,24 +338,6 @@ Implemented full article management in admin panel:
 - Dashboard stats integration
 - Authentication requirements
 - Graceful skip when MongoDB unavailable (cloud env)
-
-### P2 - Important Features
-
-1. **Series List Search**
-   - Add search field at top of `/series` page
-   - Filter by title (Arabic/English)
-   - Real-time filtering
-
-### P3 - Enhancements
-
-1. **Weekly Schedule Redesign**
-   - Replace table with clickable day tabs
-   - Session cards with lecture info
-   - Mobile-friendly layout
-
-2. **Cairo Font** (Optional)
-   - Design uses Cairo from Google Fonts
-   - Would require font loading strategy update
 
 ## Key Files Reference
 
