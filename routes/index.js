@@ -1050,6 +1050,11 @@ async function generateSitemap() {
     .select('_id slug shortId slug_en slug_ar updatedAt')
     .lean();
 
+  // Get all published articles
+  const articles = await Article.find({ isPublished: true })
+    .select('_id slug shortId publishedAt updatedAt')
+    .lean();
+
   let xml = `<?xml version="1.0" encoding="UTF-8"?>
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
   <!-- Homepage -->
@@ -1073,7 +1078,26 @@ async function generateSitemap() {
     <changefreq>weekly</changefreq>
     <priority>0.8</priority>
   </url>
+  <url>
+    <loc>${baseUrl}/articles</loc>
+    <changefreq>daily</changefreq>
+    <priority>0.8</priority>
+  </url>
 `;
+
+  // Add articles
+  for (const article of articles) {
+    const lastmod = article.updatedAt ? new Date(article.updatedAt).toISOString().split('T')[0] :
+                    (article.publishedAt ? new Date(article.publishedAt).toISOString().split('T')[0] : '');
+    const articleUrl = article.slug || article.shortId || article._id;
+    xml += `  <url>
+    <loc>${baseUrl}/articles/${articleUrl}</loc>
+    ${lastmod ? `<lastmod>${lastmod}</lastmod>` : ''}
+    <changefreq>monthly</changefreq>
+    <priority>0.7</priority>
+  </url>
+`;
+  }
 
   // Add lectures (use new URL format if shortId exists)
   for (const lecture of lectures) {
