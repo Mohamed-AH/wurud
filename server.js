@@ -92,10 +92,10 @@ app.use(helmet({
   contentSecurityPolicy: {
     directives: {
       defaultSrc: ["'self'"],
-      scriptSrc: ["'self'", "'unsafe-inline'", "https://accounts.google.com", "https://apis.google.com"],
+      scriptSrc: ["'self'", "'unsafe-inline'", "https://accounts.google.com", "https://apis.google.com", "https://unpkg.com"],
       scriptSrcAttr: ["'unsafe-inline'"], // Allow onclick handlers
-      styleSrc: ["'self'", "'unsafe-inline'"],
-      fontSrc: ["'self'"],
+      styleSrc: ["'self'", "'unsafe-inline'", "https://fonts.googleapis.com"],
+      fontSrc: ["'self'", "https://fonts.gstatic.com"],
       imgSrc: ["'self'", "data:", "https:", "blob:"],
       mediaSrc: ["'self'", "https://objectstorage.me-jeddah-1.oraclecloud.com"],
       connectSrc: ["'self'", "https://objectstorage.me-jeddah-1.oraclecloud.com"],
