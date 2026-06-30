@@ -3068,25 +3068,25 @@ function switchDayTab(location, day) {
 <% } %>
 <% } %>
 
-<!-- Featured Articles Section -->
+<!-- Featured Articles Section (Redesigned per design handoff) -->
 <% if (typeof recentArticles !== 'undefined' && recentArticles && recentArticles.length > 0) { %>
 <section class="featured-articles-section">
   <div class="container">
+    <div class="featured-articles-divider"></div>
     <div class="featured-articles-header">
-      <h2 class="featured-articles-title">
-        ✍️ <%= locale === 'ar' ? 'أحدث المقالات' : 'Latest Articles' %>
-      </h2>
       <a href="/articles" class="featured-articles-link">
-        <%= locale === 'ar' ? 'عرض الكل' : 'View All' %> →
+        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="15,18 9,12 15,6"/></svg>
+        <%= locale === 'ar' ? 'عرض الكل' : 'View All' %>
       </a>
+      <h2 class="featured-articles-title">
+        <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 013 3L7 19l-4 1 1-4L16.5 3.5z"/></svg>
+        <%= locale === 'ar' ? 'أحدث المقالات' : 'Latest Articles' %>
+      </h2>
     </div>
     <div class="featured-articles-grid">
       <% recentArticles.slice(0, 4).forEach(function(article) { %>
         <a href="/articles/<%= article.slug || article.shortId || article._id %>" class="featured-article-card">
           <div class="featured-article-meta">
-            <span class="featured-article-type <%= article.type === 'TelegramArticle' ? 'telegram' : '' %>">
-              <%= article.type === 'TelegramArticle' ? 'تليجرام' : 'أصداء' %>
-            </span>
             <span class="featured-article-date">
               <%
                 const pubDate = new Date(article.publishedAt);
@@ -3097,11 +3097,20 @@ function switchDayTab(location, day) {
               %>
               <%= hijriFormatter.format(pubDate) %>
             </span>
+            <span class="featured-article-type <%= article.type === 'TelegramArticle' ? 'telegram' : '' %>">
+              <%= article.type === 'TelegramArticle' ? 'تليجرام' : 'أصداء' %>
+            </span>
           </div>
           <h3 class="featured-article-title"><%= article.title %></h3>
           <% if (article.summary) { %>
             <p class="featured-article-summary"><%= article.summary %></p>
           <% } %>
+          <div class="featured-article-footer">
+            <span class="featured-article-read">
+              <%= locale === 'ar' ? 'قراءة المقال' : 'Read Article' %>
+            </span>
+            <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="15,18 9,12 15,6"/></svg>
+          </div>
         </a>
       <% }); %>
     </div>
@@ -3109,79 +3118,99 @@ function switchDayTab(location, day) {
 </section>
 <style>
   .featured-articles-section {
-    background: var(--redesign-cream-bg, #F5EDE0);
-    padding: 24px 0;
-    margin-bottom: 24px;
-    border-top: 2px solid var(--redesign-gold-light, #DEC99A);
-    border-bottom: 2px solid var(--redesign-gold-light, #DEC99A);
+    max-width: 960px;
+    margin: 0 auto;
+    padding: 0 32px 44px;
+  }
+  .featured-articles-divider {
+    height: 1px;
+    background: linear-gradient(to left, transparent, var(--redesign-gold-light, #DEC99A) 20%, var(--redesign-gold-light, #DEC99A) 80%, transparent);
+    margin-bottom: 32px;
   }
   .featured-articles-header {
     display: flex;
     justify-content: space-between;
     align-items: center;
-    margin-bottom: 16px;
+    margin-bottom: 20px;
   }
   .featured-articles-title {
     color: var(--redesign-brown-dark, #2C1508);
     font-size: 20px;
-    font-weight: 700;
+    font-weight: 800;
     margin: 0;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  .featured-articles-title svg {
+    stroke: var(--redesign-brown-dark, #2C1508);
   }
   .featured-articles-link {
     color: var(--redesign-gold-primary, #C49A3C);
-    font-size: 14px;
+    font-size: 13px;
     font-weight: 600;
     text-decoration: none;
+    display: flex;
+    align-items: center;
+    gap: 5px;
   }
   .featured-articles-link:hover {
     text-decoration: underline;
   }
   .featured-articles-grid {
     display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
-    gap: 16px;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 14px;
   }
   .featured-article-card {
     background: var(--redesign-card-bg, #FDF8F2);
     border: 1px solid var(--redesign-gold-light, #DEC99A);
-    border-radius: 12px;
+    border-radius: 13px;
     padding: 16px;
     text-decoration: none;
     transition: all 0.2s ease;
+    display: flex;
+    flex-direction: column;
   }
   .featured-article-card:hover {
     border-color: var(--redesign-gold-primary, #C49A3C);
-    transform: translateY(-3px);
-    box-shadow: 0 6px 20px rgba(44, 21, 8, 0.1);
+    transform: translateY(-2px);
+    box-shadow: 0 4px 16px rgba(44, 21, 8, 0.08);
   }
   .featured-article-meta {
     display: flex;
     justify-content: space-between;
-    align-items: center;
-    margin-bottom: 10px;
+    align-items: flex-start;
+    gap: 6px;
+    margin-bottom: 11px;
   }
   .featured-article-type {
     background: var(--redesign-badge-bg, #E8D5A0);
     color: var(--redesign-text-mid, #7A5C3A);
-    font-size: 11px;
-    font-weight: 600;
-    padding: 3px 10px;
-    border-radius: 8px;
+    font-size: 10px;
+    font-weight: 700;
+    padding: 3px 9px;
+    border-radius: 7px;
+    white-space: nowrap;
   }
   .featured-article-type.telegram {
     background: var(--redesign-sage, #6B7A4E);
     color: var(--redesign-card-bg, #FDF8F2);
   }
   .featured-article-date {
-    color: var(--redesign-text-muted, #A89070);
-    font-size: 11px;
+    color: #B0997A;
+    font-size: 10px;
+    padding-top: 2px;
+    flex-shrink: 0;
   }
   .featured-article-title {
     color: var(--redesign-brown-dark, #2C1508);
-    font-size: 15px;
+    font-size: 14px;
     font-weight: 700;
-    line-height: 1.5;
-    margin: 0 0 8px 0;
+    line-height: 1.55;
+    margin: 0 0 9px 0;
+    flex: 1;
+    text-wrap: pretty;
     display: -webkit-box;
     -webkit-line-clamp: 2;
     -webkit-box-orient: vertical;
@@ -3189,39 +3218,306 @@ function switchDayTab(location, day) {
   }
   .featured-article-summary {
     color: var(--redesign-text-mid, #7A5C3A);
-    font-size: 13px;
-    line-height: 1.6;
-    margin: 0;
+    font-size: 12px;
+    line-height: 1.7;
+    margin: 0 0 13px 0;
     display: -webkit-box;
     -webkit-line-clamp: 2;
     -webkit-box-orient: vertical;
     overflow: hidden;
   }
+  .featured-article-footer {
+    border-top: 1px solid #EDE4D3;
+    padding-top: 11px;
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+    gap: 5px;
+    margin-top: auto;
+  }
+  .featured-article-read {
+    color: var(--redesign-gold-primary, #C49A3C);
+    font-size: 12px;
+    font-weight: 600;
+  }
+  .featured-article-footer svg {
+    stroke: var(--redesign-gold-primary, #C49A3C);
+  }
+  @media (max-width: 1024px) {
+    .featured-articles-grid {
+      grid-template-columns: repeat(2, 1fr);
+    }
+  }
   @media (max-width: 768px) {
     .featured-articles-section {
-      padding: 16px 0;
+      padding: 4px 14px 10px;
+    }
+    .featured-articles-divider {
+      margin-bottom: 14px;
+    }
+    .featured-articles-header {
+      margin-bottom: 11px;
     }
     .featured-articles-title {
-      font-size: 18px;
+      font-size: 14px;
+      font-weight: 700;
+      gap: 5px;
+    }
+    .featured-articles-title svg {
+      width: 13px;
+      height: 13px;
+    }
+    .featured-articles-link {
+      font-size: 11px;
+      gap: 3px;
+    }
+    .featured-articles-link svg {
+      width: 11px;
+      height: 11px;
     }
     .featured-articles-grid {
       grid-template-columns: 1fr;
-      gap: 12px;
+      gap: 8px;
     }
     .featured-article-card {
-      padding: 14px;
+      padding: 13px;
+      border-radius: 11px;
+    }
+    .featured-article-meta {
+      margin-bottom: 7px;
+    }
+    .featured-article-type {
+      padding: 2px 8px;
     }
     .featured-article-title {
-      font-size: 14px;
+      font-size: 13px;
+      line-height: 1.45;
+      margin-bottom: 5px;
     }
+    .featured-article-summary {
+      font-size: 11px;
+      line-height: 1.6;
+    }
+    .featured-article-footer {
+      margin-top: 9px;
+      padding-top: 8px;
+      gap: 3px;
+    }
+    .featured-article-read {
+      font-size: 11px;
+    }
+    .featured-article-footer svg {
+      width: 10px;
+      height: 10px;
+    }
+  }
+  /* LTR overrides */
+  html[dir="ltr"] .featured-articles-link svg,
+  html[dir="ltr"] .featured-article-footer svg {
+    transform: rotate(180deg);
   }
 </style>
 <% } %>
 
-<!-- Homepage Sections -->
+<!-- Featured Series Section (Redesigned per design handoff) -->
 <% if (typeof homepageSections !== 'undefined' && homepageSections && homepageSections.length > 0) { %>
+<%
+  // Take the first section as "Featured"
+  const featuredSection = homepageSections[0];
+  const featuredSeries = featuredSection.series.slice(0, 4);
+  const remainingSections = homepageSections.slice(1);
+%>
+<section class="featured-series-section">
+  <div class="featured-series-container">
+    <div class="featured-series-header" id="featured-header" onclick="toggleFeaturedSeries()">
+      <svg class="featured-chevron" id="featured-chevron" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="18,15 12,9 6,15"/></svg>
+      <div class="featured-series-title-row">
+        <span class="featured-series-count"><%= featuredSeries.length %> <%= locale === 'ar' ? 'سلاسل' : 'series' %></span>
+        <h2 class="featured-series-title">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor" stroke="currentColor" stroke-width="1"><polygon points="12,2 15.09,8.26 22,9.27 17,14.14 18.18,21.02 12,17.77 5.82,21.02 7,14.14 2,9.27 8.91,8.26"/></svg>
+          <%= locale === 'ar' ? 'مميز' : 'Featured' %>
+        </h2>
+      </div>
+    </div>
+    <div class="featured-series-content" id="featured-content">
+      <% featuredSeries.forEach(function(s) { %>
+        <a href="/series/<%= s.slug ? encodeURIComponent(s.slug) : s._id %>" class="featured-series-item">
+          <span class="featured-series-lessons"><%= s.lectureCount %> <%= locale === 'ar' ? 'درس' : 'lessons' %></span>
+          <span class="featured-series-sheikh"><%= locale === 'ar' ? 'الشيخ حسن بن محمد منصور الدغريري' : 'Sheikh Hasan Dhaghriri' %></span>
+          <span class="featured-series-spacer"></span>
+          <h3 class="featured-series-name"><%= locale === 'ar' ? s.titleArabic : (s.titleEnglish || s.titleArabic) %></h3>
+        </a>
+      <% }); %>
+    </div>
+  </div>
+</section>
+<style>
+  .featured-series-section {
+    max-width: 960px;
+    margin: 0 auto;
+    padding: 0 32px 44px;
+  }
+  .featured-series-container {
+    border-radius: 12px;
+    overflow: hidden;
+  }
+  .featured-series-header {
+    background: var(--redesign-badge-bg, #E8D5A0);
+    padding: 14px 20px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    cursor: pointer;
+    border-radius: 12px 12px 0 0;
+  }
+  .featured-chevron {
+    stroke: var(--redesign-text-mid, #7A5C3A);
+    transition: transform 0.2s ease;
+  }
+  .featured-series-header.collapsed .featured-chevron {
+    transform: rotate(180deg);
+  }
+  .featured-series-title-row {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+  .featured-series-title {
+    color: var(--redesign-brown-dark, #2C1508);
+    font-size: 18px;
+    font-weight: 800;
+    margin: 0;
+    display: flex;
+    align-items: center;
+    gap: 7px;
+  }
+  .featured-series-title svg {
+    fill: var(--redesign-gold-primary, #C49A3C);
+    stroke: var(--redesign-gold-primary, #C49A3C);
+  }
+  .featured-series-count {
+    background: var(--redesign-brown-dark, #2C1508);
+    color: var(--redesign-gold-primary, #C49A3C);
+    font-size: 12px;
+    font-weight: 700;
+    padding: 3px 12px;
+    border-radius: 10px;
+  }
+  .featured-series-content {
+    background: var(--redesign-card-bg, #FDF8F2);
+    border: 1px solid var(--redesign-gold-light, #DEC99A);
+    border-top: none;
+    border-radius: 0 0 12px 12px;
+    transition: max-height 0.3s ease, opacity 0.2s ease;
+    overflow: hidden;
+  }
+  .featured-series-content.collapsed {
+    max-height: 0 !important;
+    opacity: 0;
+    border: none;
+  }
+  .featured-series-item {
+    display: flex;
+    align-items: center;
+    padding: 14px 20px;
+    border-bottom: 1px solid #F0E5CC;
+    cursor: pointer;
+    gap: 12px;
+    text-decoration: none;
+    transition: background 0.15s ease;
+  }
+  .featured-series-item:last-child {
+    border-bottom: none;
+  }
+  .featured-series-item:hover {
+    background: rgba(196, 154, 60, 0.05);
+  }
+  .featured-series-lessons {
+    background: var(--redesign-badge-bg, #E8D5A0);
+    color: var(--redesign-text-mid, #7A5C3A);
+    font-size: 11px;
+    font-weight: 700;
+    padding: 3px 11px;
+    border-radius: 10px;
+    white-space: nowrap;
+    flex-shrink: 0;
+  }
+  .featured-series-sheikh {
+    color: var(--redesign-text-muted, #A89070);
+    font-size: 12px;
+    flex-shrink: 0;
+  }
+  .featured-series-spacer {
+    flex: 1;
+  }
+  .featured-series-name {
+    color: var(--redesign-brown-dark, #2C1508);
+    font-size: 15px;
+    font-weight: 600;
+    margin: 0;
+    text-align: right;
+  }
+  @media (max-width: 768px) {
+    .featured-series-section {
+      padding: 14px 14px 6px;
+    }
+    .featured-series-header {
+      padding: 10px 14px;
+    }
+    .featured-series-title {
+      font-size: 14px;
+      font-weight: 700;
+      gap: 5px;
+    }
+    .featured-series-title svg {
+      width: 15px;
+      height: 15px;
+    }
+    .featured-series-count {
+      font-size: 10px;
+      padding: 3px 10px;
+    }
+    .featured-chevron {
+      width: 15px;
+      height: 15px;
+    }
+    .featured-series-item {
+      padding: 11px 13px;
+      gap: 8px;
+      flex-wrap: wrap;
+    }
+    .featured-series-lessons {
+      font-size: 10px;
+      padding: 2px 8px;
+      order: 2;
+    }
+    .featured-series-sheikh {
+      display: none;
+    }
+    .featured-series-spacer {
+      display: none;
+    }
+    .featured-series-name {
+      font-size: 13px;
+      font-weight: 500;
+      flex: 1;
+      order: 1;
+    }
+  }
+</style>
+<script>
+function toggleFeaturedSeries() {
+  const header = document.getElementById('featured-header');
+  const content = document.getElementById('featured-content');
+  header.classList.toggle('collapsed');
+  content.classList.toggle('collapsed');
+}
+</script>
+
+<!-- Homepage Sections (remaining) -->
+<% if (remainingSections.length > 0) { %>
 <div class="homepage-sections">
-  <% homepageSections.forEach(function(section) { %>
+  <% remainingSections.forEach(function(section) { %>
   <div class="section-block" id="section-<%= section.slug %>">
     <div class="section-header" onclick="toggleSection('<%= section.slug %>')">
       <div class="section-header-left">
@@ -3329,6 +3625,7 @@ function showMoreSeries(slug) {
   } catch(e) {}
 })();
 </script>
+<% } %>
 <% } %>
 
 <!-- Navigation Tabs -->

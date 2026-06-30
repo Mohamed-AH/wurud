@@ -271,11 +271,159 @@ Added admin setting to switch between new card layout and classic table layout:
 
 ## Pending Tasks
 
+### ACTIVE: Design Redesign Implementation (June 2026)
+
+**Design Source Files**:
+- Desktop: `/.claude/uploads/.../Desktop_Redesign.dc.html`
+- Mobile: `/.claude/uploads/.../Audio_Archive_Redesign.dc.html`
+
+**Design System Colors (from handoff)**:
+```css
+--redesign-brown-dark: #2C1508;    /* Primary dark */
+--redesign-gold-primary: #C49A3C;  /* Accent gold */
+--redesign-gold-light: #DEC99A;    /* Light gold */
+--redesign-badge-bg: #E8D5A0;      /* Badge/chip background */
+--redesign-sage: #6B7A4E;          /* Hero green gradient */
+--redesign-cream-bg: #F5EDE0;      /* Page background */
+--redesign-text-mid: #7A5C3A;      /* Mid-tone text */
+--redesign-text-muted: #A89070;    /* Muted text */
+--redesign-card-bg: #FDF8F2;       /* Card backgrounds */
+```
+
+**Typography**: Cairo font family (Google Fonts), weights: 400, 500, 600, 700, 800
+
+---
+
+#### Phase 1: Design System Foundation
+**Status**: Pending
+
+1. **Cairo Font Loading** (`views/layout.ejs`)
+   - Add Google Fonts preconnect and Cairo import
+   - Update `--font-arabic-display` CSS variable
+   - Test Arabic rendering
+
+2. **CSS Variables** (`public/css/main.css`)
+   - Verify all redesign variables exist
+   - Add any missing color tokens
+
+---
+
+#### Phase 2: Header Navigation
+**Status**: Pending
+
+1. **Desktop Header** - Add "مقالات" (Articles) to navigation
+   - File: `views/partials/header.ejs`
+   - Add link between existing nav items
+   - Style to match: `color:#C49A3C` for active, `rgba(222,201,154,0.62)` for inactive
+
+2. **Mobile Menu** - Add Articles to hamburger menu
+   - File: `views/partials/header.ejs` (mobile section)
+   - Maintain existing menu structure
+
+**Admin Impact**: None - nav is not admin-controlled
+
+---
+
+#### Phase 3: Homepage Redesign
+**Status**: Pending
+
+**Files to Modify**:
+- `views/public/index.ejs` (main template, ~3200 lines)
+- `routes/index.js` (passes data to template)
+
+**3.1 Latest Articles Section** (Replace existing)
+- Card grid: 4 columns desktop, 2 columns tablet, 1 column mobile
+- Card structure:
+  ```
+  ┌─────────────────────────────┐
+  │ [Badge: Type]    [Date]    │
+  │ Title (14px bold)          │
+  │ Excerpt (12px, 2 lines)    │
+  │ ─────────────────────────  │
+  │         قراءة المقال ←     │
+  └─────────────────────────────┘
+  ```
+- Uses existing `recentArticles` from route (admin controls this)
+
+**3.2 Featured Series Section** (Collapsible header)
+- Background: `#E8D5A0` header with expand/collapse chevron
+- Count badge: `4 سلاسل` in dark pill
+- List items: Title + "X درس" badge + sheikh name
+- Uses existing `featuredSeries` from route (admin controls featured list)
+
+**3.3 Content Tabs** (السلاسل | المنفردة | خطب الجمعة)
+- Tab bar with underline indicator
+- Filter panel:
+  - Category chips (تفسير, حديث, فقه, etc.)
+  - Type chips
+  - Sort toggle (الأحدث/الأقدم)
+- Series rows: Expandable with lessons inside
+- This is NEW functionality - not currently admin-controlled
+
+**Admin Impact for Phase 3**:
+- `recentArticles` count: Controlled by existing code (4 articles)
+- `featuredSeries`: Controlled by admin via SiteSettings
+- `schedule`: Controlled by admin toggle (cards/table)
+- Content tabs: New feature, no admin control needed initially
+
+---
+
+#### Phase 4: Series Pages
+**Status**: Pending
+
+**4.1 Series List Page** (`views/public/series.ejs`)
+- Grid layout: 3 columns desktop, 2 tablet, 1 mobile
+- Card design with icon, title, subtitle, category badge, lesson count
+- Search box styling per design
+
+**4.2 Series Detail Page** (`views/public/series-detail.ejs`)
+- Hero section with gradient
+- Stats bar (lesson count + play all button)
+- "About" section
+- Lesson cards with number badge, title, metadata, action buttons
+
+---
+
+#### Phase 5: Lecture Player Page
+**Status**: Pending
+
+**File**: `views/public/lecture.ejs`
+- Already has mobile redesign from earlier commit
+- Desktop needs: Player card with circular play button, waveform/progress
+- Sidebar with transcript or related lectures (if on desktop)
+
+---
+
+#### Phase 6: Articles Page Audit
+**Status**: Pending
+
+**File**: `views/public/articles.ejs`
+- Already redesigned in earlier commits
+- Audit for: Category filter chips (if needed), pagination styling
+
+---
+
+### Implementation Order (Recommended)
+1. Phase 1 (Foundation) - Quick, no functional changes
+2. Phase 2 (Header) - Small scope, visible impact
+3. Phase 3.1-3.2 (Articles + Featured) - Medium scope, uses existing data
+4. Phase 4.1 (Series List) - Already partially done
+5. Phase 3.3 (Content Tabs) - New feature, largest scope
+6. Phase 4.2, 5, 6 - Polish passes
+
+### Critical Constraints
+1. **Do NOT break admin controls** - All dynamic content must continue working
+2. **RTL-first** - Base styles are RTL, use `html[dir="ltr"]` for LTR overrides
+3. **Mobile-first** - Design is mobile-optimized, scale up for desktop
+4. **Test both locales** - Arabic (RTL) and English (LTR) must work
+
+---
+
 ### P3 - Enhancements (Remaining)
 
-1. **Cairo Font** (Optional)
+1. **Cairo Font** (Being addressed in Phase 1)
    - Design uses Cairo from Google Fonts
-   - Would require font loading strategy update
+   - Added to Phase 1 implementation
 
 ### 12. Admin Panel for Articles (Phase 1 Complete)
 Implemented full article management in admin panel:
