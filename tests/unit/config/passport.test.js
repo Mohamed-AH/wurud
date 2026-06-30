@@ -3,12 +3,35 @@
  * Tests Google OAuth strategy, serialization, and user handling
  */
 
+// Store mock return values for findOne calls
+let findOneResults = [];
+let findOneIndex = 0;
+
+// Helper to create chainable query mock with .lean() support
+const createChainableQuery = () => ({
+  lean: jest.fn().mockImplementation(() => {
+    const result = findOneResults[findOneIndex];
+    findOneIndex++;
+    if (result instanceof Error) {
+      return Promise.reject(result);
+    }
+    return Promise.resolve(result);
+  })
+});
+
 // Mock the models module at the top level
 const mockAdmin = {
   findById: jest.fn(),
-  findOne: jest.fn(),
+  findOne: jest.fn().mockImplementation(() => createChainableQuery()),
   create: jest.fn(),
-  isEmailWhitelisted: jest.fn()
+  isEmailWhitelisted: jest.fn(),
+  findOneAndUpdate: jest.fn()
+};
+
+// Helper to set up findOne results
+const setFindOneResults = (...results) => {
+  findOneResults = results;
+  findOneIndex = 0;
 };
 
 jest.mock('../../../models', () => ({
@@ -31,6 +54,8 @@ describe('Passport Configuration', () => {
     process.env = { ...originalEnv };
     jest.clearAllMocks();
     capturedVerifyCallback = null;
+    findOneResults = [];
+    findOneIndex = 0;
     jest.spyOn(console, 'log').mockImplementation(() => {});
     jest.spyOn(console, 'error').mockImplementation(() => {});
   });
@@ -96,7 +121,7 @@ describe('Passport Configuration', () => {
 
     it('should reject unauthorized email not in whitelist and not pre-created', async () => {
       mockAdmin.isEmailWhitelisted.mockReturnValue(false);
-      mockAdmin.findOne.mockResolvedValue(null);
+      setFindOneResults(null);
 
       const done = jest.fn();
       const profile = createMockProfile();
@@ -119,9 +144,8 @@ describe('Passport Configuration', () => {
       };
 
       mockAdmin.isEmailWhitelisted.mockReturnValue(true);
-      mockAdmin.findOne
-        .mockResolvedValueOnce(adminUser)  // First call for existingUser
-        .mockResolvedValueOnce(adminUser); // Second call for googleId lookup
+      setFindOneResults(adminUser, adminUser); // existingUser, then googleId lookup
+      mockAdmin.findOneAndUpdate.mockResolvedValue(adminUser);
 
       const done = jest.fn();
       const profile = createMockProfile({ emails: [{ value: 'admin@example.com' }] });
@@ -140,18 +164,19 @@ describe('Passport Configuration', () => {
         updateLastLogin: jest.fn().mockResolvedValue()
       };
 
+      const updatedEditor = { ...editorUser, googleId: 'google-123' };
+
       mockAdmin.isEmailWhitelisted.mockReturnValue(false);
-      mockAdmin.findOne
-        .mockResolvedValueOnce(editorUser)  // existingUser found
-        .mockResolvedValueOnce(null);       // No googleId match
+      setFindOneResults(editorUser, null); // existingUser found, no googleId match
+      mockAdmin.findOneAndUpdate.mockResolvedValue(updatedEditor);
 
       const done = jest.fn();
       const profile = createMockProfile({ emails: [{ value: 'editor@example.com' }] });
 
       await capturedVerifyCallback('accessToken', 'refreshToken', profile, done);
 
-      expect(editorUser.googleId).toBe('google-123');
-      expect(done).toHaveBeenCalledWith(null, editorUser);
+      expect(updatedEditor.googleId).toBe('google-123');
+      expect(done).toHaveBeenCalledWith(null, updatedEditor);
     });
 
     it('should update existing admin on login', async () => {
@@ -164,10 +189,11 @@ describe('Passport Configuration', () => {
         updateLastLogin: jest.fn().mockResolvedValue()
       };
 
+      const updatedAdmin = { ...existingAdmin, displayName: 'Updated Name' };
+
       mockAdmin.isEmailWhitelisted.mockReturnValue(true);
-      mockAdmin.findOne
-        .mockResolvedValueOnce(existingAdmin)
-        .mockResolvedValueOnce(existingAdmin); // Found by googleId
+      setFindOneResults(existingAdmin, existingAdmin); // existingUser, googleId match
+      mockAdmin.findOneAndUpdate.mockResolvedValue(updatedAdmin);
 
       const done = jest.fn();
       const profile = createMockProfile({
@@ -177,8 +203,14 @@ describe('Passport Configuration', () => {
 
       await capturedVerifyCallback('accessToken', 'refreshToken', profile, done);
 
-      expect(existingAdmin.displayName).toBe('Updated Name');
-      expect(existingAdmin.updateLastLogin).toHaveBeenCalled();
+      expect(mockAdmin.findOneAndUpdate).toHaveBeenCalledWith(
+        { _id: 'admin-123' },
+        expect.objectContaining({
+          $set: expect.objectContaining({ displayName: 'Updated Name' })
+        }),
+        { new: true }
+      );
+      expect(done).toHaveBeenCalledWith(null, updatedAdmin);
     });
 
     it('should create new admin for whitelisted email', async () => {
@@ -191,9 +223,7 @@ describe('Passport Configuration', () => {
       };
 
       mockAdmin.isEmailWhitelisted.mockReturnValue(true);
-      mockAdmin.findOne
-        .mockResolvedValueOnce(null)  // No existing user
-        .mockResolvedValueOnce(null); // No googleId match
+      setFindOneResults(null, null); // No existing user, no googleId match
       mockAdmin.create.mockResolvedValue(newAdmin);
 
       const done = jest.fn();
@@ -216,7 +246,7 @@ describe('Passport Configuration', () => {
       const dbError = new Error('Database connection failed');
 
       mockAdmin.isEmailWhitelisted.mockReturnValue(true);
-      mockAdmin.findOne.mockRejectedValue(dbError);
+      setFindOneResults(dbError); // Will be rejected
 
       const done = jest.fn();
       const profile = createMockProfile();
@@ -239,7 +269,7 @@ describe('Passport Configuration', () => {
       };
 
       mockAdmin.isEmailWhitelisted.mockReturnValue(true);
-      mockAdmin.findOne.mockResolvedValue(null);
+      setFindOneResults(null, null); // No existing user, no googleId match
       mockAdmin.create.mockResolvedValue(newAdmin);
 
       const done = jest.fn();
