@@ -1146,6 +1146,14 @@
     color: white;
   }
 
+  .location-toggle-btn .lucide {
+    width: 16px;
+    height: 16px;
+    margin-inline-end: 6px;
+    vertical-align: -2px;
+    stroke-width: 2;
+  }
+
   .location-toggle-count {
     display: inline-block;
     background: rgba(193, 154, 107, 0.2);
@@ -1353,9 +1361,15 @@
   }
 
   .schedule-empty-icon {
-    font-size: 48px;
     margin-bottom: 12px;
     opacity: 0.5;
+    color: var(--redesign-text-muted, #A89070);
+  }
+
+  .schedule-empty-icon .lucide {
+    width: 48px;
+    height: 48px;
+    stroke-width: 1;
   }
 
   @media (max-width: 768px) {
@@ -1586,6 +1600,14 @@
     background: var(--primary-dark);
     border-color: var(--primary-dark);
     color: white;
+  }
+
+  .schedule-tab .lucide {
+    width: 16px;
+    height: 16px;
+    margin-inline-end: 6px;
+    vertical-align: -2px;
+    stroke-width: 2;
   }
 
   .schedule-tab-count {
@@ -2867,11 +2889,11 @@
 
   <div class="schedule-tabs">
     <button class="schedule-tab active" onclick="switchScheduleTab('inperson')">
-      🕌 <%= locale === 'ar' ? 'جامع الورود' : 'In-Person' %>
+      <i data-lucide="building-2"></i> <%= locale === 'ar' ? 'جامع الورود' : 'In-Person' %>
       <span class="schedule-tab-count"><%= groupedInPerson.length %></span>
     </button>
     <button class="schedule-tab" onclick="switchScheduleTab('online')">
-      💻 <%= locale === 'ar' ? 'عن بُعد' : 'Online' %>
+      <i data-lucide="monitor"></i> <%= locale === 'ar' ? 'عن بُعد' : 'Online' %>
       <span class="schedule-tab-count"><%= groupedOnline.length %></span>
     </button>
   </div>
@@ -3017,11 +3039,11 @@ function switchScheduleTab(tab) {
   <!-- Location Toggle -->
   <div class="schedule-location-toggle">
     <button class="location-toggle-btn active" onclick="switchLocation('inperson')">
-      🕌 <%= locale === 'ar' ? 'جامع الورود' : 'In-Person' %>
+      <i data-lucide="building-2"></i> <%= locale === 'ar' ? 'جامع الورود' : 'In-Person' %>
       <span class="location-toggle-count"><%= groupedInPerson.length %></span>
     </button>
     <button class="location-toggle-btn" onclick="switchLocation('online')">
-      💻 <%= locale === 'ar' ? 'عن بُعد' : 'Online' %>
+      <i data-lucide="monitor"></i> <%= locale === 'ar' ? 'عن بُعد' : 'Online' %>
       <span class="location-toggle-count"><%= groupedOnline.length %></span>
     </button>
   </div>
@@ -3069,7 +3091,7 @@ function switchScheduleTab(tab) {
       </div>
       <% } else { %>
       <div class="schedule-empty">
-        <div class="schedule-empty-icon">📭</div>
+        <div class="schedule-empty-icon"><i data-lucide="inbox"></i></div>
         <p><%= locale === 'ar' ? 'لا توجد دروس في هذا اليوم' : 'No classes on this day' %></p>
       </div>
       <% } %>
@@ -3077,7 +3099,7 @@ function switchScheduleTab(tab) {
     <% }); %>
     <% } else { %>
     <div class="schedule-empty">
-      <div class="schedule-empty-icon">🕌</div>
+      <div class="schedule-empty-icon"><i data-lucide="building-2"></i></div>
       <p><%= locale === 'ar' ? 'لا توجد دروس حضورية حالياً' : 'No in-person classes currently' %></p>
     </div>
     <% } %>
@@ -3126,7 +3148,7 @@ function switchScheduleTab(tab) {
       </div>
       <% } else { %>
       <div class="schedule-empty">
-        <div class="schedule-empty-icon">📭</div>
+        <div class="schedule-empty-icon"><i data-lucide="inbox"></i></div>
         <p><%= locale === 'ar' ? 'لا توجد دروس في هذا اليوم' : 'No classes on this day' %></p>
       </div>
       <% } %>
@@ -3134,7 +3156,7 @@ function switchScheduleTab(tab) {
     <% }); %>
     <% } else { %>
     <div class="schedule-empty">
-      <div class="schedule-empty-icon">💻</div>
+      <div class="schedule-empty-icon"><i data-lucide="monitor"></i></div>
       <p><%= locale === 'ar' ? 'لا توجد دروس عن بُعد حالياً' : 'No online classes currently' %></p>
     </div>
     <% } %>
@@ -4177,7 +4199,7 @@ function showMoreSeries(slug) {
       <% }) %>
     <% } else { %>
       <div class="empty-state">
-        <div class="empty-icon">🕌</div>
+        <div class="empty-icon"><i data-lucide="building-2"></i></div>
         <h3 class="empty-title"><%= locale === 'ar' ? 'لا توجد خطب' : 'No Khutbahs' %></h3>
       </div>
     <% } %>
