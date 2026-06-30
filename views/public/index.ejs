@@ -995,7 +995,7 @@
     display: block;
   }
 
-  /* Weekly Schedule Section - Compact Design */
+  /* Weekly Schedule Section - Card-Based Design */
   .weekly-schedule-section {
     max-width: 1200px;
     margin: 0 auto var(--space-xl);
@@ -1019,13 +1019,14 @@
     gap: 10px;
   }
 
-  .schedule-tabs {
+  /* Location toggle (In-Person / Online) */
+  .schedule-location-toggle {
     display: flex;
     gap: 8px;
     margin-bottom: var(--space-md);
   }
 
-  .schedule-tab {
+  .location-toggle-btn {
     padding: 10px 20px;
     border: 2px solid var(--border-light);
     border-radius: 8px;
@@ -1038,18 +1039,18 @@
     color: var(--text-secondary);
   }
 
-  .schedule-tab:hover {
+  .location-toggle-btn:hover {
     border-color: var(--accent-gold);
     color: var(--accent-gold);
   }
 
-  .schedule-tab.active {
+  .location-toggle-btn.active {
     background: var(--primary-dark);
     border-color: var(--primary-dark);
     color: white;
   }
 
-  .schedule-tab-count {
+  .location-toggle-count {
     display: inline-block;
     background: rgba(193, 154, 107, 0.2);
     color: var(--accent-gold);
@@ -1059,143 +1060,206 @@
     margin-right: 6px;
   }
 
-  .schedule-tab.active .schedule-tab-count {
+  .location-toggle-btn.active .location-toggle-count {
     background: rgba(255, 255, 255, 0.2);
     color: white;
   }
 
-  .schedule-panel {
-    display: none;
+  /* Day tabs - horizontal scrollable */
+  .schedule-day-tabs {
+    display: flex;
+    gap: 6px;
+    margin-bottom: var(--space-md);
+    overflow-x: auto;
+    padding-bottom: 8px;
+    -webkit-overflow-scrolling: touch;
   }
 
-  .schedule-panel.active {
-    display: block;
+  .schedule-day-tabs::-webkit-scrollbar {
+    height: 4px;
   }
 
-  .schedule-table-wrapper {
-    background: white;
-    border-radius: 12px;
-    box-shadow: 0 2px 12px var(--shadow-warm);
-    overflow: hidden;
+  .schedule-day-tabs::-webkit-scrollbar-track {
+    background: var(--border-light);
+    border-radius: 2px;
+  }
+
+  .schedule-day-tabs::-webkit-scrollbar-thumb {
+    background: var(--accent-gold);
+    border-radius: 2px;
+  }
+
+  .day-tab {
+    flex-shrink: 0;
+    padding: 12px 18px;
     border: 2px solid var(--border-light);
-  }
-
-  .schedule-table {
-    width: 100%;
-    border-collapse: collapse;
-  }
-
-  .schedule-table th {
-    background: linear-gradient(135deg, var(--primary-dark) 0%, var(--primary-brown) 100%);
-    color: var(--cream);
-    font-weight: 600;
-    padding: 14px 16px;
-    text-align: right;
+    border-radius: 10px;
+    background: white;
+    font-family: inherit;
     font-size: 14px;
-  }
-
-  .schedule-table td {
-    padding: 12px 16px;
-    border-bottom: 1px solid var(--border-light);
-    vertical-align: middle;
-  }
-
-  .schedule-table tr:last-child td {
-    border-bottom: none;
-  }
-
-  .schedule-table tr:hover td {
-    background: rgba(193, 154, 107, 0.05);
-  }
-
-  .schedule-day-cell {
     font-weight: 600;
-    color: var(--primary-brown);
-    white-space: nowrap;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    color: var(--text-secondary);
+    text-align: center;
+    min-width: 70px;
   }
 
-  .schedule-day-cell.multi-day {
-    white-space: normal;
-    min-width: 100px;
-  }
-
-  .schedule-time-cell {
-    color: var(--text-muted);
-    font-size: 13px;
-    white-space: nowrap;
-  }
-
-  /* Stacked day/time cells for varying times */
-  .schedule-day-cell.stacked,
-  .schedule-time-cell.stacked {
-    vertical-align: top;
-    white-space: nowrap;
-  }
-
-  .stacked-day,
-  .stacked-time {
-    line-height: 1.6;
-  }
-
-  .stacked-day {
-    font-weight: 600;
-    color: var(--primary-brown);
-  }
-
-  .stacked-time {
-    color: var(--text-muted);
-    font-size: 13px;
-  }
-
-  .schedule-series-cell a {
-    color: var(--text-primary);
-    text-decoration: none;
-    font-weight: 500;
-    transition: color 0.2s;
-  }
-
-  .schedule-series-cell a:hover {
+  .day-tab:hover {
+    border-color: var(--accent-gold);
     color: var(--accent-gold);
   }
 
-  .schedule-lesson-num {
-    display: inline-block;
+  .day-tab.active {
     background: var(--accent-gold);
+    border-color: var(--accent-gold);
     color: var(--primary-dark);
-    font-size: 12px;
-    font-weight: 700;
-    padding: 4px 10px;
-    border-radius: 12px;
-    min-width: 45px;
-    text-align: center;
   }
 
-  .new-badge {
+  .day-tab.disabled,
+  .day-tab:disabled {
+    opacity: 0.4;
+    cursor: not-allowed;
+    background: var(--border-light);
+  }
+
+  .day-tab.disabled:hover,
+  .day-tab:disabled:hover {
+    border-color: var(--border-light);
+    color: var(--text-secondary);
+  }
+
+  .day-tab-name {
+    display: block;
+    font-size: 14px;
+    font-weight: 700;
+  }
+
+  .day-tab-count {
+    display: block;
+    font-size: 11px;
+    opacity: 0.7;
+    margin-top: 2px;
+  }
+
+  /* Schedule panels */
+  .schedule-location-panel {
+    display: none;
+  }
+
+  .schedule-location-panel.active {
+    display: block;
+  }
+
+  .schedule-day-panel {
+    display: none;
+  }
+
+  .schedule-day-panel.active {
+    display: block;
+  }
+
+  /* Session cards grid */
+  .session-cards {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+    gap: 16px;
+  }
+
+  .session-card {
+    background: white;
+    border: 2px solid var(--border-light);
+    border-radius: 12px;
+    padding: 16px;
+    text-decoration: none;
+    display: block;
+    transition: all 0.2s ease;
+  }
+
+  .session-card:hover {
+    border-color: var(--accent-gold);
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px var(--shadow-warm);
+  }
+
+  .session-card-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    margin-bottom: 10px;
+  }
+
+  .session-time {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    background: var(--cream);
+    color: var(--primary-brown);
+    font-size: 13px;
+    font-weight: 600;
+    padding: 5px 10px;
+    border-radius: 8px;
+  }
+
+  .session-time-icon {
+    font-size: 14px;
+  }
+
+  .session-badge {
     display: inline-block;
     background: var(--sage);
     color: white;
     font-size: 10px;
     font-weight: 700;
-    padding: 2px 6px;
+    padding: 3px 8px;
     border-radius: 8px;
-    margin-right: 6px;
-    vertical-align: middle;
   }
 
-  .schedule-latest-link {
-    display: block;
-    font-size: 12px;
+  .session-title {
+    font-family: var(--font-arabic-display);
+    font-size: 17px;
+    font-weight: 700;
+    color: var(--text-primary);
+    margin-bottom: 8px;
+    line-height: 1.4;
+  }
+
+  .session-meta {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    font-size: 13px;
     color: var(--text-muted);
-    margin-top: 4px;
   }
 
-  .schedule-latest-link a {
-    color: var(--accent-gold);
-    text-decoration: none;
+  .session-lesson-count {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    background: var(--accent-gold);
+    color: var(--primary-dark);
+    font-weight: 700;
+    padding: 4px 10px;
+    border-radius: 10px;
+    font-size: 12px;
   }
 
-  .schedule-latest-link a:hover {
-    text-decoration: underline;
+  .session-location {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+  }
+
+  .schedule-empty {
+    text-align: center;
+    padding: 40px 20px;
+    color: var(--text-muted);
+  }
+
+  .schedule-empty-icon {
+    font-size: 48px;
+    margin-bottom: 12px;
+    opacity: 0.5;
   }
 
   @media (max-width: 768px) {
@@ -1209,51 +1273,82 @@
       font-size: 20px;
     }
 
-    .schedule-tabs {
+    .schedule-location-toggle {
       width: 100%;
     }
 
-    .schedule-tab {
+    .location-toggle-btn {
       flex: 1;
       text-align: center;
       padding: 8px 12px;
       font-size: 13px;
     }
 
-    .schedule-table th,
-    .schedule-table td {
-      padding: 8px 10px;
+    .day-tab {
+      padding: 10px 14px;
+      min-width: 60px;
+    }
+
+    .day-tab-name {
+      font-size: 13px;
+    }
+
+    .session-cards {
+      grid-template-columns: 1fr;
+      gap: 12px;
+    }
+
+    .session-card {
+      padding: 14px;
+    }
+
+    .session-title {
+      font-size: 16px;
+    }
+  }
+
+  @media (max-width: 480px) {
+    .weekly-schedule-section {
+      padding: var(--space-md);
+    }
+
+    .schedule-title {
+      font-size: 18px;
+    }
+
+    .location-toggle-btn {
+      padding: 6px 10px;
       font-size: 12px;
     }
 
-    .schedule-day-cell {
-      white-space: normal;
-      line-height: 1.4;
+    .day-tab {
+      padding: 8px 12px;
+      min-width: 55px;
     }
 
-    .schedule-day-cell .day-full {
-      display: inline;
-    }
-
-    .schedule-day-cell .day-short {
-      display: none;
-    }
-
-    .schedule-day-cell.multi-day {
-      min-width: 70px;
-    }
-
-    /* Stacked cells on mobile */
-    .stacked-day,
-    .stacked-time {
+    .day-tab-name {
       font-size: 12px;
-      line-height: 1.5;
     }
 
-    .schedule-lesson-num {
-      font-size: 11px;
-      padding: 3px 8px;
-      min-width: 40px;
+    .day-tab-count {
+      font-size: 10px;
+    }
+
+    .session-card {
+      padding: 12px;
+    }
+
+    .session-title {
+      font-size: 15px;
+    }
+
+    .session-time {
+      font-size: 12px;
+      padding: 4px 8px;
+    }
+
+    .session-meta {
+      font-size: 12px;
     }
   }
 
@@ -2399,6 +2494,50 @@
   const groupedInPerson = groupScheduleItems(inPersonSchedule);
   const groupedOnline = groupScheduleItems(onlineSchedule);
 %>
+<%
+  // Group schedule items by day for card display
+  const dayOrderList = ['السبت', 'الأحد', 'الاثنين', 'الثلاثاء', 'الأربعاء', 'الخميس', 'الجمعة'];
+
+  const groupByDay = (items) => {
+    const byDay = {};
+    dayOrderList.forEach(day => { byDay[day] = []; });
+
+    items.forEach(item => {
+      item.days.forEach(day => {
+        if (byDay[day]) {
+          byDay[day].push({
+            ...item,
+            displayTime: item.hasVaryingTimes
+              ? translateTime(item.dayTimes.find(dt => dt.day === day)?.time || item.time)
+              : translateTime(item.time)
+          });
+        }
+      });
+    });
+
+    return byDay;
+  };
+
+  const inPersonByDay = groupByDay(groupedInPerson);
+  const onlineByDay = groupByDay(groupedOnline);
+
+  const getDayCount = (byDay) => {
+    const counts = {};
+    dayOrderList.forEach(day => { counts[day] = byDay[day].length; });
+    return counts;
+  };
+
+  const inPersonCounts = getDayCount(inPersonByDay);
+  const onlineCounts = getDayCount(onlineByDay);
+
+  // Find first day with sessions for default tab
+  const getFirstActiveDay = (counts) => {
+    for (const day of dayOrderList) {
+      if (counts[day] > 0) return day;
+    }
+    return dayOrderList[0];
+  };
+%>
 <section class="weekly-schedule-section">
   <div class="schedule-header">
     <h2 class="schedule-title">
@@ -2406,151 +2545,150 @@
     </h2>
   </div>
 
-  <div class="schedule-tabs">
-    <button class="schedule-tab active" onclick="switchScheduleTab('inperson')">
+  <!-- Location Toggle -->
+  <div class="schedule-location-toggle">
+    <button class="location-toggle-btn active" onclick="switchLocation('inperson')">
       🕌 <%= locale === 'ar' ? 'جامع الورود' : 'In-Person' %>
-      <span class="schedule-tab-count"><%= groupedInPerson.length %></span>
+      <span class="location-toggle-count"><%= groupedInPerson.length %></span>
     </button>
-    <button class="schedule-tab" onclick="switchScheduleTab('online')">
+    <button class="location-toggle-btn" onclick="switchLocation('online')">
       💻 <%= locale === 'ar' ? 'عن بُعد' : 'Online' %>
-      <span class="schedule-tab-count"><%= groupedOnline.length %></span>
+      <span class="location-toggle-count"><%= groupedOnline.length %></span>
     </button>
   </div>
 
-  <!-- In-Person Classes Panel -->
-  <div id="schedule-inperson" class="schedule-panel active">
+  <!-- In-Person Panel -->
+  <div id="location-inperson" class="schedule-location-panel active">
     <% if (groupedInPerson.length > 0) { %>
-    <div class="schedule-table-wrapper">
-      <table class="schedule-table">
-        <thead>
-          <tr>
-            <th><%= locale === 'ar' ? 'اليوم' : 'Day' %></th>
-            <th><%= locale === 'ar' ? 'الوقت' : 'Time' %></th>
-            <th><%= locale === 'ar' ? 'السلسلة' : 'Series' %></th>
-            <th><%= locale === 'ar' ? 'الدرس #' : 'Lesson #' %></th>
-          </tr>
-        </thead>
-        <tbody>
-          <% groupedInPerson.forEach(function(item) { %>
-          <tr>
-            <% if (item.hasVaryingTimes) { %>
-            <!-- Varying times: stack days and times vertically, aligned -->
-            <td class="schedule-day-cell multi-day stacked">
-              <% item.dayTimes.forEach(function(dt) { %>
-              <div class="stacked-day"><%= getDay(dt.day) %></div>
-              <% }); %>
-            </td>
-            <td class="schedule-time-cell stacked">
-              <% item.dayTimes.forEach(function(dt) { %>
-              <div class="stacked-time"><%= translateTime(dt.time) %></div>
-              <% }); %>
-            </td>
-            <% } else { %>
-            <!-- Same time: show combined days and single time -->
-            <td class="schedule-day-cell<%= item.days.length > 1 ? ' multi-day' : '' %>">
-              <span class="day-full"><%= formatDays(item.days, false) %></span>
-            </td>
-            <td class="schedule-time-cell">
-              <span class="time-full"><%= translateTime(item.time) %></span>
-            </td>
-            <% } %>
-            <td class="schedule-series-cell">
-              <% if (item.isNew) { %><span class="new-badge"><%= locale === 'ar' ? 'جديد' : 'NEW' %></span><% } %>
-              <a href="/series/<%= item.seriesId.slug ? encodeURIComponent(item.seriesId.slug) : item.seriesId._id %>">
-                <%= locale === 'ar' ? item.seriesId.titleArabic : (item.seriesId.titleEnglish || item.seriesId.titleArabic) %>
-              </a>
-            </td>
-            <td style="text-align: center;">
-              <% if (item.lectureCount > 0) { %>
-              <a href="<%= item.latestLecture ? '/lectures/' + (item.latestLecture.slug ? encodeURIComponent(item.latestLecture.slug) : item.latestLecture._id) : '/series/' + (item.seriesId.slug ? encodeURIComponent(item.seriesId.slug) : item.seriesId._id) %>" style="text-decoration: none;">
-                <span class="schedule-lesson-num"><%= item.lectureCount %></span>
-              </a>
-              <% } else { %>
-              <span style="color: var(--text-muted);">-</span>
-              <% } %>
-            </td>
-          </tr>
-          <% }); %>
-        </tbody>
-      </table>
+    <div class="schedule-day-tabs" id="inperson-day-tabs">
+      <% dayOrderList.forEach((day, idx) => { %>
+      <button class="day-tab<%= idx === 0 || day === getFirstActiveDay(inPersonCounts) ? ' active' : '' %><%= inPersonCounts[day] === 0 ? ' disabled' : '' %>"
+              onclick="switchDayTab('inperson', '<%= day %>')"
+              <%= inPersonCounts[day] === 0 ? 'disabled' : '' %>>
+        <span class="day-tab-name"><%= getDayShort(day) %></span>
+        <span class="day-tab-count"><%= inPersonCounts[day] %> <%= locale === 'ar' ? 'درس' : '' %></span>
+      </button>
+      <% }); %>
     </div>
+    <% dayOrderList.forEach((day, idx) => { %>
+    <div id="inperson-day-<%= day %>" class="schedule-day-panel<%= idx === 0 || day === getFirstActiveDay(inPersonCounts) ? ' active' : '' %>">
+      <% if (inPersonByDay[day].length > 0) { %>
+      <div class="session-cards">
+        <% inPersonByDay[day].forEach(item => { %>
+        <a href="/series/<%= item.seriesId.slug ? encodeURIComponent(item.seriesId.slug) : item.seriesId._id %>" class="session-card">
+          <div class="session-card-header">
+            <span class="session-time">
+              <span class="session-time-icon">🕐</span>
+              <%= item.displayTime %>
+            </span>
+            <% if (item.isNew) { %>
+            <span class="session-badge"><%= locale === 'ar' ? 'جديد' : 'NEW' %></span>
+            <% } %>
+          </div>
+          <h3 class="session-title">
+            <%= locale === 'ar' ? item.seriesId.titleArabic : (item.seriesId.titleEnglish || item.seriesId.titleArabic) %>
+          </h3>
+          <div class="session-meta">
+            <% if (item.lectureCount > 0) { %>
+            <span class="session-lesson-count">
+              📚 <%= item.lectureCount %> <%= locale === 'ar' ? 'درس' : 'lessons' %>
+            </span>
+            <% } %>
+          </div>
+        </a>
+        <% }); %>
+      </div>
+      <% } else { %>
+      <div class="schedule-empty">
+        <div class="schedule-empty-icon">📭</div>
+        <p><%= locale === 'ar' ? 'لا توجد دروس في هذا اليوم' : 'No classes on this day' %></p>
+      </div>
+      <% } %>
+    </div>
+    <% }); %>
     <% } else { %>
-    <p style="text-align: center; color: var(--text-muted); padding: 24px;"><%= locale === 'ar' ? 'لا توجد دروس حضورية حالياً' : 'No in-person classes currently' %></p>
+    <div class="schedule-empty">
+      <div class="schedule-empty-icon">🕌</div>
+      <p><%= locale === 'ar' ? 'لا توجد دروس حضورية حالياً' : 'No in-person classes currently' %></p>
+    </div>
     <% } %>
   </div>
 
-  <!-- Online Classes Panel -->
-  <div id="schedule-online" class="schedule-panel">
+  <!-- Online Panel -->
+  <div id="location-online" class="schedule-location-panel">
     <% if (groupedOnline.length > 0) { %>
-    <div class="schedule-table-wrapper">
-      <table class="schedule-table">
-        <thead>
-          <tr>
-            <th><%= locale === 'ar' ? 'اليوم' : 'Day' %></th>
-            <th><%= locale === 'ar' ? 'الوقت' : 'Time' %></th>
-            <th><%= locale === 'ar' ? 'السلسلة' : 'Series' %></th>
-            <th><%= locale === 'ar' ? 'الدرس #' : 'Lesson #' %></th>
-          </tr>
-        </thead>
-        <tbody>
-          <% groupedOnline.forEach(function(item) { %>
-          <tr>
-            <% if (item.hasVaryingTimes) { %>
-            <!-- Varying times: stack days and times vertically, aligned -->
-            <td class="schedule-day-cell multi-day stacked">
-              <% item.dayTimes.forEach(function(dt) { %>
-              <div class="stacked-day"><%= getDay(dt.day) %></div>
-              <% }); %>
-            </td>
-            <td class="schedule-time-cell stacked">
-              <% item.dayTimes.forEach(function(dt) { %>
-              <div class="stacked-time"><%= translateTime(dt.time) %></div>
-              <% }); %>
-            </td>
-            <% } else { %>
-            <!-- Same time: show combined days and single time -->
-            <td class="schedule-day-cell<%= item.days.length > 1 ? ' multi-day' : '' %>">
-              <span class="day-full"><%= formatDays(item.days, false) %></span>
-            </td>
-            <td class="schedule-time-cell">
-              <span class="time-full"><%= translateTime(item.time) %></span>
-            </td>
-            <% } %>
-            <td class="schedule-series-cell">
-              <% if (item.isNew) { %><span class="new-badge"><%= locale === 'ar' ? 'جديد' : 'NEW' %></span><% } %>
-              <a href="/series/<%= item.seriesId.slug ? encodeURIComponent(item.seriesId.slug) : item.seriesId._id %>">
-                <%= locale === 'ar' ? item.seriesId.titleArabic : (item.seriesId.titleEnglish || item.seriesId.titleArabic) %>
-              </a>
-            </td>
-            <td style="text-align: center;">
-              <% if (item.lectureCount > 0) { %>
-              <a href="<%= item.latestLecture ? '/lectures/' + (item.latestLecture.slug ? encodeURIComponent(item.latestLecture.slug) : item.latestLecture._id) : '/series/' + (item.seriesId.slug ? encodeURIComponent(item.seriesId.slug) : item.seriesId._id) %>" style="text-decoration: none;">
-                <span class="schedule-lesson-num"><%= item.lectureCount %></span>
-              </a>
-              <% } else { %>
-              <span style="color: var(--text-muted);">-</span>
-              <% } %>
-            </td>
-          </tr>
-          <% }); %>
-        </tbody>
-      </table>
+    <div class="schedule-day-tabs" id="online-day-tabs">
+      <% dayOrderList.forEach((day, idx) => { %>
+      <button class="day-tab<%= idx === 0 || day === getFirstActiveDay(onlineCounts) ? ' active' : '' %><%= onlineCounts[day] === 0 ? ' disabled' : '' %>"
+              onclick="switchDayTab('online', '<%= day %>')"
+              <%= onlineCounts[day] === 0 ? 'disabled' : '' %>>
+        <span class="day-tab-name"><%= getDayShort(day) %></span>
+        <span class="day-tab-count"><%= onlineCounts[day] %> <%= locale === 'ar' ? 'درس' : '' %></span>
+      </button>
+      <% }); %>
     </div>
+    <% dayOrderList.forEach((day, idx) => { %>
+    <div id="online-day-<%= day %>" class="schedule-day-panel<%= idx === 0 || day === getFirstActiveDay(onlineCounts) ? ' active' : '' %>">
+      <% if (onlineByDay[day].length > 0) { %>
+      <div class="session-cards">
+        <% onlineByDay[day].forEach(item => { %>
+        <a href="/series/<%= item.seriesId.slug ? encodeURIComponent(item.seriesId.slug) : item.seriesId._id %>" class="session-card">
+          <div class="session-card-header">
+            <span class="session-time">
+              <span class="session-time-icon">🕐</span>
+              <%= item.displayTime %>
+            </span>
+            <% if (item.isNew) { %>
+            <span class="session-badge"><%= locale === 'ar' ? 'جديد' : 'NEW' %></span>
+            <% } %>
+          </div>
+          <h3 class="session-title">
+            <%= locale === 'ar' ? item.seriesId.titleArabic : (item.seriesId.titleEnglish || item.seriesId.titleArabic) %>
+          </h3>
+          <div class="session-meta">
+            <% if (item.lectureCount > 0) { %>
+            <span class="session-lesson-count">
+              📚 <%= item.lectureCount %> <%= locale === 'ar' ? 'درس' : 'lessons' %>
+            </span>
+            <% } %>
+          </div>
+        </a>
+        <% }); %>
+      </div>
+      <% } else { %>
+      <div class="schedule-empty">
+        <div class="schedule-empty-icon">📭</div>
+        <p><%= locale === 'ar' ? 'لا توجد دروس في هذا اليوم' : 'No classes on this day' %></p>
+      </div>
+      <% } %>
+    </div>
+    <% }); %>
     <% } else { %>
-    <p style="text-align: center; color: var(--text-muted); padding: 24px;"><%= locale === 'ar' ? 'لا توجد دروس عن بُعد حالياً' : 'No online classes currently' %></p>
+    <div class="schedule-empty">
+      <div class="schedule-empty-icon">💻</div>
+      <p><%= locale === 'ar' ? 'لا توجد دروس عن بُعد حالياً' : 'No online classes currently' %></p>
+    </div>
     <% } %>
   </div>
 </section>
 
 <script>
-function switchScheduleTab(tab) {
-  // Update tab buttons
-  document.querySelectorAll('.schedule-tab').forEach(btn => btn.classList.remove('active'));
-  event.target.closest('.schedule-tab').classList.add('active');
+function switchLocation(location) {
+  document.querySelectorAll('.location-toggle-btn').forEach(btn => btn.classList.remove('active'));
+  event.target.closest('.location-toggle-btn').classList.add('active');
 
-  // Update panels
-  document.querySelectorAll('.schedule-panel').forEach(panel => panel.classList.remove('active'));
-  document.getElementById('schedule-' + tab).classList.add('active');
+  document.querySelectorAll('.schedule-location-panel').forEach(panel => panel.classList.remove('active'));
+  document.getElementById('location-' + location).classList.add('active');
+}
+
+function switchDayTab(location, day) {
+  const container = document.getElementById('location-' + location);
+
+  container.querySelectorAll('.day-tab').forEach(btn => btn.classList.remove('active'));
+  event.target.closest('.day-tab').classList.add('active');
+
+  container.querySelectorAll('.schedule-day-panel').forEach(panel => panel.classList.remove('active'));
+  document.getElementById(location + '-day-' + day).classList.add('active');
 }
 </script>
 <% } %>
