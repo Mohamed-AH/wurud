@@ -233,16 +233,23 @@ Added real-time search to `/series` page:
 
 **Files Modified**: `views/public/series.ejs`
 
+### 17. Weekly Schedule Redesign (Commit: 4a55303)
+Replaced table-based schedule with modern card design:
+- Day tabs (Sat-Fri) for quick navigation
+- Session cards showing time, series title, lesson count
+- Location toggle (In-Person / Online)
+- Disabled state for days with no sessions
+- Horizontal scrollable tabs on mobile
+- Cards link directly to series pages
+- Responsive design for all screen sizes
+
+**Files Modified**: `views/public/index.ejs`
+
 ## Pending Tasks
 
-### P3 - Enhancements
+### P3 - Enhancements (Remaining)
 
-1. **Weekly Schedule Redesign**
-   - Replace table with clickable day tabs
-   - Session cards with lecture info
-   - Mobile-friendly layout
-
-2. **Cairo Font** (Optional)
+1. **Cairo Font** (Optional)
    - Design uses Cairo from Google Fonts
    - Would require font loading strategy update
 
