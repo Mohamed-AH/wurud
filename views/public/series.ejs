@@ -232,6 +232,119 @@
       font-size: 12px;
     }
   }
+
+  /* Search box styles */
+  .search-section {
+    margin-bottom: 24px;
+  }
+
+  .search-wrapper {
+    position: relative;
+    max-width: 500px;
+  }
+
+  .search-input {
+    width: 100%;
+    padding: 14px 16px 14px 48px;
+    border: 2px solid var(--accent-amber);
+    border-radius: 12px;
+    font-size: 16px;
+    font-family: inherit;
+    background: var(--cream);
+    color: var(--primary-dark);
+    direction: rtl;
+    text-align: right;
+    box-sizing: border-box;
+  }
+
+  .search-input:focus {
+    outline: none;
+    border-color: var(--accent-gold);
+    box-shadow: 0 0 0 3px rgba(196, 154, 60, 0.15);
+  }
+
+  .search-input::placeholder {
+    color: var(--text-muted);
+  }
+
+  .search-icon {
+    position: absolute;
+    right: 16px;
+    top: 50%;
+    transform: translateY(-50%);
+    color: var(--text-muted);
+    pointer-events: none;
+  }
+
+  .search-clear {
+    position: absolute;
+    left: 12px;
+    top: 50%;
+    transform: translateY(-50%);
+    background: none;
+    border: none;
+    color: var(--text-muted);
+    cursor: pointer;
+    padding: 4px;
+    display: none;
+    font-size: 18px;
+  }
+
+  .search-clear.visible {
+    display: block;
+  }
+
+  .search-clear:hover {
+    color: var(--primary-dark);
+  }
+
+  .search-results-info {
+    margin-top: 12px;
+    font-size: 14px;
+    color: var(--text-secondary);
+  }
+
+  .no-results {
+    text-align: center;
+    padding: 60px 20px;
+    color: var(--text-secondary);
+    display: none;
+  }
+
+  .no-results.visible {
+    display: block;
+  }
+
+  .series-card.hidden {
+    display: none;
+  }
+
+  @media (max-width: 768px) {
+    .search-section {
+      margin-bottom: 20px;
+    }
+
+    .search-input {
+      padding: 12px 14px 12px 44px;
+      font-size: 15px;
+    }
+  }
+
+  @media (max-width: 480px) {
+    .search-section {
+      margin-bottom: 16px;
+    }
+
+    .search-input {
+      padding: 11px 12px 11px 40px;
+      font-size: 14px;
+      border-radius: 10px;
+    }
+
+    .search-icon {
+      right: 12px;
+    }
+  }
 </style>
 
 <div class="page-header">
@@ -243,9 +356,38 @@
 
 <div class="container">
   <% if (series && series.length > 0) { %>
-    <div class="series-grid">
+    <div class="search-section">
+      <div class="search-wrapper">
+        <span class="search-icon">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <circle cx="11" cy="11" r="8"></circle>
+            <path d="m21 21-4.35-4.35"></path>
+          </svg>
+        </span>
+        <input type="text"
+               id="seriesSearch"
+               class="search-input"
+               placeholder="<%= locale === 'ar' ? 'ابحث في السلاسل...' : 'Search series...' %>"
+               autocomplete="off">
+        <button type="button" class="search-clear" id="searchClear" title="مسح">×</button>
+      </div>
+      <div class="search-results-info" id="searchResultsInfo"></div>
+    </div>
+
+    <div class="no-results" id="noResults">
+      <div class="empty-icon">🔍</div>
+      <h3><%= locale === 'ar' ? 'لا توجد نتائج' : 'No results found' %></h3>
+      <p><%= locale === 'ar' ? 'جرب كلمات بحث مختلفة' : 'Try different search terms' %></p>
+    </div>
+
+    <div class="series-grid" id="seriesGrid">
       <% series.forEach(s => { %>
-        <a href="/series/<%= s.slug ? encodeURIComponent(s.slug) : s._id %>" class="series-card">
+        <a href="/series/<%= s.slug ? encodeURIComponent(s.slug) : s._id %>"
+           class="series-card"
+           data-title-ar="<%= (s.titleArabic || '').toLowerCase() %>"
+           data-title-en="<%= (s.titleEnglish || '').toLowerCase() %>"
+           data-sheikh="<%= s.sheikhId ? (s.sheikhId.nameArabic || '').toLowerCase() : '' %>"
+           data-category="<%= (s.category || '').toLowerCase() %>">
           <div class="series-icon">
             <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
               <path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"></path>
@@ -288,3 +430,78 @@
     </div>
   <% } %>
 </div>
+
+<% if (series && series.length > 0) { %>
+<script>
+(function() {
+  const searchInput = document.getElementById('seriesSearch');
+  const searchClear = document.getElementById('searchClear');
+  const searchResultsInfo = document.getElementById('searchResultsInfo');
+  const noResults = document.getElementById('noResults');
+  const seriesGrid = document.getElementById('seriesGrid');
+  const seriesCards = document.querySelectorAll('.series-card');
+  const totalCount = seriesCards.length;
+
+  const isArabic = '<%= locale %>' === 'ar';
+
+  function normalizeArabic(text) {
+    return text
+      .replace(/[أإآا]/g, 'ا')
+      .replace(/ة/g, 'ه')
+      .replace(/ى/g, 'ي')
+      .replace(/ؤ/g, 'و')
+      .replace(/ئ/g, 'ي')
+      .trim();
+  }
+
+  function filterSeries() {
+    const query = normalizeArabic(searchInput.value.toLowerCase());
+    let visibleCount = 0;
+
+    searchClear.classList.toggle('visible', query.length > 0);
+
+    seriesCards.forEach(card => {
+      const titleAr = normalizeArabic(card.dataset.titleAr || '');
+      const titleEn = (card.dataset.titleEn || '').toLowerCase();
+      const sheikh = normalizeArabic(card.dataset.sheikh || '');
+      const category = (card.dataset.category || '').toLowerCase();
+
+      const matches = !query ||
+        titleAr.includes(query) ||
+        titleEn.includes(query) ||
+        sheikh.includes(query) ||
+        category.includes(query);
+
+      card.classList.toggle('hidden', !matches);
+      if (matches) visibleCount++;
+    });
+
+    if (query) {
+      searchResultsInfo.textContent = isArabic
+        ? `عرض ${visibleCount} من ${totalCount} سلسلة`
+        : `Showing ${visibleCount} of ${totalCount} series`;
+    } else {
+      searchResultsInfo.textContent = '';
+    }
+
+    noResults.classList.toggle('visible', visibleCount === 0 && query.length > 0);
+    seriesGrid.style.display = visibleCount === 0 && query.length > 0 ? 'none' : '';
+  }
+
+  searchInput.addEventListener('input', filterSeries);
+
+  searchClear.addEventListener('click', function() {
+    searchInput.value = '';
+    filterSeries();
+    searchInput.focus();
+  });
+
+  searchInput.addEventListener('keydown', function(e) {
+    if (e.key === 'Escape') {
+      searchInput.value = '';
+      filterSeries();
+    }
+  });
+})();
+</script>
+<% } %>
