@@ -171,42 +171,56 @@ Added article count alongside lecture count on homepage:
 
 **Files Modified**: `views/public/articles.ejs`, `views/partials/bottomNav.ejs`
 
+## Completed Tasks
+
+### 13. Article SEO Implementation (Commit: 0126457, 0bdc0af)
+Comprehensive SEO for 338 articles:
+
+**Meta Tags** - `views/layout.ejs`, `routes/articles.js`:
+- Dynamic `og:type` (article vs website)
+- `article:published_time` and `article:modified_time`
+- `article:author` meta tag
+- Meta description from summary or first 160 chars of content
+- Canonical URLs for article list and detail pages
+
+**Article JSON-LD Schema** - `views/layout.ejs`:
+- Full Article schema with headline, description, dates
+- Links to Person schema (@id reference)
+- Publisher organization info
+- mainEntityOfPage for canonical URL
+
+**Sitemap Enhancement** - `routes/index.js`:
+- Added `/articles` listing page (priority 0.8, daily changefreq)
+- Added all published articles with lastmod dates
+- Articles get priority 0.7, monthly changefreq
+
+**Related Articles** - Already implemented in `views/public/article-detail.ejs`:
+- Shows 3 related articles (same type) at bottom of each article
+- Hijri date formatting
+
+### 14. Article Title Update Script (Commit: d88706a)
+Created `scripts/update-article-titles.js`:
+- Matches articles by sourceUrl (exact match)
+- Dry-run mode by default (no DB changes)
+- `--apply` flag to execute updates
+- Only updates title field, nothing else
+- Detailed logging with old vs new titles
+
 ## Pending Tasks
 
-### P1 - SEO Strategy (Leverage 338 Articles)
+### P1 - SEO Strategy (Remaining)
 
-**Goal**: Improve search visibility using the rich article content.
+1. **BreadcrumbList Schema** (Optional)
+   - Add breadcrumb structured data to article pages
 
-1. **Article SEO Meta Tags**
-   - Add unique meta description per article (use summary or first 160 chars)
-   - Add Open Graph tags (og:title, og:description, og:type=article)
-   - Add Twitter Card meta tags
-   - Add article:published_time, article:author structured data
+2. **URL Optimization** (Optional)
+   - Ensure all articles have clean Arabic slugs ✅ Auto-generated
+   - Canonical URLs ✅ Done
 
-2. **Sitemap Enhancement**
-   - Add all 338 articles to sitemap.xml
-   - Include lastmod dates from publishedAt
-   - Set appropriate priority (0.7 for articles vs 0.8 for lectures)
-
-3. **Internal Linking**
-   - Link related articles at bottom of each article
-   - Link articles to relevant lecture series
-   - Add "Latest Articles" section to series pages
-
-4. **Schema.org Structured Data**
-   - Add Article schema to article pages
-   - Add BreadcrumbList schema
-   - Add Organization/Person schema for the Sheikh
-
-5. **URL Optimization**
-   - Ensure all articles have clean Arabic slugs
-   - Add canonical URLs to prevent duplicate content
-   - Consider English transliterated slugs for broader reach
-
-6. **Content Discoverability**
+3. **Content Discoverability**
    - Add articles to homepage featured section ✅ Done
-   - Create topic/category pages for article groupings
-   - Add search functionality within articles
+   - Create topic/category pages for article groupings (future)
+   - Add search functionality within articles (future)
 
 ### 12. Admin Panel for Articles (Phase 1 Complete)
 Implemented full article management in admin panel:
