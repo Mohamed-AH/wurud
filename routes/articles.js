@@ -40,8 +40,9 @@ router.get('/', async (req, res) => {
     res.render('public/articles', {
       title: locale === 'ar' ? 'المقالات' : 'Articles',
       metaDescription: locale === 'ar'
-        ? 'مقالات ومواضيع علمية مختارة'
-        : 'Selected scholarly articles and topics',
+        ? 'مقالات ومواضيع علمية مختارة للشيخ حسن بن محمد منصور الدغريري'
+        : 'Selected scholarly articles by Sheikh Hasan bin Mohammed Mansour Dhaghriri',
+      canonicalPath: page > 1 ? `/articles?page=${page}` : '/articles',
       articles,
       currentPage: page,
       totalPages,
@@ -101,11 +102,28 @@ router.get('/:slugOrId', async (req, res) => {
       .select('shortId title summary slug publishedAt')
       .lean();
 
+    // Generate meta description (summary or first 160 chars of content)
+    let metaDescription = article.summary;
+    if (!metaDescription && article.content) {
+      metaDescription = article.content.replace(/\s+/g, ' ').trim().substring(0, 160);
+      if (article.content.length > 160) metaDescription += '...';
+    }
+    metaDescription = metaDescription || article.title;
+
+    // Build canonical URL
+    const articleSlug = article.slug || article.shortId || article._id;
+    const canonicalPath = `/articles/${articleSlug}`;
+
     res.render('public/article-detail', {
       title: article.title,
-      metaDescription: article.summary || article.title,
+      metaDescription,
+      canonicalPath,
       article,
-      relatedArticles
+      relatedArticles,
+      // Article-specific SEO
+      ogType: 'article',
+      publishedTime: article.publishedAt ? new Date(article.publishedAt).toISOString() : null,
+      modifiedTime: article.updatedAt ? new Date(article.updatedAt).toISOString() : null
     });
   } catch (error) {
     console.error('Article detail error:', error);

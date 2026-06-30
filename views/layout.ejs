@@ -18,12 +18,21 @@
   <link rel="alternate" hreflang="x-default" href="https://rasmihassan.com<%= typeof currentPath !== 'undefined' ? currentPath : '' %>">
 
   <!-- Open Graph / Facebook -->
-  <meta property="og:type" content="website">
+  <meta property="og:type" content="<%= typeof ogType !== 'undefined' ? ogType : 'website' %>">
   <meta property="og:url" content="https://rasmihassan.com<%= typeof canonicalPath !== 'undefined' ? canonicalPath : (typeof currentPath !== 'undefined' ? currentPath : '') %>">
   <meta property="og:title" content="<%= title %> - <%= locale === 'ar' ? 'موقع الشيخ حسن بن محمد منصور الدغريري' : 'Sheikh Hasan bin Mohammed Mansour Dhaghriri' %>">
   <meta property="og:description" content="<%= typeof metaDescription !== 'undefined' ? metaDescription : (locale === 'ar' ? 'الموقع الرسمي للشيخ حسن بن محمد الدغريري - دروس ومحاضرات في العقيدة والفقه من جامع الورود بجدة' : 'Official site of Sheikh Hasan Dhaghriri - Islamic lectures from Jeddah') %>">
   <meta property="og:locale" content="<%= locale === 'ar' ? 'ar_SA' : 'en_US' %>">
   <meta property="og:site_name" content="<%= locale === 'ar' ? 'موقع الشيخ حسن بن محمد منصور الدغريري' : 'Sheikh Hasan bin Mohammed Mansour Dhaghriri' %>">
+  <% if (typeof publishedTime !== 'undefined' && publishedTime) { %>
+  <meta property="article:published_time" content="<%= publishedTime %>">
+  <% } %>
+  <% if (typeof modifiedTime !== 'undefined' && modifiedTime) { %>
+  <meta property="article:modified_time" content="<%= modifiedTime %>">
+  <% } %>
+  <% if (typeof ogType !== 'undefined' && ogType === 'article') { %>
+  <meta property="article:author" content="<%= locale === 'ar' ? 'الشيخ حسن بن محمد منصور الدغريري' : 'Sheikh Hasan bin Mohammed Mansour Dhaghriri' %>">
+  <% } %>
 
   <!-- Twitter -->
   <meta name="twitter:card" content="summary">
@@ -71,6 +80,33 @@
     ]
   }
   </script>
+  <% if (typeof article !== 'undefined' && article && typeof ogType !== 'undefined' && ogType === 'article') { %>
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@type": "Article",
+    "headline": "<%= article.title.replace(/"/g, '\\"') %>",
+    "description": "<%= (article.summary || article.title).replace(/"/g, '\\"').substring(0, 200) %>",
+    "datePublished": "<%= article.publishedAt ? new Date(article.publishedAt).toISOString() : '' %>",
+    <% if (article.updatedAt) { %>"dateModified": "<%= new Date(article.updatedAt).toISOString() %>",<% } %>
+    "author": {
+      "@type": "Person",
+      "@id": "https://rasmihassan.com/#person",
+      "name": "<%= locale === 'ar' ? 'الشيخ حسن بن محمد منصور الدغريري' : 'Sheikh Hasan bin Mohammed Mansour Dhaghriri' %>"
+    },
+    "publisher": {
+      "@type": "Organization",
+      "name": "<%= locale === 'ar' ? 'موقع الشيخ حسن بن محمد منصور الدغريري' : 'Sheikh Hasan bin Mohammed Mansour Dhaghriri' %>",
+      "url": "https://rasmihassan.com"
+    },
+    "mainEntityOfPage": {
+      "@type": "WebPage",
+      "@id": "https://rasmihassan.com<%= typeof canonicalPath !== 'undefined' ? canonicalPath : '' %>"
+    },
+    "inLanguage": "ar"
+  }
+  </script>
+  <% } %>
 
   <!-- Favicon -->
   <link rel="icon" type="image/svg+xml" href="/favicon.svg">
