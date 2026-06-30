@@ -16,11 +16,18 @@
  *   }
  * ]
  */
-require('dotenv').config();
-const fs = require('fs');
 const path = require('path');
+
+// Resolve paths relative to script location
+const scriptDir = __dirname;
+const projectRoot = path.resolve(scriptDir, '..');
+
+require('dotenv').config({ path: path.join(projectRoot, '.env') });
+const fs = require('fs');
 const mongoose = require('mongoose');
-const { Article } = require('../models');
+
+// Import Article model directly to avoid any index.js issues
+const Article = require(path.join(projectRoot, 'models', 'Article'));
 
 async function updateArticleTitles(jsonFilePath, applyChanges = false) {
   console.log('📝 Article Title Update Script');
