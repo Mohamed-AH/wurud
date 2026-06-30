@@ -350,6 +350,14 @@ Added admin setting to switch between new card layout and classic table layout:
 - Responsive: 768px and 480px breakpoints
 - Title truncation with ellipsis
 
+**3.5 Lucide Icons & UI Polish** ✅ (Commits: d54910f, 28eb102)
+- Added Lucide icons library from unpkg CDN
+- Replaced emoji icons with Lucide SVG icons (play, download, plus, minus)
+- Simplified expand button from text ("عرض الدروس ▼") to clean +/- icon
+- Styled episode sort bar with gold chips matching design
+- Fixed font consistency: updated main.css to use Cairo font variables
+- Removed hardcoded Spectral, Cormorant Garamond, Noto Naskh Arabic fonts
+
 **Admin Impact**: All existing admin controls preserved
 
 ---
