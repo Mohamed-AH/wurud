@@ -459,23 +459,30 @@ Solved audio player + bottom navigation overlap on mobile:
   - Play/pause icons sync between mini and full player
   - Auto-expand on desktop resize
 
-**3.9 Critical Bug Fixes** ✅ (Commit: 7112c36)
+**3.9 Critical Bug Fixes** ✅ (Commits: 7112c36, 57b9018)
 
 Three critical issues fixed:
 
 1. **Series-info alignment** - Tags (lesson count + category badge) were left-aligned instead of right-aligned
-   - **Root Cause**: Using `direction: rtl` with `justify-content: flex-end` causes flex-end to mean LEFT side
-   - **Fix**: Changed to `flex-direction: row-reverse` with `justify-content: flex-start`
-   - **File**: `views/public/index.ejs` (lines 435-443)
+   - **Root Cause**: `flex-direction: row-reverse` in RTL context reverses back to LTR, making `flex-start` = LEFT
+   - **Fix**: Use physical positioning instead - `width: fit-content; margin-left: auto; margin-right: 0`
+   - **File**: `views/public/index.ejs` (lines 435-445)
+   - **Why physical not logical**: Design requires VISUAL right alignment regardless of writing direction
 
 2. **Mini-player not appearing on mobile** - Clicking play showed full player instead of mini-player
    - **Root Cause**: `show()` removed `hidden` class BEFORE adding `minimized` class, causing flash
    - **Fix**: Refactored `show()` to add `minimized` class first, then remove `hidden`
-   - **File**: `public/js/audioPlayer.js` (lines 381-400)
+   - **Additional fix**: Added `!important` to ensure `display: flex` is applied
+   - **File**: `public/js/audioPlayer.js`, `public/css/audioPlayer.css`
+   - **Debug**: Added console logging to trace show/minimize flow
 
 3. **Audio player layout** - Icons were misaligned and unprofessional
    - **Fix**: Restructured HTML with close button in top-right corner, new `.action-btn` class for secondary controls (speed, volume, download)
    - **Files**: `views/partials/audioPlayer.ejs`, `public/css/audioPlayer.css`
+
+**IMPORTANT**: Always minify after editing JS files:
+- `npx terser public/js/audioPlayer.js -o public/js/audioPlayer.min.js --compress --mangle`
+- `npx terser public/js/homepage.js -o public/js/homepage.min.js --compress --mangle`
 
 ---
 
