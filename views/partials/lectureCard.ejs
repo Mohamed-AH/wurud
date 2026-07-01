@@ -34,14 +34,21 @@
 
     <div class="lecture-info">
       <% if (lecture.duration && lecture.duration > 0) { %>
-        <span class="lecture-duration">⏱️ <%= lecture.durationFormatted %></span>
+        <span class="lecture-duration">
+          <svg class="info-icon" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+          <%= lecture.durationFormatted %>
+        </span>
         <span class="lecture-divider">•</span>
       <% } %>
-      <span class="lecture-plays"><i data-lucide="play"></i> <%= lecture.playCount %> <%= locale === 'ar' ? 'مرة' : 'plays' %></span>
+      <span class="lecture-plays">
+        <svg class="info-icon" width="12" height="12" viewBox="0 0 24 24" fill="currentColor"><polygon points="5 3 19 12 5 21 5 3"/></svg>
+        <%= lecture.playCount %> <%= locale === 'ar' ? 'مرة' : 'plays' %>
+      </span>
       <% if (lecture.dateRecordedHijri) { %>
         <span class="lecture-divider">•</span>
         <span class="lecture-date" title="<%= locale === 'ar' ? 'تاريخ التسجيل (هجري)' : 'Recording Date (Hijri)' %>">
-          <i data-lucide="calendar"></i> <%= formatHijriDate(lecture.dateRecordedHijri) %>
+          <svg class="info-icon" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+          <%= formatHijriDate(lecture.dateRecordedHijri) %>
         </span>
       <% } %>
       <% if (lecture.category && lecture.category !== 'Other') { %>
@@ -166,6 +173,18 @@
 
   .lecture-divider {
     opacity: 0.5;
+  }
+
+  /* Info icons */
+  .info-icon {
+    vertical-align: middle;
+    margin-right: 3px;
+    opacity: 0.7;
+  }
+
+  html[dir="rtl"] .info-icon {
+    margin-right: 0;
+    margin-left: 3px;
   }
 
   /* Number badge inside card - hidden on desktop, shown on mobile */
@@ -323,34 +342,48 @@
     }
 
     .lecture-info {
-      font-size: 12px;
+      font-size: 11px;
       color: var(--redesign-text-muted, #A89070);
-      gap: 6px;
+      gap: 4px;
+      flex-wrap: wrap;
+    }
+
+    .lecture-info .info-icon {
+      width: 11px;
+      height: 11px;
     }
 
     .lecture-divider {
       display: inline;
+      opacity: 0.4;
     }
 
-    /* Actions: Play button full-width, download/share small */
+    /* Actions: Single row - Play (flex) + Download + Share */
     .lecture-actions {
-      flex-direction: column;
+      flex-direction: row;
       gap: 8px;
       width: 100%;
+      align-items: center;
     }
 
     .btn-play {
-      width: 100%;
-      height: 42px;
+      flex: 1;
+      height: 36px;
       border-radius: 8px;
-      font-size: 14px;
+      font-size: 13px;
       font-weight: 600;
       display: flex;
       align-items: center;
       justify-content: center;
-      gap: 8px;
+      gap: 6px;
       background: var(--redesign-gold-primary, #C49A3C);
-      border-color: var(--redesign-gold-primary, #C49A3C);
+      border: none;
+      color: var(--redesign-brown-dark, #2C1508);
+    }
+
+    .btn-play .play-icon {
+      width: 12px;
+      height: 12px;
     }
 
     .btn-play::after {
@@ -364,18 +397,24 @@
 
     .lecture-secondary-actions {
       display: flex;
-      gap: 8px;
-      justify-content: flex-end;
+      gap: 6px;
     }
 
     .btn-download,
     .btn-share-card {
-      width: 36px;
-      height: 36px;
-      border-radius: 8px;
+      width: 34px;
+      height: 34px;
+      border-radius: 6px;
       background: transparent;
       border: 1px solid var(--redesign-gold-light, #DEC99A);
       color: var(--redesign-text-mid, #7A5C3A);
+      flex-shrink: 0;
+    }
+
+    .btn-download svg,
+    .btn-share-card svg {
+      width: 14px;
+      height: 14px;
     }
 
     .btn-download:hover,
@@ -388,52 +427,13 @@
   /* Small phones (below 480px) */
   @media (max-width: 480px) {
     .lecture-card {
-      padding: 12px;
-    }
-
-    .lecture-number-inside {
-      top: 10px;
-      right: 10px;
-      width: 28px;
-      height: 28px;
-      font-size: 12px;
-    }
-
-    .lecture-title {
-      font-size: 14px;
-      padding-left: 40px;
-    }
-
-    html[dir="rtl"] .lecture-title {
-      padding-left: 0;
-      padding-right: 40px;
-    }
-
-    .lecture-info {
-      font-size: 11px;
-    }
-
-    .btn-play {
-      height: 38px;
-      font-size: 13px;
-    }
-
-    .btn-download,
-    .btn-share-card {
-      width: 32px;
-      height: 32px;
-    }
-  }
-
-  /* Very small phones (below 360px) */
-  @media (max-width: 360px) {
-    .lecture-card {
-      padding: 10px;
+      padding: 10px 12px;
+      gap: 8px;
     }
 
     .lecture-number-inside {
       top: 8px;
-      right: 8px;
+      right: 10px;
       width: 26px;
       height: 26px;
       font-size: 11px;
@@ -442,6 +442,7 @@
     .lecture-title {
       font-size: 13px;
       padding-left: 36px;
+      margin-bottom: 4px;
     }
 
     html[dir="rtl"] .lecture-title {
@@ -453,15 +454,83 @@
       font-size: 10px;
     }
 
+    .lecture-info .info-icon {
+      width: 10px;
+      height: 10px;
+    }
+
+    .lecture-actions {
+      gap: 6px;
+    }
+
     .btn-play {
-      height: 36px;
+      height: 34px;
       font-size: 12px;
+      gap: 5px;
+    }
+
+    .btn-play .play-icon {
+      width: 10px;
+      height: 10px;
     }
 
     .btn-download,
     .btn-share-card {
-      width: 30px;
-      height: 30px;
+      width: 32px;
+      height: 32px;
+    }
+
+    .btn-download svg,
+    .btn-share-card svg {
+      width: 12px;
+      height: 12px;
+    }
+  }
+
+  /* Very small phones (below 360px) */
+  @media (max-width: 360px) {
+    .lecture-card {
+      padding: 8px 10px;
+      gap: 6px;
+    }
+
+    .lecture-number-inside {
+      top: 6px;
+      right: 8px;
+      width: 24px;
+      height: 24px;
+      font-size: 10px;
+    }
+
+    .lecture-title {
+      font-size: 12px;
+      padding-left: 32px;
+    }
+
+    html[dir="rtl"] .lecture-title {
+      padding-left: 0;
+      padding-right: 32px;
+    }
+
+    .lecture-info {
+      font-size: 9px;
+    }
+
+    .btn-play {
+      height: 32px;
+      font-size: 11px;
+    }
+
+    .btn-download,
+    .btn-share-card {
+      width: 28px;
+      height: 28px;
+    }
+
+    .btn-download svg,
+    .btn-share-card svg {
+      width: 11px;
+      height: 11px;
     }
   }
 </style>

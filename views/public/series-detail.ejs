@@ -160,6 +160,23 @@
     border-bottom: 3px solid var(--accent-gold);
   }
 
+  .section-header-row {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 16px;
+  }
+
+  .section-header-row .section-title {
+    margin-bottom: 0;
+    padding-bottom: 0;
+    border-bottom: none;
+  }
+
+  .lesson-count-badge {
+    display: none;
+  }
+
   .description-card, .bio-card {
     background: var(--cream);
     border-radius: 12px;
@@ -594,50 +611,30 @@
       display: none;
     }
 
-    /* Compact stats - inline with description */
+    /* Hide stats section on mobile - count shown inline with section header */
     .stats-section {
-      padding: 12px 0;
-      background: transparent;
-    }
-
-    .stats-grid {
-      display: flex;
-      justify-content: flex-start;
-      gap: 12px;
-    }
-
-    .stat-card {
-      background: transparent;
-      border: none;
-      box-shadow: none;
-      padding: 0;
-      gap: 6px;
-      flex-direction: row;
-      align-items: center;
-    }
-
-    .stat-icon {
-      width: 36px;
-      height: 36px;
-      border-radius: 8px;
-    }
-
-    .stat-icon svg {
-      width: 18px;
-      height: 18px;
-    }
-
-    .stat-value {
-      font-size: 18px;
-    }
-
-    .stat-label {
-      font-size: 12px;
-    }
-
-    /* Hide plays/duration on mobile - show only lesson count */
-    .stat-card:not(:first-child) {
       display: none;
+    }
+
+    /* Show lesson count badge inline with section header */
+    .lesson-count-badge {
+      display: inline-flex;
+      background: var(--redesign-brown-dark, #2C1508);
+      color: var(--redesign-gold-light, #DEC99A);
+      font-size: 11px;
+      font-weight: 700;
+      padding: 4px 10px;
+      border-radius: 8px;
+      white-space: nowrap;
+    }
+
+    .section-header-row {
+      margin-bottom: 10px;
+      gap: 10px;
+    }
+
+    .section-header-row .section-title {
+      font-size: 15px;
     }
 
     /* Compact description */
@@ -814,9 +811,22 @@
     }
 
     .section-title {
-      font-size: 15px;
+      font-size: 14px;
       margin-bottom: 8px;
       padding-bottom: 4px;
+    }
+
+    .section-header-row {
+      gap: 8px;
+    }
+
+    .section-header-row .section-title {
+      font-size: 14px;
+    }
+
+    .lesson-count-badge {
+      font-size: 10px;
+      padding: 3px 8px;
     }
 
     .description-text, .bio-text {
@@ -1232,10 +1242,32 @@
   </div>
 
   <!-- Description -->
+  <%
+    // Arabic pluralization helper for lesson/khutba count
+    function getArabicPlural(count, singular, dual, plural3to10, plural11plus) {
+      if (count === 1) return singular;
+      if (count === 2) return dual;
+      if (count >= 3 && count <= 10) return count + ' ' + plural3to10;
+      return count + ' ' + plural11plus;
+    }
+
+    const lessonCountText = locale === 'ar'
+      ? getArabicPlural(
+          stats.totalLectures,
+          isKhutbaSeries ? 'خطبة واحدة' : 'درس واحد',
+          isKhutbaSeries ? 'خطبتان' : 'درسان',
+          isKhutbaSeries ? 'خطب' : 'دروس',
+          isKhutbaSeries ? 'خطبة' : 'درسًا'
+        )
+      : stats.totalLectures + ' ' + (isKhutbaSeries ? 'Khutbahs' : 'Lectures');
+  %>
   <% if (series.descriptionArabic || series.descriptionEnglish) { %>
-    <div class="content-section">
+    <div class="content-section description-section">
       <div class="container">
-        <h2 class="section-title"><%= locale === 'ar' ? 'عن السلسلة' : 'About the Series' %></h2>
+        <div class="section-header-row">
+          <h2 class="section-title"><%= locale === 'ar' ? 'عن السلسلة' : 'About the Series' %></h2>
+          <span class="lesson-count-badge"><%= lessonCountText %></span>
+        </div>
         <div class="description-card">
           <% if (locale === 'ar') { %>
             <% if (series.descriptionArabic) { %>
