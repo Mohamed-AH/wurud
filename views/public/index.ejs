@@ -3485,8 +3485,7 @@ function switchDayTab(location, day) {
     <div class="featured-series-header" id="featured-header" onclick="toggleFeaturedSeries()">
       <div class="featured-series-title-row">
         <h2 class="featured-series-title">
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor" stroke="currentColor" stroke-width="1"><polygon points="12,2 15.09,8.26 22,9.27 17,14.14 18.18,21.02 12,17.77 5.82,21.02 7,14.14 2,9.27 8.91,8.26"/></svg>
-          <%= locale === 'ar' ? 'مميز' : 'Featured' %>
+          <%= (locale === 'ar' ? featuredSection.title.ar : featuredSection.title.en).replace(/[\u{1F300}-\u{1F9FF}]|[\u{2600}-\u{26FF}]|[\u{2700}-\u{27BF}]|[\u{1F600}-\u{1F64F}]|[\u{1F680}-\u{1F6FF}]|[\u{2300}-\u{23FF}]|[\u{2B50}]|[\u{2705}]|[\u{274C}]|[\u{274E}]|[\u{1F4C5}]/gu, '').trim() %>
         </h2>
         <span class="featured-series-count"><%= featuredSeries.length %> <%= locale === 'ar' ? 'سلاسل' : 'series' %></span>
       </div>
