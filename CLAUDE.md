@@ -271,11 +271,311 @@ Added admin setting to switch between new card layout and classic table layout:
 
 ## Pending Tasks
 
+### ACTIVE: Design Redesign Implementation (June 2026)
+
+**Design Source Files**:
+- Desktop: `/.claude/uploads/.../Desktop_Redesign.dc.html`
+- Mobile: `/.claude/uploads/.../Audio_Archive_Redesign.dc.html`
+
+**Design System Colors (from handoff)**:
+```css
+--redesign-brown-dark: #2C1508;    /* Primary dark */
+--redesign-gold-primary: #C49A3C;  /* Accent gold */
+--redesign-gold-light: #DEC99A;    /* Light gold */
+--redesign-badge-bg: #E8D5A0;      /* Badge/chip background */
+--redesign-sage: #6B7A4E;          /* Hero green gradient */
+--redesign-cream-bg: #F5EDE0;      /* Page background */
+--redesign-text-mid: #7A5C3A;      /* Mid-tone text */
+--redesign-text-muted: #A89070;    /* Muted text */
+--redesign-card-bg: #FDF8F2;       /* Card backgrounds */
+```
+
+**Typography**: Cairo font family (Google Fonts), weights: 400, 500, 600, 700, 800
+
+---
+
+#### Phase 1: Design System Foundation
+**Status**: ✅ COMPLETED (Commit: ec3535d)
+
+1. **Cairo Font Loading** (`views/layout.ejs`)
+   - Added Google Fonts preconnect and Cairo import
+   - Updated `--font-arabic-display` and `--font-arabic-body` to use Cairo with fallbacks
+   - Added `--font-cairo` variable for direct use
+
+2. **CSS Variables** (`public/css/main.css`)
+   - Verified all redesign variables exist (lines 773-781)
+
+---
+
+#### Phase 2: Header Navigation
+**Status**: ✅ COMPLETED (Commit: ec3535d)
+
+1. **Desktop Header** - Added "مقالات" (Articles) to navigation
+   - File: `views/partials/header.ejs`
+   - Added between Series and Biography links
+
+2. **Mobile Menu** - Added Articles to hamburger menu
+   - File: `views/partials/header.ejs` (mobile section)
+   - Same position as desktop
+
+**Admin Impact**: None - nav is not admin-controlled
+
+---
+
+#### Phase 3: Homepage Redesign
+**Status**: ✅ COMPLETED (Commits: ec3535d, 2e30b43)
+
+**3.1 Latest Articles Section** ✅
+- Card grid: 4 columns desktop, 2 tablet, 1 mobile
+- Cards with type badge, date, title, excerpt, "قراءة المقال" link
+- Gradient divider above section
+- Uses existing `recentArticles` (admin-controlled)
+
+**3.2 Featured Series Section** ✅
+- Collapsible gold header (#E8D5A0) with star icon
+- Count badge in dark pill
+- List items with title, sheikh name, lesson count badge
+- Uses first `homepageSection` (admin-controlled)
+
+**3.3 Content Tabs** ✅
+- Underline indicator style for tabs
+- Compact filter chips with new color scheme
+- SVG search icon integrated into filter panel
+- Max-width 960px per design
+
+**3.4 Episode Item Styling** ✅ (Commit: e5b2832)
+- Episode row layout: gold number badge | title | action buttons
+- Compact gold play/download buttons (side by side)
+- Hidden episode meta for cleaner mobile design
+- Responsive: 768px and 480px breakpoints
+- Title truncation with ellipsis
+
+**3.5 Lucide Icons & UI Polish** ✅ (Commits: d54910f, 28eb102, 8fada05, 6b11d62, 2281bff, 0e518c6, 8c9938a)
+
+**CSP Fix** (server.js):
+- Added `https://fonts.googleapis.com` to styleSrc
+- Added `https://fonts.gstatic.com` to fontSrc  
+- Added `https://unpkg.com` to scriptSrc for Lucide icons
+
+**Lucide Icons** (layout.ejs, index.ejs, partials):
+- Added Lucide icons library from unpkg CDN
+- Replaced ALL emoji icons with Lucide SVG icons:
+  - Stats: 🎧→headphones, ✍️→pen-line
+  - Tabs: 📚→library, 🎙️→mic, 🕌→building-2
+  - Episodes: ⏱️→clock, 📅→calendar, ▶→play, ⬇→download
+  - Schedule: 🕌→building-2, 💻→monitor, 📭→inbox
+  - Bottom nav: 🏠→home, 📚→library, 🔍→search, ✍️→pen-line, 📅→calendar-days
+- Simplified expand button from text ("عرض الدروس ▼") to clean +/- icon
+
+**homepage.js Updates**:
+- Updated all dynamic content to use Lucide icons
+- Added `refreshIcons()` helper to reinitialize Lucide after dynamic render
+- Fixed formatTime scope issue (was in wrong IIFE)
+- Styled sort bar with .episode-sort-bar and .sort-chip classes
+
+**Font Fix** (main.css):
+- Updated all font-family rules to use `var(--font-cairo)`
+- Removed hardcoded Spectral, Cormorant Garamond, Noto Naskh Arabic
+
+**Admin Impact**: All existing admin controls preserved
+
+**3.6 Mobile Layout Fixes** ✅ (Commit: 4b2dc2a)
+
+Six mobile-specific layout improvements:
+
+1. **Horizontal filter scroll** - Filter chips now scroll horizontally on mobile
+   - Added `flex-wrap: nowrap; overflow-x: auto` to `.filter-group`
+   - Hidden scrollbar with vendor prefixes
+   
+2. **Remove diamond grid background** - Hidden decorative diagonal pattern on mobile
+   - Added `@media (max-width: 768px) { body::before { display: none; } }` to main.css
+
+3. **Episode title text wrapping** - Titles wrap naturally instead of truncating
+   - Changed `white-space: normal; overflow: visible;` on `.episode-title`
+
+4. **Icon-only buttons** - Play/Download buttons show only icons on mobile
+   - Used `font-size: 0` to hide text labels
+   - Set explicit width/height (32px on tablet, 28px on phone)
+
+5. **RTL alignment for articles section** - Fixed header layout
+   - Added `flex-direction: row-reverse` to `.featured-articles-header`
+
+6. **RTL layout for featured series** - Fixed flex direction for Arabic text
+   - Changed `.featured-series-item` to use `flex-direction: row-reverse`
+   - Used `margin-inline-start: auto` for lessons badge positioning
+
+**3.7 Series Cards Design Match** ✅ (Commits: e2c249b, c9601e4, 7255159, 4dcfdca)
+
+Restructured series cards in content tabs to match design specification:
+
+1. **Vertical card layout**:
+   - Button (+) on far LEFT
+   - Content area with vertical stacking on RIGHT:
+     * Title at top (bold, 16px, weight 700)
+     * Sheikh name below (lighter, 13px)
+     * Lesson count + category badge at bottom right
+   
+2. **HTML restructure**:
+   - Added `.series-content` wrapper div
+   - Button moved before content in HTML
+   - Sheikh name shown (was hidden)
+   - `.series-info` contains lesson count + badge
+
+3. **CSS updates**:
+   - `.series-header`: `flex-direction: row-reverse` (button on left)
+   - `.series-content`: vertical flex column
+   - `.series-info`: `flex-direction: row-reverse; justify-content: flex-start` (right-aligned)
+   - `.category-badge`: gold background (#C49A3C) with white text
+
+4. **Dynamic cards** (homepage.js):
+   - Updated `createSeriesCard()` to match new structure
+   - Minified homepage.min.js
+
+5. **CSP fix**:
+   - Added `https://unpkg.com` to `connect-src` for Lucide source maps
+
+**3.8 Mobile Mini-Player** ✅ (Commit: 4dcfdca)
+
+Solved audio player + bottom navigation overlap on mobile:
+
+**Problem**: Sticky audio player and sticky bottom nav overlapped on mobile.
+
+**Solution**: Mini-player that collapses when scrolling.
+
+**Implementation**:
+- `views/partials/audioPlayer.ejs`:
+  - Added `.mini-player` div with title + play/pause button
+  - Mini-player sits above bottom nav (64px from bottom)
+
+- `public/css/audioPlayer.css`:
+  - `.audio-player.minimized` state
+  - Mini-player styles (compact bar)
+  - Expand handle indicator
+
+- `public/js/audioPlayer.js`:
+  - `minimize()` / `expand()` methods
+  - Scroll listener auto-minimizes on scroll down
+  - Click mini-player to expand
+  - Play/pause icons sync between mini and full player
+  - Auto-expand on desktop resize
+
+**3.9 Critical Bug Fixes** ✅ (Commits: 7112c36, 57b9018)
+
+Three critical issues fixed:
+
+1. **Series-info alignment** - Tags (lesson count + category badge) were left-aligned instead of right-aligned
+   - **Root Cause**: `flex-direction: row-reverse` in RTL context reverses back to LTR, making `flex-start` = LEFT
+   - **Fix**: Use physical positioning instead - `width: fit-content; margin-left: auto; margin-right: 0`
+   - **File**: `views/public/index.ejs` (lines 435-445)
+   - **Why physical not logical**: Design requires VISUAL right alignment regardless of writing direction
+
+2. **Mini-player not appearing on mobile** - Clicking play showed full player instead of mini-player
+   - **Root Cause**: `show()` removed `hidden` class BEFORE adding `minimized` class, causing flash
+   - **Fix**: Refactored `show()` to add `minimized` class first, then remove `hidden`
+   - **Additional fix**: Added `!important` to ensure `display: flex` is applied
+   - **File**: `public/js/audioPlayer.js`, `public/css/audioPlayer.css`
+   - **Debug**: Added console logging to trace show/minimize flow
+
+3. **Audio player layout** - Icons were misaligned and unprofessional
+   - **Fix**: Restructured HTML with close button in top-right corner, new `.action-btn` class for secondary controls (speed, volume, download)
+   - **Files**: `views/partials/audioPlayer.ejs`, `public/css/audioPlayer.css`
+
+**IMPORTANT**: Always minify after editing JS files:
+- `npx terser public/js/audioPlayer.js -o public/js/audioPlayer.min.js --compress --mangle`
+- `npx terser public/js/homepage.js -o public/js/homepage.min.js --compress --mangle`
+
+---
+
+#### Phase 4: Series Pages
+**Status**: ✅ 4.1 COMPLETED (Commit: 4533b44), 4.2 Pending
+
+**4.1 Series List Page** (`views/public/series.ejs`) ✅
+- Grid: 3 columns desktop, 2 tablet, 1 mobile
+- Cards with icon, title, subtitle, category badge, lesson count
+- New gradient header with gold divider
+- Container max-width 960px
+
+**4.2 Series Detail Page** (`views/public/series-detail.ejs`)
+- Hero section with gradient
+- Stats bar (lesson count + play all button)
+- Lesson cards with action buttons
+- Status: Pending
+
+---
+
+#### Phase 5: Lecture Player Page
+**Status**: Pending
+
+**File**: `views/public/lecture.ejs`
+- Mobile redesign already done (earlier commit)
+- Desktop: Player card, waveform/progress
+- Pending: Desktop styling audit
+
+---
+
+#### Phase 6: Articles Page Audit
+**Status**: Pending
+
+**File**: `views/public/articles.ejs`
+- Already redesigned in earlier commits
+- Audit for: Category filter chips (if needed), pagination styling
+
+---
+
+### Implementation Order (Recommended)
+1. Phase 1 (Foundation) - Quick, no functional changes
+2. Phase 2 (Header) - Small scope, visible impact
+3. Phase 3.1-3.2 (Articles + Featured) - Medium scope, uses existing data
+4. Phase 4.1 (Series List) - Already partially done
+5. Phase 3.3 (Content Tabs) - New feature, largest scope
+6. Phase 4.2, 5, 6 - Polish passes
+
+### Critical Constraints
+1. **Do NOT break admin controls** - All dynamic content must continue working
+2. **RTL-first** - Base styles are RTL, use `html[dir="ltr"]` for LTR overrides
+3. **Mobile-first** - Design is mobile-optimized, scale up for desktop
+4. **Test both locales** - Arabic (RTL) and English (LTR) must work
+
+---
+
+### Contact Us Feature (Telegram Integration)
+**Status**: ✅ COMPLETED
+
+Implemented contact form with Telegram notification routing for link-building and collaboration inquiries.
+
+**Files Created**:
+- `routes/api/contact.js` - POST endpoint with validation and Telegram API integration
+- `views/partials/contactModal.ejs` - Modal component with form, RTL-first design
+
+**Files Modified**:
+- `.env.example` - Added TELEGRAM_BOT_TOKEN and TELEGRAM_CHAT_ID placeholders
+- `server.js` - Registered `/api/contact` route
+- `views/partials/footer.ejs` - Added "تواصل معنا" link with mail icon
+- `views/layout.ejs` - Included contactModal partial
+
+**Features**:
+- Rate limited: 5 requests/hour per IP (spam protection)
+- Server-side validation (name, email format, message)
+- Client-side validation with RTL-aligned error messages
+- Lucide X icon for close button (consistent with site icons)
+- Loading state and success/error feedback
+- Escape key and click-outside-to-close
+- Mobile: slides up as bottom sheet
+- Desktop: centered modal with shadow
+
+**Environment Variables Required**:
+```
+TELEGRAM_BOT_TOKEN=your-bot-token-from-botfather
+TELEGRAM_CHAT_ID=your-private-chat-id
+```
+
+---
+
 ### P3 - Enhancements (Remaining)
 
-1. **Cairo Font** (Optional)
+1. **Cairo Font** (Being addressed in Phase 1)
    - Design uses Cairo from Google Fonts
-   - Would require font loading strategy update
+   - Added to Phase 1 implementation
 
 ### 12. Admin Panel for Articles (Phase 1 Complete)
 Implemented full article management in admin panel:

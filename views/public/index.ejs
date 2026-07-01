@@ -1,16 +1,20 @@
 <style>
-  /* Search Hero Section */
+  /* Search Hero Section - Redesigned per design handoff */
   .search-hero {
-    background: linear-gradient(180deg, #5C4033 0%, #8B9D83 100%);
-    padding: var(--space-2xl) var(--space-lg);
+    background: linear-gradient(to left, var(--redesign-brown-dark, #2C1508) 0%, #3D1E0A 28%, #5E6B3D 62%, var(--redesign-sage, #6B7A4E) 100%);
+    padding: 64px 0 56px;
     text-align: center;
-    margin-bottom: var(--space-2xl);
-    border-bottom: 4px solid var(--accent-gold);
     position: relative;
-    min-height: 280px;
-    display: flex;
-    flex-direction: column;
-    justify-content: center;
+  }
+
+  .search-hero::after {
+    content: '';
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    height: 3px;
+    background: linear-gradient(to left, transparent 0%, var(--redesign-gold-primary, #C49A3C) 20%, var(--redesign-gold-primary, #C49A3C) 80%, transparent 100%);
   }
 
   /* Calligraphy watermark background */
@@ -21,7 +25,7 @@
     left: 50%;
     transform: translate(-50%, -50%);
     font-size: 200px;
-    color: rgba(255, 255, 255, 0.03);
+    color: rgba(255, 255, 255, 0.02);
     font-family: var(--font-arabic-display);
     pointer-events: none;
     z-index: 0;
@@ -33,21 +37,20 @@
   }
 
   .search-hero-quote {
-    font-family: var(--font-arabic-display);
-    font-size: 36px;
-    font-weight: 700;
-    color: #FAF7F2;
+    font-family: var(--font-cairo, 'Cairo', sans-serif);
+    font-size: 38px;
+    font-weight: 800;
+    color: var(--redesign-card-bg, #FDF8F2);
     margin-bottom: 12px;
-    line-height: 1.8;
-    text-shadow: 2px 2px 6px rgba(0, 0, 0, 0.3);
+    line-height: 1.4;
   }
 
   .search-hero-subheading {
-    font-family: var(--font-arabic-body);
-    font-size: 18px;
+    font-family: var(--font-cairo, 'Cairo', sans-serif);
+    font-size: 15px;
     font-weight: 400;
-    color: rgba(250, 247, 242, 0.85);
-    margin-bottom: 28px;
+    color: rgba(245, 237, 224, 0.7);
+    margin-bottom: 36px;
     line-height: 1.6;
     max-width: 700px;
     margin-left: auto;
@@ -55,27 +58,27 @@
   }
 
   .search-container {
-    max-width: 600px;
+    max-width: 580px;
     margin: 0 auto;
+    padding: 0 24px;
     display: flex;
-    gap: var(--space-md);
   }
 
   .search-input {
     flex: 1;
-    padding: 16px 20px;
-    border: 3px solid #C19A6B;
-    border-radius: 12px;
-    font-family: var(--font-arabic-body);
-    font-size: 18px;
-    background: #F5EBE0;
-    color: var(--text-primary);
-    max-width: 700px;
-    box-shadow: 0 8px 24px rgba(92, 64, 51, 0.15);
+    padding: 0 20px;
+    height: 52px;
+    border: none;
+    border-radius: 0 10px 10px 0;
+    font-family: var(--font-cairo, 'Cairo', sans-serif);
+    font-size: 15px;
+    background: var(--redesign-card-bg, #FDF8F2);
+    color: var(--redesign-brown-dark, #2C1508);
+    direction: rtl;
   }
 
   .search-input::placeholder {
-    color: #8B7355;
+    color: var(--redesign-text-muted, #A89070);
   }
 
   .search-input:focus {
@@ -84,22 +87,22 @@
   }
 
   .search-btn {
-    padding: 16px 32px;
-    background: var(--accent-gold);
-    color: var(--primary-dark);
+    padding: 0 28px;
+    height: 52px;
+    background: var(--redesign-gold-primary, #C49A3C);
+    color: var(--redesign-card-bg, #FDF8F2);
     border: none;
-    border-radius: 8px;
-    font-family: var(--font-arabic-body);
+    border-radius: 10px 0 0 10px;
+    font-family: var(--font-cairo, 'Cairo', sans-serif);
     font-size: 16px;
-    font-weight: 600;
+    font-weight: 700;
     cursor: pointer;
-    transition: all 0.3s ease;
+    transition: all 0.2s ease;
+    flex-shrink: 0;
   }
 
   .search-btn:hover {
-    background: var(--accent-amber);
-    transform: translateY(-2px);
-    box-shadow: 0 4px 12px var(--shadow-warm);
+    background: #B38A30;
   }
 
   /* Archive Stats Badge */
@@ -107,46 +110,50 @@
     display: flex;
     align-items: center;
     justify-content: center;
-    gap: 20px;
-    margin-top: 32px;
-    padding: 20px 0;
+    gap: 12px;
+    margin-top: 22px;
+    flex-wrap: wrap;
   }
 
   .stat-item {
-    display: flex;
+    display: inline-flex;
     align-items: center;
-    gap: 8px;
-    padding: 10px 18px;
-    background: rgba(44, 21, 8, 0.4);
-    border-radius: 30px;
-    border: 1px solid rgba(193, 154, 107, 0.5);
+    gap: 9px;
+    padding: 10px 22px;
+    background: rgba(20, 10, 4, 0.5);
+    border: 1px solid rgba(196, 154, 60, 0.28);
+    border-radius: 24px;
   }
 
   .stat-icon {
-    font-size: 18px;
-    opacity: 0.9;
+    color: var(--redesign-gold-light, #DEC99A);
+    display: flex;
+    align-items: center;
+  }
+
+  .stat-icon .lucide {
+    width: 18px;
+    height: 18px;
+    stroke-width: 2;
   }
 
   .stat-number {
-    font-family: var(--font-arabic-display);
-    font-size: 20px;
+    font-family: var(--font-cairo, 'Cairo', sans-serif);
+    font-size: 16px;
     font-weight: 700;
-    color: #FFFFFF;
-    text-shadow: 0 1px 2px rgba(0, 0, 0, 0.3);
+    color: var(--redesign-card-bg, #FDF8F2);
+    direction: ltr;
   }
 
   .stat-label {
-    font-family: var(--font-arabic-body);
+    font-family: var(--font-cairo, 'Cairo', sans-serif);
     font-size: 13px;
-    font-weight: 500;
-    color: #FFFFFF;
-    text-shadow: 0 1px 2px rgba(0, 0, 0, 0.2);
+    font-weight: 400;
+    color: rgba(245, 237, 224, 0.55);
   }
 
   .stat-divider {
-    width: 1px;
-    height: 32px;
-    background: rgba(193, 154, 107, 0.3);
+    display: none;
   }
 
   /* Legacy support */
@@ -187,17 +194,22 @@
     letter-spacing: 0.3px;
   }
 
-  /* Filter Chips */
+  /* Filter Panel - Redesigned per design handoff */
   .filters-section {
-    max-width: 1200px;
-    margin: 0 auto var(--space-xl);
-    padding: var(--space-lg);
-    background: #F5EBE0;
-    border-bottom: 2px solid #E8DCC8;
+    max-width: 960px;
+    margin: 0 auto;
+    padding: 16px 20px 14px;
+    background: var(--redesign-card-bg, #FDF8F2);
+    border: 1px solid var(--redesign-badge-bg, #E8D5A0);
+    border-top: none;
   }
 
   .filter-group {
-    margin-bottom: 16px;
+    margin-bottom: 10px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    flex-wrap: wrap;
   }
 
   .filter-group:last-child {
@@ -205,57 +217,55 @@
   }
 
   .filter-label {
-    font-family: var(--font-arabic-display);
-    font-size: 16px;
-    font-weight: 600;
-    color: #5C4033;
-    margin-bottom: 12px;
-    display: block;
+    font-family: var(--font-cairo, 'Cairo', sans-serif);
+    font-size: 12px;
+    font-weight: 500;
+    color: var(--redesign-text-muted, #A89070);
+    min-width: 50px;
+    flex-shrink: 0;
   }
 
   .filter-chips {
     display: flex;
-    gap: 8px;
+    gap: 5px;
     flex-wrap: wrap;
   }
 
   .chip {
-    padding: 8px 20px;
-    border: 2px solid #C19A6B;
-    border-radius: 25px;
+    padding: 4px 13px;
+    border: none;
+    border-radius: 3px;
     background: transparent;
-    color: #5C4033;
-    font-family: var(--font-arabic-body);
-    font-size: 15px;
+    color: var(--redesign-text-mid, #7A5C3A);
+    font-family: var(--font-cairo, 'Cairo', sans-serif);
+    font-size: 12px;
     font-weight: 500;
     cursor: pointer;
-    transition: all 0.3s ease;
+    transition: all 0.15s ease;
   }
 
   .chip:hover {
-    background: rgba(193, 154, 107, 0.1);
+    background: var(--redesign-badge-bg, #E8D5A0);
   }
 
   .chip.active {
-    background: var(--accent-gold);
-    color: var(--primary-dark);
+    background: var(--redesign-brown-dark, #2C1508);
+    color: var(--redesign-gold-primary, #C49A3C);
     font-weight: 700;
-    border-color: var(--accent-gold);
-    box-shadow: 0 4px 12px var(--shadow-warm);
   }
 
   .clear-filters-btn {
-    padding: 8px 16px;
-    border: 2px solid #dc3545;
-    border-radius: 25px;
+    padding: 4px 13px;
+    border: none;
+    border-radius: 3px;
     background: transparent;
-    color: #dc3545;
-    font-family: var(--font-arabic-body);
-    font-size: 14px;
+    color: var(--redesign-text-muted, #A89070);
+    font-family: var(--font-cairo, 'Cairo', sans-serif);
+    font-size: 12px;
     font-weight: 500;
     cursor: pointer;
-    transition: all 0.3s ease;
-    margin-right: auto;
+    transition: all 0.15s ease;
+    text-decoration: underline;
   }
 
   .clear-filters-btn:hover {
@@ -263,53 +273,50 @@
     color: white;
   }
 
-  /* Minimized Title/Name Search Section */
+  /* Minimized Title/Name Search Section - Inside filter panel */
   .title-search-section {
-    max-width: 1200px;
+    max-width: 960px;
     margin: 0 auto;
-    padding: var(--space-md) var(--space-lg);
-    background: rgba(193, 154, 107, 0.08);
-    border-bottom: 1px solid #E8DCC8;
+    padding: 0 32px;
   }
 
   .title-search-wrapper {
     position: relative;
-    max-width: 400px;
+    background: var(--redesign-cream-bg, #F5EDE0);
+    border-radius: 6px;
+    display: flex;
+    align-items: center;
+    padding: 0 12px;
+    gap: 8px;
+    margin-bottom: 14px;
   }
 
   .title-search-input {
-    width: 100%;
-    padding: 10px 16px;
-    padding-left: 40px;
-    border: 2px solid #D4A574;
-    border-radius: 8px;
-    font-family: var(--font-arabic-body);
+    flex: 1;
+    padding: 10px 0;
+    border: none;
+    font-family: var(--font-cairo, 'Cairo', sans-serif);
     font-size: 14px;
-    background: #FAF7F2;
-    color: var(--text-primary);
-    transition: all 0.3s ease;
+    background: transparent;
+    color: var(--redesign-brown-dark, #2C1508);
+    direction: rtl;
   }
 
   .title-search-input::placeholder {
-    color: #8B7355;
-    font-size: 13px;
+    color: var(--redesign-text-muted, #A89070);
+    font-size: 14px;
   }
 
   .title-search-input:focus {
     outline: none;
-    border-color: #C19A6B;
-    box-shadow: 0 0 0 3px rgba(193, 154, 107, 0.15);
   }
 
   .title-search-icon {
-    position: absolute;
-    left: 12px;
-    top: 50%;
-    transform: translateY(-50%);
     font-size: 14px;
     opacity: 0.6;
     cursor: pointer;
     transition: opacity 0.2s ease;
+    order: -1;
   }
 
   .title-search-icon:hover {
@@ -318,65 +325,93 @@
 
   @media (max-width: 768px) {
     .title-search-section {
-      padding: var(--space-sm) var(--space-md);
+      padding: 0 14px;
     }
 
     .title-search-wrapper {
-      max-width: 100%;
+      padding: 0 10px;
+      gap: 6px;
+      margin-bottom: 10px;
+    }
+
+    .title-search-input {
+      font-size: 13px;
+      padding: 9px 0;
+    }
+
+    /* Fix 1: Horizontal filter scroll */
+    .filter-group {
+      flex-wrap: nowrap;
+      overflow-x: auto;
+      -webkit-overflow-scrolling: touch;
+      scrollbar-width: none;
+      -ms-overflow-style: none;
+      padding-bottom: 4px;
+    }
+    .filter-group::-webkit-scrollbar {
+      display: none;
+    }
+    .filter-chips {
+      flex-wrap: nowrap;
+      flex-shrink: 0;
+    }
+    .chip {
+      flex-shrink: 0;
+      white-space: nowrap;
+    }
+    .filters-section {
+      padding: 12px 14px 10px;
     }
   }
 
-  /* Series Cards */
+  /* Series Cards/Rows */
   .series-list {
-    max-width: 1200px;
+    max-width: 960px;
     margin: 0 auto;
-    padding: 0 var(--space-lg) var(--space-3xl);
+    padding: 0 32px var(--space-3xl);
   }
 
+  /* Series Card - Redesigned per design handoff */
   .series-card {
-    background: #F5EBE0;
-    border: 3px solid #D4A574;
-    border-radius: 16px;
-    margin-bottom: 24px;
-    overflow: hidden;
-    box-shadow: 0 6px 16px rgba(92, 64, 51, 0.15);
-    transition: all 0.4s ease;
-    position: relative;
+    border-bottom: 1px solid #EDE4D3;
+    margin-bottom: 0;
+    padding: 18px 2px;
   }
 
-  /* Vertical gold accent bar */
   .series-card::before {
-    content: '';
-    position: absolute;
-    right: 0;
-    top: 0;
-    bottom: 0;
-    width: 6px;
-    background: linear-gradient(180deg, #C19A6B 0%, #D4A574 100%);
-    box-shadow: -2px 0 8px rgba(92, 64, 51, 0.15);
+    display: none;
   }
 
   .series-card:hover {
-    border-color: #C19A6B;
-    box-shadow: 0 12px 32px rgba(92, 64, 51, 0.25);
-    transform: translateY(-4px);
+    background: rgba(196, 154, 60, 0.03);
   }
 
   .series-header {
-    padding: 24px;
-    padding-right: calc(24px + 12px);
-    background: linear-gradient(135deg, rgba(193, 154, 107, 0.1) 0%, rgba(212, 165, 116, 0.05) 100%);
-    border-bottom: 2px solid #E8DCC8;
+    display: flex;
+    flex-direction: row-reverse;
+    align-items: flex-start;
+    gap: 14px;
     cursor: pointer;
+    padding: 0;
+    background: transparent;
+    border: none;
+  }
+
+  .series-content {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    text-align: right;
   }
 
   .series-title {
-    font-family: var(--font-arabic-display);
-    font-size: 24px;
+    font-family: var(--font-cairo, 'Cairo', sans-serif);
+    font-size: 16px;
     font-weight: 700;
-    color: #2C1810;
-    margin-bottom: 8px;
-    line-height: 1.5;
+    color: var(--redesign-brown-dark, #2C1508);
+    margin: 0;
+    line-height: 1.4;
   }
 
   .series-title a {
@@ -386,92 +421,79 @@
   }
 
   .series-title a:hover {
-    color: var(--accent-gold, #C19A6B);
-    text-decoration: underline;
-  }
-
-  .series-meta {
-    margin-bottom: 16px;
-  }
-
-  /* Prominent author display - CRITICAL FIX */
-  .series-author {
-    font-family: var(--font-arabic-display);
-    font-size: 18px;
-    color: #C19A6B;
-    font-weight: 600;
-    line-height: 1.6;
-    margin-bottom: 8px;
-  }
-
-  .series-author-label {
-    color: #5C4033;
-    font-weight: 500;
+    color: var(--redesign-gold-primary, #C49A3C);
   }
 
   .series-sheikh {
-    font-size: 15px;
-    color: #5C4033;
-    margin-bottom: 8px;
+    font-family: var(--font-cairo, 'Cairo', sans-serif);
+    font-size: 13px;
+    font-weight: 400;
+    color: var(--redesign-text-muted, #A89070);
+    line-height: 1.4;
   }
 
   .series-info {
     display: flex;
-    gap: 16px;
-    font-size: 14px;
-    color: #8B7355;
+    gap: 8px;
+    font-size: 12px;
     align-items: center;
-    padding-top: 8px;
-    border-top: 1px solid #E8DCC8;
+    width: fit-content;
+    margin-left: auto;
+    margin-right: 0;
+    margin-top: 4px;
   }
 
-  .series-info span:not(:last-child)::after {
-    content: '•';
-    margin-left: 16px;
+  .series-lesson-count {
+    color: var(--redesign-text-mid, #7A5C3A);
+    font-weight: 500;
   }
 
   .category-badge {
     display: inline-block;
-    padding: 6px 14px;
-    border-radius: 20px;
-    font-size: 13px;
-    font-weight: 600;
-    background: #FAF7F2;
-    color: #5C6B54;
-    border: 2px solid #8B9D83;
+    padding: 3px 10px;
+    border-radius: 4px;
+    font-size: 11px;
+    font-weight: 700;
+    background: var(--redesign-gold-primary, #C49A3C);
+    color: var(--redesign-card-bg, #FDF8F2);
+    border: none;
   }
 
   .expand-btn {
-    margin-top: 16px;
-    padding: 16px;
-    background: transparent;
-    border: none;
-    border-top: 2px solid #E8DCC8;
-    border-radius: 0;
-    color: #C19A6B;
-    font-family: var(--font-arabic-display);
-    font-size: 16px;
-    font-weight: 600;
+    flex-shrink: 0;
+    width: 32px;
+    height: 32px;
+    padding: 0;
+    background: var(--redesign-card-bg, #FDF8F2);
+    border: 1px solid var(--redesign-gold-light, #DEC99A);
+    border-radius: 6px;
+    color: var(--redesign-brown-dark, #2C1508);
     cursor: pointer;
-    transition: all 0.3s ease;
-    width: 100%;
+    transition: all 0.2s ease;
     display: flex;
     align-items: center;
     justify-content: center;
-    gap: 8px;
+  }
+
+  .expand-btn .expand-icon {
+    width: 18px;
+    height: 18px;
+    stroke-width: 2.5;
   }
 
   .expand-btn:hover {
-    background: rgba(193, 154, 107, 0.1);
+    background: var(--redesign-badge-bg, #E8D5A0);
   }
 
   .expand-btn.expanded {
-    background: rgba(193, 154, 107, 0.1);
+    background: var(--redesign-badge-bg, #E8D5A0);
   }
 
   /* Episodes List - CLS-safe animation approach */
   .episodes-list {
-    background: #F5EBE0;
+    background: var(--redesign-cream-bg, #F5EDE0);
+    border-radius: 8px;
+    margin-top: 16px;
     max-height: 0;
     overflow: hidden;
     transition: max-height 0.3s ease-out, opacity 0.2s ease-out;
@@ -479,13 +501,12 @@
   }
 
   .episodes-list.show {
-    max-height: 10000px; /* Large enough for any content */
+    max-height: 10000px;
     overflow: visible;
     opacity: 1;
     transition: max-height 0.5s ease-in, opacity 0.3s ease-in;
   }
 
-  /* More specific selector for Khutba tab to ensure proper display */
   #content-khutbas .episodes-list.show {
     max-height: 10000px;
     overflow: visible;
@@ -493,12 +514,12 @@
   }
 
   .episode-item {
-    padding: 24px;
-    padding-right: calc(24px + 12px);
-    border-bottom: 2px solid #E8DCC8;
-    transition: background 0.3s ease;
+    padding: 14px 16px;
+    border-bottom: 1px solid var(--redesign-badge-bg, #E8D5A0);
+    transition: background 0.15s ease;
     display: flex;
-    flex-direction: column;
+    align-items: center;
+    justify-content: space-between;
     gap: 12px;
   }
 
@@ -507,100 +528,163 @@
   }
 
   .episode-item:hover {
-    background: rgba(193, 154, 107, 0.05);
+    background: rgba(196, 154, 60, 0.06);
   }
 
   .episode-header {
     display: flex;
-    gap: 16px;
-    align-items: flex-start;
+    gap: 12px;
+    align-items: center;
+    flex: 1;
+    min-width: 0;
   }
 
   .episode-number {
-    width: 32px;
-    height: 32px;
-    background: #C19A6B;
-    color: #2C1810;
-    border-radius: 8px;
+    width: 28px;
+    height: 28px;
+    background: var(--redesign-gold-primary, #C49A3C);
+    color: var(--redesign-card-bg, #FDF8F2);
+    border-radius: 6px;
     display: flex;
     align-items: center;
     justify-content: center;
+    font-family: var(--font-cairo, 'Cairo', sans-serif);
     font-weight: 700;
-    font-size: 14px;
+    font-size: 13px;
     flex-shrink: 0;
   }
 
   .episode-title {
-    font-family: var(--font-arabic-body);
-    font-size: 18px;
+    font-family: var(--font-cairo, 'Cairo', sans-serif);
+    font-size: 14px;
     font-weight: 600;
-    color: #2C1810;
+    color: var(--redesign-brown-dark, #2C1508);
     flex: 1;
     line-height: 1.5;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
   }
 
   .episode-meta {
-    font-size: 14px;
-    color: #8B7355;
-    display: flex;
-    flex-wrap: wrap;
-    gap: 8px 16px;
-    align-items: center;
+    display: none;
   }
 
   .episode-meta span:not(:last-child)::after {
-    content: '•';
-    margin-left: 16px;
+    display: none;
   }
 
   .hijri-date {
-    color: #5C4033;
+    color: var(--redesign-text-mid, #7A5C3A);
     font-weight: 500;
   }
 
   .episode-actions {
     display: flex;
-    gap: 12px;
+    gap: 8px;
+    flex-shrink: 0;
   }
 
   .btn-play, .btn-download {
-    padding: 10px 24px;
+    padding: 6px 14px;
     border-radius: 6px;
-    font-size: 15px;
+    font-family: var(--font-cairo, 'Cairo', sans-serif);
+    font-size: 12px;
     font-weight: 600;
     cursor: pointer;
-    transition: all 0.3s ease;
+    transition: all 0.2s ease;
     text-decoration: none;
     display: inline-flex;
     align-items: center;
     justify-content: center;
-    gap: 8px;
+    gap: 5px;
+    white-space: nowrap;
   }
 
   .btn-play {
-    background: #C19A6B;
-    color: #2C1810;
+    background: var(--redesign-gold-primary, #C49A3C);
+    color: var(--redesign-card-bg, #FDF8F2);
     border: none;
-    flex: 1;
-    box-shadow: 0 4px 12px rgba(92, 64, 51, 0.15);
   }
 
   .btn-play:hover {
-    background: #D4A574;
-    transform: translateY(-2px);
-    box-shadow: 0 6px 16px rgba(92, 64, 51, 0.25);
+    background: #B38A30;
   }
 
   .btn-download {
     background: transparent;
-    border: 2px solid #C19A6B;
-    color: #C19A6B;
-    min-width: 120px;
+    border: 1px solid var(--redesign-gold-primary, #C49A3C);
+    color: var(--redesign-gold-primary, #C49A3C);
   }
 
   .btn-download:hover {
-    background: #C19A6B;
-    color: #2C1810;
+    background: var(--redesign-gold-primary, #C49A3C);
+    color: var(--redesign-card-bg, #FDF8F2);
+  }
+
+  .btn-play .lucide, .btn-download .lucide {
+    width: 14px;
+    height: 14px;
+    stroke-width: 2;
+  }
+
+  /* General inline icons */
+  .episode-meta .lucide,
+  .hijri-date .lucide,
+  .section-header .lucide,
+  .schedule-section-header .lucide {
+    width: 14px;
+    height: 14px;
+    margin-inline-end: 4px;
+    vertical-align: -2px;
+    stroke-width: 2;
+  }
+
+  /* Episode Sort Bar */
+  .episode-sort-bar {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 12px 16px;
+    background: var(--redesign-card-bg, #FDF8F2);
+    border-bottom: 1px solid var(--redesign-badge-bg, #E8D5A0);
+  }
+
+  .episode-sort-label {
+    font-family: var(--font-cairo, 'Cairo', sans-serif);
+    font-size: 12px;
+    font-weight: 600;
+    color: var(--redesign-text-muted, #A89070);
+    white-space: nowrap;
+  }
+
+  .episode-sort-chips {
+    display: flex;
+    gap: 6px;
+    flex-wrap: wrap;
+  }
+
+  .sort-chip {
+    padding: 5px 12px;
+    border-radius: 6px;
+    border: 1px solid var(--redesign-gold-light, #DEC99A);
+    background: var(--redesign-card-bg, #FDF8F2);
+    font-family: var(--font-cairo, 'Cairo', sans-serif);
+    font-size: 11px;
+    font-weight: 600;
+    color: var(--redesign-text-mid, #7A5C3A);
+    cursor: pointer;
+    transition: all 0.2s ease;
+  }
+
+  .sort-chip:hover {
+    background: var(--redesign-badge-bg, #E8D5A0);
+  }
+
+  .sort-chip.active {
+    background: var(--redesign-gold-primary, #C49A3C);
+    color: var(--redesign-card-bg, #FDF8F2);
+    border-color: var(--redesign-gold-primary, #C49A3C);
   }
 
   /* Empty State */
@@ -611,8 +695,14 @@
   }
 
   .empty-icon {
-    font-size: 64px;
     margin-bottom: var(--space-md);
+    color: var(--redesign-text-muted, #A89070);
+  }
+
+  .empty-icon .lucide {
+    width: 64px;
+    height: 64px;
+    stroke-width: 1;
   }
 
   .empty-title {
@@ -719,58 +809,106 @@
       align-items: flex-start;
     }
 
-    .episode-meta {
+    .episode-item {
+      padding: 10px 12px;
+      gap: 8px;
+    }
+
+    .episode-number {
+      width: 24px;
+      height: 24px;
+      font-size: 11px;
+    }
+
+    .episode-title {
       font-size: 13px;
-      gap: 6px 12px;
-    }
-
-    .episode-meta span:not(:last-child)::after {
-      margin-left: 12px;
-    }
-
-    .hijri-date {
-      font-size: 12px;
     }
 
     .episode-actions {
-      flex-direction: column;
+      gap: 6px;
+    }
+
+    /* Fix 4: Icon-only buttons on mobile */
+    .btn-play, .btn-download {
+      padding: 8px;
+      font-size: 0;
+      gap: 0;
+      width: 32px;
+      height: 32px;
+    }
+    .btn-play .lucide, .btn-download .lucide {
+      width: 16px;
+      height: 16px;
+    }
+
+    /* Fix 3: Allow episode title to wrap */
+    .episode-title {
+      font-size: 13px;
+      white-space: normal;
+      overflow: visible;
+      text-overflow: clip;
+      line-height: 1.4;
+    }
+  }
+
+  @media (max-width: 480px) {
+    .episode-item {
+      padding: 8px 10px;
+    }
+
+    .episode-header {
+      gap: 8px;
+    }
+
+    .episode-number {
+      width: 22px;
+      height: 22px;
+      font-size: 10px;
+      border-radius: 5px;
+    }
+
+    .episode-title {
+      font-size: 12px;
     }
 
     .btn-play, .btn-download {
-      width: 100%;
-      justify-content: center;
+      padding: 6px;
+      width: 28px;
+      height: 28px;
+    }
+    .btn-play .lucide, .btn-download .lucide {
+      width: 14px;
+      height: 14px;
     }
   }
 
-  /* Homepage Sections */
+  /* Homepage Sections - Redesigned per design handoff */
   .homepage-sections {
-    max-width: 1200px;
-    margin: 0 auto var(--space-xl);
-    padding: 0 var(--space-lg);
+    max-width: 960px;
+    margin: 0 auto;
+    padding: 0 32px 44px;
   }
 
   .section-block {
-    background: white;
+    background: transparent;
     border-radius: 12px;
-    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
-    margin-bottom: var(--space-lg);
+    margin-bottom: 16px;
     overflow: hidden;
-    border: 1px solid #f0ebe4;
   }
 
   .section-header {
     display: flex;
     justify-content: space-between;
     align-items: center;
-    padding: 16px 20px;
-    background: linear-gradient(135deg, #FAF7F2 0%, #F5EBE0 100%);
-    border-bottom: 2px solid var(--accent-amber);
+    padding: 14px 20px;
+    background: var(--redesign-badge-bg, #E8D5A0);
     cursor: pointer;
     user-select: none;
+    border-radius: 12px 12px 0 0;
   }
 
   .section-header:hover {
-    background: linear-gradient(135deg, #F5EBE0 0%, #EDE0D0 100%);
+    background: #DCC890;
   }
 
   .section-header-left {
@@ -779,49 +917,46 @@
     gap: 10px;
   }
 
-  .section-icon {
-    font-size: 24px;
-  }
-
   .section-title {
-    font-family: 'Scheherazade New', serif;
-    font-size: 22px;
-    font-weight: 700;
-    color: var(--primary-dark);
+    font-family: var(--font-cairo, 'Cairo', sans-serif);
+    font-size: 18px;
+    font-weight: 800;
+    color: var(--redesign-brown-dark, #2C1508);
     margin: 0;
   }
 
   .section-count {
-    font-size: 14px;
-    color: var(--accent-brown);
-    font-weight: 600;
-    background: white;
-    padding: 2px 10px;
-    border-radius: 12px;
-    border: 1px solid var(--accent-amber);
+    font-size: 12px;
+    font-weight: 700;
+    color: var(--redesign-gold-primary, #C49A3C);
+    background: var(--redesign-brown-dark, #2C1508);
+    padding: 3px 12px;
+    border-radius: 10px;
   }
 
-  .section-toggle {
-    background: none;
-    border: none;
-    font-size: 18px;
-    color: var(--accent-brown);
-    cursor: pointer;
-    padding: 4px 8px;
-    transition: transform 0.3s ease;
+  .section-chevron {
+    stroke: var(--redesign-text-mid, #7A5C3A);
+    transition: transform 0.2s ease;
+    flex-shrink: 0;
   }
 
-  .section-toggle.collapsed {
+  .section-chevron.collapsed {
     transform: rotate(180deg);
   }
 
   .section-content {
-    transition: max-height 0.3s ease;
+    transition: max-height 0.3s ease, opacity 0.2s ease;
     overflow: hidden;
+    background: var(--redesign-card-bg, #FDF8F2);
+    border: 1px solid var(--redesign-gold-light, #DEC99A);
+    border-top: none;
+    border-radius: 0 0 12px 12px;
   }
 
   .section-content.collapsed {
     max-height: 0 !important;
+    opacity: 0;
+    border: none;
   }
 
   .section-table {
@@ -830,7 +965,7 @@
   }
 
   .section-table tr {
-    border-bottom: 1px solid #f0ebe4;
+    border-bottom: 1px solid #F0E5CC;
     transition: background 0.15s;
   }
 
@@ -839,58 +974,46 @@
   }
 
   .section-table tr:hover {
-    background: #faf7f2;
+    background: rgba(196, 154, 60, 0.05);
   }
 
   .section-table td {
-    padding: 12px 16px;
+    padding: 14px 20px;
     vertical-align: middle;
   }
 
   .section-series-title {
-    font-family: 'Scheherazade New', serif;
-    font-size: 18px;
+    font-family: var(--font-cairo, 'Cairo', sans-serif);
+    font-size: 15px;
     font-weight: 600;
-    color: var(--primary-dark);
+    color: var(--redesign-brown-dark, #2C1508);
     text-decoration: none;
     display: block;
   }
 
   .section-series-title:hover {
-    color: var(--accent-brown);
-    text-decoration: underline;
+    color: var(--redesign-gold-primary, #C49A3C);
   }
 
   .section-series-subtitle {
-    font-size: 13px;
-    color: #888;
+    font-size: 12px;
+    color: var(--redesign-text-muted, #A89070);
     margin-top: 2px;
   }
 
   .section-lecture-count {
     display: inline-block;
-    background: #e3f2fd;
-    color: #1565c0;
-    padding: 3px 10px;
+    background: var(--redesign-badge-bg, #E8D5A0);
+    color: var(--redesign-text-mid, #7A5C3A);
+    padding: 3px 11px;
     border-radius: 10px;
-    font-size: 13px;
-    font-weight: 600;
+    font-size: 11px;
+    font-weight: 700;
     white-space: nowrap;
   }
 
   .section-view-btn {
-    background: var(--accent-brown);
-    color: white;
-    padding: 6px 14px;
-    border-radius: 6px;
-    text-decoration: none;
-    font-size: 13px;
-    font-weight: 600;
-    white-space: nowrap;
-  }
-
-  .section-view-btn:hover {
-    background: #A8845C;
+    display: none;
   }
 
   .section-show-more {
@@ -938,43 +1061,41 @@
     }
   }
 
-  /* Navigation Tabs */
+  /* Navigation Tabs - Redesigned per design handoff */
   .nav-tabs {
-    background: white;
-    border-bottom: 2px solid var(--accent-amber);
-    margin-bottom: 24px;
+    max-width: 960px;
+    margin: 0 auto;
+    padding: 0 32px;
+    border-top: 1px solid var(--redesign-badge-bg, #E8D5A0);
   }
 
   .nav-tabs-container {
-    max-width: 1200px;
-    margin: 0 auto;
     display: flex;
-    gap: 0;
-    padding: 0 16px;
+    border-bottom: 2px solid var(--redesign-badge-bg, #E8D5A0);
   }
 
   .nav-tab {
-    flex: 1;
-    padding: 16px 24px;
+    padding: 0 28px 13px;
     border: none;
     background: transparent;
-    color: var(--text-secondary);
-    font-size: 16px;
-    font-weight: 600;
+    color: var(--redesign-text-muted, #A89070);
+    font-size: 15px;
+    font-weight: 500;
     cursor: pointer;
     position: relative;
-    transition: all 0.3s;
-    font-family: var(--font-arabic);
+    transition: all 0.2s;
+    font-family: var(--font-cairo, 'Cairo', sans-serif);
+    margin-bottom: -2px;
+    white-space: nowrap;
   }
 
   .nav-tab:hover {
-    color: var(--primary-brown);
-    background: var(--cream);
+    color: var(--redesign-text-mid, #7A5C3A);
   }
 
   .nav-tab.active {
-    color: var(--primary-brown);
-    background: var(--cream);
+    color: var(--redesign-brown-dark, #2C1508);
+    font-weight: 700;
   }
 
   .nav-tab.active::after {
@@ -983,8 +1104,16 @@
     bottom: 0;
     left: 0;
     right: 0;
-    height: 3px;
-    background: var(--accent-gold);
+    height: 2px;
+    background: var(--redesign-gold-primary, #C49A3C);
+  }
+
+  .nav-tab .lucide {
+    width: 16px;
+    height: 16px;
+    margin-inline-end: 6px;
+    vertical-align: -2px;
+    stroke-width: 2;
   }
 
   .tab-content {
@@ -1048,6 +1177,14 @@
     background: var(--primary-dark);
     border-color: var(--primary-dark);
     color: white;
+  }
+
+  .location-toggle-btn .lucide {
+    width: 16px;
+    height: 16px;
+    margin-inline-end: 6px;
+    vertical-align: -2px;
+    stroke-width: 2;
   }
 
   .location-toggle-count {
@@ -1257,9 +1394,15 @@
   }
 
   .schedule-empty-icon {
-    font-size: 48px;
     margin-bottom: 12px;
     opacity: 0.5;
+    color: var(--redesign-text-muted, #A89070);
+  }
+
+  .schedule-empty-icon .lucide {
+    width: 48px;
+    height: 48px;
+    stroke-width: 1;
   }
 
   @media (max-width: 768px) {
@@ -1490,6 +1633,14 @@
     background: var(--primary-dark);
     border-color: var(--primary-dark);
     color: white;
+  }
+
+  .schedule-tab .lucide {
+    width: 16px;
+    height: 16px;
+    margin-inline-end: 6px;
+    vertical-align: -2px;
+    stroke-width: 2;
   }
 
   .schedule-tab-count {
@@ -2507,7 +2658,7 @@
   <div class="archive-stats">
     <% if (typeof totalLectureCount !== 'undefined' && totalLectureCount > 0) { %>
     <div class="stat-item">
-      <span class="stat-icon">🎧</span>
+      <span class="stat-icon"><i data-lucide="headphones"></i></span>
       <span class="stat-number"><%= totalLectureCount %></span>
       <span class="stat-label"><%= locale === 'ar' ? 'درس صوتي' : 'Lectures' %></span>
     </div>
@@ -2517,7 +2668,7 @@
     <% } %>
     <% if (typeof totalArticleCount !== 'undefined' && totalArticleCount > 0) { %>
     <div class="stat-item">
-      <span class="stat-icon">✍️</span>
+      <span class="stat-icon"><i data-lucide="pen-line"></i></span>
       <span class="stat-number"><%= totalArticleCount %></span>
       <span class="stat-label"><%= locale === 'ar' ? 'مقال' : 'Articles' %></span>
     </div>
@@ -2765,17 +2916,17 @@
 <section class="weekly-schedule-section">
   <div class="schedule-header">
     <h2 class="schedule-title">
-      📅 <%= locale === 'ar' ? 'جدول الدروس الأسبوعي' : 'Weekly Class Schedule' %>
+      <i data-lucide="calendar-days"></i> <%= locale === 'ar' ? 'جدول الدروس الأسبوعي' : 'Weekly Class Schedule' %>
     </h2>
   </div>
 
   <div class="schedule-tabs">
     <button class="schedule-tab active" onclick="switchScheduleTab('inperson')">
-      🕌 <%= locale === 'ar' ? 'جامع الورود' : 'In-Person' %>
+      <i data-lucide="building-2"></i> <%= locale === 'ar' ? 'جامع الورود' : 'In-Person' %>
       <span class="schedule-tab-count"><%= groupedInPerson.length %></span>
     </button>
     <button class="schedule-tab" onclick="switchScheduleTab('online')">
-      💻 <%= locale === 'ar' ? 'عن بُعد' : 'Online' %>
+      <i data-lucide="monitor"></i> <%= locale === 'ar' ? 'عن بُعد' : 'Online' %>
       <span class="schedule-tab-count"><%= groupedOnline.length %></span>
     </button>
   </div>
@@ -2914,18 +3065,18 @@ function switchScheduleTab(tab) {
 <section class="weekly-schedule-section">
   <div class="schedule-header">
     <h2 class="schedule-title">
-      📅 <%= locale === 'ar' ? 'جدول الدروس الأسبوعي' : 'Weekly Class Schedule' %>
+      <i data-lucide="calendar-days"></i> <%= locale === 'ar' ? 'جدول الدروس الأسبوعي' : 'Weekly Class Schedule' %>
     </h2>
   </div>
 
   <!-- Location Toggle -->
   <div class="schedule-location-toggle">
     <button class="location-toggle-btn active" onclick="switchLocation('inperson')">
-      🕌 <%= locale === 'ar' ? 'جامع الورود' : 'In-Person' %>
+      <i data-lucide="building-2"></i> <%= locale === 'ar' ? 'جامع الورود' : 'In-Person' %>
       <span class="location-toggle-count"><%= groupedInPerson.length %></span>
     </button>
     <button class="location-toggle-btn" onclick="switchLocation('online')">
-      💻 <%= locale === 'ar' ? 'عن بُعد' : 'Online' %>
+      <i data-lucide="monitor"></i> <%= locale === 'ar' ? 'عن بُعد' : 'Online' %>
       <span class="location-toggle-count"><%= groupedOnline.length %></span>
     </button>
   </div>
@@ -2964,7 +3115,7 @@ function switchScheduleTab(tab) {
           <div class="session-meta">
             <% if (item.lectureCount > 0) { %>
             <span class="session-lesson-count">
-              📚 <%= item.lectureCount %> <%= locale === 'ar' ? 'درس' : 'lessons' %>
+              <i data-lucide="book-open"></i> <%= item.lectureCount %> <%= locale === 'ar' ? 'درس' : 'lessons' %>
             </span>
             <% } %>
           </div>
@@ -2973,7 +3124,7 @@ function switchScheduleTab(tab) {
       </div>
       <% } else { %>
       <div class="schedule-empty">
-        <div class="schedule-empty-icon">📭</div>
+        <div class="schedule-empty-icon"><i data-lucide="inbox"></i></div>
         <p><%= locale === 'ar' ? 'لا توجد دروس في هذا اليوم' : 'No classes on this day' %></p>
       </div>
       <% } %>
@@ -2981,7 +3132,7 @@ function switchScheduleTab(tab) {
     <% }); %>
     <% } else { %>
     <div class="schedule-empty">
-      <div class="schedule-empty-icon">🕌</div>
+      <div class="schedule-empty-icon"><i data-lucide="building-2"></i></div>
       <p><%= locale === 'ar' ? 'لا توجد دروس حضورية حالياً' : 'No in-person classes currently' %></p>
     </div>
     <% } %>
@@ -3021,7 +3172,7 @@ function switchScheduleTab(tab) {
           <div class="session-meta">
             <% if (item.lectureCount > 0) { %>
             <span class="session-lesson-count">
-              📚 <%= item.lectureCount %> <%= locale === 'ar' ? 'درس' : 'lessons' %>
+              <i data-lucide="book-open"></i> <%= item.lectureCount %> <%= locale === 'ar' ? 'درس' : 'lessons' %>
             </span>
             <% } %>
           </div>
@@ -3030,7 +3181,7 @@ function switchScheduleTab(tab) {
       </div>
       <% } else { %>
       <div class="schedule-empty">
-        <div class="schedule-empty-icon">📭</div>
+        <div class="schedule-empty-icon"><i data-lucide="inbox"></i></div>
         <p><%= locale === 'ar' ? 'لا توجد دروس في هذا اليوم' : 'No classes on this day' %></p>
       </div>
       <% } %>
@@ -3038,7 +3189,7 @@ function switchScheduleTab(tab) {
     <% }); %>
     <% } else { %>
     <div class="schedule-empty">
-      <div class="schedule-empty-icon">💻</div>
+      <div class="schedule-empty-icon"><i data-lucide="monitor"></i></div>
       <p><%= locale === 'ar' ? 'لا توجد دروس عن بُعد حالياً' : 'No online classes currently' %></p>
     </div>
     <% } %>
@@ -3068,25 +3219,25 @@ function switchDayTab(location, day) {
 <% } %>
 <% } %>
 
-<!-- Featured Articles Section -->
+<!-- Featured Articles Section (Redesigned per design handoff) -->
 <% if (typeof recentArticles !== 'undefined' && recentArticles && recentArticles.length > 0) { %>
 <section class="featured-articles-section">
   <div class="container">
+    <div class="featured-articles-divider"></div>
     <div class="featured-articles-header">
-      <h2 class="featured-articles-title">
-        ✍️ <%= locale === 'ar' ? 'أحدث المقالات' : 'Latest Articles' %>
-      </h2>
       <a href="/articles" class="featured-articles-link">
-        <%= locale === 'ar' ? 'عرض الكل' : 'View All' %> →
+        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="15,18 9,12 15,6"/></svg>
+        <%= locale === 'ar' ? 'عرض الكل' : 'View All' %>
       </a>
+      <h2 class="featured-articles-title">
+        <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 013 3L7 19l-4 1 1-4L16.5 3.5z"/></svg>
+        <%= locale === 'ar' ? 'أحدث المقالات' : 'Latest Articles' %>
+      </h2>
     </div>
     <div class="featured-articles-grid">
       <% recentArticles.slice(0, 4).forEach(function(article) { %>
         <a href="/articles/<%= article.slug || article.shortId || article._id %>" class="featured-article-card">
           <div class="featured-article-meta">
-            <span class="featured-article-type <%= article.type === 'TelegramArticle' ? 'telegram' : '' %>">
-              <%= article.type === 'TelegramArticle' ? 'تليجرام' : 'أصداء' %>
-            </span>
             <span class="featured-article-date">
               <%
                 const pubDate = new Date(article.publishedAt);
@@ -3097,11 +3248,20 @@ function switchDayTab(location, day) {
               %>
               <%= hijriFormatter.format(pubDate) %>
             </span>
+            <span class="featured-article-type <%= article.type === 'TelegramArticle' ? 'telegram' : '' %>">
+              <%= article.type === 'TelegramArticle' ? 'تليجرام' : 'أصداء' %>
+            </span>
           </div>
           <h3 class="featured-article-title"><%= article.title %></h3>
           <% if (article.summary) { %>
             <p class="featured-article-summary"><%= article.summary %></p>
           <% } %>
+          <div class="featured-article-footer">
+            <span class="featured-article-read">
+              <%= locale === 'ar' ? 'قراءة المقال' : 'Read Article' %>
+            </span>
+            <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="15,18 9,12 15,6"/></svg>
+          </div>
         </a>
       <% }); %>
     </div>
@@ -3109,79 +3269,99 @@ function switchDayTab(location, day) {
 </section>
 <style>
   .featured-articles-section {
-    background: var(--redesign-cream-bg, #F5EDE0);
-    padding: 24px 0;
-    margin-bottom: 24px;
-    border-top: 2px solid var(--redesign-gold-light, #DEC99A);
-    border-bottom: 2px solid var(--redesign-gold-light, #DEC99A);
+    max-width: 960px;
+    margin: 0 auto;
+    padding: 0 32px 44px;
+  }
+  .featured-articles-divider {
+    height: 1px;
+    background: linear-gradient(to left, transparent, var(--redesign-gold-light, #DEC99A) 20%, var(--redesign-gold-light, #DEC99A) 80%, transparent);
+    margin-bottom: 32px;
   }
   .featured-articles-header {
     display: flex;
     justify-content: space-between;
     align-items: center;
-    margin-bottom: 16px;
+    margin-bottom: 20px;
   }
   .featured-articles-title {
     color: var(--redesign-brown-dark, #2C1508);
     font-size: 20px;
-    font-weight: 700;
+    font-weight: 800;
     margin: 0;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  .featured-articles-title svg {
+    stroke: var(--redesign-brown-dark, #2C1508);
   }
   .featured-articles-link {
     color: var(--redesign-gold-primary, #C49A3C);
-    font-size: 14px;
+    font-size: 13px;
     font-weight: 600;
     text-decoration: none;
+    display: flex;
+    align-items: center;
+    gap: 5px;
   }
   .featured-articles-link:hover {
     text-decoration: underline;
   }
   .featured-articles-grid {
     display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
-    gap: 16px;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 14px;
   }
   .featured-article-card {
     background: var(--redesign-card-bg, #FDF8F2);
     border: 1px solid var(--redesign-gold-light, #DEC99A);
-    border-radius: 12px;
+    border-radius: 13px;
     padding: 16px;
     text-decoration: none;
     transition: all 0.2s ease;
+    display: flex;
+    flex-direction: column;
   }
   .featured-article-card:hover {
     border-color: var(--redesign-gold-primary, #C49A3C);
-    transform: translateY(-3px);
-    box-shadow: 0 6px 20px rgba(44, 21, 8, 0.1);
+    transform: translateY(-2px);
+    box-shadow: 0 4px 16px rgba(44, 21, 8, 0.08);
   }
   .featured-article-meta {
     display: flex;
     justify-content: space-between;
-    align-items: center;
-    margin-bottom: 10px;
+    align-items: flex-start;
+    gap: 6px;
+    margin-bottom: 11px;
   }
   .featured-article-type {
     background: var(--redesign-badge-bg, #E8D5A0);
     color: var(--redesign-text-mid, #7A5C3A);
-    font-size: 11px;
-    font-weight: 600;
-    padding: 3px 10px;
-    border-radius: 8px;
+    font-size: 10px;
+    font-weight: 700;
+    padding: 3px 9px;
+    border-radius: 7px;
+    white-space: nowrap;
   }
   .featured-article-type.telegram {
     background: var(--redesign-sage, #6B7A4E);
     color: var(--redesign-card-bg, #FDF8F2);
   }
   .featured-article-date {
-    color: var(--redesign-text-muted, #A89070);
-    font-size: 11px;
+    color: #B0997A;
+    font-size: 10px;
+    padding-top: 2px;
+    flex-shrink: 0;
   }
   .featured-article-title {
     color: var(--redesign-brown-dark, #2C1508);
-    font-size: 15px;
+    font-size: 14px;
     font-weight: 700;
-    line-height: 1.5;
-    margin: 0 0 8px 0;
+    line-height: 1.55;
+    margin: 0 0 9px 0;
+    flex: 1;
+    text-wrap: pretty;
     display: -webkit-box;
     -webkit-line-clamp: 2;
     -webkit-box-orient: vertical;
@@ -3189,47 +3369,120 @@ function switchDayTab(location, day) {
   }
   .featured-article-summary {
     color: var(--redesign-text-mid, #7A5C3A);
-    font-size: 13px;
-    line-height: 1.6;
-    margin: 0;
+    font-size: 12px;
+    line-height: 1.7;
+    margin: 0 0 13px 0;
     display: -webkit-box;
     -webkit-line-clamp: 2;
     -webkit-box-orient: vertical;
     overflow: hidden;
   }
+  .featured-article-footer {
+    border-top: 1px solid #EDE4D3;
+    padding-top: 11px;
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+    gap: 5px;
+    margin-top: auto;
+  }
+  .featured-article-read {
+    color: var(--redesign-gold-primary, #C49A3C);
+    font-size: 12px;
+    font-weight: 600;
+  }
+  .featured-article-footer svg {
+    stroke: var(--redesign-gold-primary, #C49A3C);
+  }
+  @media (max-width: 1024px) {
+    .featured-articles-grid {
+      grid-template-columns: repeat(2, 1fr);
+    }
+  }
   @media (max-width: 768px) {
     .featured-articles-section {
-      padding: 16px 0;
+      padding: 4px 14px 10px;
+    }
+    .featured-articles-divider {
+      margin-bottom: 14px;
+    }
+    /* Fix 5: RTL alignment for articles section */
+    .featured-articles-header {
+      margin-bottom: 11px;
+      flex-direction: row-reverse;
     }
     .featured-articles-title {
-      font-size: 18px;
+      font-size: 14px;
+      font-weight: 700;
+      gap: 5px;
+    }
+    .featured-articles-title svg {
+      width: 13px;
+      height: 13px;
+    }
+    .featured-articles-link {
+      font-size: 11px;
+      gap: 3px;
+    }
+    .featured-articles-link svg {
+      width: 11px;
+      height: 11px;
     }
     .featured-articles-grid {
       grid-template-columns: 1fr;
-      gap: 12px;
+      gap: 8px;
     }
     .featured-article-card {
-      padding: 14px;
+      padding: 13px;
+      border-radius: 11px;
+    }
+    .featured-article-meta {
+      margin-bottom: 7px;
+    }
+    .featured-article-type {
+      padding: 2px 8px;
     }
     .featured-article-title {
-      font-size: 14px;
+      font-size: 13px;
+      line-height: 1.45;
+      margin-bottom: 5px;
     }
+    .featured-article-summary {
+      font-size: 11px;
+      line-height: 1.6;
+    }
+    .featured-article-footer {
+      margin-top: 9px;
+      padding-top: 8px;
+      gap: 3px;
+    }
+    .featured-article-read {
+      font-size: 11px;
+    }
+    .featured-article-footer svg {
+      width: 10px;
+      height: 10px;
+    }
+  }
+  /* LTR overrides */
+  html[dir="ltr"] .featured-articles-link svg,
+  html[dir="ltr"] .featured-article-footer svg {
+    transform: rotate(180deg);
   }
 </style>
 <% } %>
 
-<!-- Homepage Sections -->
+<!-- Homepage Sections (All from database, controlled via admin panel) -->
 <% if (typeof homepageSections !== 'undefined' && homepageSections && homepageSections.length > 0) { %>
 <div class="homepage-sections">
   <% homepageSections.forEach(function(section) { %>
   <div class="section-block" id="section-<%= section.slug %>">
     <div class="section-header" onclick="toggleSection('<%= section.slug %>')">
       <div class="section-header-left">
-        <span class="section-icon"><%= section.icon %></span>
-        <h2 class="section-title"><%= locale === 'ar' ? section.title.ar : section.title.en %></h2>
-        <span class="section-count"><%= section.totalSeriesCount %></span>
+        <h2 class="section-title"><%= (locale === 'ar' ? section.title.ar : section.title.en).replace(/[\u{1F300}-\u{1F9FF}]|[\u{2600}-\u{26FF}]|[\u{2700}-\u{27BF}]|[\u{1F600}-\u{1F64F}]|[\u{1F680}-\u{1F6FF}]|[\u{2300}-\u{23FF}]|[\u{2B50}]|[\u{2705}]|[\u{274C}]|[\u{274E}]|[\u{1F4C5}]/gu, '').trim() %></h2>
+        <span class="section-count"><%= section.totalSeriesCount %> <%= locale === 'ar' ? 'سلاسل' : 'series' %></span>
       </div>
-      <button class="section-toggle <%= section.collapsedByDefault ? 'collapsed' : '' %>" id="toggle-<%= section.slug %>" aria-label="Toggle">&#9650;</button>
+      <svg class="section-chevron <%= section.collapsedByDefault ? 'collapsed' : '' %>" id="toggle-<%= section.slug %>" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="18,15 12,9 6,15"/></svg>
     </div>
     <div class="section-content <%= section.collapsedByDefault ? 'collapsed' : '' %>" id="content-<%= section.slug %>">
       <table class="section-table">
@@ -3343,32 +3596,32 @@ function showMoreSeries(slug) {
   <div class="nav-tabs-container">
     <% if (showSeriesTab) { %>
     <button class="nav-tab<%= activeTab === 'series' ? ' active' : '' %>" id="tab-series">
-      📚 <%= locale === 'ar' ? 'السلاسل' : 'Series' %>
+      <i data-lucide="library"></i> <%= locale === 'ar' ? 'السلاسل' : 'Series' %>
     </button>
     <% } %>
     <% if (showStandaloneTab) { %>
     <button class="nav-tab<%= activeTab === 'lectures' ? ' active' : '' %>" id="tab-lectures">
-      🎙️ <%= locale === 'ar' ? 'المحاضرات' : 'Standalone' %>
+      <i data-lucide="mic"></i> <%= locale === 'ar' ? 'المحاضرات' : 'Standalone' %>
     </button>
     <% } %>
     <% if (showKhutbasTab) { %>
     <button class="nav-tab<%= activeTab === 'khutbas' ? ' active' : '' %>" id="tab-khutbas">
-      🕌 <%= locale === 'ar' ? 'الخطب' : 'Khutbahs' %>
+      <i data-lucide="building-2"></i> <%= locale === 'ar' ? 'الخطب' : 'Khutbahs' %>
     </button>
     <% } %>
   </div>
 </div>
 
-<!-- Minimized Name/Title Search -->
+<!-- Filter Panel (includes search) -->
 <div class="title-search-section">
   <div class="title-search-wrapper">
+    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--redesign-text-muted, #A89070)" stroke-width="2.5"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
     <input
       type="text"
       class="title-search-input"
       id="titleSearchInput"
-      placeholder="<%= locale === 'ar' ? 'بحث بعنوان السلسلة أو المحاضرة...' : 'Search by series or lecture name...' %>"
+      placeholder="<%= locale === 'ar' ? 'ابحث عن سلسلة أو درس...' : 'Search series or lesson...' %>"
     >
-    <span class="title-search-icon" id="titleSearchIcon" title="<%= locale === 'ar' ? 'بحث' : 'Search' %>">🔍</span>
   </div>
 </div>
 
@@ -3522,46 +3775,36 @@ function showMoreSeries(slug) {
     %>
       <div class="series-card" data-category="<%= series.category %>" data-date="<%= latestDate %>" data-hijri="<%= hijriDate %>" data-series-type="<%= seriesType %>">
         <div class="series-header" onclick="toggleSeries('<%= series._id %>')">
-          <h2 class="series-title"><a href="/series/<%= series.slug ? encodeURIComponent(series.slug) : series._id %>" onclick="event.stopPropagation()"><%= locale === 'ar' ? series.titleArabic : (series.titleEnglish || series.titleArabic) %></a></h2>
-
-          <div class="series-meta">
-            <% if (series.originalAuthor) { %>
-              <div class="series-author">
-                <span class="series-author-label"><%= locale === 'ar' ? 'المؤلف:' : 'Author:' %></span>
-                <%= series.originalAuthor %>
-              </div>
-            <% } %>
+          <button class="expand-btn" id="btn-<%= series._id %>" aria-label="<%= locale === 'ar' ? 'عرض الدروس' : 'Show Lessons' %>">
+            <i data-lucide="plus" class="expand-icon"></i>
+          </button>
+          <div class="series-content">
+            <h2 class="series-title"><a href="/series/<%= series.slug ? encodeURIComponent(series.slug) : series._id %>" onclick="event.stopPropagation()"><%= locale === 'ar' ? series.titleArabic : (series.titleEnglish || series.titleArabic) %></a></h2>
             <div class="series-sheikh">
-              <%= locale === 'ar' ? 'الشيخ:' : 'Sheikh:' %>
               <%= series.sheikh ? (locale === 'ar' ? series.sheikh.nameArabic : (series.sheikh.nameEnglish || series.sheikh.nameArabic)) : '' %>
             </div>
+            <div class="series-info">
+              <span class="series-lesson-count"><%= series.lectureCount %> <%= locale === 'ar' ? 'درس' : 'lessons' %></span>
+              <span class="category-badge"><%= translateCategory(series.category) %></span>
+            </div>
           </div>
-
-          <div class="series-info">
-            <span><%= series.lectureCount %> <%= locale === 'ar' ? 'درس' : 'lessons' %></span>
-            <span class="category-badge">
-              <%= translateCategory(series.category) %>
-            </span>
-          </div>
-
-          <button class="expand-btn" id="btn-<%= series._id %>">
-            <%= locale === 'ar' ? 'عرض الدروس ▼' : 'Show Lessons ▼' %>
-          </button>
         </div>
 
         <div class="episodes-list" id="episodes-<%= series._id %>">
           <!-- Sort controls for lectures within this series -->
-          <div style="padding: 12px; background: #f8f9fa; border-bottom: 1px solid #e9ecef; display: flex; gap: 8px; align-items: center;">
-            <span style="font-size: 13px; font-weight: 600; color: #666;"><%= locale === 'ar' ? 'ترتيب الدروس:' : 'Sort:' %></span>
-            <button class="chip" onclick="sortSeriesLectures('<%= series._id %>', 'number'); event.stopPropagation();" style="padding: 4px 12px; font-size: 12px;">
-              <%= locale === 'ar' ? 'حسب الرقم' : 'By Number' %>
-            </button>
-            <button class="chip" onclick="sortSeriesLectures('<%= series._id %>', 'oldest'); event.stopPropagation();" style="padding: 4px 12px; font-size: 12px;">
-              <%= locale === 'ar' ? 'الأقدم أولاً' : 'Oldest First' %>
-            </button>
-            <button class="chip" onclick="sortSeriesLectures('<%= series._id %>', 'newest'); event.stopPropagation();" style="padding: 4px 12px; font-size: 12px;">
-              <%= locale === 'ar' ? 'الأحدث أولاً' : 'Newest First' %>
-            </button>
+          <div class="episode-sort-bar">
+            <span class="episode-sort-label"><%= locale === 'ar' ? 'ترتيب الدروس:' : 'Sort:' %></span>
+            <div class="episode-sort-chips">
+              <button class="sort-chip active" onclick="sortSeriesLectures('<%= series._id %>', 'number'); event.stopPropagation();">
+                <%= locale === 'ar' ? 'حسب الرقم' : 'By Number' %>
+              </button>
+              <button class="sort-chip" onclick="sortSeriesLectures('<%= series._id %>', 'oldest'); event.stopPropagation();">
+                <%= locale === 'ar' ? 'الأقدم' : 'Oldest' %>
+              </button>
+              <button class="sort-chip" onclick="sortSeriesLectures('<%= series._id %>', 'newest'); event.stopPropagation();">
+                <%= locale === 'ar' ? 'الأحدث' : 'Newest' %>
+              </button>
+            </div>
           </div>
 
           <div class="episodes-container">
@@ -3575,21 +3818,21 @@ function showMoreSeries(slug) {
               </div>
               <div class="episode-meta">
                 <% if (lecture.duration && lecture.duration > 0) { %>
-                  <span>⏱️ <%= Math.floor(lecture.duration / 60) %>:<%= String(lecture.duration % 60).padStart(2, '0') %></span>
+                  <span><i data-lucide="clock"></i> <%= Math.floor(lecture.duration / 60) %>:<%= String(lecture.duration % 60).padStart(2, '0') %></span>
                 <% } %>
                 <% if (lecture.location) { %>
                   <span><%= lecture.location %></span>
                 <% } %>
                 <% if (lecture.dateRecordedHijri) { %>
-                  <span class="hijri-date">📅 <%= formatHijriDate(lecture.dateRecordedHijri) %></span>
+                  <span class="hijri-date"><i data-lucide="calendar"></i> <%= formatHijriDate(lecture.dateRecordedHijri) %></span>
                 <% } %>
               </div>
               <div class="episode-actions">
                 <button class="btn-play" onclick="playAudio('<%= lecture._id %>', '<%= lecture.titleArabic.replace(/'/g, "\\'") %>', '<%= series.sheikh ? series.sheikh.nameArabic.replace(/'/g, "\\'") : "" %>')">
-                  ▶ <%= locale === 'ar' ? 'تشغيل' : 'Play' %>
+                  <i data-lucide="play"></i> <%= locale === 'ar' ? 'تشغيل' : 'Play' %>
                 </button>
                 <a href="/download/<%= lecture._id %>" class="btn-download">
-                  ⬇ <%= locale === 'ar' ? 'تحميل' : 'Download' %>
+                  <i data-lucide="download"></i> <%= locale === 'ar' ? 'تحميل' : 'Download' %>
                 </a>
               </div>
             </div>
@@ -3600,7 +3843,7 @@ function showMoreSeries(slug) {
     <% }); %>
   <% } else { %>
     <div class="empty-state">
-      <div class="empty-icon">📚</div>
+      <div class="empty-icon"><i data-lucide="book-open"></i></div>
       <h3 class="empty-title">
         <%= locale === 'ar' ? 'لا توجد محاضرات' : 'No lectures found' %>
       </h3>
@@ -3639,19 +3882,19 @@ function showMoreSeries(slug) {
             </div>
             <div class="series-info">
               <% if (lecture.duration && lecture.duration > 0) { %>
-                <span>⏱️ <%= Math.floor(lecture.duration / 60) %>:<%= String(lecture.duration % 60).padStart(2, '0') %></span>
+                <span><i data-lucide="clock"></i> <%= Math.floor(lecture.duration / 60) %>:<%= String(lecture.duration % 60).padStart(2, '0') %></span>
               <% } %>
               <% if (lecture.dateRecordedHijri) { %>
-                <span class="hijri-date">📅 <%= formatHijriDate(lecture.dateRecordedHijri) %></span>
+                <span class="hijri-date"><i data-lucide="calendar"></i> <%= formatHijriDate(lecture.dateRecordedHijri) %></span>
               <% } %>
             </div>
             <div class="episode-actions" style="margin-top: 16px;">
               <% if (lecture.audioFileName) { %>
                 <button class="btn-play" onclick="playAudio('<%= lecture._id %>', '<%= lecture.titleArabic.replace(/'/g, "\\'") %>', '<%= lecture.sheikhId ? lecture.sheikhId.nameArabic.replace(/'/g, "\\'") : "" %>')">
-                  ▶ <%= locale === 'ar' ? 'تشغيل' : 'Play' %>
+                  <i data-lucide="play"></i> <%= locale === 'ar' ? 'تشغيل' : 'Play' %>
                 </button>
                 <a href="/download/<%= lecture._id %>" class="btn-download">
-                  ⬇ <%= locale === 'ar' ? 'تحميل' : 'Download' %>
+                  <i data-lucide="download"></i> <%= locale === 'ar' ? 'تحميل' : 'Download' %>
                 </a>
               <% } %>
             </div>
@@ -3660,7 +3903,7 @@ function showMoreSeries(slug) {
       <% }) %>
     <% } else { %>
       <div class="empty-state">
-        <div class="empty-icon">🎙️</div>
+        <div class="empty-icon"><i data-lucide="mic"></i></div>
         <h3 class="empty-title"><%= locale === 'ar' ? 'لا توجد محاضرات منفصلة' : 'No standalone lectures' %></h3>
       </div>
     <% } %>
@@ -3723,23 +3966,25 @@ function showMoreSeries(slug) {
             <div class="series-info">
               <span><%= series.lectureCount %> <%= locale === 'ar' ? 'خطبة' : 'khutbahs' %></span>
             </div>
-            <button class="expand-btn" id="khutba-btn-<%= series._id %>">
-              <%= locale === 'ar' ? 'عرض الخطب ▼' : 'Show Khutbahs ▼' %>
+            <button class="expand-btn" id="khutba-btn-<%= series._id %>" aria-label="<%= locale === 'ar' ? 'عرض الخطب' : 'Show Khutbahs' %>">
+              <i data-lucide="plus" class="expand-icon"></i>
             </button>
           </div>
           <div class="episodes-list" id="khutba-episodes-<%= series._id %>">
             <!-- Sort controls for khutbas within this series -->
-            <div style="padding: 12px; background: #f8f9fa; border-bottom: 1px solid #e9ecef; display: flex; gap: 8px; align-items: center;">
-              <span style="font-size: 13px; font-weight: 600; color: #666;"><%= locale === 'ar' ? 'ترتيب الخطب:' : 'Sort:' %></span>
-              <button class="chip" onclick="sortSeriesLectures('khutba-<%= series._id %>', 'number'); event.stopPropagation();" style="padding: 4px 12px; font-size: 12px;">
-                <%= locale === 'ar' ? 'حسب الرقم' : 'By Number' %>
-              </button>
-              <button class="chip" onclick="sortSeriesLectures('khutba-<%= series._id %>', 'oldest'); event.stopPropagation();" style="padding: 4px 12px; font-size: 12px;">
-                <%= locale === 'ar' ? 'الأقدم أولاً' : 'Oldest First' %>
-              </button>
-              <button class="chip" onclick="sortSeriesLectures('khutba-<%= series._id %>', 'newest'); event.stopPropagation();" style="padding: 4px 12px; font-size: 12px;">
-                <%= locale === 'ar' ? 'الأحدث أولاً' : 'Newest First' %>
-              </button>
+            <div class="episode-sort-bar">
+              <span class="episode-sort-label"><%= locale === 'ar' ? 'ترتيب الخطب:' : 'Sort:' %></span>
+              <div class="episode-sort-chips">
+                <button class="sort-chip active" onclick="sortSeriesLectures('khutba-<%= series._id %>', 'number'); event.stopPropagation();">
+                  <%= locale === 'ar' ? 'حسب الرقم' : 'By Number' %>
+                </button>
+                <button class="sort-chip" onclick="sortSeriesLectures('khutba-<%= series._id %>', 'oldest'); event.stopPropagation();">
+                  <%= locale === 'ar' ? 'الأقدم' : 'Oldest' %>
+                </button>
+                <button class="sort-chip" onclick="sortSeriesLectures('khutba-<%= series._id %>', 'newest'); event.stopPropagation();">
+                  <%= locale === 'ar' ? 'الأحدث' : 'Newest' %>
+                </button>
+              </div>
             </div>
 
             <div class="episodes-container">
@@ -3752,22 +3997,22 @@ function showMoreSeries(slug) {
                   </div>
                   <div class="episode-meta">
                     <% if (lecture.duration && lecture.duration > 0) { %>
-                      <span>⏱️ <%= Math.floor(lecture.duration / 60) %>:<%= String(lecture.duration % 60).padStart(2, '0') %></span>
+                      <span><i data-lucide="clock"></i> <%= Math.floor(lecture.duration / 60) %>:<%= String(lecture.duration % 60).padStart(2, '0') %></span>
                     <% } %>
                     <% if (lecture.location) { %>
                       <span><%= lecture.location %></span>
                     <% } %>
                     <% if (lecture.dateRecordedHijri) { %>
-                      <span class="hijri-date">📅 <%= formatHijriDate(lecture.dateRecordedHijri) %></span>
+                      <span class="hijri-date"><i data-lucide="calendar"></i> <%= formatHijriDate(lecture.dateRecordedHijri) %></span>
                     <% } %>
                   </div>
                   <div class="episode-actions">
                     <% if (lecture.audioFileName) { %>
                       <button class="btn-play" onclick="playAudio('<%= lecture._id %>', '<%= lecture.titleArabic.replace(/'/g, "\\'") %>', '<%= series.sheikh ? series.sheikh.nameArabic.replace(/'/g, "\\'") : "" %>')">
-                        ▶ <%= locale === 'ar' ? 'تشغيل' : 'Play' %>
+                        <i data-lucide="play"></i> <%= locale === 'ar' ? 'تشغيل' : 'Play' %>
                       </button>
                       <a href="/download/<%= lecture._id %>" class="btn-download">
-                        ⬇ <%= locale === 'ar' ? 'تحميل' : 'Download' %>
+                        <i data-lucide="download"></i> <%= locale === 'ar' ? 'تحميل' : 'Download' %>
                       </a>
                     <% } %>
                   </div>
@@ -3780,7 +4025,7 @@ function showMoreSeries(slug) {
       <% }) %>
     <% } else { %>
       <div class="empty-state">
-        <div class="empty-icon">🕌</div>
+        <div class="empty-icon"><i data-lucide="building-2"></i></div>
         <h3 class="empty-title"><%= locale === 'ar' ? 'لا توجد خطب' : 'No Khutbahs' %></h3>
       </div>
     <% } %>
@@ -3802,10 +4047,11 @@ function showMoreSeries(slug) {
     episodesList.classList.toggle('show');
     btn.classList.toggle('expanded');
 
-    if (episodesList.classList.contains('show')) {
-      btn.textContent = currentLocale === 'ar' ? 'إخفاء الدروس ▲' : 'Hide Lessons ▲';
-    } else {
-      btn.textContent = currentLocale === 'ar' ? 'عرض الدروس ▼' : 'Show Lessons ▼';
+    // Toggle between plus and minus icons
+    const icon = btn.querySelector('.expand-icon');
+    if (icon) {
+      icon.setAttribute('data-lucide', episodesList.classList.contains('show') ? 'minus' : 'plus');
+      if (typeof lucide !== 'undefined') lucide.createIcons();
     }
   }
 
@@ -3819,10 +4065,11 @@ function showMoreSeries(slug) {
     episodesList.classList.toggle('show');
     btn.classList.toggle('expanded');
 
-    if (episodesList.classList.contains('show')) {
-      btn.textContent = currentLocale === 'ar' ? 'إخفاء الخطب ▲' : 'Hide Khutbahs ▲';
-    } else {
-      btn.textContent = currentLocale === 'ar' ? 'عرض الخطب ▼' : 'Show Khutbahs ▼';
+    // Toggle between plus and minus icons
+    const icon = btn.querySelector('.expand-icon');
+    if (icon) {
+      icon.setAttribute('data-lucide', episodesList.classList.contains('show') ? 'minus' : 'plus');
+      if (typeof lucide !== 'undefined') lucide.createIcons();
     }
   }
 
@@ -3877,6 +4124,16 @@ function showMoreSeries(slug) {
 
     // Re-append episodes in sorted order
     episodes.forEach(episode => container.appendChild(episode));
+  }
+
+  // Initialize Lucide icons when DOM is ready
+  if (typeof lucide !== 'undefined') {
+    lucide.createIcons();
+  } else {
+    // Wait for Lucide to load
+    window.addEventListener('load', function() {
+      if (typeof lucide !== 'undefined') lucide.createIcons();
+    });
   }
 </script>
 

@@ -1,4 +1,7 @@
-<div class="lecture-card">
+<div class="lecture-card" data-lecture-number="<%= lecture.lectureNumber || '' %>">
+  <!-- Number badge inside card (visible on mobile) -->
+  <div class="lecture-number-inside"><%= lecture.lectureNumber || '' %></div>
+
   <div class="lecture-icon">
     <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
       <path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z"></path>
@@ -31,14 +34,21 @@
 
     <div class="lecture-info">
       <% if (lecture.duration && lecture.duration > 0) { %>
-        <span class="lecture-duration">⏱️ <%= lecture.durationFormatted %></span>
+        <span class="lecture-duration">
+          <svg class="info-icon" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+          <%= lecture.durationFormatted %>
+        </span>
         <span class="lecture-divider">•</span>
       <% } %>
-      <span class="lecture-plays">▶️ <%= lecture.playCount %> <%= locale === 'ar' ? 'مرة' : 'plays' %></span>
+      <span class="lecture-plays">
+        <svg class="info-icon" width="12" height="12" viewBox="0 0 24 24" fill="currentColor"><polygon points="5 3 19 12 5 21 5 3"/></svg>
+        <%= lecture.playCount %> <%= locale === 'ar' ? 'مرة' : 'plays' %>
+      </span>
       <% if (lecture.dateRecordedHijri) { %>
         <span class="lecture-divider">•</span>
         <span class="lecture-date" title="<%= locale === 'ar' ? 'تاريخ التسجيل (هجري)' : 'Recording Date (Hijri)' %>">
-          📅 <%= formatHijriDate(lecture.dateRecordedHijri) %>
+          <svg class="info-icon" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+          <%= formatHijriDate(lecture.dateRecordedHijri) %>
         </span>
       <% } %>
       <% if (lecture.category && lecture.category !== 'Other') { %>
@@ -53,24 +63,32 @@
       <% const displayTitle = locale === 'ar' ? (lecture.titleArabic || '') : (lecture.titleEnglish || lecture.titleArabic || ''); %>
       <% const displaySheikh = lecture.sheikhId ? (locale === 'ar' ? lecture.sheikhId.nameArabic : (lecture.sheikhId.nameEnglish || lecture.sheikhId.nameArabic)) : ''; %>
       <button class="btn-play" onclick="playAudio('<%= lecture._id %>', '<%= displayTitle.replace(/'/g, "\\'") %>', '<%= displaySheikh.replace(/'/g, "\\'") %>')" title="<%= typeof t === 'function' ? t('lecture_play') : (locale === 'ar' ? 'استماع' : 'Play') %>">
-        ▶️
+        <svg class="play-icon" width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><polygon points="5 3 19 12 5 21 5 3"></polygon></svg>
       </button>
     <% } else { %>
       <button class="btn-play" disabled style="opacity: 0.5; cursor: not-allowed;" title="<%= locale === 'ar' ? 'لا يوجد ملف صوتي' : 'No audio file' %>">
-        ▶️
+        <svg class="play-icon" width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><polygon points="5 3 19 12 5 21 5 3"></polygon></svg>
       </button>
     <% } %>
-    <a href="/download/<%= lecture._id %>" class="btn-download" title="<%= typeof t === 'function' ? t('lecture_download') : (locale === 'ar' ? 'تحميل' : 'Download') %>">⬇️</a>
-    <% const shareTitle = locale === 'ar' ? (lecture.titleArabic || '') : (lecture.titleEnglish || lecture.titleArabic || ''); %>
-    <button class="btn-share-card" onclick="if(window.shareModule){window.shareModule.share(window.location.origin + '/lectures/<%= lecture.shortId ? lecture.shortId + '/' + (lecture.slug_en || '') + '/' + encodeURIComponent(lecture.slug_ar || '') : (lecture.slug ? encodeURIComponent(lecture.slug) : lecture._id) %>', '<%= shareTitle.replace(/'/g, "\\'").replace(/\n/g, " ") %>')}" title="<%= typeof t === 'function' ? t('lecture_share') : (locale === 'ar' ? 'مشاركة' : 'Share') %>">
-      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-        <circle cx="18" cy="5" r="3"></circle>
-        <circle cx="6" cy="12" r="3"></circle>
-        <circle cx="18" cy="19" r="3"></circle>
-        <line x1="8.59" y1="13.51" x2="15.42" y2="17.49"></line>
-        <line x1="15.41" y1="6.51" x2="8.59" y2="10.49"></line>
-      </svg>
-    </button>
+    <div class="lecture-secondary-actions">
+      <a href="/download/<%= lecture._id %>" class="btn-download" title="<%= typeof t === 'function' ? t('lecture_download') : (locale === 'ar' ? 'تحميل' : 'Download') %>">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+          <polyline points="7 10 12 15 17 10"/>
+          <line x1="12" y1="15" x2="12" y2="3"/>
+        </svg>
+      </a>
+      <% const shareTitle = locale === 'ar' ? (lecture.titleArabic || '') : (lecture.titleEnglish || lecture.titleArabic || ''); %>
+      <button class="btn-share-card" onclick="if(window.shareModule){window.shareModule.share(window.location.origin + '/lectures/<%= lecture.shortId ? lecture.shortId + '/' + (lecture.slug_en || '') + '/' + encodeURIComponent(lecture.slug_ar || '') : (lecture.slug ? encodeURIComponent(lecture.slug) : lecture._id) %>', '<%= shareTitle.replace(/'/g, "\\'").replace(/\n/g, " ") %>')}" title="<%= typeof t === 'function' ? t('lecture_share') : (locale === 'ar' ? 'مشاركة' : 'Share') %>">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <circle cx="18" cy="5" r="3"></circle>
+          <circle cx="6" cy="12" r="3"></circle>
+          <circle cx="18" cy="19" r="3"></circle>
+          <line x1="8.59" y1="13.51" x2="15.42" y2="17.49"></line>
+          <line x1="15.41" y1="6.51" x2="8.59" y2="10.49"></line>
+        </svg>
+      </button>
+    </div>
   </div>
 </div>
 
@@ -87,6 +105,7 @@
     max-width: 100%;
     box-sizing: border-box;
     overflow: hidden;
+    position: relative;
   }
 
   .lecture-card:hover {
@@ -116,9 +135,16 @@
   }
 
   .lecture-title {
+    font-family: var(--font-cairo, 'Cairo', sans-serif);
     font-size: 18px;
     margin-bottom: 8px;
     font-weight: 600;
+    padding-left: 52px; /* Space for number badge on desktop */
+  }
+
+  html[dir="rtl"] .lecture-title {
+    padding-left: 0;
+    padding-right: 52px;
   }
 
   .lecture-title a {
@@ -145,6 +171,7 @@
   }
 
   .lecture-info {
+    font-family: var(--font-cairo, 'Cairo', sans-serif);
     color: var(--text-secondary);
     font-size: 13px;
     display: flex;
@@ -155,6 +182,44 @@
 
   .lecture-divider {
     opacity: 0.5;
+  }
+
+  /* Info icons */
+  .info-icon {
+    vertical-align: middle;
+    margin-right: 3px;
+    opacity: 0.7;
+  }
+
+  html[dir="rtl"] .info-icon {
+    margin-right: 0;
+    margin-left: 3px;
+  }
+
+  /* Number badge inside card - shown on all screen sizes */
+  .lecture-number-inside {
+    display: flex;
+    position: absolute;
+    top: 16px;
+    right: 16px;
+    width: 36px;
+    height: 36px;
+    border-radius: 50%;
+    background: var(--redesign-gold-primary, #C49A3C);
+    color: var(--redesign-brown-dark, #2C1508);
+    font-size: 15px;
+    font-weight: 700;
+    align-items: center;
+    justify-content: center;
+    font-family: var(--font-cairo, 'Cairo', sans-serif);
+  }
+
+  .lecture-number-inside:empty {
+    display: none;
+  }
+
+  .lecture-secondary-actions {
+    display: contents;
   }
 
   .lecture-category {
@@ -242,152 +307,243 @@
     }
   }
 
-  /* Small screens - stack layout */
-  @media (max-width: 640px) {
+  /* Mobile redesign - matches design handoff */
+  @media (max-width: 768px) {
     .lecture-card {
       flex-direction: column;
       align-items: stretch;
       width: 100%;
-      max-width: 100%;
       padding: 14px;
       gap: 10px;
+      border: 1px solid var(--redesign-gold-light, #DEC99A);
+      border-radius: 10px;
+      position: relative;
     }
 
     .lecture-icon {
       display: none;
     }
 
+    /* Number badge inside card - smaller on mobile */
+    .lecture-number-inside {
+      top: 12px;
+      right: 12px;
+      width: 32px;
+      height: 32px;
+      font-size: 14px;
+    }
+
+    /* Hide sheikh/series meta on mobile - shown in series context */
+    .lecture-meta {
+      display: none;
+    }
+
     .lecture-content {
       width: 100%;
-      max-width: 100%;
-      overflow: hidden;
-      word-wrap: break-word;
-      overflow-wrap: break-word;
     }
 
     .lecture-title {
       font-size: 15px;
-      line-height: 1.4;
-      word-wrap: break-word;
-      overflow-wrap: break-word;
+      line-height: 1.5;
+      margin-bottom: 6px;
+      padding-left: 44px; /* Space for number badge */
     }
 
-    .lecture-meta {
-      font-size: 13px;
+    html[dir="rtl"] .lecture-title {
+      padding-left: 0;
+      padding-right: 44px;
     }
 
     .lecture-info {
-      font-size: 12px;
-    }
-
-    .lecture-actions {
-      width: 100%;
-      max-width: 100%;
-      justify-content: center;
-      gap: 8px;
-      margin-top: 4px;
+      font-size: 11px;
+      color: var(--redesign-text-muted, #A89070);
+      gap: 4px;
       flex-wrap: wrap;
     }
 
-    .btn-play,
+    .lecture-info .info-icon {
+      width: 11px;
+      height: 11px;
+    }
+
+    .lecture-divider {
+      display: inline;
+      opacity: 0.4;
+    }
+
+    /* Actions: Single row - Play (flex) + Download + Share */
+    .lecture-actions {
+      flex-direction: row;
+      gap: 8px;
+      width: 100%;
+      align-items: center;
+    }
+
+    .btn-play {
+      flex: 1;
+      height: 36px;
+      border-radius: 8px;
+      font-size: 13px;
+      font-weight: 600;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 6px;
+      background: var(--redesign-gold-primary, #C49A3C);
+      border: none;
+      color: var(--redesign-brown-dark, #2C1508);
+    }
+
+    .btn-play .play-icon {
+      width: 12px;
+      height: 12px;
+    }
+
+    .btn-play::after {
+      content: 'تشغيل';
+      font-family: var(--font-cairo, 'Cairo', sans-serif);
+    }
+
+    html[dir="ltr"] .btn-play::after {
+      content: 'Play';
+    }
+
+    .lecture-secondary-actions {
+      display: flex;
+      gap: 6px;
+    }
+
     .btn-download,
     .btn-share-card {
-      width: 38px;
-      height: 38px;
+      width: 34px;
+      height: 34px;
+      border-radius: 6px;
+      background: transparent;
+      border: 1px solid var(--redesign-gold-light, #DEC99A);
+      color: var(--redesign-text-mid, #7A5C3A);
+      flex-shrink: 0;
+    }
+
+    .btn-download svg,
+    .btn-share-card svg {
+      width: 14px;
+      height: 14px;
+    }
+
+    .btn-download:hover,
+    .btn-share-card:hover {
+      background: var(--redesign-badge-bg, #E8D5A0);
+      border-color: var(--redesign-gold-primary, #C49A3C);
     }
   }
 
   /* Small phones (below 480px) */
   @media (max-width: 480px) {
     .lecture-card {
-      padding: 12px;
+      padding: 10px 12px;
       gap: 8px;
-      border-radius: 10px;
+    }
+
+    .lecture-number-inside {
+      top: 8px;
+      right: 10px;
+      width: 26px;
+      height: 26px;
+      font-size: 11px;
     }
 
     .lecture-title {
-      font-size: 14px;
+      font-size: 13px;
+      padding-left: 36px;
       margin-bottom: 4px;
-      word-wrap: break-word;
-      overflow-wrap: break-word;
     }
 
-    .lecture-meta {
-      font-size: 12px;
-      margin-bottom: 4px;
+    html[dir="rtl"] .lecture-title {
+      padding-left: 0;
+      padding-right: 36px;
     }
 
     .lecture-info {
-      font-size: 11px;
-      gap: 4px;
-    }
-
-    .lecture-divider {
-      display: none;
-    }
-
-    .lecture-info > span {
-      display: inline-block;
-    }
-
-    .lecture-info > span:not(:last-child)::after {
-      content: ' • ';
-      opacity: 0.5;
-    }
-
-    .lecture-category {
       font-size: 10px;
-      padding: 2px 6px;
+    }
+
+    .lecture-info .info-icon {
+      width: 10px;
+      height: 10px;
     }
 
     .lecture-actions {
-      justify-content: center;
       gap: 6px;
     }
 
-    .btn-play,
+    .btn-play {
+      height: 34px;
+      font-size: 12px;
+      gap: 5px;
+    }
+
+    .btn-play .play-icon {
+      width: 10px;
+      height: 10px;
+    }
+
     .btn-download,
     .btn-share-card {
-      width: 34px;
-      height: 34px;
-      font-size: 13px;
-      border-width: 1.5px;
-      border-radius: 6px;
+      width: 32px;
+      height: 32px;
+    }
+
+    .btn-download svg,
+    .btn-share-card svg {
+      width: 12px;
+      height: 12px;
     }
   }
 
   /* Very small phones (below 360px) */
   @media (max-width: 360px) {
     .lecture-card {
-      padding: 10px;
+      padding: 8px 10px;
       gap: 6px;
-      border-radius: 8px;
     }
 
-    .lecture-title {
-      font-size: 13px;
-    }
-
-    .lecture-meta {
-      font-size: 11px;
-    }
-
-    .lecture-info {
+    .lecture-number-inside {
+      top: 6px;
+      right: 8px;
+      width: 24px;
+      height: 24px;
       font-size: 10px;
     }
 
-    .lecture-actions {
-      justify-content: center;
-      gap: 4px;
+    .lecture-title {
+      font-size: 12px;
+      padding-left: 32px;
     }
 
-    .btn-play,
+    html[dir="rtl"] .lecture-title {
+      padding-left: 0;
+      padding-right: 32px;
+    }
+
+    .lecture-info {
+      font-size: 9px;
+    }
+
+    .btn-play {
+      height: 32px;
+      font-size: 11px;
+    }
+
     .btn-download,
     .btn-share-card {
-      width: 30px;
-      height: 30px;
-      font-size: 11px;
-      border-radius: 5px;
+      width: 28px;
+      height: 28px;
+    }
+
+    .btn-download svg,
+    .btn-share-card svg {
+      width: 11px;
+      height: 11px;
     }
   }
 </style>

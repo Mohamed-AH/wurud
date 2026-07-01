@@ -92,13 +92,13 @@ app.use(helmet({
   contentSecurityPolicy: {
     directives: {
       defaultSrc: ["'self'"],
-      scriptSrc: ["'self'", "'unsafe-inline'", "https://accounts.google.com", "https://apis.google.com"],
+      scriptSrc: ["'self'", "'unsafe-inline'", "https://accounts.google.com", "https://apis.google.com", "https://unpkg.com"],
       scriptSrcAttr: ["'unsafe-inline'"], // Allow onclick handlers
-      styleSrc: ["'self'", "'unsafe-inline'"],
-      fontSrc: ["'self'"],
+      styleSrc: ["'self'", "'unsafe-inline'", "https://fonts.googleapis.com"],
+      fontSrc: ["'self'", "https://fonts.gstatic.com"],
       imgSrc: ["'self'", "data:", "https:", "blob:"],
       mediaSrc: ["'self'", "https://objectstorage.me-jeddah-1.oraclecloud.com"],
-      connectSrc: ["'self'", "https://objectstorage.me-jeddah-1.oraclecloud.com"],
+      connectSrc: ["'self'", "https://objectstorage.me-jeddah-1.oraclecloud.com", "https://unpkg.com"],
       frameSrc: ["https://accounts.google.com"],
       objectSrc: ["'none'"],
       upgradeInsecureRequests: isProduction ? [] : null,
@@ -274,6 +274,7 @@ const streamRoutes = require('./routes/stream');
 const downloadRoutes = require('./routes/download');
 const searchApiRoutes = require('./routes/search');
 const articlesRoutes = require('./routes/articles');
+const contactApiRoutes = require('./routes/api/contact');
 
 app.use('/', publicRoutes);
 app.use('/auth', authRoutes);
@@ -286,6 +287,7 @@ app.use('/stream', streamRoutes);
 app.use('/download', downloadRoutes);
 app.use('/search', searchApiRoutes);
 app.use('/articles', articlesRoutes);
+app.use('/api/contact', contactApiRoutes);
 
 // The Sentry error handler must be registered before any other error middleware and after all controllers
 Sentry.setupExpressErrorHandler(app);

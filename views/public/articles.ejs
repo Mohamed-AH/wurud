@@ -11,28 +11,84 @@
   }
 
   .articles-header {
-    background: #2C1508;
-    padding: 14px 16px 18px;
+    background: linear-gradient(135deg, #2C1508 0%, #4A3020 100%);
+    padding: 48px 32px;
     text-align: center;
   }
 
   .articles-header h1 {
     color: #FDF8F2;
-    font-size: 18px;
+    font-size: 36px;
     font-weight: 800;
     margin: 0;
+    font-family: var(--font-cairo, 'Cairo', sans-serif);
   }
 
   .articles-header p {
     color: #DEC99A;
-    font-size: 11px;
-    margin-top: 4px;
+    font-size: 16px;
+    margin-top: 8px;
   }
 
-  .articles-search {
+  /* Mobile header */
+  @media (max-width: 768px) {
+    .articles-header {
+      padding: 14px 16px 18px;
+    }
+
+    .articles-header h1 {
+      font-size: 18px;
+    }
+
+    .articles-header p {
+      font-size: 11px;
+      margin-top: 4px;
+    }
+  }
+
+  .articles-filter-section {
     background: #F5EDE0;
-    padding: 10px 14px;
+    padding: 20px 32px;
     border-bottom: 1px solid #DEC99A;
+  }
+
+  .articles-filter-container {
+    max-width: 1200px;
+    margin: 0 auto;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 24px;
+  }
+
+  .filter-chips {
+    display: flex;
+    gap: 10px;
+    flex-wrap: wrap;
+  }
+
+  .filter-chip {
+    background: #FDF8F2;
+    border: 1px solid #DEC99A;
+    border-radius: 20px;
+    padding: 8px 18px;
+    font-size: 14px;
+    font-weight: 600;
+    color: #7A5C3A;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    font-family: var(--font-cairo, 'Cairo', sans-serif);
+  }
+
+  .filter-chip:hover {
+    background: #E8D5A0;
+    border-color: #C49A3C;
+  }
+
+  .filter-chip.active {
+    background: #C49A3C;
+    color: #FDF8F2;
+    border-color: #C49A3C;
   }
 
   .articles-search-wrapper {
@@ -41,8 +97,9 @@
     border-radius: 10px;
     display: flex;
     align-items: center;
-    padding: 0 10px;
-    gap: 8px;
+    padding: 0 14px;
+    gap: 10px;
+    min-width: 280px;
   }
 
   .articles-search-icon {
@@ -54,9 +111,9 @@
     flex: 1;
     background: transparent;
     border: none;
-    padding: 9px 0;
+    padding: 10px 0;
     font-family: inherit;
-    font-size: 13px;
+    font-size: 14px;
     color: #2C1508;
   }
 
@@ -72,20 +129,50 @@
     border-color: #C49A3C;
   }
 
+  /* Mobile filter section */
+  @media (max-width: 768px) {
+    .articles-filter-section {
+      padding: 10px 14px;
+    }
+
+    .articles-filter-container {
+      flex-direction: column;
+      gap: 12px;
+    }
+
+    .filter-chips {
+      display: none; /* Hide chips on mobile for simplicity */
+    }
+
+    .articles-search-wrapper {
+      width: 100%;
+      min-width: unset;
+      padding: 0 10px;
+    }
+
+    .articles-search-input {
+      padding: 9px 0;
+      font-size: 13px;
+    }
+  }
+
   .articles-list {
-    padding: 12px 14px;
-    max-width: 900px;
+    padding: 24px 32px;
+    max-width: 1200px;
     margin: 0 auto;
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 20px;
   }
 
   .article-card {
     background: #FDF8F2;
     border: 1px solid #DEC99A;
     border-radius: 12px;
-    padding: 12px 14px;
-    margin-bottom: 10px;
+    padding: 16px 18px;
     text-decoration: none;
-    display: block;
+    display: flex;
+    flex-direction: column;
     transition: all 0.3s ease;
   }
 
@@ -114,6 +201,19 @@
   .article-type.telegram {
     background: #6B7A4E;
     color: #FDF8F2;
+  }
+
+  .article-reading-time {
+    color: #A89070;
+    font-size: 12px;
+  }
+
+  .article-footer {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-top: auto;
+    padding-top: 8px;
   }
 
   .article-date {
@@ -146,11 +246,10 @@
 
   .article-read-more {
     display: flex;
-    justify-content: flex-end;
     align-items: center;
-    gap: 3px;
+    gap: 4px;
     color: #C49A3C;
-    font-size: 11px;
+    font-size: 12px;
     font-weight: 600;
   }
 
@@ -163,12 +262,20 @@
     flex-direction: row-reverse;
   }
 
+  html[dir="ltr"] .article-footer {
+    flex-direction: row-reverse;
+  }
+
   html[dir="ltr"] .article-read-more {
     flex-direction: row-reverse;
   }
 
   html[dir="ltr"] .article-read-more .arrow {
     transform: scaleX(-1);
+  }
+
+  html[dir="ltr"] .articles-filter-container {
+    flex-direction: row-reverse;
   }
 
   .pagination {
@@ -249,6 +356,28 @@
     color: #7A5C3A;
   }
 
+  /* Tablet - 2 columns */
+  @media (max-width: 992px) {
+    .articles-list {
+      grid-template-columns: repeat(2, 1fr);
+      padding: 20px 24px;
+      gap: 16px;
+    }
+  }
+
+  /* Mobile - single column */
+  @media (max-width: 768px) {
+    .articles-list {
+      grid-template-columns: 1fr;
+      padding: 12px 14px;
+      gap: 10px;
+    }
+
+    .article-card {
+      padding: 12px 14px;
+    }
+  }
+
   @media (max-width: 480px) {
     .articles-list {
       padding: 10px 12px;
@@ -274,24 +403,46 @@
   <p><%= locale === 'ar' ? 'مقالات ومواضيع علمية مختارة' : 'Selected scholarly articles and topics' %></p>
 </div>
 
-<div class="articles-search">
-  <div class="articles-search-wrapper">
-    <svg class="articles-search-icon" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
-      <circle cx="11" cy="11" r="8"/>
-      <line x1="21" y1="21" x2="16.65" y2="16.65"/>
-    </svg>
-    <input type="text" class="articles-search-input" placeholder="<%= locale === 'ar' ? 'ابحث في المقالات...' : 'Search articles...' %>" id="articleSearch" />
+<div class="articles-filter-section">
+  <div class="articles-filter-container">
+    <div class="filter-chips">
+      <button class="filter-chip active" data-filter="all"><%= locale === 'ar' ? 'الكل' : 'All' %></button>
+      <button class="filter-chip" data-filter="Aqeedah"><%= locale === 'ar' ? 'عقيدة' : 'Aqeedah' %></button>
+      <button class="filter-chip" data-filter="Taleem"><%= locale === 'ar' ? 'تعليم' : 'Education' %></button>
+      <button class="filter-chip" data-filter="Quran"><%= locale === 'ar' ? 'قرآن' : 'Quran' %></button>
+      <button class="filter-chip" data-filter="Seerah"><%= locale === 'ar' ? 'سيرة' : 'Seerah' %></button>
+    </div>
+    <div class="articles-search-wrapper">
+      <svg class="articles-search-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+        <circle cx="11" cy="11" r="8"/>
+        <line x1="21" y1="21" x2="16.65" y2="16.65"/>
+      </svg>
+      <input type="text" class="articles-search-input" placeholder="<%= locale === 'ar' ? 'ابحث في المقالات...' : 'Search articles...' %>" id="articleSearch" />
+    </div>
   </div>
 </div>
 
 <div class="articles-list" id="articlesList">
   <% if (articles && articles.length > 0) { %>
     <% articles.forEach(article => { %>
-      <a href="/articles/<%= article.slug || article.shortId || article._id %>" class="article-card" data-title="<%= article.title %>">
+      <%
+        // Estimate reading time (avg 200 words/min for Arabic)
+        const contentLength = (article.content || article.summary || '').length;
+        const wordsEstimate = contentLength / 5; // Rough chars to words
+        const readingTime = Math.max(1, Math.ceil(wordsEstimate / 200));
+      %>
+      <a href="/articles/<%= article.slug || article.shortId || article._id %>" class="article-card" data-title="<%= article.title %>" data-type="<%= article.type %>">
         <div class="article-meta">
           <span class="article-type <%= article.type === 'TelegramArticle' ? 'telegram' : '' %>">
             <%= article.type === 'TelegramArticle' ? 'تليجرام' : 'أصداء' %>
           </span>
+          <span class="article-reading-time"><%= readingTime %> <%= locale === 'ar' ? 'دقائق قراءة' : 'min read' %></span>
+        </div>
+        <h3 class="article-title"><%= article.title %></h3>
+        <% if (article.summary) { %>
+          <p class="article-summary"><%= article.summary %></p>
+        <% } %>
+        <div class="article-footer">
           <span class="article-date">
             <%
               const pubDate = new Date(article.publishedAt);
@@ -303,14 +454,10 @@
             %>
             <%= hijriFormatter.format(pubDate) %>
           </span>
-        </div>
-        <h3 class="article-title"><%= article.title %></h3>
-        <% if (article.summary) { %>
-          <p class="article-summary"><%= article.summary %></p>
-        <% } %>
-        <div class="article-read-more">
-          <span><%= locale === 'ar' ? 'قراءة المقال' : 'Read Article' %></span>
-          <span class="arrow">←</span>
+          <div class="article-read-more">
+            <span><%= locale === 'ar' ? 'قراءة المقال' : 'Read Article' %></span>
+            <span class="arrow">←</span>
+          </div>
         </div>
       </a>
     <% }); %>
@@ -351,17 +498,43 @@
   const searchInput = document.getElementById('articleSearch');
   const articlesList = document.getElementById('articlesList');
   const articleCards = articlesList.querySelectorAll('.article-card');
+  const filterChips = document.querySelectorAll('.filter-chip');
 
-  searchInput.addEventListener('input', function() {
-    const query = this.value.toLowerCase().trim();
+  let currentFilter = 'all';
+  let currentSearch = '';
 
+  function filterArticles() {
     articleCards.forEach(card => {
       const title = card.dataset.title.toLowerCase();
-      if (query === '' || title.includes(query)) {
-        card.style.display = 'block';
+      const type = card.dataset.type || '';
+
+      const matchesSearch = currentSearch === '' || title.includes(currentSearch);
+      const matchesFilter = currentFilter === 'all' ||
+        (currentFilter === 'Aqeedah' && type === 'Asdaa') ||
+        (currentFilter === 'Taleem' && type === 'Asdaa') ||
+        (currentFilter === 'Quran' && type === 'Asdaa') ||
+        (currentFilter === 'Seerah' && type === 'Asdaa') ||
+        type.toLowerCase().includes(currentFilter.toLowerCase());
+
+      if (matchesSearch && matchesFilter) {
+        card.style.display = 'flex';
       } else {
         card.style.display = 'none';
       }
+    });
+  }
+
+  searchInput.addEventListener('input', function() {
+    currentSearch = this.value.toLowerCase().trim();
+    filterArticles();
+  });
+
+  filterChips.forEach(chip => {
+    chip.addEventListener('click', function() {
+      filterChips.forEach(c => c.classList.remove('active'));
+      this.classList.add('active');
+      currentFilter = this.dataset.filter;
+      filterArticles();
     });
   });
 </script>

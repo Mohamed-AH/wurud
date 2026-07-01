@@ -115,6 +115,11 @@
   <!-- DNS Prefetch for external resources -->
   <link rel="dns-prefetch" href="https://objectstorage.me-jeddah-1.oraclecloud.com">
 
+  <!-- Google Fonts: Cairo (modern Arabic font from design system) -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+
   <!-- Self-hosted Arabic fonts (Scheherazade New for display, Noto Naskh Arabic for body) -->
   <link rel="preload" href="/fonts/ScheherazadeNew-400.woff2" as="font" type="font/woff2" crossorigin>
   <link rel="preload" href="/fonts/ScheherazadeNew-700.woff2" as="font" type="font/woff2" crossorigin>
@@ -137,7 +142,7 @@
 
   <!-- Critical inline CSS for above-the-fold content (minimized for performance) -->
   <style>
-    :root{--primary-dark:#2C1810;--primary-brown:#5C4033;--accent-gold:#C19A6B;--accent-amber:#D4A574;--cream:#F5EBE0;--paper:#FAF7F2;--sage:#8B9D83;--text-primary:#2C1810;--text-secondary:#5C4033;--text-muted:#8B7355;--border-light:#E8DCC8;--shadow-warm:rgba(92,64,51,0.15);--font-arabic-display:'Scheherazade New',serif;--font-arabic-body:'Noto Naskh Arabic',serif;--space-xs:4px;--space-sm:8px;--space-md:16px;--space-lg:24px;--space-xl:32px;--space-2xl:48px;--space-3xl:64px}
+    :root{--primary-dark:#2C1810;--primary-brown:#5C4033;--accent-gold:#C19A6B;--accent-amber:#D4A574;--cream:#F5EBE0;--paper:#FAF7F2;--sage:#8B9D83;--text-primary:#2C1810;--text-secondary:#5C4033;--text-muted:#8B7355;--border-light:#E8DCC8;--shadow-warm:rgba(92,64,51,0.15);--font-cairo:'Cairo','Noto Naskh Arabic',sans-serif;--font-arabic-display:'Cairo','Scheherazade New',serif;--font-arabic-body:'Cairo','Noto Naskh Arabic',sans-serif;--space-xs:4px;--space-sm:8px;--space-md:16px;--space-lg:24px;--space-xl:32px;--space-2xl:48px;--space-3xl:64px}
     *{margin:0;padding:0;box-sizing:border-box}
     body{font-family:var(--font-arabic-body);background:var(--paper);color:var(--text-primary);line-height:1.9;direction:rtl;padding-bottom:140px}
     html[dir="ltr"] body{direction:ltr;text-align:left}
@@ -211,6 +216,8 @@
   </main>
 
   <%- include('partials/footer') %>
+
+  <%- include('partials/contactModal') %>
 
   <%- include('partials/audioPlayer') %>
 
@@ -295,6 +302,15 @@
         });
       }
     })();
+  </script>
+
+  <!-- Lucide Icons (high quality SVG icons) -->
+  <script src="https://unpkg.com/lucide@latest/dist/umd/lucide.min.js"></script>
+  <script>
+    // Initialize Lucide icons after DOM is ready
+    if (typeof lucide !== 'undefined') {
+      lucide.createIcons();
+    }
   </script>
   <% } %> <!-- End maintenance mode else block -->
 </body>

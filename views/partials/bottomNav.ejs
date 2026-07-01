@@ -1,23 +1,23 @@
 <!-- Bottom Navigation Bar (Mobile Only) -->
 <nav class="bottom-nav" id="bottomNav">
   <a href="/" class="bottom-nav-item<%= typeof currentPath !== 'undefined' && currentPath === '/' ? ' active' : '' %>">
-    <span class="bottom-nav-icon">🏠</span>
+    <span class="bottom-nav-icon"><i data-lucide="home"></i></span>
     <span class="bottom-nav-label"><%= locale === 'ar' ? 'الرئيسية' : 'Home' %></span>
   </a>
   <a href="/series" class="bottom-nav-item<%= typeof currentPath !== 'undefined' && currentPath.startsWith('/series') ? ' active' : '' %>">
-    <span class="bottom-nav-icon">📚</span>
+    <span class="bottom-nav-icon"><i data-lucide="library"></i></span>
     <span class="bottom-nav-label"><%= locale === 'ar' ? 'السلاسل' : 'Series' %></span>
   </a>
   <a href="/#search" class="bottom-nav-item bottom-nav-search" onclick="focusSearch(event)">
-    <span class="bottom-nav-icon">🔍</span>
+    <span class="bottom-nav-icon"><i data-lucide="search"></i></span>
     <span class="bottom-nav-label"><%= locale === 'ar' ? 'بحث' : 'Search' %></span>
   </a>
   <a href="/articles" class="bottom-nav-item<%= typeof currentPath !== 'undefined' && currentPath.startsWith('/articles') ? ' active' : '' %>">
-    <span class="bottom-nav-icon">✍️</span>
+    <span class="bottom-nav-icon"><i data-lucide="pen-line"></i></span>
     <span class="bottom-nav-label"><%= locale === 'ar' ? 'مقالات' : 'Articles' %></span>
   </a>
   <a href="/#schedule" class="bottom-nav-item" onclick="scrollToSchedule(event)">
-    <span class="bottom-nav-icon">📅</span>
+    <span class="bottom-nav-icon"><i data-lucide="calendar-days"></i></span>
     <span class="bottom-nav-label"><%= locale === 'ar' ? 'الجدول' : 'Schedule' %></span>
   </a>
 </nav>
@@ -85,12 +85,24 @@
   }
 
   .bottom-nav-icon {
-    font-size: 18px;
-    line-height: 1.2;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: rgba(222, 201, 154, 0.5);
+  }
+
+  .bottom-nav-icon .lucide {
+    width: 22px;
+    height: 22px;
+    stroke-width: 1.75;
+  }
+
+  .bottom-nav-item.active .bottom-nav-icon {
+    color: #C49A3C;
   }
 
   .bottom-nav-label {
-    font-family: var(--font-arabic-body);
+    font-family: var(--font-cairo, 'Cairo', sans-serif);
     font-size: 9px;
     font-weight: 400;
     color: rgba(222, 201, 154, 0.38);
