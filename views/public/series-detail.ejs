@@ -546,39 +546,156 @@
 
   /* Tablet (768px and below) */
   @media (max-width: 768px) {
+    /* Hide breadcrumb on mobile */
+    .breadcrumb {
+      display: none;
+    }
+
+    /* Compact hero - no gradient on mobile */
     .series-hero {
-      padding: 32px 0;
+      background: var(--redesign-cream-bg, #F5EDE0);
+      padding: 16px 0 12px;
+      border-bottom: none;
+    }
+
+    .series-category-badge {
+      font-size: 11px;
+      padding: 3px 10px;
+      margin-bottom: 8px;
+      background: var(--redesign-badge-bg, #E8D5A0);
+      color: var(--redesign-text-mid, #7A5C3A);
     }
 
     .series-title {
-      font-size: 32px;
+      font-size: 20px;
+      color: var(--redesign-brown-dark, #2C1508);
+      text-shadow: none;
+      margin-bottom: 4px;
+      line-height: 1.4;
     }
 
     .series-title-en {
-      font-size: 18px;
+      font-size: 13px;
+      color: var(--redesign-text-muted, #A89070);
+      opacity: 1;
+      margin-bottom: 8px;
+    }
+
+    .series-sheikh {
+      font-size: 13px;
+      color: var(--redesign-text-mid, #7A5C3A);
+    }
+
+    .series-sheikh a {
+      color: var(--redesign-text-mid, #7A5C3A);
+    }
+
+    .series-sheikh svg {
+      display: none;
+    }
+
+    /* Compact stats - inline with description */
+    .stats-section {
+      padding: 12px 0;
+      background: transparent;
     }
 
     .stats-grid {
-      grid-template-columns: repeat(2, 1fr);
+      display: flex;
+      justify-content: flex-start;
+      gap: 12px;
+    }
+
+    .stat-card {
+      background: transparent;
+      border: none;
+      box-shadow: none;
+      padding: 0;
+      gap: 6px;
+      flex-direction: row;
+      align-items: center;
+    }
+
+    .stat-icon {
+      width: 36px;
+      height: 36px;
+      border-radius: 8px;
+    }
+
+    .stat-icon svg {
+      width: 18px;
+      height: 18px;
+    }
+
+    .stat-value {
+      font-size: 18px;
+    }
+
+    .stat-label {
+      font-size: 12px;
+    }
+
+    /* Hide plays/duration on mobile - show only lesson count */
+    .stat-card:not(:first-child) {
+      display: none;
+    }
+
+    /* Compact description */
+    .content-section {
+      padding: 16px 0;
+    }
+
+    .section-title {
+      font-size: 16px;
+      margin-bottom: 10px;
+      padding-bottom: 6px;
+      border-bottom-width: 2px;
+    }
+
+    .description-card, .bio-card {
+      background: transparent;
+      border: none;
+      box-shadow: none;
+      padding: 0;
+      margin-bottom: 16px;
+    }
+
+    .description-text, .bio-text {
+      font-size: 14px;
+      line-height: 1.7;
+      color: var(--redesign-text-mid, #7A5C3A);
     }
 
     .series-grid {
       grid-template-columns: 1fr;
     }
 
+    /* Lecture list - card contains number badge */
+    .lectures-list {
+      gap: 10px;
+    }
+
     .lecture-item {
-      padding: 8px;
-      gap: 12px;
+      padding: 0;
+      gap: 0;
+      flex-direction: column;
     }
 
+    /* Hide external number badge - will be inside card */
     .lecture-number-badge {
-      width: 40px;
-      height: 40px;
-      font-size: 18px;
+      display: none;
     }
 
+    .lecture-item-content {
+      max-width: 100%;
+      width: 100%;
+    }
+
+    /* Search/Filter compact */
     .search-filter-controls {
-      padding: 16px;
+      padding: 12px;
+      margin-bottom: 16px;
+      border-radius: 10px;
     }
 
     .search-row {
@@ -590,18 +707,41 @@
       min-width: 100%;
     }
 
+    .search-input {
+      padding: 10px 40px 10px 14px;
+      font-size: 14px;
+      border-radius: 8px;
+    }
+
     .year-filter-wrapper {
       width: 100%;
       justify-content: space-between;
     }
 
     .sort-controls {
-      flex-direction: column;
-      align-items: flex-start;
+      flex-direction: row;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 8px;
+    }
+
+    .sort-label {
+      font-size: 13px;
     }
 
     .sort-chips {
-      width: 100%;
+      display: flex;
+      gap: 6px;
+      overflow-x: auto;
+      flex-wrap: nowrap;
+      -webkit-overflow-scrolling: touch;
+    }
+
+    .sort-chip {
+      padding: 6px 12px;
+      font-size: 12px;
+      white-space: nowrap;
+      flex-shrink: 0;
     }
 
     .clear-filters-btn {
@@ -613,24 +753,6 @@
       width: 100%;
       text-align: center;
     }
-
-    .breadcrumb .container {
-      flex-wrap: wrap;
-      gap: 4px;
-      font-size: 13px;
-    }
-
-    .section-title {
-      font-size: 22px;
-    }
-
-    .description-card, .bio-card {
-      padding: 20px;
-    }
-
-    .content-section {
-      padding: 32px 0;
-    }
   }
 
   /* Small phones (below 480px) */
@@ -641,263 +763,69 @@
     }
 
     .series-hero {
-      padding: 20px 0;
+      padding: 12px 0 10px;
     }
 
     .series-title {
-      font-size: 24px;
-      margin-bottom: 8px;
+      font-size: 18px;
+      margin-bottom: 4px;
       line-height: 1.4;
-      word-wrap: break-word;
     }
 
     .series-title-en {
-      font-size: 15px;
-      margin-bottom: 16px;
+      font-size: 12px;
+      margin-bottom: 6px;
     }
 
     .series-category-badge {
-      font-size: 12px;
-      padding: 4px 12px;
+      font-size: 10px;
+      padding: 2px 8px;
+      margin-bottom: 6px;
     }
 
     .series-sheikh {
-      font-size: 14px;
-      flex-wrap: wrap;
+      font-size: 12px;
     }
 
     .stats-section {
-      padding: 24px 0;
-    }
-
-    .stats-grid {
-      grid-template-columns: 1fr;
-      gap: 12px;
-    }
-
-    .stat-card {
-      padding: 14px;
-      gap: 12px;
-    }
-
-    .stat-icon {
-      width: 44px;
-      height: 44px;
-    }
-
-    .stat-icon svg {
-      width: 24px;
-      height: 24px;
-    }
-
-    .stat-value {
-      font-size: 24px;
-    }
-
-    .stat-label {
-      font-size: 13px;
-    }
-
-    .content-section {
-      padding: 24px 0;
-    }
-
-    .section-title {
-      font-size: 18px;
-      margin-bottom: 16px;
-      padding-bottom: 8px;
-    }
-
-    .description-card, .bio-card {
-      padding: 14px;
-    }
-
-    .description-text, .bio-text {
-      font-size: 15px;
-      line-height: 1.7;
-    }
-
-    /* Search & Filter */
-    .search-filter-controls {
-      padding: 12px;
-      gap: 12px;
-    }
-
-    .search-input {
-      padding: 10px 40px 10px 14px;
-      font-size: 14px;
-    }
-
-    [dir="ltr"] .search-input {
-      padding: 10px 14px 10px 40px;
-    }
-
-    .search-icon {
-      font-size: 16px;
-    }
-
-    .year-filter-label {
-      font-size: 13px;
-    }
-
-    .year-filter-select {
-      padding: 8px 12px;
-      font-size: 13px;
-      min-width: 80px;
-    }
-
-    .sort-label {
-      font-size: 13px;
-    }
-
-    .sort-chips {
-      gap: 6px;
-    }
-
-    .sort-chip {
-      padding: 6px 10px;
-      font-size: 12px;
-    }
-
-    .clear-filters-btn {
-      padding: 6px 12px;
-      font-size: 12px;
-    }
-
-    .results-count {
-      font-size: 12px;
-      padding: 6px 12px;
-    }
-
-    /* Lecture list items */
-    .lectures-list {
-      gap: 12px;
-    }
-
-    .lecture-item {
-      padding: 4px;
-      gap: 8px;
-      flex-direction: row;
-      align-items: flex-start;
-    }
-
-    .lecture-number-badge {
-      width: 32px;
-      height: 32px;
-      font-size: 14px;
-      margin-top: 4px;
-    }
-
-    .lecture-item-content {
-      flex: 1;
-      min-width: 0;
-      max-width: calc(100% - 44px);
-      width: 100%;
-      overflow: hidden;
-      box-sizing: border-box;
-    }
-
-    .lecture-item-content .lecture-card {
-      max-width: 100%;
-      width: 100%;
-      overflow: hidden;
-      box-sizing: border-box;
-    }
-
-    .breadcrumb {
       padding: 10px 0;
     }
 
-    .breadcrumb .container {
-      font-size: 12px;
-    }
-
-    /* Related series grid */
-    .series-grid {
-      gap: 12px;
-    }
-
-    .series-card {
-      padding: 14px;
-      gap: 12px;
-    }
-
-    .series-icon {
-      width: 40px;
-      height: 40px;
-    }
-
-    .series-icon svg {
-      width: 28px;
-      height: 28px;
-    }
-
-    .series-content .series-title {
-      font-size: 16px;
-    }
-
-    .series-content .series-title-en {
-      font-size: 12px;
-    }
-
-    .series-meta {
-      font-size: 12px;
-      gap: 8px;
-    }
-  }
-
-  /* Very small phones (below 360px) */
-  @media (max-width: 360px) {
-    .series-detail-page .container {
-      padding-left: 8px;
-      padding-right: 8px;
-    }
-
-    .series-hero {
-      padding: 16px 0;
-    }
-
-    .series-title {
-      font-size: 20px;
-    }
-
-    .series-title-en {
-      font-size: 13px;
-    }
-
-    .stat-card {
-      padding: 12px;
-      gap: 10px;
-    }
-
     .stat-icon {
-      width: 40px;
-      height: 40px;
+      width: 32px;
+      height: 32px;
     }
 
     .stat-icon svg {
-      width: 22px;
-      height: 22px;
+      width: 16px;
+      height: 16px;
     }
 
     .stat-value {
-      font-size: 22px;
-    }
-
-    .stat-label {
-      font-size: 12px;
-    }
-
-    .section-title {
       font-size: 16px;
     }
 
-    .description-card, .bio-card {
-      padding: 12px;
+    .stat-label {
+      font-size: 11px;
+    }
+
+    .content-section {
+      padding: 12px 0;
+    }
+
+    .section-title {
+      font-size: 15px;
+      margin-bottom: 8px;
+      padding-bottom: 4px;
     }
 
     .description-text, .bio-text {
-      font-size: 14px;
+      font-size: 13px;
+      line-height: 1.6;
+    }
+
+    .lectures-list {
+      gap: 8px;
     }
 
     /* Search & Filter */
@@ -915,56 +843,119 @@
       padding: 8px 12px 8px 36px;
     }
 
-    .year-filter-wrapper {
-      flex-direction: column;
-      align-items: stretch;
-    }
-
-    .year-filter-select {
-      width: 100%;
-    }
-
     .sort-chip {
-      padding: 5px 8px;
+      padding: 5px 10px;
       font-size: 11px;
     }
 
-    .lecture-item {
-      padding: 2px;
-      gap: 6px;
+    .sort-chips {
+      gap: 4px;
     }
 
-    .lecture-number-badge {
-      width: 28px;
-      height: 28px;
-      font-size: 12px;
+    .clear-filters-btn {
+      padding: 5px 10px;
+      font-size: 11px;
     }
 
-    .lecture-item-content {
-      max-width: calc(100% - 38px);
-      width: 100%;
-      overflow: hidden;
+    .results-count {
+      font-size: 11px;
+      padding: 5px 10px;
     }
 
-    .lecture-item-content .lecture-card {
-      max-width: 100%;
-      width: 100%;
-      overflow: hidden;
+    /* Related series grid */
+    .series-grid {
+      gap: 10px;
     }
 
     .series-card {
       padding: 12px;
-      flex-direction: column;
-      text-align: center;
+      gap: 10px;
     }
 
     .series-icon {
-      margin: 0 auto 8px;
+      width: 36px;
+      height: 36px;
+    }
+
+    .series-content .series-title {
+      font-size: 14px;
+    }
+
+    .series-content .series-title-en {
+      font-size: 11px;
     }
 
     .series-meta {
-      justify-content: center;
-      flex-wrap: wrap;
+      font-size: 11px;
+      gap: 6px;
+    }
+  }
+
+  /* Very small phones (below 360px) */
+  @media (max-width: 360px) {
+    .series-detail-page .container {
+      padding-left: 8px;
+      padding-right: 8px;
+    }
+
+    .series-hero {
+      padding: 10px 0 8px;
+    }
+
+    .series-title {
+      font-size: 16px;
+    }
+
+    .series-title-en {
+      font-size: 11px;
+    }
+
+    .series-category-badge {
+      font-size: 9px;
+      padding: 2px 6px;
+    }
+
+    .stat-icon {
+      width: 28px;
+      height: 28px;
+    }
+
+    .stat-icon svg {
+      width: 14px;
+      height: 14px;
+    }
+
+    .stat-value {
+      font-size: 14px;
+    }
+
+    .stat-label {
+      font-size: 10px;
+    }
+
+    .section-title {
+      font-size: 14px;
+    }
+
+    .description-text, .bio-text {
+      font-size: 12px;
+    }
+
+    .lectures-list {
+      gap: 6px;
+    }
+
+    .sort-chip {
+      padding: 4px 6px;
+      font-size: 10px;
+    }
+
+    .series-card {
+      padding: 10px;
+    }
+
+    .series-content .series-title {
+      font-size: 13px;
     }
   }
 
