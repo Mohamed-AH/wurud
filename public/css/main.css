@@ -19,6 +19,13 @@ body::before {
   z-index: -1;
 }
 
+/* Hide diamond grid pattern on mobile */
+@media (max-width: 768px) {
+  body::before {
+    display: none;
+  }
+}
+
 /* Accessibility: visually hidden but accessible to screen readers */
 .visually-hidden {
   position: absolute;

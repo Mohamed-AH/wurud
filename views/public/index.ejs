@@ -338,6 +338,30 @@
       font-size: 13px;
       padding: 9px 0;
     }
+
+    /* Fix 1: Horizontal filter scroll */
+    .filter-group {
+      flex-wrap: nowrap;
+      overflow-x: auto;
+      -webkit-overflow-scrolling: touch;
+      scrollbar-width: none;
+      -ms-overflow-style: none;
+      padding-bottom: 4px;
+    }
+    .filter-group::-webkit-scrollbar {
+      display: none;
+    }
+    .filter-chips {
+      flex-wrap: nowrap;
+      flex-shrink: 0;
+    }
+    .chip {
+      flex-shrink: 0;
+      white-space: nowrap;
+    }
+    .filters-section {
+      padding: 12px 14px 10px;
+    }
   }
 
   /* Series Cards/Rows */
@@ -807,10 +831,26 @@
       gap: 6px;
     }
 
+    /* Fix 4: Icon-only buttons on mobile */
     .btn-play, .btn-download {
-      padding: 5px 10px;
-      font-size: 11px;
-      gap: 4px;
+      padding: 8px;
+      font-size: 0;
+      gap: 0;
+      width: 32px;
+      height: 32px;
+    }
+    .btn-play .lucide, .btn-download .lucide {
+      width: 16px;
+      height: 16px;
+    }
+
+    /* Fix 3: Allow episode title to wrap */
+    .episode-title {
+      font-size: 13px;
+      white-space: normal;
+      overflow: visible;
+      text-overflow: clip;
+      line-height: 1.4;
     }
   }
 
@@ -835,8 +875,13 @@
     }
 
     .btn-play, .btn-download {
-      padding: 4px 8px;
-      font-size: 10px;
+      padding: 6px;
+      width: 28px;
+      height: 28px;
+    }
+    .btn-play .lucide, .btn-download .lucide {
+      width: 14px;
+      height: 14px;
     }
   }
 
@@ -3373,8 +3418,10 @@ function switchDayTab(location, day) {
     .featured-articles-divider {
       margin-bottom: 14px;
     }
+    /* Fix 5: RTL alignment for articles section */
     .featured-articles-header {
       margin-bottom: 11px;
+      flex-direction: row-reverse;
     }
     .featured-articles-title {
       font-size: 14px;
@@ -3599,15 +3646,17 @@ function switchDayTab(location, day) {
       width: 15px;
       height: 15px;
     }
+    /* Fix 6: RTL layout for featured series items */
     .featured-series-item {
       padding: 11px 13px;
       gap: 8px;
-      flex-wrap: wrap;
+      flex-direction: row-reverse;
+      justify-content: flex-start;
     }
     .featured-series-lessons {
       font-size: 10px;
       padding: 2px 8px;
-      order: 2;
+      margin-inline-start: auto;
     }
     .featured-series-sheikh {
       display: none;
@@ -3618,8 +3667,8 @@ function switchDayTab(location, day) {
     .featured-series-name {
       font-size: 13px;
       font-weight: 500;
-      flex: 1;
-      order: 1;
+      flex-shrink: 1;
+      text-align: right;
     }
   }
 </style>
