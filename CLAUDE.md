@@ -379,6 +379,31 @@ Added admin setting to switch between new card layout and classic table layout:
 
 **Admin Impact**: All existing admin controls preserved
 
+**3.6 Mobile Layout Fixes** ✅ (Commit: 4b2dc2a)
+
+Six mobile-specific layout improvements:
+
+1. **Horizontal filter scroll** - Filter chips now scroll horizontally on mobile
+   - Added `flex-wrap: nowrap; overflow-x: auto` to `.filter-group`
+   - Hidden scrollbar with vendor prefixes
+   
+2. **Remove diamond grid background** - Hidden decorative diagonal pattern on mobile
+   - Added `@media (max-width: 768px) { body::before { display: none; } }` to main.css
+
+3. **Episode title text wrapping** - Titles wrap naturally instead of truncating
+   - Changed `white-space: normal; overflow: visible;` on `.episode-title`
+
+4. **Icon-only buttons** - Play/Download buttons show only icons on mobile
+   - Used `font-size: 0` to hide text labels
+   - Set explicit width/height (32px on tablet, 28px on phone)
+
+5. **RTL alignment for articles section** - Fixed header layout
+   - Added `flex-direction: row-reverse` to `.featured-articles-header`
+
+6. **RTL layout for featured series** - Fixed flex direction for Arabic text
+   - Changed `.featured-series-item` to use `flex-direction: row-reverse`
+   - Used `margin-inline-start: auto` for lessons badge positioning
+
 ---
 
 #### Phase 4: Series Pages
