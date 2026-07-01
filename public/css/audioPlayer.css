@@ -682,6 +682,11 @@ html[dir="rtl"] .speed-menu {
   left: 0;
 }
 
+html[dir="rtl"] .close-player-btn {
+  right: auto;
+  left: 0;
+}
+
 /* RTL Mobile - use same centered positioning */
 @media (max-width: 768px) {
   html[dir="rtl"] .speed-menu {
