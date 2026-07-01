@@ -492,9 +492,99 @@ body.audio-seeking * {
   }
 }
 
+/* Mini Player (Mobile Only) */
+.mini-player {
+  display: none;
+}
+
+@media (max-width: 768px) {
+  /* Mini player styles */
+  .mini-player {
+    display: none;
+    align-items: center;
+    justify-content: space-between;
+    padding: 10px 16px;
+    cursor: pointer;
+  }
+
+  .audio-player.minimized .mini-player {
+    display: flex;
+  }
+
+  .audio-player.minimized .player-container {
+    display: none;
+  }
+
+  /* Minimized player sits above bottom nav */
+  .audio-player.minimized {
+    padding: 0;
+    bottom: 64px;
+    border-top-width: 2px;
+  }
+
+  .mini-player-info {
+    flex: 1;
+    min-width: 0;
+    padding-right: 12px;
+  }
+
+  .mini-player-title {
+    font-family: var(--font-cairo, 'Cairo', sans-serif);
+    font-size: 14px;
+    font-weight: 600;
+    color: #FAF7F2;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    display: block;
+  }
+
+  .mini-player-btn {
+    width: 36px;
+    height: 36px;
+    border-radius: 50%;
+    background: #C19A6B;
+    color: #2C1810;
+    border: none;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 14px;
+    cursor: pointer;
+    flex-shrink: 0;
+  }
+
+  .mini-player-btn:active {
+    transform: scale(0.95);
+  }
+
+  /* Expand indicator */
+  .mini-player::before {
+    content: '';
+    position: absolute;
+    top: 4px;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 32px;
+    height: 3px;
+    background: rgba(193, 154, 107, 0.4);
+    border-radius: 2px;
+  }
+
+  /* Full player when expanded needs space for bottom nav */
+  .audio-player:not(.minimized) {
+    padding-bottom: calc(12px + 64px);
+  }
+}
+
 /* RTL Support */
 html[dir="rtl"] .player-container {
   direction: rtl;
+}
+
+html[dir="rtl"] .mini-player-info {
+  padding-right: 0;
+  padding-left: 12px;
 }
 
 html[dir="rtl"] .player-info,

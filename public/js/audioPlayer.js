@@ -60,6 +60,17 @@ class AudioPlayer {
 
     // Download button
     this.downloadBtn = document.getElementById('downloadBtn');
+
+    // Mini player elements (mobile)
+    this.miniPlayer = document.getElementById('miniPlayer');
+    this.miniPlayerTitle = document.getElementById('miniPlayerTitle');
+    this.miniPlayPauseBtn = document.getElementById('miniPlayPauseBtn');
+    this.miniPlayPauseIcon = document.getElementById('miniPlayPauseIcon');
+    this.fullPlayer = document.getElementById('fullPlayer');
+
+    // Mini player state
+    this.isMinimized = false;
+    this.isMobile = window.innerWidth <= 768;
   }
 
   setupEventListeners() {
@@ -111,6 +122,33 @@ class AudioPlayer {
 
     // Keyboard shortcuts
     document.addEventListener('keydown', (e) => this.handleKeyboard(e));
+
+    // Mini player - scroll to minimize on mobile
+    if (this.isMobile) {
+      let lastScrollY = window.scrollY;
+      let scrollTimeout;
+
+      window.addEventListener('scroll', () => {
+        // Only minimize if player is visible and playing
+        if (!this.player.classList.contains('hidden') && !this.isMinimized) {
+          const currentScrollY = window.scrollY;
+          // Minimize on any scroll down
+          if (currentScrollY > lastScrollY + 10) {
+            this.minimize();
+          }
+          lastScrollY = currentScrollY;
+        }
+      }, { passive: true });
+    }
+
+    // Handle window resize
+    window.addEventListener('resize', () => {
+      this.isMobile = window.innerWidth <= 768;
+      // Expand if switching to desktop
+      if (!this.isMobile && this.isMinimized) {
+        this.expand();
+      }
+    });
   }
 
   /**
@@ -337,7 +375,34 @@ class AudioPlayer {
 
   show() {
     this.player.classList.remove('hidden');
-    document.body.style.paddingBottom = '140px'; // Make space for player
+    // On mobile, start minimized; on desktop, show full
+    if (this.isMobile) {
+      this.minimize();
+      document.body.style.paddingBottom = '120px'; // Space for mini player + bottom nav
+    } else {
+      document.body.style.paddingBottom = '140px'; // Make space for player
+    }
+  }
+
+  minimize() {
+    if (!this.isMobile) return;
+    this.player.classList.add('minimized');
+    this.isMinimized = true;
+    // Update mini player title
+    if (this.miniPlayerTitle && this.currentLecture) {
+      this.miniPlayerTitle.textContent = this.currentLecture.title || this.currentLecture.titleArabic || '';
+    }
+    document.body.style.paddingBottom = '120px';
+  }
+
+  expand() {
+    this.player.classList.remove('minimized');
+    this.isMinimized = false;
+    if (this.isMobile) {
+      document.body.style.paddingBottom = '260px'; // Full player + bottom nav
+    } else {
+      document.body.style.paddingBottom = '140px';
+    }
   }
 
   close() {
@@ -418,6 +483,7 @@ class AudioPlayer {
 
   onEnded() {
     this.playPauseIcon.textContent = '▶';
+    if (this.miniPlayPauseIcon) this.miniPlayPauseIcon.textContent = '▶';
     this.isPlaying = false;
 
     // Clear saved position
@@ -428,11 +494,13 @@ class AudioPlayer {
 
   onPlay() {
     this.playPauseIcon.textContent = '⏸';
+    if (this.miniPlayPauseIcon) this.miniPlayPauseIcon.textContent = '⏸';
     this.isPlaying = true;
   }
 
   onPause() {
     this.playPauseIcon.textContent = '▶';
+    if (this.miniPlayPauseIcon) this.miniPlayPauseIcon.textContent = '▶';
     this.isPlaying = false;
   }
 
@@ -526,4 +594,17 @@ if (document.readyState === 'loading') {
   log('🎵 Initializing Audio Player (already loaded)...');
   window.audioPlayer = new AudioPlayer();
   log('✅ Audio Player initialized:', window.audioPlayer);
+}
+
+// Global helper functions for mini-player HTML onclick handlers
+function expandPlayer() {
+  if (window.audioPlayer) {
+    window.audioPlayer.expand();
+  }
+}
+
+function togglePlayPause() {
+  if (window.audioPlayer) {
+    window.audioPlayer.togglePlayPause();
+  }
 }

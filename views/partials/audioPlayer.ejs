@@ -2,7 +2,18 @@
 <div id="audioPlayer" class="audio-player hidden">
   <audio id="audio" preload="metadata"></audio>
 
-  <div class="player-container">
+  <!-- Mini Player (shown when collapsed on mobile) -->
+  <div class="mini-player" id="miniPlayer" onclick="expandPlayer()">
+    <div class="mini-player-info">
+      <span class="mini-player-title" id="miniPlayerTitle"><%= locale === 'ar' ? 'جاري التشغيل...' : 'Now Playing...' %></span>
+    </div>
+    <button class="mini-player-btn" id="miniPlayPauseBtn" onclick="event.stopPropagation(); togglePlayPause();">
+      <span id="miniPlayPauseIcon">▶</span>
+    </button>
+  </div>
+
+  <!-- Full Player -->
+  <div class="player-container" id="fullPlayer">
     <!-- Left: Now Playing Info -->
     <div class="player-info">
       <div class="now-playing-label"><%= locale === 'ar' ? 'يتم تشغيل:' : 'Now Playing:' %></div>
