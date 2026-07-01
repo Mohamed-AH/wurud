@@ -3,7 +3,7 @@
  * Critical styles are inlined in <head>
  */
 
-/* Decorative Islamic pattern background */
+/* Decorative Islamic pattern background - subtle diamond grid */
 body::before {
   content: '';
   position: fixed;
@@ -12,9 +12,8 @@ body::before {
   right: 0;
   bottom: 0;
   background-image:
-    repeating-linear-gradient(45deg, transparent, transparent 35px, var(--border-light) 35px, var(--border-light) 36px),
-    repeating-linear-gradient(-45deg, transparent, transparent 35px, var(--border-light) 35px, var(--border-light) 36px);
-  opacity: 0.3;
+    repeating-linear-gradient(45deg, transparent, transparent 16px, rgba(196, 154, 60, 0.12) 16px, rgba(196, 154, 60, 0.12) 16.5px),
+    repeating-linear-gradient(-45deg, transparent, transparent 16px, rgba(196, 154, 60, 0.12) 16px, rgba(196, 154, 60, 0.12) 16.5px);
   pointer-events: none;
   z-index: -1;
 }
