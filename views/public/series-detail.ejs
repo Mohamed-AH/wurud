@@ -225,34 +225,21 @@
     display: grid;
     gap: 16px;
     width: 100%;
-    max-width: 100%;
+    max-width: 960px;
+    margin: 0 auto;
     overflow-x: hidden;
     box-sizing: border-box;
   }
 
   .lecture-item {
-    display: flex;
-    align-items: flex-start;
-    gap: 16px;
-    padding: 12px;
-    border-radius: 12px;
-    transition: all 0.3s ease;
+    display: block;
     width: 100%;
-    max-width: 100%;
     box-sizing: border-box;
-    overflow: hidden;
   }
 
   .lecture-item-content {
-    flex: 1;
-    min-width: 0;
-    max-width: 100%;
-    overflow: hidden;
+    width: 100%;
     box-sizing: border-box;
-  }
-
-  .lecture-item:hover {
-    background: rgba(193, 154, 107, 0.08);
   }
 
   /* External number badge - hidden since number is inside card now */
@@ -534,7 +521,7 @@
     display: none !important;
   }
 
-  /* Large desktop (1200px and above) - ensure wide layout */
+  /* Large desktop (1200px and above) */
   @media (min-width: 1200px) {
     .series-detail-page .container {
       max-width: 1400px;
@@ -542,11 +529,7 @@
     }
 
     .lectures-list {
-      max-width: 100%;
-    }
-
-    .lecture-item {
-      padding: 16px;
+      max-width: 960px;
     }
   }
 
@@ -658,20 +641,10 @@
       grid-template-columns: 1fr;
     }
 
-    /* Lecture list - card contains number badge */
+    /* Lecture list */
     .lectures-list {
       gap: 10px;
-    }
-
-    .lecture-item {
-      padding: 0;
-      gap: 0;
-      flex-direction: column;
-    }
-
-    .lecture-item-content {
       max-width: 100%;
-      width: 100%;
     }
 
     /* Search/Filter compact */
