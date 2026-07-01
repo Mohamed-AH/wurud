@@ -388,24 +388,29 @@
 
   .series-header {
     display: flex;
-    flex-direction: row-reverse;
-    align-items: center;
-    gap: 12px;
+    align-items: flex-start;
+    gap: 14px;
     cursor: pointer;
     padding: 0;
     background: transparent;
     border: none;
   }
 
+  .series-content {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    text-align: right;
+  }
+
   .series-title {
     font-family: var(--font-cairo, 'Cairo', sans-serif);
-    font-size: 15px;
-    font-weight: 600;
+    font-size: 16px;
+    font-weight: 700;
     color: var(--redesign-brown-dark, #2C1508);
     margin: 0;
-    line-height: 1.5;
-    text-align: right;
-    flex: 1;
+    line-height: 1.4;
   }
 
   .series-title a {
@@ -418,51 +423,36 @@
     color: var(--redesign-gold-primary, #C49A3C);
   }
 
-  .series-meta {
-    display: none;
-  }
-
-  .series-author {
-    display: none;
-  }
-
-  .series-author-label {
-    display: none;
-  }
-
   .series-sheikh {
-    display: none;
+    font-family: var(--font-cairo, 'Cairo', sans-serif);
+    font-size: 13px;
+    font-weight: 400;
+    color: var(--redesign-text-muted, #A89070);
+    line-height: 1.4;
   }
 
   .series-info {
     display: flex;
     gap: 8px;
-    font-size: 11px;
+    font-size: 12px;
     align-items: center;
-    flex-shrink: 0;
+    justify-content: flex-end;
+    margin-top: 4px;
   }
 
-  .series-info > span:first-child {
-    background: var(--redesign-badge-bg, #E8D5A0);
+  .series-lesson-count {
     color: var(--redesign-text-mid, #7A5C3A);
-    font-weight: 700;
-    padding: 3px 11px;
-    border-radius: 10px;
-    white-space: nowrap;
-  }
-
-  .series-info span:not(:last-child)::after {
-    display: none;
+    font-weight: 500;
   }
 
   .category-badge {
     display: inline-block;
-    padding: 2px 10px;
+    padding: 3px 10px;
     border-radius: 4px;
-    font-size: 10px;
-    font-weight: 600;
-    background: var(--redesign-badge-bg, #E8D5A0);
-    color: var(--redesign-text-mid, #7A5C3A);
+    font-size: 11px;
+    font-weight: 700;
+    background: var(--redesign-gold-primary, #C49A3C);
+    color: var(--redesign-card-bg, #FDF8F2);
     border: none;
   }
 
@@ -3499,14 +3489,14 @@ function switchDayTab(location, day) {
 <section class="featured-series-section">
   <div class="featured-series-container">
     <div class="featured-series-header" id="featured-header" onclick="toggleFeaturedSeries()">
-      <svg class="featured-chevron" id="featured-chevron" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="18,15 12,9 6,15"/></svg>
       <div class="featured-series-title-row">
-        <span class="featured-series-count"><%= featuredSeries.length %> <%= locale === 'ar' ? 'سلاسل' : 'series' %></span>
         <h2 class="featured-series-title">
           <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor" stroke="currentColor" stroke-width="1"><polygon points="12,2 15.09,8.26 22,9.27 17,14.14 18.18,21.02 12,17.77 5.82,21.02 7,14.14 2,9.27 8.91,8.26"/></svg>
           <%= locale === 'ar' ? 'مميز' : 'Featured' %>
         </h2>
+        <span class="featured-series-count"><%= featuredSeries.length %> <%= locale === 'ar' ? 'سلاسل' : 'series' %></span>
       </div>
+      <svg class="featured-chevron" id="featured-chevron" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="18,15 12,9 6,15"/></svg>
     </div>
     <div class="featured-series-content" id="featured-content">
       <% featuredSeries.forEach(function(s) { %>
@@ -3970,31 +3960,19 @@ function showMoreSeries(slug) {
     %>
       <div class="series-card" data-category="<%= series.category %>" data-date="<%= latestDate %>" data-hijri="<%= hijriDate %>" data-series-type="<%= seriesType %>">
         <div class="series-header" onclick="toggleSeries('<%= series._id %>')">
-          <h2 class="series-title"><a href="/series/<%= series.slug ? encodeURIComponent(series.slug) : series._id %>" onclick="event.stopPropagation()"><%= locale === 'ar' ? series.titleArabic : (series.titleEnglish || series.titleArabic) %></a></h2>
-
-          <div class="series-meta">
-            <% if (series.originalAuthor) { %>
-              <div class="series-author">
-                <span class="series-author-label"><%= locale === 'ar' ? 'المؤلف:' : 'Author:' %></span>
-                <%= series.originalAuthor %>
-              </div>
-            <% } %>
-            <div class="series-sheikh">
-              <%= locale === 'ar' ? 'الشيخ:' : 'Sheikh:' %>
-              <%= series.sheikh ? (locale === 'ar' ? series.sheikh.nameArabic : (series.sheikh.nameEnglish || series.sheikh.nameArabic)) : '' %>
-            </div>
-          </div>
-
-          <div class="series-info">
-            <span><%= series.lectureCount %> <%= locale === 'ar' ? 'درس' : 'lessons' %></span>
-            <span class="category-badge">
-              <%= translateCategory(series.category) %>
-            </span>
-          </div>
-
           <button class="expand-btn" id="btn-<%= series._id %>" aria-label="<%= locale === 'ar' ? 'عرض الدروس' : 'Show Lessons' %>">
             <i data-lucide="plus" class="expand-icon"></i>
           </button>
+          <div class="series-content">
+            <h2 class="series-title"><a href="/series/<%= series.slug ? encodeURIComponent(series.slug) : series._id %>" onclick="event.stopPropagation()"><%= locale === 'ar' ? series.titleArabic : (series.titleEnglish || series.titleArabic) %></a></h2>
+            <div class="series-sheikh">
+              <%= series.sheikh ? (locale === 'ar' ? series.sheikh.nameArabic : (series.sheikh.nameEnglish || series.sheikh.nameArabic)) : '' %>
+            </div>
+            <div class="series-info">
+              <span class="series-lesson-count"><%= series.lectureCount %> <%= locale === 'ar' ? 'درس' : 'lessons' %></span>
+              <span class="category-badge"><%= translateCategory(series.category) %></span>
+            </div>
+          </div>
         </div>
 
         <div class="episodes-list" id="episodes-<%= series._id %>">
