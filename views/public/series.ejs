@@ -30,6 +30,12 @@
     background: linear-gradient(to left, transparent 0%, var(--redesign-gold-primary, #C49A3C) 20%, var(--redesign-gold-primary, #C49A3C) 80%, transparent 100%);
   }
 
+  .series-container {
+    max-width: 960px;
+    margin: 0 auto;
+    padding: 28px 32px 44px;
+  }
+
   .series-grid {
     display: grid;
     grid-template-columns: repeat(3, 1fr);
@@ -149,109 +155,90 @@
   }
 
   @media (max-width: 768px) {
-    .page-header {
-      padding: 32px 16px;
+    /* Hide header on mobile - search is first element */
+    .page-header,
+    .page-divider {
+      display: none;
     }
 
-    .page-title {
-      font-size: 24px;
-    }
-
-    .page-subtitle {
-      font-size: 13px;
+    .series-container {
+      padding: 16px 12px 80px;
     }
 
     .series-grid {
       grid-template-columns: 1fr;
-      gap: 12px;
+      gap: 10px;
     }
 
     .series-card {
-      padding: 13px;
+      padding: 14px 16px;
+      position: relative;
+      box-shadow: 0 1px 4px rgba(44, 21, 8, 0.08);
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
+
+    /* Hide icon on mobile */
+    .series-icon {
+      display: none;
+    }
+
+    /* Card header - just title now */
+    .series-card-header {
+      margin-bottom: 4px;
+      gap: 0;
     }
 
     .series-title {
-      font-size: 20px;
+      font-size: 17px;
+      line-height: 1.5;
     }
 
-    .series-icon {
-      width: 48px;
-      height: 48px;
+    .series-title-en {
+      margin-bottom: 8px;
+      font-size: 13px;
     }
 
-    .series-icon svg {
-      width: 28px;
-      height: 28px;
+    /* Lesson badge floats top-left */
+    .series-lessons {
+      position: absolute;
+      top: 14px;
+      left: 14px;
+      background: var(--redesign-brown-dark, #2C1508);
+      color: var(--redesign-gold-light, #DEC99A);
+      font-size: 11px;
+      font-weight: 700;
+      padding: 4px 10px;
+      border-radius: 8px;
+    }
+
+    .series-meta {
+      justify-content: flex-end;
+      gap: 8px;
+    }
+
+    .series-category {
+      font-size: 11px;
+      padding: 3px 10px;
+    }
+
+    /* Show sheikh name on mobile */
+    .series-sheikh {
+      display: inline;
+      color: var(--redesign-text-muted, #A89070);
+      font-size: 12px;
     }
   }
 
   /* Small phones (below 480px) */
   @media (max-width: 480px) {
-    .page-header {
-      padding: 24px 0;
-      margin-bottom: 16px;
-    }
-
-    .page-title {
-      font-size: 24px;
-    }
-
-    .page-subtitle {
-      font-size: 13px;
-    }
-
     .series-grid {
-      gap: 12px;
-    }
-
-    .series-card {
-      padding: 14px;
-      gap: 12px;
-    }
-
-    .series-icon {
-      width: 44px;
-      height: 44px;
-    }
-
-    .series-icon svg {
-      width: 24px;
-      height: 24px;
-    }
-
-    .series-title {
-      font-size: 18px;
-    }
-
-    .series-title-en {
-      font-size: 13px;
-    }
-
-    .series-meta {
       gap: 8px;
-      font-size: 13px;
-    }
-
-    .series-category {
-      font-size: 11px;
-      padding: 2px 6px;
-    }
-  }
-
-  /* Very small phones (below 360px) */
-  @media (max-width: 360px) {
-    .page-title {
-      font-size: 20px;
     }
 
     .series-card {
-      padding: 12px;
-      gap: 10px;
-    }
-
-    .series-icon {
-      width: 40px;
-      height: 40px;
+      padding: 12px 14px;
     }
 
     .series-title {
@@ -260,10 +247,45 @@
 
     .series-title-en {
       font-size: 12px;
+      margin-bottom: 6px;
     }
 
-    .series-meta {
-      font-size: 12px;
+    .series-lessons {
+      top: 12px;
+      left: 12px;
+      font-size: 10px;
+      padding: 3px 8px;
+    }
+
+    .series-category {
+      font-size: 10px;
+      padding: 2px 8px;
+    }
+
+    .series-sheikh {
+      font-size: 11px;
+    }
+  }
+
+  /* Very small phones (below 360px) */
+  @media (max-width: 360px) {
+    .series-card {
+      padding: 10px 12px;
+    }
+
+    .series-title {
+      font-size: 15px;
+    }
+
+    .series-title-en {
+      font-size: 11px;
+    }
+
+    .series-lessons {
+      top: 10px;
+      left: 10px;
+      font-size: 9px;
+      padding: 2px 6px;
     }
   }
 
@@ -434,7 +456,7 @@
 </div>
 <div class="page-divider"></div>
 
-<div class="container" style="max-width: 960px; margin: 0 auto; padding: 28px 32px 44px;">
+<div class="container series-container">
   <% if (series && series.length > 0) { %>
     <div class="search-section">
       <div class="search-wrapper">
@@ -497,6 +519,9 @@
                 };
               %>
               <span class="series-category"><%= categoryArabic[s.category] || s.category || 'أخرى' %></span>
+            <% } %>
+            <% if (s.sheikhId && s.sheikhId.nameArabic) { %>
+              <span class="series-sheikh"><%= locale === 'ar' ? s.sheikhId.nameArabic : (s.sheikhId.nameEnglish || s.sheikhId.nameArabic) %></span>
             <% } %>
           </div>
         </a>
