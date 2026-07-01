@@ -404,6 +404,61 @@ Six mobile-specific layout improvements:
    - Changed `.featured-series-item` to use `flex-direction: row-reverse`
    - Used `margin-inline-start: auto` for lessons badge positioning
 
+**3.7 Series Cards Design Match** ✅ (Commits: e2c249b, c9601e4, 7255159, 4dcfdca)
+
+Restructured series cards in content tabs to match design specification:
+
+1. **Vertical card layout**:
+   - Button (+) on far LEFT
+   - Content area with vertical stacking on RIGHT:
+     * Title at top (bold, 16px, weight 700)
+     * Sheikh name below (lighter, 13px)
+     * Lesson count + category badge at bottom right
+   
+2. **HTML restructure**:
+   - Added `.series-content` wrapper div
+   - Button moved before content in HTML
+   - Sheikh name shown (was hidden)
+   - `.series-info` contains lesson count + badge
+
+3. **CSS updates**:
+   - `.series-header`: `flex-direction: row-reverse` (button on left)
+   - `.series-content`: vertical flex column
+   - `.series-info`: `flex-direction: row-reverse` (right-aligned)
+   - `.category-badge`: gold background (#C49A3C) with white text
+
+4. **Dynamic cards** (homepage.js):
+   - Updated `createSeriesCard()` to match new structure
+   - Minified homepage.min.js
+
+5. **CSP fix**:
+   - Added `https://unpkg.com` to `connect-src` for Lucide source maps
+
+**3.8 Mobile Mini-Player** ✅ (Commit: 4dcfdca)
+
+Solved audio player + bottom navigation overlap on mobile:
+
+**Problem**: Sticky audio player and sticky bottom nav overlapped on mobile.
+
+**Solution**: Mini-player that collapses when scrolling.
+
+**Implementation**:
+- `views/partials/audioPlayer.ejs`:
+  - Added `.mini-player` div with title + play/pause button
+  - Mini-player sits above bottom nav (64px from bottom)
+
+- `public/css/audioPlayer.css`:
+  - `.audio-player.minimized` state
+  - Mini-player styles (compact bar)
+  - Expand handle indicator
+
+- `public/js/audioPlayer.js`:
+  - `minimize()` / `expand()` methods
+  - Scroll listener auto-minimizes on scroll down
+  - Click mini-player to expand
+  - Play/pause icons sync between mini and full player
+  - Auto-expand on desktop resize
+
 ---
 
 #### Phase 4: Series Pages
