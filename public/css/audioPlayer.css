@@ -471,9 +471,24 @@ body.audio-seeking * {
   }
 
   .player-actions {
-    gap: 12px;
-    justify-content: space-around;
+    display: flex;
+    gap: 16px;
+    justify-content: center;
+    align-items: center;
     width: 100%;
+    padding: 8px 0;
+  }
+
+  .player-actions .control-btn-small {
+    width: 44px;
+    height: 44px;
+    border-radius: 10px;
+    font-size: 16px;
+  }
+
+  .player-actions .download-btn svg {
+    width: 20px;
+    height: 20px;
   }
 
   /* Fix speed menu position on mobile to prevent overflow */
@@ -483,7 +498,7 @@ body.audio-seeking * {
 
   .speed-menu {
     position: fixed;
-    bottom: 120px;
+    bottom: 180px;
     left: 50%;
     transform: translateX(-50%);
     right: auto;

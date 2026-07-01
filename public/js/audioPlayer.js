@@ -168,6 +168,11 @@ class AudioPlayer {
     this.titleEl.textContent = lectureData.title || lectureData.titleArabic || 'Unknown';
     this.sheikhEl.textContent = lectureData.sheikh || '';
 
+    // Update mini-player title
+    if (this.miniPlayerTitle) {
+      this.miniPlayerTitle.textContent = lectureData.title || lectureData.titleArabic || '';
+    }
+
     // Set audio source
     const streamUrl = `/stream/${lectureId}`;
     this.audio.src = streamUrl;
@@ -375,10 +380,11 @@ class AudioPlayer {
 
   show() {
     this.player.classList.remove('hidden');
+    // Recheck mobile status
+    this.isMobile = window.innerWidth <= 768;
     // On mobile, start minimized; on desktop, show full
     if (this.isMobile) {
       this.minimize();
-      document.body.style.paddingBottom = '120px'; // Space for mini player + bottom nav
     } else {
       document.body.style.paddingBottom = '140px'; // Make space for player
     }
