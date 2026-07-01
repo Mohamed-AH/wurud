@@ -750,11 +750,6 @@
       padding: 16px;
     }
 
-    /* Hide Description and About Sheikh sections on mobile */
-    .description-section {
-      display: none;
-    }
-
     /* Hide transcript excerpt and disclaimer on mobile - only show expand button */
     .transcript-disclaimer,
     .transcript-excerpt {
@@ -1285,31 +1280,6 @@
               </div>
             <% } %>
           </div>
-
-          <!-- Description -->
-          <% if (locale === 'ar' && lecture.descriptionArabic) { %>
-            <div class="description-section">
-              <h3 class="section-title"><%= locale === 'ar' ? 'الوصف' : 'Description' %></h3>
-              <p class="description-text"><%= lecture.descriptionArabic %></p>
-            </div>
-          <% } else if (locale === 'en' && (lecture.descriptionEnglish || lecture.descriptionArabic)) { %>
-            <div class="description-section">
-              <h3 class="section-title">Description</h3>
-              <p class="description-text"><%= lecture.descriptionEnglish || lecture.descriptionArabic %></p>
-            </div>
-          <% } %>
-
-          <!-- Sheikh Bio -->
-          <% if (lecture.sheikhId && (lecture.sheikhId.bioArabic || lecture.sheikhId.bioEnglish)) { %>
-            <div class="description-section">
-              <h3 class="section-title"><%= locale === 'ar' ? 'نبذة عن الشيخ' : 'About the Sheikh' %></h3>
-              <% const bio = locale === 'ar' ? lecture.sheikhId.bioArabic : (lecture.sheikhId.bioEnglish || lecture.sheikhId.bioArabic); %>
-              <p class="description-text"><%= bio ? bio.substring(0, 300) + '...' : '' %></p>
-              <a href="/sheikhs/<%= lecture.sheikhId.shortId ? lecture.sheikhId.shortId + '/' + (lecture.sheikhId.slug_en || '') + '/' + encodeURIComponent(lecture.sheikhId.slug_ar || '') : (lecture.sheikhId.slug ? encodeURIComponent(lecture.sheikhId.slug) : lecture.sheikhId._id) %>" style="color: var(--accent-gold); text-decoration: none; font-weight: 600;">
-                <%= locale === 'ar' ? 'المزيد عن الشيخ ←' : 'More about the Sheikh →' %>
-              </a>
-            </div>
-          <% } %>
 
           <!-- Transcript Section -->
           <% if (typeof hasTranscript !== 'undefined' && hasTranscript) { %>

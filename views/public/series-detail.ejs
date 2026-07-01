@@ -174,7 +174,15 @@
   }
 
   .lesson-count-badge {
-    display: none;
+    display: inline-flex;
+    background: var(--redesign-brown-dark, #2C1508);
+    color: var(--redesign-gold-light, #DEC99A);
+    font-size: 13px;
+    font-weight: 700;
+    padding: 5px 12px;
+    border-radius: 8px;
+    white-space: nowrap;
+    font-family: var(--font-cairo, 'Cairo', sans-serif);
   }
 
   .description-card, .bio-card {
@@ -247,26 +255,13 @@
     background: rgba(193, 154, 107, 0.08);
   }
 
+  /* External number badge - hidden since number is inside card now */
   .lecture-number-badge {
-    width: 48px;
-    height: 48px;
-    border-radius: 50%;
-    background: var(--accent-gold);
-    color: var(--primary-dark);
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-family: var(--font-arabic-display);
-    font-size: 20px;
-    font-weight: 700;
-    flex-shrink: 0;
-    box-shadow: 0 2px 8px var(--shadow-warm);
+    display: none;
   }
 
   .lecture-number-badge.unnumbered {
-    background: transparent;
-    border: 2px dashed var(--accent-amber);
-    color: var(--text-muted);
+    display: none;
   }
 
   .series-grid {
@@ -618,16 +613,10 @@
       display: none;
     }
 
-    /* Show lesson count badge inline with section header */
+    /* Smaller lesson count badge on mobile */
     .lesson-count-badge {
-      display: inline-flex;
-      background: var(--redesign-brown-dark, #2C1508);
-      color: var(--redesign-gold-light, #DEC99A);
       font-size: 11px;
-      font-weight: 700;
       padding: 4px 10px;
-      border-radius: 8px;
-      white-space: nowrap;
     }
 
     .section-header-row {
@@ -678,11 +667,6 @@
       padding: 0;
       gap: 0;
       flex-direction: column;
-    }
-
-    /* Hide external number badge - will be inside card */
-    .lecture-number-badge {
-      display: none;
     }
 
     .lecture-item-content {

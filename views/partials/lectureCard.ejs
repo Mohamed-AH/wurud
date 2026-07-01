@@ -105,6 +105,7 @@
     max-width: 100%;
     box-sizing: border-box;
     overflow: hidden;
+    position: relative;
   }
 
   .lecture-card:hover {
@@ -138,6 +139,12 @@
     font-size: 18px;
     margin-bottom: 8px;
     font-weight: 600;
+    padding-left: 52px; /* Space for number badge on desktop */
+  }
+
+  html[dir="rtl"] .lecture-title {
+    padding-left: 0;
+    padding-right: 52px;
   }
 
   .lecture-title a {
@@ -189,8 +196,25 @@
     margin-left: 3px;
   }
 
-  /* Number badge inside card - hidden on desktop, shown on mobile */
+  /* Number badge inside card - shown on all screen sizes */
   .lecture-number-inside {
+    display: flex;
+    position: absolute;
+    top: 16px;
+    right: 16px;
+    width: 36px;
+    height: 36px;
+    border-radius: 50%;
+    background: var(--redesign-gold-primary, #C49A3C);
+    color: var(--redesign-brown-dark, #2C1508);
+    font-size: 15px;
+    font-weight: 700;
+    align-items: center;
+    justify-content: center;
+    font-family: var(--font-cairo, 'Cairo', sans-serif);
+  }
+
+  .lecture-number-inside:empty {
     display: none;
   }
 
@@ -300,26 +324,13 @@
       display: none;
     }
 
-    /* Number badge inside card - top right corner */
+    /* Number badge inside card - smaller on mobile */
     .lecture-number-inside {
-      display: flex;
-      position: absolute;
       top: 12px;
       right: 12px;
       width: 32px;
       height: 32px;
-      border-radius: 50%;
-      background: var(--redesign-gold-primary, #C49A3C);
-      color: var(--redesign-brown-dark, #2C1508);
       font-size: 14px;
-      font-weight: 700;
-      align-items: center;
-      justify-content: center;
-      font-family: var(--font-cairo, 'Cairo', sans-serif);
-    }
-
-    .lecture-number-inside:empty {
-      display: none;
     }
 
     /* Hide sheikh/series meta on mobile - shown in series context */
@@ -335,12 +346,12 @@
       font-size: 15px;
       line-height: 1.5;
       margin-bottom: 6px;
-      padding-left: 50px; /* Space for number badge */
+      padding-left: 44px; /* Space for number badge */
     }
 
     html[dir="rtl"] .lecture-title {
       padding-left: 0;
-      padding-right: 50px;
+      padding-right: 44px;
     }
 
     .lecture-info {
