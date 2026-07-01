@@ -915,7 +915,6 @@
     display: flex;
     align-items: center;
     gap: 10px;
-    flex-direction: row-reverse;
   }
 
   .section-title {
@@ -3657,8 +3656,8 @@ function toggleFeaturedSeries() {
   <div class="section-block" id="section-<%= section.slug %>">
     <div class="section-header" onclick="toggleSection('<%= section.slug %>')">
       <div class="section-header-left">
-        <h2 class="section-title"><%= locale === 'ar' ? section.title.ar : section.title.en %></h2>
-        <span class="section-count"><%= section.totalSeriesCount %></span>
+        <h2 class="section-title"><%= (locale === 'ar' ? section.title.ar : section.title.en).replace(/[\u{1F300}-\u{1F9FF}]|[\u{2600}-\u{26FF}]|[\u{2700}-\u{27BF}]|[\u{1F600}-\u{1F64F}]|[\u{1F680}-\u{1F6FF}]|[\u{2300}-\u{23FF}]|[\u{2B50}]|[\u{2705}]|[\u{274C}]|[\u{274E}]|[\u{1F4C5}]/gu, '').trim() %></h2>
+        <span class="section-count"><%= section.totalSeriesCount %> <%= locale === 'ar' ? 'سلاسل' : 'series' %></span>
       </div>
       <svg class="section-chevron <%= section.collapsedByDefault ? 'collapsed' : '' %>" id="toggle-<%= section.slug %>" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="18,15 12,9 6,15"/></svg>
     </div>
