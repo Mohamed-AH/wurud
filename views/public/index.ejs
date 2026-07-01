@@ -388,8 +388,9 @@
 
   .series-header {
     display: flex;
-    align-items: flex-start;
-    gap: 16px;
+    flex-direction: row-reverse;
+    align-items: center;
+    gap: 12px;
     cursor: pointer;
     padding: 0;
     background: transparent;
@@ -398,11 +399,11 @@
 
   .series-title {
     font-family: var(--font-cairo, 'Cairo', sans-serif);
-    font-size: 16px;
-    font-weight: 700;
+    font-size: 15px;
+    font-weight: 600;
     color: var(--redesign-brown-dark, #2C1508);
-    margin-bottom: 5px;
-    line-height: 1.4;
+    margin: 0;
+    line-height: 1.5;
     text-align: right;
     flex: 1;
   }
@@ -418,7 +419,7 @@
   }
 
   .series-meta {
-    margin-bottom: 8px;
+    display: none;
   }
 
   .series-author {
@@ -430,21 +431,24 @@
   }
 
   .series-sheikh {
-    font-size: 12px;
-    color: var(--redesign-text-muted, #A89070);
-    margin-bottom: 0;
-    text-align: right;
+    display: none;
   }
 
   .series-info {
     display: flex;
     gap: 8px;
-    font-size: 12px;
-    color: var(--redesign-text-muted, #A89070);
+    font-size: 11px;
     align-items: center;
-    justify-content: flex-end;
-    padding-top: 0;
-    border-top: none;
+    flex-shrink: 0;
+  }
+
+  .series-info > span:first-child {
+    background: var(--redesign-badge-bg, #E8D5A0);
+    color: var(--redesign-text-mid, #7A5C3A);
+    font-weight: 700;
+    padding: 3px 11px;
+    border-radius: 10px;
+    white-space: nowrap;
   }
 
   .series-info span:not(:last-child)::after {
@@ -3508,8 +3512,6 @@ function switchDayTab(location, day) {
       <% featuredSeries.forEach(function(s) { %>
         <a href="/series/<%= s.slug ? encodeURIComponent(s.slug) : s._id %>" class="featured-series-item">
           <span class="featured-series-lessons"><%= s.lectureCount %> <%= locale === 'ar' ? 'درس' : 'lessons' %></span>
-          <span class="featured-series-sheikh"><%= locale === 'ar' ? 'الشيخ حسن بن محمد منصور الدغريري' : 'Sheikh Hasan Dhaghriri' %></span>
-          <span class="featured-series-spacer"></span>
           <h3 class="featured-series-name"><%= locale === 'ar' ? s.titleArabic : (s.titleEnglish || s.titleArabic) %></h3>
         </a>
       <% }); %>
@@ -3583,6 +3585,7 @@ function switchDayTab(location, day) {
   }
   .featured-series-item {
     display: flex;
+    flex-direction: row-reverse;
     align-items: center;
     padding: 14px 20px;
     border-bottom: 1px solid #F0E5CC;
@@ -3607,20 +3610,13 @@ function switchDayTab(location, day) {
     white-space: nowrap;
     flex-shrink: 0;
   }
-  .featured-series-sheikh {
-    color: var(--redesign-text-muted, #A89070);
-    font-size: 12px;
-    flex-shrink: 0;
-  }
-  .featured-series-spacer {
-    flex: 1;
-  }
   .featured-series-name {
+    flex: 1;
+    text-align: right;
     color: var(--redesign-brown-dark, #2C1508);
     font-size: 15px;
     font-weight: 600;
     margin: 0;
-    text-align: right;
   }
   @media (max-width: 768px) {
     .featured-series-section {
@@ -3646,29 +3642,17 @@ function switchDayTab(location, day) {
       width: 15px;
       height: 15px;
     }
-    /* Fix 6: RTL layout for featured series items */
     .featured-series-item {
       padding: 11px 13px;
-      gap: 8px;
-      flex-direction: row-reverse;
-      justify-content: flex-start;
+      gap: 10px;
     }
     .featured-series-lessons {
       font-size: 10px;
       padding: 2px 8px;
-      margin-inline-start: auto;
-    }
-    .featured-series-sheikh {
-      display: none;
-    }
-    .featured-series-spacer {
-      display: none;
     }
     .featured-series-name {
       font-size: 13px;
-      font-weight: 500;
-      flex-shrink: 1;
-      text-align: right;
+      font-weight: 600;
     }
   }
 </style>
