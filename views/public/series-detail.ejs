@@ -187,6 +187,7 @@
   }
 
   .description-text, .bio-text {
+    font-family: var(--font-cairo, 'Cairo', sans-serif);
     color: var(--text-secondary);
     line-height: 1.9;
     font-size: 18px;
@@ -389,7 +390,7 @@
     font-size: 15px;
     background: white;
     transition: all 0.3s;
-    font-family: inherit;
+    font-family: var(--font-cairo, 'Cairo', sans-serif);
   }
 
   [dir="ltr"] .search-input {
@@ -475,6 +476,7 @@
     border-radius: 20px;
     font-size: 14px;
     font-weight: 500;
+    font-family: var(--font-cairo, 'Cairo', sans-serif);
     border: 2px solid var(--accent-amber);
     background: white;
     color: var(--text-secondary);
