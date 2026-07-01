@@ -577,11 +577,11 @@ body.audio-seeking * {
   }
 
   .audio-player.minimized .mini-player {
-    display: flex;
+    display: flex !important;
   }
 
   .audio-player.minimized .player-container {
-    display: none;
+    display: none !important;
   }
 
   /* Minimized player sits above bottom nav */

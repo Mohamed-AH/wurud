@@ -381,11 +381,13 @@ class AudioPlayer {
   show() {
     // Recheck mobile status FIRST
     this.isMobile = window.innerWidth <= 768;
+    log('📱 show() called - isMobile:', this.isMobile, 'width:', window.innerWidth);
 
     // On mobile, add minimized class BEFORE showing to prevent flash of full player
     if (this.isMobile) {
       this.player.classList.add('minimized');
       this.isMinimized = true;
+      log('📱 Added minimized class, player classes:', this.player.className);
       if (this.miniPlayerTitle && this.currentLecture) {
         this.miniPlayerTitle.textContent = this.currentLecture.title || this.currentLecture.titleArabic || '';
       }
@@ -398,6 +400,7 @@ class AudioPlayer {
 
     // Now show the player (reveal it)
     this.player.classList.remove('hidden');
+    log('📱 Removed hidden class, final classes:', this.player.className);
   }
 
   minimize() {
