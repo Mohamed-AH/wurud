@@ -27,6 +27,34 @@
   grid-template-columns: 1fr 2fr 1fr;
   gap: 24px;
   align-items: center;
+  position: relative;
+}
+
+/* Close Button - Top Right Corner */
+.close-player-btn {
+  position: absolute;
+  top: -8px;
+  right: 0;
+  background: transparent;
+  border: none;
+  color: #C19A6B;
+  cursor: pointer;
+  padding: 8px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s ease;
+  z-index: 10;
+}
+
+.close-player-btn:hover {
+  color: #FAF7F2;
+  background: rgba(193, 154, 107, 0.2);
+}
+
+.close-player-btn svg {
+  display: block;
 }
 
 /* Left: Now Playing Info */
@@ -71,8 +99,9 @@
 
 .time-display {
   display: flex;
-  justify-content: space-between;
+  justify-content: center;
   align-items: center;
+  gap: 4px;
   font-size: 13px;
   color: #C19A6B;
   font-weight: 600;
@@ -239,45 +268,60 @@ body.audio-seeking * {
   width: 44px;
   height: 44px;
   position: relative;
-}
-
-.skip-icon {
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  line-height: 1;
+  gap: 0;
 }
 
-.skip-icon svg {
-  width: 18px;
-  height: 18px;
+.skip-btn svg {
+  width: 20px;
+  height: 20px;
+  flex-shrink: 0;
 }
 
-.skip-seconds {
+.skip-label {
   font-size: 9px;
   font-weight: 700;
+  line-height: 1;
   margin-top: -2px;
 }
 
-/* Download button - polished design */
-.download-btn {
-  text-decoration: none;
+/* Action buttons (secondary controls) */
+.action-btn {
+  background: transparent;
+  border: 1px solid rgba(193, 154, 107, 0.4);
+  color: #C19A6B;
+  height: 36px;
+  padding: 0 12px;
+  border-radius: 8px;
   display: flex;
   align-items: center;
   justify-content: center;
-  background: rgba(193, 154, 107, 0.15);
-  padding: 0;
-  margin: 0;
-  line-height: 0;
-  box-sizing: border-box;
+  gap: 6px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  font-size: 13px;
+  font-weight: 600;
+  text-decoration: none;
 }
 
-.download-btn svg {
+.action-btn:hover {
+  background: rgba(193, 154, 107, 0.15);
+  border-color: #C19A6B;
+  color: #FAF7F2;
+}
+
+.action-btn svg {
   width: 16px;
   height: 16px;
-  display: block;
-  margin: auto;
+  flex-shrink: 0;
+}
+
+/* Download button - uses action-btn base */
+.download-btn {
+  padding: 0 10px;
 }
 
 .download-btn:hover {
@@ -457,13 +501,20 @@ body.audio-seeking * {
     height: 40px;
   }
 
-  .skip-icon svg {
-    width: 16px;
-    height: 16px;
+  .skip-btn svg {
+    width: 18px;
+    height: 18px;
   }
 
-  .skip-seconds {
+  .skip-label {
     font-size: 8px;
+  }
+
+  /* Close button on mobile - make it more prominent */
+  .close-player-btn {
+    top: -4px;
+    right: -4px;
+    padding: 6px;
   }
 
   .volume-control {
@@ -472,23 +523,26 @@ body.audio-seeking * {
 
   .player-actions {
     display: flex;
-    gap: 16px;
+    gap: 12px;
     justify-content: center;
     align-items: center;
     width: 100%;
     padding: 8px 0;
   }
 
-  .player-actions .control-btn-small {
-    width: 44px;
-    height: 44px;
-    border-radius: 10px;
-    font-size: 16px;
+  .player-actions .action-btn {
+    height: 40px;
+    padding: 0 14px;
+    font-size: 12px;
   }
 
-  .player-actions .download-btn svg {
-    width: 20px;
-    height: 20px;
+  .player-actions .action-btn svg {
+    width: 18px;
+    height: 18px;
+  }
+
+  .player-actions .download-btn {
+    padding: 0 12px;
   }
 
   /* Fix speed menu position on mobile to prevent overflow */

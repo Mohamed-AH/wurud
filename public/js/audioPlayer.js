@@ -379,24 +379,41 @@ class AudioPlayer {
   }
 
   show() {
-    this.player.classList.remove('hidden');
-    // Recheck mobile status
+    // Recheck mobile status FIRST
     this.isMobile = window.innerWidth <= 768;
-    // On mobile, start minimized; on desktop, show full
+
+    // On mobile, add minimized class BEFORE showing to prevent flash of full player
     if (this.isMobile) {
-      this.minimize();
+      this.player.classList.add('minimized');
+      this.isMinimized = true;
+      if (this.miniPlayerTitle && this.currentLecture) {
+        this.miniPlayerTitle.textContent = this.currentLecture.title || this.currentLecture.titleArabic || '';
+      }
+      document.body.style.paddingBottom = '120px';
     } else {
-      document.body.style.paddingBottom = '140px'; // Make space for player
+      this.player.classList.remove('minimized');
+      this.isMinimized = false;
+      document.body.style.paddingBottom = '140px';
     }
+
+    // Now show the player (reveal it)
+    this.player.classList.remove('hidden');
   }
 
   minimize() {
+    // Recheck mobile status
+    this.isMobile = window.innerWidth <= 768;
     if (!this.isMobile) return;
+
     this.player.classList.add('minimized');
     this.isMinimized = true;
     // Update mini player title
     if (this.miniPlayerTitle && this.currentLecture) {
       this.miniPlayerTitle.textContent = this.currentLecture.title || this.currentLecture.titleArabic || '';
+    }
+    // Sync play/pause icon
+    if (this.miniPlayPauseIcon) {
+      this.miniPlayPauseIcon.textContent = this.isPlaying ? '⏸' : '▶';
     }
     document.body.style.paddingBottom = '120px';
   }
@@ -404,6 +421,8 @@ class AudioPlayer {
   expand() {
     this.player.classList.remove('minimized');
     this.isMinimized = false;
+    // Recheck mobile status
+    this.isMobile = window.innerWidth <= 768;
     if (this.isMobile) {
       document.body.style.paddingBottom = '260px'; // Full player + bottom nav
     } else {

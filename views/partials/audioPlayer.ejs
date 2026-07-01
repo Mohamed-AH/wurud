@@ -14,7 +14,15 @@
 
   <!-- Full Player -->
   <div class="player-container" id="fullPlayer">
-    <!-- Left: Now Playing Info -->
+    <!-- Close Button (Top Right Corner) -->
+    <button class="close-player-btn" id="closePlayerBtn" title="<%= locale === 'ar' ? 'إغلاق' : 'Close' %>">
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <line x1="18" y1="6" x2="6" y2="18"></line>
+        <line x1="6" y1="6" x2="18" y2="18"></line>
+      </svg>
+    </button>
+
+    <!-- Now Playing Info -->
     <div class="player-info">
       <div class="now-playing-label"><%= locale === 'ar' ? 'يتم تشغيل:' : 'Now Playing:' %></div>
       <div class="lecture-title" id="playerLectureTitle">
@@ -23,15 +31,8 @@
       <div class="sheikh-name" id="playerSheikhName"></div>
     </div>
 
-    <!-- Center: Playback Controls -->
+    <!-- Playback Controls -->
     <div class="player-controls">
-      <!-- Time Display -->
-      <div class="time-display">
-        <span id="currentTime">0:00</span>
-        <span class="time-separator">/</span>
-        <span id="duration">0:00</span>
-      </div>
-
       <!-- Progress Bar -->
       <div class="progress-container" id="progressContainer">
         <div class="progress-bar" id="progressBar">
@@ -39,16 +40,21 @@
         </div>
       </div>
 
+      <!-- Time Display -->
+      <div class="time-display">
+        <span id="currentTime">0:00</span>
+        <span class="time-separator">/</span>
+        <span id="duration">0:00</span>
+      </div>
+
       <!-- Control Buttons -->
       <div class="control-buttons">
         <!-- Skip Backward 15s -->
         <button class="control-btn skip-btn" id="skipBackward" title="<%= locale === 'ar' ? 'رجوع 15 ثانية' : 'Skip backward 15s' %>">
-          <span class="skip-icon">
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-              <path d="M12 5V1L7 6l5 5V7c3.31 0 6 2.69 6 6s-2.69 6-6 6-6-2.69-6-6H4c0 4.42 3.58 8 8 8s8-3.58 8-8-3.58-8-8-8z"/>
-            </svg>
-            <span class="skip-seconds">15</span>
-          </span>
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M12 5V1L7 6l5 5V7c3.31 0 6 2.69 6 6s-2.69 6-6 6-6-2.69-6-6H4c0 4.42 3.58 8 8 8s8-3.58 8-8-3.58-8-8-8z"/>
+          </svg>
+          <span class="skip-label">15</span>
         </button>
 
         <!-- Play/Pause -->
@@ -58,21 +64,23 @@
 
         <!-- Skip Forward 15s -->
         <button class="control-btn skip-btn" id="skipForward" title="<%= locale === 'ar' ? 'تقديم 15 ثانية' : 'Skip forward 15s' %>">
-          <span class="skip-icon">
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="transform: scaleX(-1);">
-              <path d="M12 5V1L7 6l5 5V7c3.31 0 6 2.69 6 6s-2.69 6-6 6-6-2.69-6-6H4c0 4.42 3.58 8 8 8s8-3.58 8-8-3.58-8-8-8z"/>
-            </svg>
-            <span class="skip-seconds">15</span>
-          </span>
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="transform: scaleX(-1);">
+            <path d="M12 5V1L7 6l5 5V7c3.31 0 6 2.69 6 6s-2.69 6-6 6-6-2.69-6-6H4c0 4.42 3.58 8 8 8s8-3.58 8-8-3.58-8-8-8z"/>
+          </svg>
+          <span class="skip-label">15</span>
         </button>
       </div>
     </div>
 
-    <!-- Right: Additional Controls -->
+    <!-- Secondary Controls (Speed, Volume, Download) -->
     <div class="player-actions">
       <!-- Playback Speed -->
       <div class="speed-control">
-        <button class="control-btn control-btn-small" id="speedBtn" title="<%= locale === 'ar' ? 'سرعة التشغيل' : 'Playback speed' %>">
+        <button class="action-btn" id="speedBtn" title="<%= locale === 'ar' ? 'سرعة التشغيل' : 'Playback speed' %>">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <circle cx="12" cy="12" r="10"></circle>
+            <polyline points="12 6 12 12 16 14"></polyline>
+          </svg>
           <span id="speedLabel">1x</span>
         </button>
         <div class="speed-menu hidden" id="speedMenu">
@@ -87,7 +95,7 @@
 
       <!-- Volume Control -->
       <div class="volume-control">
-        <button class="control-btn control-btn-small" id="muteBtn" title="<%= locale === 'ar' ? 'كتم الصوت' : 'Mute' %>">
+        <button class="action-btn" id="muteBtn" title="<%= locale === 'ar' ? 'كتم الصوت' : 'Mute' %>">
           <span id="volumeIcon">🔊</span>
         </button>
         <label for="volumeSlider" class="visually-hidden"><%= locale === 'ar' ? 'مستوى الصوت' : 'Volume level' %></label>
@@ -95,18 +103,13 @@
       </div>
 
       <!-- Download Button -->
-      <a class="control-btn control-btn-small download-btn" id="downloadBtn" title="<%= locale === 'ar' ? 'تحميل' : 'Download' %>" style="display:none;">
+      <a class="action-btn download-btn" id="downloadBtn" title="<%= locale === 'ar' ? 'تحميل' : 'Download' %>" style="display:none;">
         <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
           <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
           <polyline points="7 10 12 15 17 10"/>
           <line x1="12" y1="15" x2="12" y2="3"/>
         </svg>
       </a>
-
-      <!-- Close Button -->
-      <button class="control-btn control-btn-small" id="closePlayerBtn" title="<%= locale === 'ar' ? 'إغلاق' : 'Close' %>">
-        <span class="control-icon">✕</span>
-      </button>
     </div>
   </div>
 </div>
