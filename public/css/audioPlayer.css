@@ -689,6 +689,10 @@ html[dir="rtl"] .close-player-btn {
 
 /* RTL Mobile - use same centered positioning */
 @media (max-width: 768px) {
+  html[dir="rtl"] .player-actions {
+    justify-content: center;
+  }
+
   html[dir="rtl"] .speed-menu {
     left: 50%;
     transform: translateX(-50%);
