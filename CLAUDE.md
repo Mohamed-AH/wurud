@@ -424,7 +424,7 @@ Restructured series cards in content tabs to match design specification:
 3. **CSS updates**:
    - `.series-header`: `flex-direction: row-reverse` (button on left)
    - `.series-content`: vertical flex column
-   - `.series-info`: `flex-direction: row-reverse` (right-aligned)
+   - `.series-info`: `flex-direction: row-reverse; justify-content: flex-start` (right-aligned)
    - `.category-badge`: gold background (#C49A3C) with white text
 
 4. **Dynamic cards** (homepage.js):
@@ -458,6 +458,24 @@ Solved audio player + bottom navigation overlap on mobile:
   - Click mini-player to expand
   - Play/pause icons sync between mini and full player
   - Auto-expand on desktop resize
+
+**3.9 Critical Bug Fixes** ✅ (Commit: 7112c36)
+
+Three critical issues fixed:
+
+1. **Series-info alignment** - Tags (lesson count + category badge) were left-aligned instead of right-aligned
+   - **Root Cause**: Using `direction: rtl` with `justify-content: flex-end` causes flex-end to mean LEFT side
+   - **Fix**: Changed to `flex-direction: row-reverse` with `justify-content: flex-start`
+   - **File**: `views/public/index.ejs` (lines 435-443)
+
+2. **Mini-player not appearing on mobile** - Clicking play showed full player instead of mini-player
+   - **Root Cause**: `show()` removed `hidden` class BEFORE adding `minimized` class, causing flash
+   - **Fix**: Refactored `show()` to add `minimized` class first, then remove `hidden`
+   - **File**: `public/js/audioPlayer.js` (lines 381-400)
+
+3. **Audio player layout** - Icons were misaligned and unprofessional
+   - **Fix**: Restructured HTML with close button in top-right corner, new `.action-btn` class for secondary controls (speed, volume, download)
+   - **Files**: `views/partials/audioPlayer.ejs`, `public/css/audioPlayer.css`
 
 ---
 
