@@ -725,28 +725,17 @@
 
     div.innerHTML = `
       <div class="series-header" onclick="${toggleFn}('${series._id}')">
-        <h2 class="series-title"><a href="${seriesUrl}" onclick="event.stopPropagation()">${escapeHtml(seriesTitle)}</a></h2>
-
-        <div class="series-meta">
-          ${series.originalAuthor ? `
-            <div class="series-author">
-              <span class="series-author-label">${t('author')}</span>
-              ${escapeHtml(series.originalAuthor)}
-            </div>
-          ` : ''}
-          <div class="series-sheikh">
-            ${t('sheikh')} ${escapeHtml(sheikhName)}
-          </div>
-        </div>
-
-        <div class="series-info">
-          <span>${series.lectureCount || 0} ${t('lesson')}</span>
-          <span class="category-badge">${categoryLabel}</span>
-        </div>
-
         <button class="expand-btn" id="${btnId}" aria-label="${isKhutba ? 'Show Khutbahs' : 'Show Lessons'}">
           <i data-lucide="plus" class="expand-icon"></i>
         </button>
+        <div class="series-content">
+          <h2 class="series-title"><a href="${seriesUrl}" onclick="event.stopPropagation()">${escapeHtml(seriesTitle)}</a></h2>
+          <div class="series-sheikh">${escapeHtml(sheikhName)}</div>
+          <div class="series-info">
+            <span class="series-lesson-count">${series.lectureCount || 0} ${t('lesson')}</span>
+            <span class="category-badge">${categoryLabel}</span>
+          </div>
+        </div>
       </div>
 
       <div class="episodes-list" id="${episodesId}">
