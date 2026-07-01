@@ -269,6 +269,19 @@ Added admin setting to switch between new card layout and classic table layout:
 2. Select "Schedule Layout" option
 3. Save settings to switch between layouts
 
+### 19. Series Detail Large Screen Layout Fix (Commit: 6453b7f)
+Fixed layout issue on very wide screens (1400px+) where lecture cards scattered across the width.
+
+**Problem**: On large screens, flex layout stretched lecture cards too wide, pushing number badges and action buttons far apart.
+
+**Solution**:
+- Constrained `.lectures-list` to `max-width: 960px` with `margin: 0 auto` (centered)
+- Simplified `.lecture-item` wrapper to just `display: block; width: 100%`
+- Removed redundant hover/padding styles from wrapper element
+- All card styling (border, shadow, background) stays on `.lecture-card` only
+
+**Files Modified**: `views/public/series-detail.ejs`
+
 ## Pending Tasks
 
 ### ACTIVE: Design Redesign Implementation (June 2026)
