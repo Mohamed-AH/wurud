@@ -98,7 +98,7 @@ app.use(helmet({
       fontSrc: ["'self'", "https://fonts.gstatic.com"],
       imgSrc: ["'self'", "data:", "https:", "blob:"],
       mediaSrc: ["'self'", "https://objectstorage.me-jeddah-1.oraclecloud.com"],
-      connectSrc: ["'self'", "https://objectstorage.me-jeddah-1.oraclecloud.com"],
+      connectSrc: ["'self'", "https://objectstorage.me-jeddah-1.oraclecloud.com", "https://unpkg.com"],
       frameSrc: ["https://accounts.google.com"],
       objectSrc: ["'none'"],
       upgradeInsecureRequests: isProduction ? [] : null,
