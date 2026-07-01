@@ -115,7 +115,7 @@
   }
 
   .section-title {
-    font-family: var(--font-arabic-display);
+    font-family: var(--font-cairo);
     font-size: 24px;
     color: var(--primary-dark);
     margin-bottom: 20px;
@@ -209,34 +209,49 @@
   }
 
   .info-grid {
-    display: grid;
-    gap: 16px;
-    margin-top: 20px;
+    display: flex;
+    flex-direction: column;
+    gap: 0;
+    margin-top: 16px;
   }
 
   .info-item {
     display: flex;
     align-items: center;
+    justify-content: space-between;
     gap: 12px;
-    padding: 12px;
-    background: var(--paper);
-    border-radius: 8px;
-    border-right: 4px solid var(--accent-gold);
+    padding: 12px 0;
+    border-bottom: 1px solid var(--border-light);
+  }
+
+  .info-item:last-child {
+    border-bottom: none;
   }
 
   .info-item .icon {
     color: var(--accent-gold);
+    flex-shrink: 0;
+  }
+
+  .info-item > div {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    flex: 1;
   }
 
   .info-label {
-    color: var(--text-muted);
+    color: var(--text-secondary);
     font-size: 14px;
+    font-family: var(--font-cairo);
   }
 
   .info-value {
     color: var(--text-primary);
     font-weight: 600;
-    font-size: 16px;
+    font-size: 14px;
+    font-family: var(--font-cairo);
+    margin-inline-start: auto;
   }
 
   .description-section {
@@ -264,7 +279,7 @@
   }
 
   .sidebar-title {
-    font-family: var(--font-arabic-display);
+    font-family: var(--font-cairo);
     font-size: 20px;
     color: var(--primary-dark);
     margin-bottom: 16px;
@@ -278,15 +293,21 @@
     border-radius: 8px;
     margin-bottom: 12px;
     transition: all 0.3s;
-    cursor: pointer;
     border: 1px solid var(--border-light);
+    display: flex;
+    align-items: center;
+    gap: 12px;
   }
 
   .related-lecture:hover {
     background: white;
     border-color: var(--accent-gold);
-    transform: translateX(-4px);
     box-shadow: 0 4px 12px var(--shadow-warm);
+  }
+
+  .related-lecture-content {
+    flex: 1;
+    min-width: 0;
   }
 
   .related-lecture-title {
@@ -294,11 +315,42 @@
     font-size: 15px;
     font-weight: 600;
     margin-bottom: 4px;
+    font-family: var(--font-cairo);
+    direction: rtl;
+    text-align: right;
   }
 
   .related-lecture-meta {
     color: var(--text-muted);
     font-size: 13px;
+    font-family: var(--font-cairo);
+  }
+
+  .related-play-btn {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    background: var(--accent-gold);
+    color: var(--primary-dark);
+    border: none;
+    border-radius: 6px;
+    padding: 8px 12px;
+    font-size: 13px;
+    font-weight: 600;
+    font-family: var(--font-cairo);
+    cursor: pointer;
+    flex-shrink: 0;
+    transition: all 0.2s;
+  }
+
+  .related-play-btn:hover {
+    background: var(--accent-amber);
+    transform: scale(1.05);
+  }
+
+  .related-play-btn svg {
+    width: 14px;
+    height: 14px;
   }
 
   /* Transcript Section Styles */
@@ -688,13 +740,97 @@
     }
 
     .lecture-content {
-      padding: 20px 0;
+      padding: 16px 0;
     }
 
     .main-content {
       border-radius: 0;
       border-left: none;
       border-right: none;
+      padding: 16px;
+    }
+
+    /* Hide Description and About Sheikh sections on mobile */
+    .description-section {
+      display: none;
+    }
+
+    /* Hide transcript excerpt and disclaimer on mobile - only show expand button */
+    .transcript-disclaimer,
+    .transcript-excerpt {
+      display: none;
+    }
+
+    .transcript-section .section-title {
+      flex-direction: row;
+      justify-content: space-between;
+      border-bottom: none;
+      padding-bottom: 8px;
+      margin-bottom: 8px;
+    }
+
+    /* Compact info section on mobile */
+    .section-title {
+      font-size: 16px;
+      margin-bottom: 8px;
+      padding-bottom: 8px;
+    }
+
+    .info-item {
+      padding: 10px 0;
+    }
+
+    .info-label {
+      font-size: 13px;
+    }
+
+    .info-value {
+      font-size: 13px;
+    }
+
+    .info-item .icon {
+      width: 18px;
+      height: 18px;
+    }
+
+    /* Compact related lectures on mobile */
+    .sidebar {
+      padding: 0 16px;
+    }
+
+    .sidebar-card {
+      padding: 16px;
+      border-radius: 8px;
+    }
+
+    .sidebar-title {
+      font-size: 16px;
+      margin-bottom: 12px;
+      padding-bottom: 8px;
+    }
+
+    .related-lecture {
+      padding: 10px;
+      flex-direction: row-reverse;
+      gap: 10px;
+    }
+
+    .related-lecture-title {
+      font-size: 14px;
+    }
+
+    .related-lecture-meta {
+      font-size: 12px;
+    }
+
+    .related-play-btn {
+      padding: 6px 10px;
+      font-size: 12px;
+    }
+
+    .related-play-btn svg {
+      width: 12px;
+      height: 12px;
     }
   }
 
@@ -776,11 +912,16 @@
     }
 
     .related-lecture-title {
-      font-size: 15px;
+      font-size: 13px;
     }
 
     .related-lecture-meta {
-      font-size: 12px;
+      font-size: 11px;
+    }
+
+    .related-play-btn {
+      padding: 5px 8px;
+      font-size: 11px;
     }
 
     .transcript-section .section-title {
@@ -859,17 +1000,36 @@
     }
 
     .related-lecture-title {
-      font-size: 14px;
+      font-size: 12px;
     }
 
     .related-lecture-meta {
-      font-size: 11px;
+      font-size: 10px;
+    }
+
+    .related-play-btn {
+      padding: 4px 6px;
+      font-size: 10px;
+      gap: 4px;
+    }
+
+    .related-play-btn svg {
+      width: 10px;
+      height: 10px;
     }
 
     .transcript-content {
       padding: 12px 16px;
       font-size: 15px;
       line-height: 1.9;
+    }
+
+    .sidebar {
+      padding: 0 12px;
+    }
+
+    .sidebar-card {
+      padding: 12px;
     }
   }
 </style>
@@ -917,7 +1077,7 @@
   <div class="mobile-player-section">
     <div class="mobile-play-row">
       <button class="mobile-play-btn" onclick="playLecture()" title="<%= locale === 'ar' ? 'تشغيل' : 'Play' %>">
-        ▶️
+        <svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor"><polygon points="5 3 19 12 5 21 5 3"/></svg>
       </button>
       <div class="mobile-play-info">
         <div class="mobile-play-title"><%= locale === 'ar' ? lecture.titleArabic : (lecture.titleEnglish || lecture.titleArabic) %></div>
@@ -1033,7 +1193,7 @@
           <% if (lecture.audioFileName) { %>
             <div class="play-section">
               <button class="btn-play-large" onclick="playLecture()" title="<%= locale === 'ar' ? 'تشغيل' : 'Play' %>">
-                ▶️
+                <svg width="32" height="32" viewBox="0 0 24 24" fill="currentColor"><polygon points="5 3 19 12 5 21 5 3"/></svg>
               </button>
               <div class="play-text"><%= locale === 'ar' ? 'انقر للتشغيل في المشغل الثابت' : 'Click to play in the sticky player' %></div>
               <div class="play-subtitle"><%= locale === 'ar' ? 'سيظل المشغل ظاهراً أثناء تصفحك للموقع' : 'The player stays visible as you browse' %></div>
@@ -1074,60 +1234,54 @@
           <div class="info-grid">
             <% if (lecture.duration) { %>
               <div class="info-item">
-                <svg class="icon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor">
-                  <circle cx="12" cy="12" r="10"></circle>
-                  <polyline points="12 6 12 12 16 14"></polyline>
-                </svg>
                 <div>
-                  <div class="info-label"><%= locale === 'ar' ? 'المدة' : 'Duration' %></div>
-                  <div class="info-value"><%= lecture.durationFormatted %></div>
+                  <svg class="icon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <circle cx="12" cy="12" r="10"></circle>
+                    <polyline points="12 6 12 12 16 14"></polyline>
+                  </svg>
+                  <span class="info-label"><%= locale === 'ar' ? 'المدة' : 'Duration' %></span>
                 </div>
+                <span class="info-value"><%= lecture.durationFormatted %></span>
               </div>
             <% } %>
 
             <% if (lecture.playCount) { %>
               <div class="info-item">
-                <svg class="icon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor">
-                  <polygon points="5 3 19 12 5 21 5 3"></polygon>
-                </svg>
                 <div>
-                  <div class="info-label"><%= locale === 'ar' ? 'مرات الاستماع' : 'Play Count' %></div>
-                  <div class="info-value"><%= lecture.playCount %></div>
+                  <svg class="icon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <polygon points="5 3 19 12 5 21 5 3"></polygon>
+                  </svg>
+                  <span class="info-label"><%= locale === 'ar' ? 'مرات الاستماع' : 'Play Count' %></span>
                 </div>
+                <span class="info-value"><%= lecture.playCount %></span>
               </div>
             <% } %>
 
             <% if (lecture.location) { %>
               <div class="info-item">
-                <svg class="icon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor">
-                  <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"></path>
-                  <circle cx="12" cy="10" r="3"></circle>
-                </svg>
                 <div>
-                  <div class="info-label"><%= locale === 'ar' ? 'المكان' : 'Location' %></div>
-                  <div class="info-value"><%= lecture.location %></div>
+                  <svg class="icon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"></path>
+                    <circle cx="12" cy="10" r="3"></circle>
+                  </svg>
+                  <span class="info-label"><%= locale === 'ar' ? 'المكان' : 'Location' %></span>
                 </div>
+                <span class="info-value"><%= lecture.location %></span>
               </div>
             <% } %>
 
             <% if (lecture.dateRecordedHijri || lecture.dateRecorded) { %>
               <div class="info-item">
-                <svg class="icon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor">
-                  <rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect>
-                  <line x1="16" y1="2" x2="16" y2="6"></line>
-                  <line x1="8" y1="2" x2="8" y2="6"></line>
-                  <line x1="3" y1="10" x2="21" y2="10"></line>
-                </svg>
                 <div>
-                  <div class="info-label"><%= locale === 'ar' ? 'تاريخ التسجيل (هجري)' : 'Date (Hijri)' %></div>
-                  <div class="info-value">
-                    <% if (lecture.dateRecordedHijri) { %>
-                      <%= formatHijriDate(lecture.dateRecordedHijri) %>
-                    <% } else { %>
-                      -
-                    <% } %>
-                  </div>
+                  <svg class="icon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect>
+                    <line x1="16" y1="2" x2="16" y2="6"></line>
+                    <line x1="8" y1="2" x2="8" y2="6"></line>
+                    <line x1="3" y1="10" x2="21" y2="10"></line>
+                  </svg>
+                  <span class="info-label"><%= locale === 'ar' ? 'التاريخ' : 'Date' %></span>
                 </div>
+                <span class="info-value"><%= lecture.dateRecordedHijri ? formatHijriDate(lecture.dateRecordedHijri) : '-' %></span>
               </div>
             <% } %>
           </div>
@@ -1209,8 +1363,8 @@
             <div class="sidebar-card">
               <h3 class="sidebar-title"><%= locale === 'ar' ? 'محاضرات ذات صلة' : 'Related Lectures' %></h3>
               <% relatedLectures.forEach(related => { %>
-                <a href="/lectures/<%= related.shortId ? related.shortId + '/' + (related.slug_en || '') + '/' + encodeURIComponent(related.slug_ar || '') : (related.slug ? encodeURIComponent(related.slug) : related._id) %>" style="text-decoration: none;">
-                  <div class="related-lecture">
+                <div class="related-lecture">
+                  <a href="/lectures/<%= related.shortId ? related.shortId + '/' + (related.slug_en || '') + '/' + encodeURIComponent(related.slug_ar || '') : (related.slug ? encodeURIComponent(related.slug) : related._id) %>" class="related-lecture-content" style="text-decoration: none;">
                     <div class="related-lecture-title"><%= locale === 'ar' ? related.titleArabic : (related.titleEnglish || related.titleArabic) %></div>
                     <div class="related-lecture-meta">
                       <% if (related.sheikhId) { %>
@@ -1220,8 +1374,12 @@
                         • <%= related.durationFormatted %>
                       <% } %>
                     </div>
-                  </div>
-                </a>
+                  </a>
+                  <button class="related-play-btn" onclick="playRelatedLecture('<%= related._id %>', '<%= (related.titleArabic || '').replace(/'/g, "\\'") %>', '<%= related.sheikhId ? (related.sheikhId.nameArabic || '').replace(/'/g, "\\'") : '' %>')" title="<%= locale === 'ar' ? 'استمع' : 'Listen' %>">
+                    <svg viewBox="0 0 24 24" fill="currentColor"><polygon points="5 3 19 12 5 21 5 3"/></svg>
+                    <%= locale === 'ar' ? 'استمع' : 'Listen' %>
+                  </button>
+                </div>
               <% }); %>
             </div>
           <% } %>
@@ -1384,6 +1542,20 @@
         }
       }
     });
+  }
+
+  // Play related lecture
+  function playRelatedLecture(lectureId, title, sheikh) {
+    if (window.audioPlayer) {
+      window.audioPlayer.play(lectureId, {
+        title: title,
+        titleArabic: title,
+        sheikh: sheikh
+      });
+    } else {
+      console.error('Audio player not initialized');
+      alert('<%= locale === "ar" ? "مشغل الصوت يتم تحميله، يرجى المحاولة مرة أخرى" : "Audio player is loading, please try again" %>');
+    }
   }
 
   // Share functionality using enhanced share module
