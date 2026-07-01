@@ -538,6 +538,39 @@ Three critical issues fixed:
 
 ---
 
+### Contact Us Feature (Telegram Integration)
+**Status**: ✅ COMPLETED
+
+Implemented contact form with Telegram notification routing for link-building and collaboration inquiries.
+
+**Files Created**:
+- `routes/api/contact.js` - POST endpoint with validation and Telegram API integration
+- `views/partials/contactModal.ejs` - Modal component with form, RTL-first design
+
+**Files Modified**:
+- `.env.example` - Added TELEGRAM_BOT_TOKEN and TELEGRAM_CHAT_ID placeholders
+- `server.js` - Registered `/api/contact` route
+- `views/partials/footer.ejs` - Added "تواصل معنا" link with mail icon
+- `views/layout.ejs` - Included contactModal partial
+
+**Features**:
+- Rate limited: 5 requests/hour per IP (spam protection)
+- Server-side validation (name, email format, message)
+- Client-side validation with RTL-aligned error messages
+- Lucide X icon for close button (consistent with site icons)
+- Loading state and success/error feedback
+- Escape key and click-outside-to-close
+- Mobile: slides up as bottom sheet
+- Desktop: centered modal with shadow
+
+**Environment Variables Required**:
+```
+TELEGRAM_BOT_TOKEN=your-bot-token-from-botfather
+TELEGRAM_CHAT_ID=your-private-chat-id
+```
+
+---
+
 ### P3 - Enhancements (Remaining)
 
 1. **Cairo Font** (Being addressed in Phase 1)
