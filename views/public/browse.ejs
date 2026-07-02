@@ -409,7 +409,14 @@
     <main class="lectures-content">
       <div class="results-header">
         <span class="results-count">
-          <%= lectures.length %> <%= locale === 'ar' ? 'محاضرة' : 'lectures' %>
+          <% if (typeof pagination !== 'undefined') { %>
+            <%= pagination.totalCount %> <%= locale === 'ar' ? 'محاضرة' : 'lectures' %>
+            <% if (pagination.totalPages > 1) { %>
+              (<%= locale === 'ar' ? 'صفحة' : 'page' %> <%= pagination.page %> <%= locale === 'ar' ? 'من' : 'of' %> <%= pagination.totalPages %>)
+            <% } %>
+          <% } else { %>
+            <%= lectures.length %> <%= locale === 'ar' ? 'محاضرة' : 'lectures' %>
+          <% } %>
           <% if (typeof search !== 'undefined' && search) { %>
             - <%= locale === 'ar' ? 'نتائج البحث عن:' : 'Search results for:' %> "<%= search %>"
           <% } %>
@@ -422,6 +429,65 @@
             <%- include('../partials/lectureCard', { lecture, locale }) %>
           <% }) %>
         </div>
+
+        <% if (typeof pagination !== 'undefined' && pagination.totalPages > 1) { %>
+          <nav class="pagination" aria-label="<%= locale === 'ar' ? 'التنقل بين الصفحات' : 'Page navigation' %>">
+            <%
+              // Build query string for pagination links
+              const buildPageUrl = (pageNum) => {
+                const params = new URLSearchParams();
+                params.set('page', pageNum);
+                if (category) params.set('category', category);
+                if (search) params.set('search', search);
+                if (fromDateHijri) params.set('fromDateHijri', fromDateHijri);
+                if (toDateHijri) params.set('toDateHijri', toDateHijri);
+                return '/browse?' + params.toString();
+              };
+
+              // Calculate visible page range
+              const maxVisiblePages = 5;
+              let startPage = Math.max(1, pagination.page - Math.floor(maxVisiblePages / 2));
+              let endPage = Math.min(pagination.totalPages, startPage + maxVisiblePages - 1);
+              if (endPage - startPage + 1 < maxVisiblePages) {
+                startPage = Math.max(1, endPage - maxVisiblePages + 1);
+              }
+            %>
+
+            <% if (pagination.hasPrev) { %>
+              <a href="<%= buildPageUrl(pagination.page - 1) %>" class="page-link prev" aria-label="<%= locale === 'ar' ? 'الصفحة السابقة' : 'Previous page' %>">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="15 18 9 12 15 6"></polyline></svg>
+              </a>
+            <% } %>
+
+            <% if (startPage > 1) { %>
+              <a href="<%= buildPageUrl(1) %>" class="page-link">1</a>
+              <% if (startPage > 2) { %>
+                <span class="page-ellipsis">...</span>
+              <% } %>
+            <% } %>
+
+            <% for (let i = startPage; i <= endPage; i++) { %>
+              <% if (i === pagination.page) { %>
+                <span class="page-link active" aria-current="page"><%= i %></span>
+              <% } else { %>
+                <a href="<%= buildPageUrl(i) %>" class="page-link"><%= i %></a>
+              <% } %>
+            <% } %>
+
+            <% if (endPage < pagination.totalPages) { %>
+              <% if (endPage < pagination.totalPages - 1) { %>
+                <span class="page-ellipsis">...</span>
+              <% } %>
+              <a href="<%= buildPageUrl(pagination.totalPages) %>" class="page-link"><%= pagination.totalPages %></a>
+            <% } %>
+
+            <% if (pagination.hasNext) { %>
+              <a href="<%= buildPageUrl(pagination.page + 1) %>" class="page-link next" aria-label="<%= locale === 'ar' ? 'الصفحة التالية' : 'Next page' %>">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="9 18 15 12 9 6"></polyline></svg>
+              </a>
+            <% } %>
+          </nav>
+        <% } %>
       <% } else { %>
         <div class="empty-state">
           <div class="empty-state-icon">🔍</div>

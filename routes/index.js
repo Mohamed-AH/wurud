@@ -372,12 +372,17 @@ router.get('/', async (req, res) => {
 });
 
 // @route   GET /browse
-// @desc    Browse all lectures with filters
+// @desc    Browse all lectures with filters and pagination
 // @access  Public
 router.get('/browse', async (req, res) => {
   try {
-    const { search, category, sort = '-dateRecorded', fromDateHijri, toDateHijri } = req.query;
+    const { search, category, fromDateHijri, toDateHijri } = req.query;
     const locale = res.locals.locale || 'ar';
+
+    // Pagination
+    const page = Math.max(1, parseInt(req.query.page) || 1);
+    const limit = 50;
+    const skip = (page - 1) * limit;
 
     // Build query
     const query = { published: true };
@@ -394,10 +399,8 @@ router.get('/browse', async (req, res) => {
 
     // Hijri date range filter (uses dateRecordedHijri field with format YYYY/MM/DD)
     if (fromDateHijri || toDateHijri) {
-      // Normalize Arabic numerals to Western numerals for comparison
       const normalizeHijriDate = (dateStr) => {
         if (!dateStr) return null;
-        // Convert Arabic-Indic numerals (٠-٩) to Western numerals (0-9)
         const normalized = dateStr.replace(/[٠-٩]/g, d => '٠١٢٣٤٥٦٧٨٩'.indexOf(d));
         return normalized;
       };
@@ -407,23 +410,27 @@ router.get('/browse', async (req, res) => {
 
       if (fromNorm || toNorm) {
         query.dateRecordedHijri = {};
-
         if (fromNorm) {
-          // Hijri dates are stored as YYYY/MM/DD strings - lexicographic comparison works
           query.dateRecordedHijri.$gte = fromNorm;
         }
-
         if (toNorm) {
           query.dateRecordedHijri.$lte = toNorm;
         }
       }
     }
 
-    // Execute query
+    // Get total count for pagination
+    const totalCount = await Lecture.countDocuments(query);
+    const totalPages = Math.ceil(totalCount / limit);
+
+    // Execute query with pagination
+    // Sort by dateRecorded DESC (primary), createdAt DESC (fallback)
     const lectures = await Lecture.find(query)
-      .sort(sort)
+      .sort({ dateRecorded: -1, createdAt: -1 })
+      .skip(skip)
+      .limit(limit)
       .populate('sheikhId', 'nameArabic nameEnglish honorific')
-      .populate('seriesId', 'titleArabic titleEnglish')
+      .populate('seriesId', 'titleArabic titleEnglish shortId slug')
       .lean();
 
     res.render('public/browse', {
@@ -431,9 +438,16 @@ router.get('/browse', async (req, res) => {
       lectures,
       search: search || '',
       category: category || '',
-      sort: sort,
       fromDateHijri: fromDateHijri || '',
-      toDateHijri: toDateHijri || ''
+      toDateHijri: toDateHijri || '',
+      pagination: {
+        page,
+        totalPages,
+        totalCount,
+        limit,
+        hasNext: page < totalPages,
+        hasPrev: page > 1
+      }
     });
   } catch (error) {
     console.error('Browse error:', error);
