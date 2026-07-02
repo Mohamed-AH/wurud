@@ -37,23 +37,27 @@
   }
 
   .lecture-hero {
-    background: linear-gradient(135deg, var(--primary-brown) 0%, var(--sage) 100%);
+    background: linear-gradient(to left, #2C1508 0%, #3D2815 30%, #5A6944 70%, #6B7A4E 100%);
     padding: 48px 0;
-    border-bottom: 3px solid var(--accent-gold);
+    border-bottom: none;
+  }
+
+  html[dir="ltr"] .lecture-hero {
+    background: linear-gradient(to right, #2C1508 0%, #3D2815 30%, #5A6944 70%, #6B7A4E 100%);
   }
 
   .lecture-title {
-    font-family: var(--font-arabic-display);
+    font-family: var(--font-cairo), var(--font-arabic-display);
     font-size: 42px;
-    color: var(--cream);
+    color: #FFFFFF;
     margin-bottom: 12px;
-    text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.3);
+    text-shadow: 1px 1px 3px rgba(0, 0, 0, 0.2);
+    font-weight: 700;
   }
 
   .lecture-title-en {
     font-size: 24px;
-    color: var(--cream);
-    opacity: 0.9;
+    color: rgba(255, 255, 255, 0.9);
     margin-bottom: 24px;
     font-weight: 400;
   }
@@ -69,8 +73,9 @@
     display: flex;
     align-items: center;
     gap: 8px;
-    color: var(--cream);
+    color: rgba(255, 255, 255, 0.9);
     font-size: 16px;
+    font-family: var(--font-cairo), var(--font-arabic-body);
   }
 
   .meta-item .icon {
