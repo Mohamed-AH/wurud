@@ -132,6 +132,94 @@
   color: #2C1810;
 }
 
+/* Volume Control */
+.volume-control {
+  position: relative;
+}
+
+.volume-popup {
+  position: absolute;
+  bottom: calc(100% + 8px);
+  left: 50%;
+  transform: translateX(-50%);
+  background: #2C1810;
+  border: 2px solid #C49A3C;
+  border-radius: 10px;
+  padding: 16px 12px;
+  box-shadow: 0 -4px 20px rgba(0, 0, 0, 0.5);
+  z-index: 100;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+}
+
+.volume-popup.hidden {
+  display: none;
+}
+
+.volume-slider {
+  width: 100px;
+  height: 6px;
+  background: rgba(193, 154, 107, 0.2);
+  border-radius: 3px;
+  outline: none;
+  appearance: none;
+  -webkit-appearance: none;
+  cursor: pointer;
+}
+
+.volume-slider::-webkit-slider-track {
+  height: 6px;
+  background: rgba(193, 154, 107, 0.2);
+  border-radius: 3px;
+}
+
+.volume-slider::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 16px;
+  height: 16px;
+  background: #C49A3C;
+  border-radius: 50%;
+  cursor: pointer;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.3);
+  transition: transform 0.15s ease;
+}
+
+.volume-slider::-webkit-slider-thumb:hover {
+  transform: scale(1.1);
+  background: #DEC99A;
+}
+
+.volume-slider::-moz-range-track {
+  height: 6px;
+  background: rgba(193, 154, 107, 0.2);
+  border-radius: 3px;
+  border: none;
+}
+
+.volume-slider::-moz-range-thumb {
+  width: 16px;
+  height: 16px;
+  background: #C49A3C;
+  border: none;
+  border-radius: 50%;
+  cursor: pointer;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.3);
+}
+
+.volume-slider::-moz-range-thumb:hover {
+  background: #DEC99A;
+}
+
+.volume-value {
+  font-size: 12px;
+  font-weight: 600;
+  color: #C49A3C;
+  font-family: var(--font-cairo), system-ui, sans-serif;
+}
+
 /* CENTER: Info + Progress */
 .player-center {
   display: flex;
@@ -526,6 +614,24 @@ body.audio-seeking {
     left: 50%;
     transform: translate(-50%, -50%);
     min-width: 120px;
+  }
+
+  /* Volume popup position */
+  .volume-popup {
+    position: fixed;
+    bottom: auto;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    padding: 20px 16px;
+  }
+
+  .volume-slider {
+    width: 140px;
+  }
+
+  .volume-value {
+    font-size: 14px;
   }
 
   /* ============================================

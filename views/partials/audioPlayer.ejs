@@ -44,9 +44,15 @@
           <button class="speed-option" data-speed="2">2x</button>
         </div>
       </div>
-      <button class="action-btn" id="volumeBtn" aria-label="<%= locale === 'ar' ? 'الصوت' : 'Volume' %>">
-        <i data-lucide="volume-2" id="volumeIcon"></i>
-      </button>
+      <div class="volume-control">
+        <button class="action-btn" id="volumeBtn" aria-label="<%= locale === 'ar' ? 'الصوت' : 'Volume' %>">
+          <i data-lucide="volume-2" id="volumeIcon"></i>
+        </button>
+        <div class="volume-popup hidden" id="volumePopup">
+          <input type="range" class="volume-slider" id="volumeSlider" min="0" max="100" value="100" aria-label="<%= locale === 'ar' ? 'مستوى الصوت' : 'Volume level' %>">
+          <span class="volume-value" id="volumeValue">100%</span>
+        </div>
+      </div>
     </div>
 
     <!-- CENTER: Info + Progress -->

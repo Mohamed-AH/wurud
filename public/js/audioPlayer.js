@@ -47,9 +47,12 @@ class AudioPlayer {
     this.speedMenu = document.getElementById('speedMenu');
     this.speedLabel = document.getElementById('speedLabel');
 
-    // Volume button
+    // Volume control
     this.volumeBtn = document.getElementById('volumeBtn');
     this.volumeIcon = document.getElementById('volumeIcon');
+    this.volumePopup = document.getElementById('volumePopup');
+    this.volumeSlider = document.getElementById('volumeSlider');
+    this.volumeValue = document.getElementById('volumeValue');
 
     // Share button
     this.shareBtn = document.getElementById('shareBtn');
@@ -110,8 +113,19 @@ class AudioPlayer {
 
     // Volume control
     if (this.volumeBtn) {
-      this.volumeBtn.addEventListener('click', () => this.toggleMute());
+      this.volumeBtn.addEventListener('click', () => this.toggleVolumePopup());
     }
+
+    if (this.volumeSlider) {
+      this.volumeSlider.addEventListener('input', (e) => this.setVolume(e.target.value));
+    }
+
+    // Close volume popup when clicking outside
+    document.addEventListener('click', (e) => {
+      if (!e.target.closest('.volume-control') && this.volumePopup) {
+        this.volumePopup.classList.add('hidden');
+      }
+    });
 
     // Share button
     if (this.shareBtn) {
@@ -324,19 +338,62 @@ class AudioPlayer {
     this.speedMenu.classList.add('hidden');
   }
 
-  toggleMute() {
-    this.isMuted = !this.isMuted;
-    this.audio.muted = this.isMuted;
+  toggleVolumePopup() {
+    if (!this.volumePopup) return;
+    this.volumePopup.classList.toggle('hidden');
+    // Close speed menu if open
+    this.speedMenu.classList.add('hidden');
+  }
+
+  setVolume(value) {
+    const volume = parseInt(value, 10);
+    this.audio.volume = volume / 100;
+    this.audio.muted = volume === 0;
+    this.isMuted = volume === 0;
+
+    // Update slider value display
+    if (this.volumeValue) {
+      this.volumeValue.textContent = `${volume}%`;
+    }
+
+    // Update slider position
+    if (this.volumeSlider) {
+      this.volumeSlider.value = volume;
+    }
+
     this.updateVolumeIcon();
+
+    // Save preference
+    localStorage.setItem('audioPlayerVolume', volume);
+  }
+
+  toggleMute() {
+    if (this.isMuted) {
+      // Unmute - restore previous volume or default to 100
+      const savedVolume = localStorage.getItem('audioPlayerVolume') || 100;
+      this.setVolume(savedVolume);
+    } else {
+      // Mute
+      this.setVolume(0);
+    }
   }
 
   updateVolumeIcon() {
     if (!this.volumeIcon) return;
 
-    const iconName = this.isMuted ? 'volume-x' : 'volume-2';
+    let iconName;
+    const volume = this.audio.volume * 100;
+
+    if (this.audio.muted || volume === 0) {
+      iconName = 'volume-x';
+    } else if (volume < 50) {
+      iconName = 'volume-1';
+    } else {
+      iconName = 'volume-2';
+    }
+
     this.volumeIcon.setAttribute('data-lucide', iconName);
 
-    // Refresh Lucide icons
     if (typeof lucide !== 'undefined') {
       lucide.createIcons();
     }
@@ -595,6 +652,12 @@ class AudioPlayer {
     const savedSpeed = localStorage.getItem('audioPlayerSpeed');
     if (savedSpeed !== null) {
       this.setSpeed(parseFloat(savedSpeed));
+    }
+
+    // Load volume
+    const savedVolume = localStorage.getItem('audioPlayerVolume');
+    if (savedVolume !== null) {
+      this.setVolume(parseInt(savedVolume, 10));
     }
   }
 }
