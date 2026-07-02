@@ -269,21 +269,27 @@ Added admin setting to switch between new card layout and classic table layout:
 2. Select "Schedule Layout" option
 3. Save settings to switch between layouts
 
-### 19. Series Detail Desktop Redesign (Commit: e78101f)
+### 19. Series Detail Desktop Redesign (Commits: e78101f, 8e71b71)
 Complete desktop redesign to match design handoff:
 
 **Hero Banner**:
-- Sage green gradient (#6B7A4E → #4A5A3A)
+- Brown-to-olive gradient (#2C1508 → #5A6944) matching other pages
 - White text for title, subtitle, sheikh name
-- Category badge with semi-transparent white background
+- Gold category badge (#E8D5A0)
 
 **Stats Section**:
 - Hidden on desktop (lesson count shown inline with "About Series" header)
 
+**Card Styling**:
+- Removed harsh borders from description and filter cards
+- Uniform cream background (#FDF8F2)
+- Reduced section header font size (20px)
+- Tightened vertical spacing throughout
+
 **Lecture Cards**:
-- 2-column grid on large screens (1200px+), 1-column on medium desktop
-- Off-white card background (#FDF8F2)
-- Gold circular badge with Lucide mic icon + number overlay
+- Single column layout (matching design)
+- Separate number SQUARE and mic icon button (not overlaid)
+- Off-white card background, no borders
 - Updated action buttons (play, download, share)
 - Responsive breakpoints for all screen sizes
 
