@@ -48,59 +48,66 @@
   }
 
   .series-hero {
-    background: linear-gradient(135deg, var(--primary-brown) 0%, var(--sage) 100%);
+    background: linear-gradient(135deg, #6B7A4E 0%, #5A6944 50%, #4A5A3A 100%);
     padding: 48px 0;
-    border-bottom: 3px solid var(--accent-gold);
+    border-bottom: none;
   }
 
   .series-category-badge {
-    background: var(--accent-gold);
-    color: var(--primary-dark);
-    padding: 6px 16px;
-    border-radius: 16px;
+    background: rgba(255, 255, 255, 0.15);
+    color: #FFFFFF;
+    padding: 8px 20px;
+    border-radius: 20px;
     font-size: 14px;
     font-weight: 600;
     display: inline-block;
     margin-bottom: 16px;
+    border: 1px solid rgba(255, 255, 255, 0.3);
   }
 
   .series-title {
-    font-family: var(--font-arabic-display);
-    font-size: 42px;
-    color: var(--cream);
-    margin-bottom: 12px;
-    text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.3);
+    font-family: var(--font-cairo, 'Cairo', sans-serif);
+    font-size: 36px;
+    color: #FFFFFF;
+    margin-bottom: 8px;
+    text-shadow: none;
+    font-weight: 700;
   }
 
   .series-title-en {
-    font-size: 24px;
-    color: var(--cream);
-    opacity: 0.9;
-    margin-bottom: 24px;
+    font-size: 18px;
+    color: rgba(255, 255, 255, 0.85);
+    opacity: 1;
+    margin-bottom: 20px;
     font-weight: 400;
+    font-style: italic;
   }
 
   .series-sheikh {
     display: flex;
     align-items: center;
     gap: 8px;
-    color: var(--cream);
-    font-size: 18px;
+    color: rgba(255, 255, 255, 0.9);
+    font-size: 16px;
+  }
+
+  .series-sheikh svg {
+    opacity: 0.8;
   }
 
   .series-sheikh a {
-    color: var(--accent-gold);
+    color: #FFFFFF;
     text-decoration: none;
-    transition: color 0.3s;
+    transition: opacity 0.3s;
   }
 
   .series-sheikh a:hover {
-    color: var(--accent-amber);
+    opacity: 0.8;
   }
 
+  /* Hide stats section on desktop - lesson count shown inline */
   .stats-section {
-    padding: 40px 0;
-    background: var(--paper);
+    display: none;
   }
 
   .stats-grid {
@@ -223,10 +230,10 @@
 
   .lectures-list {
     display: grid;
-    gap: 16px;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 20px;
     width: 100%;
-    max-width: 960px;
-    margin: 0 auto;
+    max-width: 100%;
     overflow-x: hidden;
     box-sizing: border-box;
   }
@@ -529,7 +536,17 @@
     }
 
     .lectures-list {
-      max-width: 960px;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 24px;
+    }
+  }
+
+  /* Medium desktop (769px to 1199px) - single column */
+  @media (min-width: 769px) and (max-width: 1199px) {
+    .lectures-list {
+      grid-template-columns: 1fr;
+      max-width: 800px;
+      margin: 0 auto;
     }
   }
 
@@ -641,8 +658,9 @@
       grid-template-columns: 1fr;
     }
 
-    /* Lecture list */
+    /* Lecture list - single column on mobile */
     .lectures-list {
+      grid-template-columns: 1fr;
       gap: 10px;
       max-width: 100%;
     }
@@ -1785,4 +1803,11 @@
   function clearSort() {
     clearAllFilters();
   }
+
+  // Initialize Lucide icons after page load
+  document.addEventListener('DOMContentLoaded', function() {
+    if (typeof lucide !== 'undefined') {
+      lucide.createIcons();
+    }
+  });
 </script>
