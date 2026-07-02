@@ -3,84 +3,36 @@
   <audio id="audio" preload="metadata"></audio>
 
   <!-- Mini Player (shown when collapsed on mobile) -->
-  <div class="mini-player" id="miniPlayer" onclick="expandPlayer()">
-    <div class="mini-player-info">
-      <span class="mini-player-title" id="miniPlayerTitle"><%= locale === 'ar' ? 'جاري التشغيل...' : 'Now Playing...' %></span>
-    </div>
-    <button class="mini-player-btn" id="miniPlayPauseBtn" onclick="event.stopPropagation(); togglePlayPause();">
-      <span id="miniPlayPauseIcon">▶</span>
+  <div class="mini-player" id="miniPlayer">
+    <button class="mini-play-btn" id="miniPlayPauseBtn" onclick="event.stopPropagation(); togglePlayPause();" aria-label="<%= locale === 'ar' ? 'تشغيل/إيقاف' : 'Play/Pause' %>">
+      <i data-lucide="play" id="miniPlayIcon" class="mini-icon"></i>
     </button>
+    <div class="mini-info" onclick="expandPlayer()">
+      <span class="mini-title" id="miniPlayerTitle"><%= locale === 'ar' ? 'جاري التشغيل...' : 'Now Playing...' %></span>
+      <span class="mini-time">
+        <span id="miniCurrentTime">0:00</span> / <span id="miniDuration">0:00</span>
+      </span>
+    </div>
   </div>
 
   <!-- Full Player -->
   <div class="player-container" id="fullPlayer">
-    <!-- Close Button (Top Right Corner) -->
-    <button class="close-player-btn" id="closePlayerBtn" title="<%= locale === 'ar' ? 'إغلاق' : 'Close' %>">
-      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-        <line x1="18" y1="6" x2="6" y2="18"></line>
-        <line x1="6" y1="6" x2="18" y2="18"></line>
-      </svg>
+
+    <!-- Close Button (Mobile Only - Top Left) -->
+    <button class="close-btn" id="closePlayerBtn" aria-label="<%= locale === 'ar' ? 'إغلاق' : 'Close' %>">
+      <i data-lucide="x"></i>
     </button>
 
-    <!-- Now Playing Info -->
-    <div class="player-info">
-      <div class="now-playing-label"><%= locale === 'ar' ? 'يتم تشغيل:' : 'Now Playing:' %></div>
-      <div class="lecture-title" id="playerLectureTitle">
-        <%= locale === 'ar' ? 'اختر محاضرة للتشغيل' : 'Select a lecture to play' %>
-      </div>
-      <div class="sheikh-name" id="playerSheikhName"></div>
-    </div>
-
-    <!-- Playback Controls -->
-    <div class="player-controls">
-      <!-- Progress Bar -->
-      <div class="progress-container" id="progressContainer">
-        <div class="progress-bar" id="progressBar">
-          <div class="progress-handle" id="progressHandle"></div>
-        </div>
-      </div>
-
-      <!-- Time Display -->
-      <div class="time-display">
-        <span id="currentTime">0:00</span>
-        <span class="time-separator">/</span>
-        <span id="duration">0:00</span>
-      </div>
-
-      <!-- Control Buttons -->
-      <div class="control-buttons">
-        <!-- Skip Backward 15s -->
-        <button class="control-btn skip-btn" id="skipBackward" title="<%= locale === 'ar' ? 'رجوع 15 ثانية' : 'Skip backward 15s' %>">
-          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-            <path d="M12 5V1L7 6l5 5V7c3.31 0 6 2.69 6 6s-2.69 6-6 6-6-2.69-6-6H4c0 4.42 3.58 8 8 8s8-3.58 8-8-3.58-8-8-8z"/>
-          </svg>
-          <span class="skip-label">15</span>
-        </button>
-
-        <!-- Play/Pause -->
-        <button class="control-btn control-btn-primary" id="playPauseBtn">
-          <span class="control-icon" id="playPauseIcon">▶</span>
-        </button>
-
-        <!-- Skip Forward 15s -->
-        <button class="control-btn skip-btn" id="skipForward" title="<%= locale === 'ar' ? 'تقديم 15 ثانية' : 'Skip forward 15s' %>">
-          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="transform: scaleX(-1);">
-            <path d="M12 5V1L7 6l5 5V7c3.31 0 6 2.69 6 6s-2.69 6-6 6-6-2.69-6-6H4c0 4.42 3.58 8 8 8s8-3.58 8-8-3.58-8-8-8z"/>
-          </svg>
-          <span class="skip-label">15</span>
-        </button>
-      </div>
-    </div>
-
-    <!-- Secondary Controls (Speed, Volume, Download) -->
-    <div class="player-actions">
-      <!-- Playback Speed -->
+    <!-- LEFT: Action Buttons (Desktop) / Grid (Mobile) -->
+    <div class="player-actions" id="playerActions">
+      <button class="action-btn" id="shareBtn" aria-label="<%= locale === 'ar' ? 'مشاركة' : 'Share' %>">
+        <i data-lucide="share-2"></i>
+      </button>
+      <a class="action-btn" id="downloadBtn" aria-label="<%= locale === 'ar' ? 'تحميل' : 'Download' %>" style="display:none;">
+        <i data-lucide="download"></i>
+      </a>
       <div class="speed-control">
-        <button class="action-btn" id="speedBtn" title="<%= locale === 'ar' ? 'سرعة التشغيل' : 'Playback speed' %>">
-          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-            <circle cx="12" cy="12" r="10"></circle>
-            <polyline points="12 6 12 12 16 14"></polyline>
-          </svg>
+        <button class="action-btn" id="speedBtn" aria-label="<%= locale === 'ar' ? 'سرعة التشغيل' : 'Playback speed' %>">
           <span id="speedLabel">1x</span>
         </button>
         <div class="speed-menu hidden" id="speedMenu">
@@ -92,24 +44,51 @@
           <button class="speed-option" data-speed="2">2x</button>
         </div>
       </div>
-
-      <!-- Volume Control -->
       <div class="volume-control">
-        <button class="action-btn" id="muteBtn" title="<%= locale === 'ar' ? 'كتم الصوت' : 'Mute' %>">
-          <span id="volumeIcon">🔊</span>
+        <button class="action-btn" id="volumeBtn" aria-label="<%= locale === 'ar' ? 'الصوت' : 'Volume' %>">
+          <i data-lucide="volume-2" id="volumeIcon"></i>
         </button>
-        <label for="volumeSlider" class="visually-hidden"><%= locale === 'ar' ? 'مستوى الصوت' : 'Volume level' %></label>
-        <input type="range" class="volume-slider" id="volumeSlider" min="0" max="100" value="100" aria-label="<%= locale === 'ar' ? 'مستوى الصوت' : 'Volume level' %>">
+        <div class="volume-popup hidden" id="volumePopup">
+          <input type="range" class="volume-slider" id="volumeSlider" min="0" max="100" value="100" aria-label="<%= locale === 'ar' ? 'مستوى الصوت' : 'Volume level' %>">
+          <span class="volume-value" id="volumeValue">100%</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- CENTER: Info + Progress -->
+    <div class="player-center">
+      <div class="player-info">
+        <div class="lecture-title" id="playerLectureTitle">
+          <%= locale === 'ar' ? 'اختر محاضرة للتشغيل' : 'Select a lecture to play' %>
+        </div>
+        <div class="sheikh-name" id="playerSheikhName"></div>
       </div>
 
-      <!-- Download Button -->
-      <a class="action-btn download-btn" id="downloadBtn" title="<%= locale === 'ar' ? 'تحميل' : 'Download' %>" style="display:none;">
-        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
-          <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
-          <polyline points="7 10 12 15 17 10"/>
-          <line x1="12" y1="15" x2="12" y2="3"/>
-        </svg>
-      </a>
+      <!-- Progress Bar with Time -->
+      <div class="progress-row">
+        <span class="time-stamp" id="currentTime">0:00</span>
+        <div class="progress-container" id="progressContainer">
+          <div class="progress-track"></div>
+          <div class="progress-bar" id="progressBar">
+            <div class="progress-handle" id="progressHandle"></div>
+          </div>
+        </div>
+        <span class="time-stamp" id="duration">0:00</span>
+      </div>
     </div>
+
+    <!-- RIGHT: Playback Controls -->
+    <div class="player-controls">
+      <button class="skip-btn" id="skipBackward" aria-label="<%= locale === 'ar' ? 'رجوع 15 ثانية' : 'Skip backward 15s' %>">
+        <i data-lucide="rotate-ccw"></i>
+      </button>
+      <button class="play-btn" id="playPauseBtn" aria-label="<%= locale === 'ar' ? 'تشغيل/إيقاف' : 'Play/Pause' %>">
+        <i data-lucide="play" id="playIcon"></i>
+      </button>
+      <button class="skip-btn" id="skipForward" aria-label="<%= locale === 'ar' ? 'تقديم 15 ثانية' : 'Skip forward 15s' %>">
+        <i data-lucide="rotate-cw"></i>
+      </button>
+    </div>
+
   </div>
 </div>

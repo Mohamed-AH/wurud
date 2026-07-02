@@ -3,7 +3,7 @@
  * Manages global audio playback across the site
  */
 
-// Debug mode - only log in development (localhost)
+// Debug mode
 const isDev = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
 const log = isDev ? console.log.bind(console) : function() {};
 
@@ -16,16 +16,10 @@ class AudioPlayer {
     this.isDragging = false;
     this.isTouchDragging = false;
 
-    // Initialize elements
     this.initElements();
-
-    // Load saved preferences
     this.loadPreferences();
-
-    // Set up event listeners
     this.setupEventListeners();
 
-    // Make globally accessible
     window.audioPlayer = this;
   }
 
@@ -34,9 +28,9 @@ class AudioPlayer {
     this.titleEl = document.getElementById('playerLectureTitle');
     this.sheikhEl = document.getElementById('playerSheikhName');
 
-    // Control buttons
+    // Playback controls
     this.playPauseBtn = document.getElementById('playPauseBtn');
-    this.playPauseIcon = document.getElementById('playPauseIcon');
+    this.playIcon = document.getElementById('playIcon');
     this.skipBackwardBtn = document.getElementById('skipBackward');
     this.skipForwardBtn = document.getElementById('skipForward');
     this.closePlayerBtn = document.getElementById('closePlayerBtn');
@@ -54,23 +48,31 @@ class AudioPlayer {
     this.speedLabel = document.getElementById('speedLabel');
 
     // Volume control
-    this.muteBtn = document.getElementById('muteBtn');
+    this.volumeBtn = document.getElementById('volumeBtn');
     this.volumeIcon = document.getElementById('volumeIcon');
+    this.volumePopup = document.getElementById('volumePopup');
     this.volumeSlider = document.getElementById('volumeSlider');
+    this.volumeValue = document.getElementById('volumeValue');
+
+    // Share button
+    this.shareBtn = document.getElementById('shareBtn');
 
     // Download button
     this.downloadBtn = document.getElementById('downloadBtn');
 
-    // Mini player elements (mobile)
+    // Mini player elements
     this.miniPlayer = document.getElementById('miniPlayer');
     this.miniPlayerTitle = document.getElementById('miniPlayerTitle');
     this.miniPlayPauseBtn = document.getElementById('miniPlayPauseBtn');
-    this.miniPlayPauseIcon = document.getElementById('miniPlayPauseIcon');
+    this.miniPlayIcon = document.getElementById('miniPlayIcon');
+    this.miniCurrentTime = document.getElementById('miniCurrentTime');
+    this.miniDuration = document.getElementById('miniDuration');
     this.fullPlayer = document.getElementById('fullPlayer');
 
-    // Mini player state
+    // State
     this.isMinimized = false;
     this.isMobile = window.innerWidth <= 768;
+    this.isMuted = false;
   }
 
   setupEventListeners() {
@@ -91,12 +93,12 @@ class AudioPlayer {
     // Progress bar - mouse events
     this.progressContainer.addEventListener('mousedown', (e) => this.startDrag(e));
 
-    // Progress bar - touch events (for mobile)
+    // Progress bar - touch events
     this.progressContainer.addEventListener('touchstart', (e) => this.handleTouchStart(e), { passive: false });
     this.progressContainer.addEventListener('touchmove', (e) => this.handleTouchMove(e), { passive: false });
     this.progressContainer.addEventListener('touchend', (e) => this.handleTouchEnd(e), { passive: false });
 
-    // Prevent background scroll when touching the player
+    // Prevent background scroll when touching progress bar
     this.player.addEventListener('touchmove', (e) => {
       if (e.target.closest('.progress-container')) {
         e.preventDefault();
@@ -110,8 +112,25 @@ class AudioPlayer {
     });
 
     // Volume control
-    this.muteBtn.addEventListener('click', () => this.toggleMute());
-    this.volumeSlider.addEventListener('input', (e) => this.setVolume(e.target.value));
+    if (this.volumeBtn) {
+      this.volumeBtn.addEventListener('click', () => this.toggleVolumePopup());
+    }
+
+    if (this.volumeSlider) {
+      this.volumeSlider.addEventListener('input', (e) => this.setVolume(e.target.value));
+    }
+
+    // Close volume popup when clicking outside
+    document.addEventListener('click', (e) => {
+      if (!e.target.closest('.volume-control') && this.volumePopup) {
+        this.volumePopup.classList.add('hidden');
+      }
+    });
+
+    // Share button
+    if (this.shareBtn) {
+      this.shareBtn.addEventListener('click', () => this.share());
+    }
 
     // Close speed menu when clicking outside
     document.addEventListener('click', (e) => {
@@ -123,16 +142,12 @@ class AudioPlayer {
     // Keyboard shortcuts
     document.addEventListener('keydown', (e) => this.handleKeyboard(e));
 
-    // Mini player - scroll to minimize on mobile
+    // Auto-minimize on scroll (mobile)
     if (this.isMobile) {
       let lastScrollY = window.scrollY;
-      let scrollTimeout;
-
       window.addEventListener('scroll', () => {
-        // Only minimize if player is visible and playing
         if (!this.player.classList.contains('hidden') && !this.isMinimized) {
           const currentScrollY = window.scrollY;
-          // Minimize on any scroll down
           if (currentScrollY > lastScrollY + 10) {
             this.minimize();
           }
@@ -144,7 +159,6 @@ class AudioPlayer {
     // Handle window resize
     window.addEventListener('resize', () => {
       this.isMobile = window.innerWidth <= 768;
-      // Expand if switching to desktop
       if (!this.isMobile && this.isMinimized) {
         this.expand();
       }
@@ -153,38 +167,32 @@ class AudioPlayer {
 
   /**
    * Play a lecture
-   * @param {string} lectureId - Lecture MongoDB ID
-   * @param {object} lectureData - Lecture metadata (title, sheikh, etc.)
    */
   play(lectureId, lectureData) {
     log('▶️ Playing lecture:', lectureId, lectureData);
 
-    this.currentLecture = {
-      id: lectureId,
-      ...lectureData
-    };
+    this.currentLecture = { id: lectureId, ...lectureData };
 
     // Update UI
     this.titleEl.textContent = lectureData.title || lectureData.titleArabic || 'Unknown';
     this.sheikhEl.textContent = lectureData.sheikh || '';
 
-    // Update mini-player title
+    // Update mini-player
     if (this.miniPlayerTitle) {
       this.miniPlayerTitle.textContent = lectureData.title || lectureData.titleArabic || '';
     }
 
     // Set audio source
-    const streamUrl = `/stream/${lectureId}`;
-    this.audio.src = streamUrl;
+    this.audio.src = `/stream/${lectureId}`;
 
     // Set download link
     this.downloadBtn.href = `/download/${lectureId}`;
-    this.downloadBtn.style.display = 'block';
+    this.downloadBtn.style.display = 'flex';
 
     // Show player
     this.show();
 
-    // Load saved position for this lecture
+    // Load saved position
     const savedPosition = this.getSavedPosition(lectureId);
     if (savedPosition > 0) {
       this.audio.currentTime = savedPosition;
@@ -209,20 +217,13 @@ class AudioPlayer {
     this.audio.currentTime = Math.max(0, Math.min(this.audio.duration, this.audio.currentTime + seconds));
   }
 
-  /**
-   * Seek to a specific time in seconds
-   * @param {number} seconds - Time to seek to
-   */
   seekToTime(seconds) {
-    // Validate input - must be a finite number
     if (typeof seconds !== 'number' || !isFinite(seconds)) {
       console.warn('Invalid seek time:', seconds);
       return;
     }
 
-    // Wait for audio to be ready
     if (!this.audio.duration || isNaN(this.audio.duration)) {
-      // If not ready, wait for loadedmetadata
       this.audio.addEventListener('loadedmetadata', () => {
         this.audio.currentTime = Math.max(0, Math.min(this.audio.duration, seconds));
       }, { once: true });
@@ -238,7 +239,6 @@ class AudioPlayer {
     const rect = this.progressContainer.getBoundingClientRect();
     const isRTL = document.documentElement.dir === 'rtl';
 
-    // Calculate percent - invert for RTL
     let percent;
     if (isRTL) {
       percent = Math.max(0, Math.min(1, (rect.right - e.clientX) / rect.width));
@@ -248,7 +248,6 @@ class AudioPlayer {
 
     const newTime = percent * this.audio.duration;
 
-    // Update visual immediately for smooth feedback
     this.progressBar.style.width = `${percent * 100}%`;
     this.currentTimeEl.textContent = this.formatTime(newTime);
 
@@ -258,18 +257,12 @@ class AudioPlayer {
   startDrag(e) {
     e.preventDefault();
     this.isDragging = true;
-
-    // Add dragging class for visual feedback
     this.progressContainer.classList.add('dragging');
     document.body.classList.add('audio-seeking');
-
-    // Seek to initial click position
     this.seek(e);
 
     const onMouseMove = (e) => {
-      if (this.isDragging) {
-        this.seek(e);
-      }
+      if (this.isDragging) this.seek(e);
     };
 
     const onMouseUp = () => {
@@ -284,15 +277,11 @@ class AudioPlayer {
     document.addEventListener('mouseup', onMouseUp);
   }
 
-  // Touch event handlers for mobile
   handleTouchStart(e) {
     e.preventDefault();
     this.isTouchDragging = true;
-
-    // Add dragging class for visual feedback
     this.progressContainer.classList.add('dragging');
     document.body.classList.add('audio-seeking');
-
     this.seekFromTouch(e);
   }
 
@@ -318,7 +307,6 @@ class AudioPlayer {
     const rect = this.progressContainer.getBoundingClientRect();
     const isRTL = document.documentElement.dir === 'rtl';
 
-    // Calculate percent - invert for RTL
     let percent;
     if (isRTL) {
       percent = Math.max(0, Math.min(1, (rect.right - touch.clientX) / rect.width));
@@ -328,7 +316,6 @@ class AudioPlayer {
 
     const newTime = percent * this.audio.duration;
 
-    // Update visual immediately for smooth feedback
     this.progressBar.style.width = `${percent * 100}%`;
     this.currentTimeEl.textContent = this.formatTime(newTime);
 
@@ -343,51 +330,99 @@ class AudioPlayer {
     this.audio.playbackRate = speed;
     this.speedLabel.textContent = `${speed}x`;
 
-    // Update active state
     document.querySelectorAll('.speed-option').forEach(btn => {
       btn.classList.toggle('active', parseFloat(btn.dataset.speed) === speed);
     });
 
-    // Save preference
     localStorage.setItem('audioPlayerSpeed', speed);
-
     this.speedMenu.classList.add('hidden');
   }
 
-  toggleMute() {
-    this.audio.muted = !this.audio.muted;
-    this.updateVolumeIcon();
+  toggleVolumePopup() {
+    if (!this.volumePopup) return;
+    this.volumePopup.classList.toggle('hidden');
+    // Close speed menu if open
+    this.speedMenu.classList.add('hidden');
   }
 
   setVolume(value) {
-    this.audio.volume = value / 100;
-    this.audio.muted = false;
+    const volume = parseInt(value, 10);
+    this.audio.volume = volume / 100;
+    this.audio.muted = volume === 0;
+    this.isMuted = volume === 0;
+
+    // Update slider value display
+    if (this.volumeValue) {
+      this.volumeValue.textContent = `${volume}%`;
+    }
+
+    // Update slider position
+    if (this.volumeSlider) {
+      this.volumeSlider.value = volume;
+    }
+
     this.updateVolumeIcon();
 
     // Save preference
-    localStorage.setItem('audioPlayerVolume', value);
+    localStorage.setItem('audioPlayerVolume', volume);
+  }
+
+  toggleMute() {
+    if (this.isMuted) {
+      // Unmute - restore previous volume or default to 100
+      const savedVolume = localStorage.getItem('audioPlayerVolume') || 100;
+      this.setVolume(savedVolume);
+    } else {
+      // Mute
+      this.setVolume(0);
+    }
   }
 
   updateVolumeIcon() {
-    if (this.audio.muted || this.audio.volume === 0) {
-      this.volumeIcon.textContent = '🔇';
-    } else if (this.audio.volume < 0.5) {
-      this.volumeIcon.textContent = '🔉';
+    if (!this.volumeIcon) return;
+
+    let iconName;
+    const volume = this.audio.volume * 100;
+
+    if (this.audio.muted || volume === 0) {
+      iconName = 'volume-x';
+    } else if (volume < 50) {
+      iconName = 'volume-1';
     } else {
-      this.volumeIcon.textContent = '🔊';
+      iconName = 'volume-2';
+    }
+
+    this.volumeIcon.setAttribute('data-lucide', iconName);
+
+    if (typeof lucide !== 'undefined') {
+      lucide.createIcons();
+    }
+  }
+
+  share() {
+    if (!this.currentLecture) return;
+
+    const url = `${window.location.origin}/lectures/${this.currentLecture.id}`;
+    const title = this.currentLecture.title || this.currentLecture.titleArabic || '';
+
+    if (navigator.share) {
+      navigator.share({ title, url }).catch(() => {});
+    } else {
+      navigator.clipboard.writeText(url).then(() => {
+        alert('Link copied to clipboard!');
+      }).catch(() => {
+        prompt('Copy this link:', url);
+      });
     }
   }
 
   show() {
-    // Recheck mobile status FIRST
     this.isMobile = window.innerWidth <= 768;
-    log('📱 show() called - isMobile:', this.isMobile, 'width:', window.innerWidth);
+    log('📱 show() - isMobile:', this.isMobile);
 
-    // On mobile, add minimized class BEFORE showing to prevent flash of full player
     if (this.isMobile) {
       this.player.classList.add('minimized');
       this.isMinimized = true;
-      log('📱 Added minimized class, player classes:', this.player.className);
       if (this.miniPlayerTitle && this.currentLecture) {
         this.miniPlayerTitle.textContent = this.currentLecture.title || this.currentLecture.titleArabic || '';
       }
@@ -395,41 +430,46 @@ class AudioPlayer {
     } else {
       this.player.classList.remove('minimized');
       this.isMinimized = false;
-      document.body.style.paddingBottom = '140px';
+      document.body.style.paddingBottom = '100px';
     }
 
-    // Now show the player (reveal it)
     this.player.classList.remove('hidden');
-    log('📱 Removed hidden class, final classes:', this.player.className);
+
+    // Refresh Lucide icons
+    if (typeof lucide !== 'undefined') {
+      lucide.createIcons();
+    }
   }
 
   minimize() {
-    // Recheck mobile status
     this.isMobile = window.innerWidth <= 768;
     if (!this.isMobile) return;
 
     this.player.classList.add('minimized');
     this.isMinimized = true;
-    // Update mini player title
+
     if (this.miniPlayerTitle && this.currentLecture) {
       this.miniPlayerTitle.textContent = this.currentLecture.title || this.currentLecture.titleArabic || '';
     }
-    // Sync play/pause icon
-    if (this.miniPlayPauseIcon) {
-      this.miniPlayPauseIcon.textContent = this.isPlaying ? '⏸' : '▶';
-    }
+
+    this.updateMiniPlayerIcon();
     document.body.style.paddingBottom = '120px';
   }
 
   expand() {
     this.player.classList.remove('minimized');
     this.isMinimized = false;
-    // Recheck mobile status
     this.isMobile = window.innerWidth <= 768;
+
     if (this.isMobile) {
-      document.body.style.paddingBottom = '260px'; // Full player + bottom nav
+      document.body.style.paddingBottom = '260px';
     } else {
-      document.body.style.paddingBottom = '140px';
+      document.body.style.paddingBottom = '100px';
+    }
+
+    // Refresh icons after expand
+    if (typeof lucide !== 'undefined') {
+      lucide.createIcons();
     }
   }
 
@@ -438,70 +478,90 @@ class AudioPlayer {
     this.player.classList.add('hidden');
     document.body.style.paddingBottom = '0';
 
-    // Save position before closing
     if (this.currentLecture) {
       this.savePosition(this.currentLecture.id, this.audio.currentTime);
     }
   }
 
+  // Update play/pause icons
+  updatePlayIcon(isPlaying) {
+    const iconName = isPlaying ? 'pause' : 'play';
+
+    if (this.playIcon) {
+      this.playIcon.setAttribute('data-lucide', iconName);
+    }
+
+    if (this.miniPlayIcon) {
+      this.miniPlayIcon.setAttribute('data-lucide', iconName);
+    }
+
+    // Refresh Lucide
+    if (typeof lucide !== 'undefined') {
+      lucide.createIcons();
+    }
+  }
+
+  updateMiniPlayerIcon() {
+    if (this.miniPlayIcon) {
+      this.miniPlayIcon.setAttribute('data-lucide', this.isPlaying ? 'pause' : 'play');
+      if (typeof lucide !== 'undefined') {
+        lucide.createIcons();
+      }
+    }
+  }
+
   // Event handlers
   onLoadedMetadata() {
-    this.durationEl.textContent = this.formatTime(this.audio.duration);
+    const duration = this.formatTime(this.audio.duration);
+    this.durationEl.textContent = duration;
 
-    // Verify duration with server (self-correcting duration sync)
+    // Update mini player duration
+    if (this.miniDuration) {
+      this.miniDuration.textContent = duration;
+    }
+
     if (this.currentLecture && this.audio.duration > 0) {
       this.verifyDuration(this.currentLecture.id, this.audio.duration);
     }
   }
 
-  /**
-   * Verify and report duration to server for automatic correction
-   * Uses localStorage to avoid duplicate reports for verified lectures
-   */
   async verifyDuration(lectureId, actualDuration) {
-    // Check if already verified locally
     const verifiedKey = `duration_verified_${lectureId}`;
-    if (localStorage.getItem(verifiedKey)) {
-      return; // Already verified, skip
-    }
+    if (localStorage.getItem(verifiedKey)) return;
 
     try {
       const response = await fetch(`/api/lectures/${lectureId}/verify-duration`, {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json'
-        },
+        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ duration: actualDuration })
       });
 
       const data = await response.json();
 
       if (data.success) {
-        // Mark as verified locally to avoid future checks
         localStorage.setItem(verifiedKey, 'true');
-
         if (data.updated) {
           log(`✅ Duration corrected: ${data.oldDuration}s → ${data.newDuration}s`);
-        } else if (data.verified) {
-          log(`✅ Duration verified: ${Math.round(actualDuration)}s`);
         }
       }
     } catch (error) {
-      // Silently fail - non-critical operation
       console.warn('Duration verification failed:', error.message);
     }
   }
 
   onTimeUpdate() {
-    // Skip visual updates during drag to prevent jumping
     if (this.isDragging || this.isTouchDragging) return;
 
-    // Update progress bar
     const percent = (this.audio.currentTime / this.audio.duration) * 100;
     this.progressBar.style.width = `${percent}%`;
 
-    // Update current time
-    this.currentTimeEl.textContent = this.formatTime(this.audio.currentTime);
+    const currentTime = this.formatTime(this.audio.currentTime);
+    this.currentTimeEl.textContent = currentTime;
+
+    // Update mini player time
+    if (this.miniCurrentTime) {
+      this.miniCurrentTime.textContent = currentTime;
+    }
 
     // Auto-save position every 5 seconds
     if (this.currentLecture && this.audio.currentTime % 5 < 0.5) {
@@ -510,26 +570,22 @@ class AudioPlayer {
   }
 
   onEnded() {
-    this.playPauseIcon.textContent = '▶';
-    if (this.miniPlayPauseIcon) this.miniPlayPauseIcon.textContent = '▶';
     this.isPlaying = false;
+    this.updatePlayIcon(false);
 
-    // Clear saved position
     if (this.currentLecture) {
       this.savePosition(this.currentLecture.id, 0);
     }
   }
 
   onPlay() {
-    this.playPauseIcon.textContent = '⏸';
-    if (this.miniPlayPauseIcon) this.miniPlayPauseIcon.textContent = '⏸';
     this.isPlaying = true;
+    this.updatePlayIcon(true);
   }
 
   onPause() {
-    this.playPauseIcon.textContent = '▶';
-    if (this.miniPlayPauseIcon) this.miniPlayPauseIcon.textContent = '▶';
     this.isPlaying = false;
+    this.updatePlayIcon(false);
   }
 
   onError(e) {
@@ -537,10 +593,8 @@ class AudioPlayer {
     alert('Error playing audio. The file may not exist or is not accessible.');
   }
 
-  // Keyboard shortcuts
   handleKeyboard(e) {
-    // Only handle if player is visible and not typing in input
-    if (this.player.classList.contains('hidden') || e.target.tagName === 'INPUT') {
+    if (this.player.classList.contains('hidden') || e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA') {
       return;
     }
 
@@ -564,7 +618,6 @@ class AudioPlayer {
     }
   }
 
-  // Utility functions
   formatTime(seconds) {
     if (!seconds || isNaN(seconds)) return '0:00';
 
@@ -595,17 +648,16 @@ class AudioPlayer {
   }
 
   loadPreferences() {
-    // Load volume
-    const savedVolume = localStorage.getItem('audioPlayerVolume');
-    if (savedVolume !== null) {
-      this.audio.volume = savedVolume / 100;
-      this.volumeSlider.value = savedVolume;
-    }
-
     // Load playback speed
     const savedSpeed = localStorage.getItem('audioPlayerSpeed');
     if (savedSpeed !== null) {
       this.setSpeed(parseFloat(savedSpeed));
+    }
+
+    // Load volume
+    const savedVolume = localStorage.getItem('audioPlayerVolume');
+    if (savedVolume !== null) {
+      this.setVolume(parseInt(savedVolume, 10));
     }
   }
 }
@@ -616,15 +668,15 @@ if (document.readyState === 'loading') {
   document.addEventListener('DOMContentLoaded', () => {
     log('🎵 Initializing Audio Player...');
     window.audioPlayer = new AudioPlayer();
-    log('✅ Audio Player initialized:', window.audioPlayer);
+    log('✅ Audio Player initialized');
   });
 } else {
   log('🎵 Initializing Audio Player (already loaded)...');
   window.audioPlayer = new AudioPlayer();
-  log('✅ Audio Player initialized:', window.audioPlayer);
+  log('✅ Audio Player initialized');
 }
 
-// Global helper functions for mini-player HTML onclick handlers
+// Global helpers for HTML onclick handlers
 function expandPlayer() {
   if (window.audioPlayer) {
     window.audioPlayer.expand();

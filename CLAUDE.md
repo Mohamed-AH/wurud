@@ -534,12 +534,14 @@ Three critical issues fixed:
 ---
 
 #### Phase 5: Lecture Player Page
-**Status**: Pending
+**Status**: ✅ Hero COMPLETED, player card pending
 
 **File**: `views/public/lecture.ejs`
 - Mobile redesign already done (earlier commit)
-- Desktop: Player card, waveform/progress
-- Pending: Desktop styling audit
+- Hero gradient: Updated to brown-to-olive matching other pages
+- Title/subtitle: White (#FFFFFF) with subtle shadow
+- LTR support: Gradient direction flips for English
+- Pending: Desktop player card styling audit
 
 ---
 
@@ -571,9 +573,9 @@ Three critical issues fixed:
 ### Implementation Order (Recommended)
 1. ✅ Phase 1 (Foundation) - Cairo font, CSS variables
 2. ✅ Phase 2 (Header) - Navigation with Articles link
-3. ✅ Phase 3.1-3.9 (Homepage) - Articles, tabs, icons, mobile fixes
+3. ✅ Phase 3.1-3.9 (Homepage) - Articles, tabs, icons, mobile fixes, series card containers
 4. ✅ Phase 4 (Series Pages) - List and detail pages
-5. ⏳ Phase 5 (Lecture Player) - Desktop styling audit pending
+5. ✅ Phase 5 (Lecture Player) - Hero gradient updated, player card pending
 6. ✅ Phase 6 (Articles Page) - Header gradient update
 7. ✅ Phase 7 (Browse Page) - Full redesign to match design system
 
