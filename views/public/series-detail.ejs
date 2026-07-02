@@ -4,6 +4,7 @@
     padding: 0;
     max-width: 100%;
     overflow-x: hidden;
+    background: #F5EDE0;
   }
 
   /* Ensure all containers have proper width */
@@ -48,59 +49,66 @@
   }
 
   .series-hero {
-    background: linear-gradient(135deg, var(--primary-brown) 0%, var(--sage) 100%);
-    padding: 48px 0;
-    border-bottom: 3px solid var(--accent-gold);
+    background: linear-gradient(to left, #2C1508 0%, #3D2815 30%, #5A6944 70%, #6B7A4E 100%);
+    padding: 40px 0;
+    border-bottom: none;
   }
 
   .series-category-badge {
-    background: var(--accent-gold);
-    color: var(--primary-dark);
+    background: var(--redesign-badge-bg, #E8D5A0);
+    color: var(--redesign-brown-dark, #2C1508);
     padding: 6px 16px;
     border-radius: 16px;
-    font-size: 14px;
+    font-size: 13px;
     font-weight: 600;
     display: inline-block;
-    margin-bottom: 16px;
+    margin-bottom: 12px;
+    border: none;
   }
 
   .series-title {
-    font-family: var(--font-arabic-display);
-    font-size: 42px;
-    color: var(--cream);
-    margin-bottom: 12px;
-    text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.3);
+    font-family: var(--font-cairo, 'Cairo', sans-serif);
+    font-size: 36px;
+    color: #FFFFFF !important;
+    margin-bottom: 8px;
+    text-shadow: none;
+    font-weight: 700;
   }
 
   .series-title-en {
-    font-size: 24px;
-    color: var(--cream);
-    opacity: 0.9;
-    margin-bottom: 24px;
+    font-size: 16px;
+    color: rgba(255, 255, 255, 0.7);
+    opacity: 1;
+    margin-bottom: 16px;
     font-weight: 400;
+    font-style: italic;
   }
 
   .series-sheikh {
     display: flex;
     align-items: center;
     gap: 8px;
-    color: var(--cream);
-    font-size: 18px;
+    color: rgba(255, 255, 255, 0.85);
+    font-size: 15px;
+  }
+
+  .series-sheikh svg {
+    opacity: 0.7;
   }
 
   .series-sheikh a {
-    color: var(--accent-gold);
+    color: rgba(255, 255, 255, 0.85);
     text-decoration: none;
-    transition: color 0.3s;
+    transition: opacity 0.3s;
   }
 
   .series-sheikh a:hover {
-    color: var(--accent-amber);
+    opacity: 0.7;
   }
 
+  /* Hide stats section on desktop - lesson count shown inline */
   .stats-section {
-    padding: 40px 0;
-    background: var(--paper);
+    display: none;
   }
 
   .stats-grid {
@@ -148,23 +156,24 @@
   }
 
   .content-section {
-    padding: 48px 0;
+    padding: 24px 0;
   }
 
   .section-title {
-    font-family: var(--font-arabic-display);
-    font-size: 28px;
-    color: var(--primary-dark);
-    margin-bottom: 24px;
-    padding-bottom: 12px;
-    border-bottom: 3px solid var(--accent-gold);
+    font-family: var(--font-cairo, 'Cairo', sans-serif);
+    font-size: 20px;
+    color: var(--redesign-brown-dark, #2C1508);
+    margin-bottom: 12px;
+    padding-bottom: 0;
+    border-bottom: none;
+    font-weight: 700;
   }
 
   .section-header-row {
     display: flex;
     align-items: center;
-    gap: 12px;
-    margin-bottom: 16px;
+    gap: 10px;
+    margin-bottom: 12px;
   }
 
   .section-header-row .section-title {
@@ -177,28 +186,28 @@
     display: inline-flex;
     background: var(--redesign-brown-dark, #2C1508);
     color: var(--redesign-gold-light, #DEC99A);
-    font-size: 13px;
+    font-size: 12px;
     font-weight: 700;
-    padding: 5px 12px;
-    border-radius: 8px;
+    padding: 4px 10px;
+    border-radius: 6px;
     white-space: nowrap;
     font-family: var(--font-cairo, 'Cairo', sans-serif);
   }
 
   .description-card, .bio-card {
-    background: var(--cream);
-    border-radius: 12px;
-    padding: 32px;
-    border: 2px solid var(--accent-amber);
-    box-shadow: 0 4px 12px var(--shadow-warm);
-    margin-bottom: 48px;
+    background: #FDF8F2;
+    border-radius: 10px;
+    padding: 20px 24px;
+    border: 1px solid var(--redesign-gold-light, #DEC99A);
+    box-shadow: none;
+    margin-bottom: 24px;
   }
 
   .description-text, .bio-text {
     font-family: var(--font-cairo, 'Cairo', sans-serif);
-    color: var(--text-secondary);
-    line-height: 1.9;
-    font-size: 18px;
+    color: var(--redesign-text-mid, #7A5C3A);
+    line-height: 1.8;
+    font-size: 15px;
   }
 
   .description-text-en, .bio-text-en {
@@ -222,8 +231,9 @@
   }
 
   .lectures-list {
-    display: grid;
-    gap: 16px;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
     width: 100%;
     max-width: 100%;
     overflow-x: hidden;
@@ -231,28 +241,14 @@
   }
 
   .lecture-item {
-    display: flex;
-    align-items: flex-start;
-    gap: 16px;
-    padding: 12px;
-    border-radius: 12px;
-    transition: all 0.3s ease;
+    display: block;
     width: 100%;
-    max-width: 100%;
     box-sizing: border-box;
-    overflow: hidden;
   }
 
   .lecture-item-content {
-    flex: 1;
-    min-width: 0;
-    max-width: 100%;
-    overflow: hidden;
+    width: 100%;
     box-sizing: border-box;
-  }
-
-  .lecture-item:hover {
-    background: rgba(193, 154, 107, 0.08);
   }
 
   /* External number badge - hidden since number is inside card now */
@@ -354,14 +350,14 @@
 
   /* Search & Filter Controls */
   .search-filter-controls {
-    background: var(--cream);
-    border-radius: 12px;
-    padding: 20px;
-    margin-bottom: 24px;
-    border: 2px solid var(--accent-amber);
+    background: #FDF8F2;
+    border-radius: 10px;
+    padding: 16px 20px;
+    margin-bottom: 16px;
+    border: none;
     display: flex;
     flex-direction: column;
-    gap: 16px;
+    gap: 12px;
   }
 
   .search-row {
@@ -467,29 +463,28 @@
   }
 
   .sort-chip {
-    padding: 8px 16px;
-    border-radius: 20px;
-    font-size: 14px;
+    padding: 6px 14px;
+    border-radius: 16px;
+    font-size: 13px;
     font-weight: 500;
     font-family: var(--font-cairo, 'Cairo', sans-serif);
-    border: 2px solid var(--accent-amber);
-    background: white;
-    color: var(--text-secondary);
+    border: 1px solid var(--redesign-gold-light, #DEC99A);
+    background: transparent;
+    color: var(--redesign-text-mid, #7A5C3A);
     cursor: pointer;
-    transition: all 0.3s;
+    transition: all 0.2s;
   }
 
   .sort-chip:hover {
-    background: var(--accent-amber);
-    color: var(--primary-dark);
+    background: rgba(196, 154, 60, 0.15);
+    border-color: var(--redesign-gold-primary, #C49A3C);
   }
 
   .sort-chip.active {
-    background: var(--accent-gold);
-    color: var(--primary-dark);
-    border-color: var(--accent-gold);
-    font-weight: 700;
-    box-shadow: 0 2px 8px var(--shadow-warm);
+    background: var(--redesign-gold-primary, #C49A3C);
+    color: #FFFFFF;
+    border-color: var(--redesign-gold-primary, #C49A3C);
+    font-weight: 600;
   }
 
   .clear-filters-btn {
@@ -534,19 +529,19 @@
     display: none !important;
   }
 
-  /* Large desktop (1200px and above) - ensure wide layout */
+  /* Large desktop (1200px and above) */
   @media (min-width: 1200px) {
     .series-detail-page .container {
-      max-width: 1400px;
+      max-width: 1200px;
       padding: 0 48px;
     }
+  }
 
-    .lectures-list {
-      max-width: 100%;
-    }
-
-    .lecture-item {
-      padding: 16px;
+  /* Medium desktop (769px to 1199px) */
+  @media (min-width: 769px) and (max-width: 1199px) {
+    .series-detail-page .container {
+      max-width: 900px;
+      padding: 0 32px;
     }
   }
 
@@ -581,8 +576,8 @@
     }
 
     .series-title {
-      font-size: 20px;
-      color: var(--redesign-brown-dark, #2C1508);
+      font-size: 24px;
+      color: #FFFFFF !important;
       text-shadow: none;
       margin-bottom: 4px;
       line-height: 1.4;
@@ -658,20 +653,11 @@
       grid-template-columns: 1fr;
     }
 
-    /* Lecture list - card contains number badge */
+    /* Lecture list - single column on mobile */
     .lectures-list {
+      grid-template-columns: 1fr;
       gap: 10px;
-    }
-
-    .lecture-item {
-      padding: 0;
-      gap: 0;
-      flex-direction: column;
-    }
-
-    .lecture-item-content {
       max-width: 100%;
-      width: 100%;
     }
 
     /* Search/Filter compact */
@@ -1812,4 +1798,11 @@
   function clearSort() {
     clearAllFilters();
   }
+
+  // Initialize Lucide icons after page load
+  document.addEventListener('DOMContentLoaded', function() {
+    if (typeof lucide !== 'undefined') {
+      lucide.createIcons();
+    }
+  });
 </script>

@@ -11,21 +11,26 @@
   }
 
   .articles-header {
-    background: linear-gradient(135deg, #2C1508 0%, #4A3020 100%);
+    background: linear-gradient(to left, #2C1508 0%, #3D2815 30%, #5A6944 70%, #6B7A4E 100%);
     padding: 48px 32px;
     text-align: center;
   }
 
+  html[dir="ltr"] .articles-header {
+    background: linear-gradient(to right, #2C1508 0%, #3D2815 30%, #5A6944 70%, #6B7A4E 100%);
+  }
+
   .articles-header h1 {
-    color: #FDF8F2;
+    color: #FFFFFF;
     font-size: 36px;
-    font-weight: 800;
+    font-weight: 700;
     margin: 0;
     font-family: var(--font-cairo, 'Cairo', sans-serif);
+    text-shadow: 1px 1px 3px rgba(0, 0, 0, 0.2);
   }
 
   .articles-header p {
-    color: #DEC99A;
+    color: rgba(255, 255, 255, 0.9);
     font-size: 16px;
     margin-top: 8px;
   }

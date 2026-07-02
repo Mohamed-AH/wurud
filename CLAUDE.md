@@ -269,6 +269,32 @@ Added admin setting to switch between new card layout and classic table layout:
 2. Select "Schedule Layout" option
 3. Save settings to switch between layouts
 
+### 19. Series Detail Desktop Redesign (Commits: e78101f, 8e71b71)
+Complete desktop redesign to match design handoff:
+
+**Hero Banner**:
+- Brown-to-olive gradient (#2C1508 → #5A6944) matching other pages
+- White text for title, subtitle, sheikh name
+- Gold category badge (#E8D5A0)
+
+**Stats Section**:
+- Hidden on desktop (lesson count shown inline with "About Series" header)
+
+**Card Styling**:
+- Removed harsh borders from description and filter cards
+- Uniform cream background (#FDF8F2)
+- Reduced section header font size (20px)
+- Tightened vertical spacing throughout
+
+**Lecture Cards**:
+- Single column layout (matching design)
+- Separate number SQUARE and mic icon button (not overlaid)
+- Off-white card background, no borders
+- Updated action buttons (play, download, share)
+- Responsive breakpoints for all screen sizes
+
+**Files Modified**: `views/public/series-detail.ejs`, `views/partials/lectureCard.ejs`
+
 ## Pending Tasks
 
 ### ACTIVE: Design Redesign Implementation (June 2026)
@@ -487,7 +513,7 @@ Three critical issues fixed:
 ---
 
 #### Phase 4: Series Pages
-**Status**: ✅ 4.1 COMPLETED (Commit: 4533b44), 4.2 Pending
+**Status**: ✅ COMPLETED
 
 **4.1 Series List Page** (`views/public/series.ejs`) ✅
 - Grid: 3 columns desktop, 2 tablet, 1 mobile
@@ -495,11 +521,15 @@ Three critical issues fixed:
 - New gradient header with gold divider
 - Container max-width 960px
 
-**4.2 Series Detail Page** (`views/public/series-detail.ejs`)
-- Hero section with gradient
-- Stats bar (lesson count + play all button)
-- Lesson cards with action buttons
-- Status: Pending
+**4.2 Series Detail Page** (`views/public/series-detail.ejs`) ✅
+- Hero gradient: `linear-gradient(to left, #2C1508 0%, #3D2815 30%, #5A6944 70%, #6B7A4E 100%)` for RTL
+- Series title: White (#FFFFFF), 36px, font-weight 700
+- Page background: Off-white (#F5EDE0)
+- Description card: Cream background (#FDF8F2), subtle gold border (#DEC99A)
+- Sort chips: Gold color (#C49A3C), 13px font
+- Lecture cards: Separate number badge and mic icon (not overlaid)
+- Single-line metadata layout
+- Mobile breakpoints preserved
 
 ---
 
@@ -514,21 +544,38 @@ Three critical issues fixed:
 ---
 
 #### Phase 6: Articles Page Audit
-**Status**: Pending
+**Status**: ✅ COMPLETED
 
 **File**: `views/public/articles.ejs`
-- Already redesigned in earlier commits
-- Audit for: Category filter chips (if needed), pagination styling
+- Header updated to use brown-to-olive gradient (matching other pages)
+- Title: White (#FFFFFF) with subtle shadow
+- Subtitle: White with 90% opacity
+- LTR support: Gradient direction flips for English
+
+---
+
+#### Phase 7: Browse Page (All Lectures)
+**Status**: ✅ COMPLETED
+
+**File**: `views/public/browse.ejs`
+- Hero gradient: Brown-to-olive matching design system
+- Page background: Off-white (#F5EDE0)
+- Sidebar: Cream background (#FDF8F2), gold border (#DEC99A)
+- Filter buttons: Gold (#C49A3C) with white text
+- Pagination: Cream background, gold active state
+- Typography: Cairo font family throughout
+- LTR support: Gradient direction flips for English
 
 ---
 
 ### Implementation Order (Recommended)
-1. Phase 1 (Foundation) - Quick, no functional changes
-2. Phase 2 (Header) - Small scope, visible impact
-3. Phase 3.1-3.2 (Articles + Featured) - Medium scope, uses existing data
-4. Phase 4.1 (Series List) - Already partially done
-5. Phase 3.3 (Content Tabs) - New feature, largest scope
-6. Phase 4.2, 5, 6 - Polish passes
+1. ✅ Phase 1 (Foundation) - Cairo font, CSS variables
+2. ✅ Phase 2 (Header) - Navigation with Articles link
+3. ✅ Phase 3.1-3.9 (Homepage) - Articles, tabs, icons, mobile fixes
+4. ✅ Phase 4 (Series Pages) - List and detail pages
+5. ⏳ Phase 5 (Lecture Player) - Desktop styling audit pending
+6. ✅ Phase 6 (Articles Page) - Header gradient update
+7. ✅ Phase 7 (Browse Page) - Full redesign to match design system
 
 ### Critical Constraints
 1. **Do NOT break admin controls** - All dynamic content must continue working
