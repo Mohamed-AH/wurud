@@ -125,6 +125,18 @@
     border-radius: 24px;
   }
 
+  .stat-link {
+    text-decoration: none;
+    cursor: pointer;
+    transition: all 0.2s ease;
+  }
+
+  .stat-link:hover {
+    background: rgba(196, 154, 60, 0.25);
+    border-color: rgba(196, 154, 60, 0.5);
+    transform: translateY(-2px);
+  }
+
   .stat-icon {
     color: var(--redesign-gold-light, #DEC99A);
     display: flex;
@@ -2657,21 +2669,21 @@
   <% if ((typeof totalLectureCount !== 'undefined' && totalLectureCount > 0) || (typeof totalArticleCount !== 'undefined' && totalArticleCount > 0)) { %>
   <div class="archive-stats">
     <% if (typeof totalLectureCount !== 'undefined' && totalLectureCount > 0) { %>
-    <div class="stat-item">
+    <a href="/browse" class="stat-item stat-link">
       <span class="stat-icon"><i data-lucide="headphones"></i></span>
       <span class="stat-number"><%= totalLectureCount %></span>
       <span class="stat-label"><%= locale === 'ar' ? 'درس صوتي' : 'Lectures' %></span>
-    </div>
+    </a>
     <% } %>
     <% if ((typeof totalLectureCount !== 'undefined' && totalLectureCount > 0) && (typeof totalArticleCount !== 'undefined' && totalArticleCount > 0)) { %>
     <span class="stat-divider"></span>
     <% } %>
     <% if (typeof totalArticleCount !== 'undefined' && totalArticleCount > 0) { %>
-    <div class="stat-item">
+    <a href="/articles" class="stat-item stat-link">
       <span class="stat-icon"><i data-lucide="pen-line"></i></span>
       <span class="stat-number"><%= totalArticleCount %></span>
       <span class="stat-label"><%= locale === 'ar' ? 'مقال' : 'Articles' %></span>
-    </div>
+    </a>
     <% } %>
   </div>
   <% } %>
