@@ -7,6 +7,7 @@ const SiteSettings = require('../../../models/SiteSettings');
 const Lecture = require('../../../models/Lecture');
 const PageView = require('../../../models/PageView');
 const Sheikh = require('../../../models/Sheikh');
+const Counter = require('../../../models/Counter');
 const testDb = require('../../helpers/testDb');
 
 describe('SiteSettings Model', () => {
@@ -24,6 +25,7 @@ describe('SiteSettings Model', () => {
     await Lecture.deleteMany({});
     await PageView.deleteMany({});
     await Sheikh.deleteMany({});
+    await Counter.deleteMany({});
   });
 
   afterEach(async () => {
@@ -31,6 +33,7 @@ describe('SiteSettings Model', () => {
     await Lecture.deleteMany({});
     await PageView.deleteMany({});
     await Sheikh.deleteMany({});
+    await Counter.deleteMany({});
   });
 
   describe('Schema Structure', () => {
@@ -120,22 +123,26 @@ describe('SiteSettings Model', () => {
           nameArabic: 'الشيخ محمد'
         });
 
-        // Create published lectures with play counts
-        await Lecture.create({
-          titleArabic: 'محاضرة 1',
-          sheikhId: sheikh._id,
-          published: true,
-          playCount: 100,
-          downloadCount: 50
-        });
+        // Create published lectures with play counts - use insertMany to avoid middleware issues
+        const lectures = await Lecture.insertMany([
+          {
+            titleArabic: 'محاضرة 1',
+            sheikhId: sheikh._id,
+            published: true,
+            playCount: 100,
+            downloadCount: 50
+          },
+          {
+            titleArabic: 'محاضرة 2',
+            sheikhId: sheikh._id,
+            published: true,
+            playCount: 200,
+            downloadCount: 75
+          }
+        ]);
 
-        await Lecture.create({
-          titleArabic: 'محاضرة 2',
-          sheikhId: sheikh._id,
-          published: true,
-          playCount: 200,
-          downloadCount: 75
-        });
+        // Verify lectures were created
+        expect(lectures.length).toBe(2);
 
         // Create page views
         const today = new Date();
@@ -168,19 +175,24 @@ describe('SiteSettings Model', () => {
           nameArabic: 'الشيخ أحمد'
         });
 
-        await Lecture.create({
-          titleArabic: 'محاضرة منشورة',
-          sheikhId: sheikh._id,
-          published: true,
-          playCount: 100
-        });
+        // Use insertMany to avoid middleware issues with Counter
+        const lectures = await Lecture.insertMany([
+          {
+            titleArabic: 'محاضرة منشورة',
+            sheikhId: sheikh._id,
+            published: true,
+            playCount: 100
+          },
+          {
+            titleArabic: 'محاضرة غير منشورة',
+            sheikhId: sheikh._id,
+            published: false,
+            playCount: 500
+          }
+        ]);
 
-        await Lecture.create({
-          titleArabic: 'محاضرة غير منشورة',
-          sheikhId: sheikh._id,
-          published: false,
-          playCount: 500
-        });
+        // Verify lectures were created
+        expect(lectures.length).toBe(2);
 
         const stats = await SiteSettings.updateCachedStats();
 
