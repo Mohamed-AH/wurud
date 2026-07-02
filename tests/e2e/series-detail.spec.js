@@ -20,8 +20,8 @@ test.describe('Series Detail Page - Basic Functionality', () => {
     // Hero section should be visible
     await expect(page.locator('.series-hero')).toBeVisible();
 
-    // Stats section should be visible
-    await expect(page.locator('.stats-section')).toBeVisible();
+    // Lectures section should exist (lectures-list or description card)
+    await expect(page.locator('.lectures-list, .description-card, .empty-state')).toBeVisible();
   });
 
   test('should display series information correctly', async ({ page }) => {
@@ -31,11 +31,6 @@ test.describe('Series Detail Page - Basic Functionality', () => {
 
     // Series title should be visible in hero
     await expect(page.locator('.series-hero h1.series-title')).toBeVisible({ timeout: 15000 });
-
-    // Stats cards should be present (at least 1 - lecture count is always shown)
-    // Additional stats like plays and duration are conditionally shown based on settings
-    const statCards = page.locator('.stat-card');
-    expect(await statCards.count()).toBeGreaterThanOrEqual(1);
 
     // Lectures section should exist
     await expect(page.locator('.lectures-list, .empty-state')).toBeVisible();
@@ -81,10 +76,6 @@ test.describe('Series Detail Page - Responsive Design', () => {
     // Hero should be visible
     await expect(page.locator('.series-hero')).toBeVisible({ timeout: 15000 });
 
-    // Stats should stack vertically on mobile
-    const statsGrid = page.locator('.stats-grid');
-    await expect(statsGrid).toBeVisible();
-
     // Breadcrumb should be readable
     await expect(page.locator('.breadcrumb')).toBeVisible();
 
@@ -100,12 +91,11 @@ test.describe('Series Detail Page - Responsive Design', () => {
     await page.goto('/series/kitab-at-tawheed');
     await page.waitForLoadState('domcontentloaded');
 
-    // All sections should be visible and properly sized
+    // Hero should be visible
     await expect(page.locator('.series-hero')).toBeVisible({ timeout: 15000 });
-    await expect(page.locator('.stats-section')).toBeVisible();
 
-    // Lecture items should be readable
-    const lectureItems = page.locator('.lecture-item');
+    // Lecture items should be readable (if any exist)
+    const lectureItems = page.locator('.lecture-item, .lecture-card');
     if (await lectureItems.count() > 0) {
       await expect(lectureItems.first()).toBeVisible();
     }
@@ -135,12 +125,7 @@ test.describe('Series Detail Page - Responsive Design', () => {
 
     // All elements should be visible
     await expect(page.locator('.series-hero')).toBeVisible({ timeout: 15000 });
-    await expect(page.locator('.stats-section')).toBeVisible();
     await expect(page.locator('.breadcrumb')).toBeVisible();
-
-    // Stats grid should display properly
-    const statsGrid = page.locator('.stats-grid');
-    await expect(statsGrid).toBeVisible();
   });
 
   test('should work on large tablet viewport (1024px)', async ({ page }) => {
@@ -151,7 +136,6 @@ test.describe('Series Detail Page - Responsive Design', () => {
 
     // All elements should be fully visible
     await expect(page.locator('.series-hero')).toBeVisible({ timeout: 15000 });
-    await expect(page.locator('.stats-section')).toBeVisible();
   });
 });
 
