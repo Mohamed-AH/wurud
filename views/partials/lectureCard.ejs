@@ -1,12 +1,12 @@
 <div class="lecture-card" data-lecture-number="<%= lecture.lectureNumber || '' %>">
-  <!-- Number badge with mic icon -->
-  <div class="lecture-badge-container">
-    <div class="lecture-mic-badge">
+  <!-- Number badge and mic icon - separate elements -->
+  <div class="lecture-badges">
+    <% if (lecture.lectureNumber) { %>
+      <div class="lecture-number-square"><%= lecture.lectureNumber %></div>
+    <% } %>
+    <div class="lecture-mic-btn">
       <i data-lucide="mic" class="mic-icon"></i>
     </div>
-    <% if (lecture.lectureNumber) { %>
-      <div class="lecture-number-overlay"><%= lecture.lectureNumber %></div>
-    <% } %>
   </div>
 
   <div class="lecture-content">
@@ -93,68 +93,61 @@
 <style>
   .lecture-card {
     background: #FDF8F2;
-    border-radius: 12px;
-    padding: 20px 24px;
+    border-radius: 10px;
+    padding: 16px 20px;
     display: flex;
-    gap: 16px;
+    gap: 12px;
     align-items: center;
     transition: all 0.2s ease;
-    box-shadow: 0 1px 3px rgba(44, 21, 8, 0.08);
+    box-shadow: none;
     max-width: 100%;
     box-sizing: border-box;
     overflow: hidden;
     position: relative;
-    border: 1px solid rgba(222, 201, 154, 0.5);
+    border: none;
   }
 
   .lecture-card:hover {
-    box-shadow: 0 4px 12px rgba(44, 21, 8, 0.12);
-    border-color: var(--redesign-gold-primary, #C49A3C);
+    background: #F8F2E8;
   }
 
-  /* Badge container with mic icon and number overlay */
-  .lecture-badge-container {
-    position: relative;
+  /* Badges container - number square and mic button */
+  .lecture-badges {
+    display: flex;
+    align-items: center;
+    gap: 8px;
     flex-shrink: 0;
   }
 
-  .lecture-mic-badge {
-    width: 52px;
-    height: 52px;
-    border-radius: 50%;
+  .lecture-number-square {
+    width: 40px;
+    height: 40px;
+    border-radius: 8px;
     background: var(--redesign-gold-primary, #C49A3C);
-    display: flex;
-    align-items: center;
-    justify-content: center;
     color: #FFFFFF;
-  }
-
-  .lecture-mic-badge .mic-icon {
-    width: 24px;
-    height: 24px;
-  }
-
-  .lecture-number-overlay {
-    position: absolute;
-    bottom: -4px;
-    right: -4px;
-    width: 24px;
-    height: 24px;
-    border-radius: 50%;
-    background: var(--redesign-brown-dark, #2C1508);
-    color: var(--redesign-gold-light, #DEC99A);
-    font-size: 12px;
+    font-size: 16px;
     font-weight: 700;
     display: flex;
     align-items: center;
     justify-content: center;
     font-family: var(--font-cairo, 'Cairo', sans-serif);
-    border: 2px solid #FDF8F2;
   }
 
-  html[dir="ltr"] .lecture-number-overlay {
-    right: auto;
-    left: -4px;
+  .lecture-mic-btn {
+    width: 40px;
+    height: 40px;
+    border-radius: 8px;
+    background: transparent;
+    border: 1px solid var(--redesign-gold-light, #DEC99A);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--redesign-text-mid, #7A5C3A);
+  }
+
+  .lecture-mic-btn .mic-icon {
+    width: 18px;
+    height: 18px;
   }
 
   .lecture-content {
@@ -305,30 +298,32 @@
       gap: 10px;
       border-radius: 10px;
       position: relative;
+      border: 1px solid var(--redesign-gold-light, #DEC99A);
     }
 
-    .lecture-badge-container {
+    .lecture-badges {
       position: absolute;
       top: 12px;
       right: 12px;
+      gap: 6px;
     }
 
-    .lecture-mic-badge {
-      width: 36px;
-      height: 36px;
+    .lecture-number-square {
+      width: 32px;
+      height: 32px;
+      font-size: 14px;
+      border-radius: 6px;
     }
 
-    .lecture-mic-badge .mic-icon {
-      width: 18px;
-      height: 18px;
+    .lecture-mic-btn {
+      width: 32px;
+      height: 32px;
+      border-radius: 6px;
     }
 
-    .lecture-number-overlay {
-      width: 20px;
-      height: 20px;
-      font-size: 10px;
-      bottom: -2px;
-      right: -2px;
+    .lecture-mic-btn .mic-icon {
+      width: 14px;
+      height: 14px;
     }
 
     /* Hide sheikh/series meta on mobile - shown in series context */
@@ -338,12 +333,12 @@
 
     .lecture-content {
       width: 100%;
-      padding-right: 50px;
+      padding-right: 80px;
     }
 
     html[dir="ltr"] .lecture-content {
       padding-right: 0;
-      padding-left: 50px;
+      padding-left: 80px;
     }
 
     .lecture-title {
@@ -427,34 +422,35 @@
       gap: 8px;
     }
 
-    .lecture-badge-container {
+    .lecture-badges {
       top: 8px;
       right: 10px;
+      gap: 4px;
     }
 
-    .lecture-mic-badge {
-      width: 30px;
-      height: 30px;
+    .lecture-number-square {
+      width: 28px;
+      height: 28px;
+      font-size: 12px;
     }
 
-    .lecture-mic-badge .mic-icon {
-      width: 14px;
-      height: 14px;
+    .lecture-mic-btn {
+      width: 28px;
+      height: 28px;
     }
 
-    .lecture-number-overlay {
-      width: 18px;
-      height: 18px;
-      font-size: 9px;
+    .lecture-mic-btn .mic-icon {
+      width: 12px;
+      height: 12px;
     }
 
     .lecture-content {
-      padding-right: 42px;
+      padding-right: 68px;
     }
 
     html[dir="ltr"] .lecture-content {
       padding-right: 0;
-      padding-left: 42px;
+      padding-left: 68px;
     }
 
     .lecture-title {
@@ -506,34 +502,35 @@
       gap: 6px;
     }
 
-    .lecture-badge-container {
+    .lecture-badges {
       top: 6px;
       right: 8px;
+      gap: 3px;
     }
 
-    .lecture-mic-badge {
-      width: 26px;
-      height: 26px;
+    .lecture-number-square {
+      width: 24px;
+      height: 24px;
+      font-size: 10px;
     }
 
-    .lecture-mic-badge .mic-icon {
-      width: 12px;
-      height: 12px;
+    .lecture-mic-btn {
+      width: 24px;
+      height: 24px;
     }
 
-    .lecture-number-overlay {
-      width: 16px;
-      height: 16px;
-      font-size: 8px;
+    .lecture-mic-btn .mic-icon {
+      width: 10px;
+      height: 10px;
     }
 
     .lecture-content {
-      padding-right: 36px;
+      padding-right: 58px;
     }
 
     html[dir="ltr"] .lecture-content {
       padding-right: 0;
-      padding-left: 36px;
+      padding-left: 58px;
     }
 
     .lecture-title {

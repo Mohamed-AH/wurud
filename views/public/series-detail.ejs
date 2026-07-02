@@ -48,37 +48,37 @@
   }
 
   .series-hero {
-    background: linear-gradient(135deg, #6B7A4E 0%, #5A6944 50%, #4A5A3A 100%);
-    padding: 48px 0;
+    background: linear-gradient(135deg, #2C1508 0%, #4A3728 40%, #5A6944 100%);
+    padding: 40px 0;
     border-bottom: none;
   }
 
   .series-category-badge {
-    background: rgba(255, 255, 255, 0.15);
-    color: #FFFFFF;
-    padding: 8px 20px;
-    border-radius: 20px;
-    font-size: 14px;
+    background: var(--redesign-badge-bg, #E8D5A0);
+    color: var(--redesign-brown-dark, #2C1508);
+    padding: 6px 16px;
+    border-radius: 16px;
+    font-size: 13px;
     font-weight: 600;
     display: inline-block;
-    margin-bottom: 16px;
-    border: 1px solid rgba(255, 255, 255, 0.3);
+    margin-bottom: 12px;
+    border: none;
   }
 
   .series-title {
     font-family: var(--font-cairo, 'Cairo', sans-serif);
-    font-size: 36px;
+    font-size: 32px;
     color: #FFFFFF;
-    margin-bottom: 8px;
+    margin-bottom: 6px;
     text-shadow: none;
     font-weight: 700;
   }
 
   .series-title-en {
-    font-size: 18px;
-    color: rgba(255, 255, 255, 0.85);
+    font-size: 16px;
+    color: rgba(255, 255, 255, 0.7);
     opacity: 1;
-    margin-bottom: 20px;
+    margin-bottom: 16px;
     font-weight: 400;
     font-style: italic;
   }
@@ -87,22 +87,22 @@
     display: flex;
     align-items: center;
     gap: 8px;
-    color: rgba(255, 255, 255, 0.9);
-    font-size: 16px;
+    color: rgba(255, 255, 255, 0.85);
+    font-size: 15px;
   }
 
   .series-sheikh svg {
-    opacity: 0.8;
+    opacity: 0.7;
   }
 
   .series-sheikh a {
-    color: #FFFFFF;
+    color: rgba(255, 255, 255, 0.85);
     text-decoration: none;
     transition: opacity 0.3s;
   }
 
   .series-sheikh a:hover {
-    opacity: 0.8;
+    opacity: 0.7;
   }
 
   /* Hide stats section on desktop - lesson count shown inline */
@@ -155,23 +155,24 @@
   }
 
   .content-section {
-    padding: 48px 0;
+    padding: 24px 0;
   }
 
   .section-title {
-    font-family: var(--font-arabic-display);
-    font-size: 28px;
-    color: var(--primary-dark);
-    margin-bottom: 24px;
-    padding-bottom: 12px;
-    border-bottom: 3px solid var(--accent-gold);
+    font-family: var(--font-cairo, 'Cairo', sans-serif);
+    font-size: 20px;
+    color: var(--redesign-brown-dark, #2C1508);
+    margin-bottom: 12px;
+    padding-bottom: 0;
+    border-bottom: none;
+    font-weight: 700;
   }
 
   .section-header-row {
     display: flex;
     align-items: center;
-    gap: 12px;
-    margin-bottom: 16px;
+    gap: 10px;
+    margin-bottom: 12px;
   }
 
   .section-header-row .section-title {
@@ -184,28 +185,28 @@
     display: inline-flex;
     background: var(--redesign-brown-dark, #2C1508);
     color: var(--redesign-gold-light, #DEC99A);
-    font-size: 13px;
+    font-size: 12px;
     font-weight: 700;
-    padding: 5px 12px;
-    border-radius: 8px;
+    padding: 4px 10px;
+    border-radius: 6px;
     white-space: nowrap;
     font-family: var(--font-cairo, 'Cairo', sans-serif);
   }
 
   .description-card, .bio-card {
-    background: var(--cream);
-    border-radius: 12px;
-    padding: 32px;
-    border: 2px solid var(--accent-amber);
-    box-shadow: 0 4px 12px var(--shadow-warm);
-    margin-bottom: 48px;
+    background: #FDF8F2;
+    border-radius: 10px;
+    padding: 20px 24px;
+    border: none;
+    box-shadow: none;
+    margin-bottom: 24px;
   }
 
   .description-text, .bio-text {
     font-family: var(--font-cairo, 'Cairo', sans-serif);
-    color: var(--text-secondary);
-    line-height: 1.9;
-    font-size: 18px;
+    color: var(--redesign-text-mid, #7A5C3A);
+    line-height: 1.8;
+    font-size: 15px;
   }
 
   .description-text-en, .bio-text-en {
@@ -229,9 +230,9 @@
   }
 
   .lectures-list {
-    display: grid;
-    grid-template-columns: repeat(2, 1fr);
-    gap: 20px;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
     width: 100%;
     max-width: 100%;
     overflow-x: hidden;
@@ -348,14 +349,14 @@
 
   /* Search & Filter Controls */
   .search-filter-controls {
-    background: var(--cream);
-    border-radius: 12px;
-    padding: 20px;
-    margin-bottom: 24px;
-    border: 2px solid var(--accent-amber);
+    background: #FDF8F2;
+    border-radius: 10px;
+    padding: 16px 20px;
+    margin-bottom: 16px;
+    border: none;
     display: flex;
     flex-direction: column;
-    gap: 16px;
+    gap: 12px;
   }
 
   .search-row {
@@ -531,22 +532,16 @@
   /* Large desktop (1200px and above) */
   @media (min-width: 1200px) {
     .series-detail-page .container {
-      max-width: 1400px;
+      max-width: 1200px;
       padding: 0 48px;
-    }
-
-    .lectures-list {
-      grid-template-columns: repeat(2, 1fr);
-      gap: 24px;
     }
   }
 
-  /* Medium desktop (769px to 1199px) - single column */
+  /* Medium desktop (769px to 1199px) */
   @media (min-width: 769px) and (max-width: 1199px) {
-    .lectures-list {
-      grid-template-columns: 1fr;
-      max-width: 800px;
-      margin: 0 auto;
+    .series-detail-page .container {
+      max-width: 900px;
+      padding: 0 32px;
     }
   }
 
