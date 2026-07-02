@@ -568,6 +568,19 @@ Three critical issues fixed:
 - Typography: Cairo font family throughout
 - LTR support: Gradient direction flips for English
 
+**7.1 Pagination & Series Context** (Commit: 905e30b)
+- Server-side pagination: 50 lectures per page (was 992 all at once)
+- Sort: `dateRecorded DESC` primary, `createdAt DESC` fallback
+- Removed global serial numbers (confusing across different series)
+- Added series context: "Series Name | Lesson X" for lectures within a series
+- Pagination controls with smart page range (shows 5 pages with ellipsis)
+- Load time improved from ~5s to <1s
+
+**Files Modified**:
+- `routes/index.js` - Added pagination logic (limit, skip, countDocuments)
+- `views/partials/lectureCard.ejs` - Replaced number badge with series context
+- `views/public/browse.ejs` - Added pagination nav component
+
 ---
 
 ### Implementation Order (Recommended)
