@@ -18,6 +18,7 @@ const { initSearchModels } = require('./models');
 const passport = require('./config/passport');
 const { i18nMiddleware } = require('./utils/i18n');
 const { trackPageView } = require('./middleware/analytics');
+const { attachSiteSettings } = require('./middleware/siteSettings');
 const { suppressConsoleInProduction } = require('./utils/logger');
 const { assetVersionMiddleware, noCacheMiddleware, ASSET_VERSION } = require('./utils/assetVersion');
 const { dbHealthMiddleware, dbErrorHandler, setupDbHealthListeners, getHealthStatus, isMongoError } = require('./middleware/dbHealth');
@@ -210,6 +211,9 @@ app.use(cookieParser());
 
 // i18n middleware (must be before routes)
 app.use(i18nMiddleware);
+
+// Site settings middleware (makes settings available to all templates)
+app.use(attachSiteSettings);
 
 // Asset version middleware (makes version available to all templates)
 app.use(assetVersionMiddleware);

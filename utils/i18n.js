@@ -271,6 +271,10 @@ const translations = {
     admin_articles_bulk_publish: 'نشر المحدد',
     admin_articles_bulk_unpublish: 'إلغاء نشر المحدد',
 
+    // Admin - Article Editors
+    admin_article_editors: 'محررو المقالات',
+    admin_article_editors_manage: 'إدارة المحررين',
+
     // Admin - Days of Week
     admin_day_sunday: 'الأحد',
     admin_day_monday: 'الإثنين',
@@ -563,6 +567,10 @@ const translations = {
     admin_articles_bulk_delete: 'Delete Selected',
     admin_articles_bulk_publish: 'Publish Selected',
     admin_articles_bulk_unpublish: 'Unpublish Selected',
+
+    // Admin - Article Editors
+    admin_article_editors: 'Article Editors',
+    admin_article_editors_manage: 'Manage Editors',
 
     // Admin - Days of Week
     admin_day_sunday: 'Sunday',

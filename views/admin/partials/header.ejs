@@ -7,6 +7,9 @@
     <a href="/admin/articles" class="<%= typeof activePage !== 'undefined' && activePage === 'articles' ? 'active' : '' %>"><%= t('admin_articles') %></a>
     <a href="/admin/schedule" class="<%= typeof activePage !== 'undefined' && activePage === 'schedule' ? 'active' : '' %>"><%= t('admin_schedule') %></a>
     <a href="/admin/analytics" class="<%= typeof activePage !== 'undefined' && activePage === 'analytics' ? 'active' : '' %>"><%= t('admin_analytics') %></a>
+    <% if (typeof user !== 'undefined' && user && user.role === 'admin') { %>
+      <a href="/admin/article-editors" class="<%= typeof activePage !== 'undefined' && activePage === 'article-editors' ? 'active' : '' %>"><%= t('admin_article_editors') || '📝 Editors' %></a>
+    <% } %>
   </nav>
   <div class="admin-user-section">
     <div class="lang-toggle">

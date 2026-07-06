@@ -63,6 +63,15 @@ const siteSettingsSchema = new mongoose.Schema({
     }
   },
 
+  // Article editor configuration
+  articleEditor: {
+    // Whether to show login link in footer
+    showLoginLink: {
+      type: Boolean,
+      default: true
+    }
+  },
+
   // Series detail page stats configuration
   seriesStats: {
     // Minimum plays before showing play count (hide if below threshold)
