@@ -3072,10 +3072,13 @@ router.post('/article-editors/add', isSuperAdmin, async (req, res) => {
       }
     }
 
-    // Create new article editor using direct collection insert
-    // This avoids Mongoose adding default null values for optional fields
+    // Create new article editor
+    // Use a unique placeholder for googleId since the index is not sparse
+    // This gets replaced with the real Google ID when they first log in
+    const { randomUUID } = require('crypto');
     const adminCollection = Admin.collection;
     await adminCollection.insertOne({
+      googleId: `pending_${randomUUID()}`,
       email: normalizedEmail,
       displayName: displayName || normalizedEmail.split('@')[0],
       role: 'articleEditor',
