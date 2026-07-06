@@ -34,6 +34,7 @@ router.get('/login', (req, res) => {
   }
 
   res.render('admin/login', {
+    layout: false,
     title: 'Admin Login',
     errorMessage
   });

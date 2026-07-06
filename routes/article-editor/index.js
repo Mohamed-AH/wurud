@@ -17,6 +17,7 @@ router.get('/login', (req, res) => {
     return res.redirect('/article-editor');
   }
   res.render('article-editor/login', {
+    layout: false,
     title: 'تسجيل الدخول - محرر المقالات',
     error: req.query.error
   });
