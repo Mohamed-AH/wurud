@@ -3,20 +3,9 @@
  * Article Content Comparison Script
  *
  * Compares article body text stored in database against original source URLs.
- * Outputs machine-readable diff for automated corrections.
+ * Focuses on actual text errors, ignoring formatting/encoding differences.
  *
  * STRICTLY READ-ONLY - Makes no changes to the database.
- *
- * Usage:
- *   node scripts/compare-articles.js [options]
- *
- * Options:
- *   --limit N       Only check first N articles (default: all)
- *   --start N       Start from article shortId N (default: 1)
- *   --type TYPE     Only check articles of type (Asdaa|TelegramArticle)
- *   --format FMT    Output format: json, jsonl, human (default: human)
- *   --output FILE   Write to file (default: stdout)
- *   --delay MS      Delay between requests in ms (default: 500)
  */
 
 require('dotenv').config();
@@ -43,7 +32,7 @@ for (let i = 0; i < args.length; i++) {
     case '--delay': options.delay = parseInt(args[++i], 10); break;
     case '--help':
       console.log(`
-Article Content Comparison - Machine-Readable Output
+Article Content Comparison
 
 Usage: node scripts/compare-articles.js [options]
 
@@ -51,23 +40,21 @@ Options:
   --limit N       Only check first N articles
   --start N       Start from article shortId N
   --type TYPE     Filter by type (Asdaa|TelegramArticle)
-  --format FMT    Output format: json, jsonl, human (default: human)
-  --output FILE   Write to file (default: stdout)
+  --format FMT    json, jsonl, or human (default: human)
+  --output FILE   Write to file
   --delay MS      Delay between requests (default: 500)
-
-Examples:
-  node scripts/compare-articles.js --format json --output diffs.json
-  node scripts/compare-articles.js --limit 10 --format human
 `);
       process.exit(0);
   }
 }
 
 function log(msg) {
-  if (options.output && options.format === 'human') {
-    fs.appendFileSync(options.output, msg + '\n');
-  } else if (options.format === 'human') {
-    console.log(msg);
+  if (options.format === 'human') {
+    if (options.output) {
+      fs.appendFileSync(options.output, msg + '\n');
+    } else {
+      console.log(msg);
+    }
   }
 }
 
@@ -75,12 +62,32 @@ function writeOutput(data) {
   const content = options.format === 'json'
     ? JSON.stringify(data, null, 2)
     : data.map(d => JSON.stringify(d)).join('\n');
-
   if (options.output) {
     fs.writeFileSync(options.output, content);
   } else {
     console.log(content);
   }
+}
+
+// Normalize text for comparison - ignore formatting differences
+function normalizeText(text) {
+  if (!text) return '';
+  return text
+    // Normalize all dash types to simple hyphen
+    .replace(/[‐-―−﹘﹣－⁃]/g, '-')
+    .replace(/–/g, '-')
+    .replace(/—/g, '-')
+    // Normalize quotes
+    .replace(/[''`]/g, "'")
+    .replace(/[""„]/g, '"')
+    // Normalize Arabic characters that are often confused
+    .replace(/ى$/g, 'ي')  // Final yaa
+    .replace(/ة$/g, 'ه')  // Taa marbuta at end of word
+    // Remove diacritics/tashkeel for comparison (optional - comment out if you want to catch these)
+    // .replace(/[ً-ٰٟ]/g, '')
+    // Normalize whitespace
+    .replace(/\s+/g, ' ')
+    .trim();
 }
 
 // Convert HTML to plain text
@@ -95,7 +102,6 @@ function htmlToText(html) {
     .replace(/<\/h[1-6]>/gi, '\n')
     .replace(/<\/li>/gi, '\n')
     .replace(/<[^>]+>/g, '')
-    // HTML entities
     .replace(/&#8211;/g, '-')
     .replace(/&#8212;/g, '-')
     .replace(/&#8217;/g, "'")
@@ -109,24 +115,18 @@ function htmlToText(html) {
     .replace(/&#39;/gi, "'")
     .replace(/&#(\d+);/g, (_, c) => String.fromCharCode(parseInt(c, 10)))
     .replace(/&[a-z]+;/gi, '')
-    // Normalize whitespace
-    .replace(/\r\n/g, '\n')
-    .replace(/[ \t]+/g, ' ')
-    .replace(/ *\n */g, '\n')
-    .replace(/\n{3,}/g, '\n\n')
+    .replace(/\s+/g, ' ')
     .trim();
 }
 
-// Extract Asdaa article content
+// Extract Asdaa content
 function extractAsdaaContent(html) {
-  // Find entry-content start
   const startMatch = html.match(/<div[^>]*class="entry-content[^"]*"[^>]*>/i);
   if (!startMatch) return null;
 
   const startIndex = startMatch.index + startMatch[0].length;
   const afterStart = html.substring(startIndex);
 
-  // Find end - before tags section or closing comment
   let endIndex;
   const tagsMatch = afterStart.match(/<div[^>]*class="post-bottom-meta/i);
   if (tagsMatch) {
@@ -137,7 +137,6 @@ function extractAsdaaContent(html) {
   }
 
   if (endIndex <= 0) endIndex = afterStart.length;
-
   return htmlToText(afterStart.substring(0, endIndex));
 }
 
@@ -147,75 +146,99 @@ function extractTelegramContent(html) {
   return match ? htmlToText(match[1]) : null;
 }
 
-// Find character-level differences
-function findDifferences(stored, source) {
-  // Normalize whitespace for comparison
-  const storedNorm = stored.replace(/\s+/g, ' ').trim();
-  const sourceNorm = source.replace(/\s+/g, ' ').trim();
+// Find word-level differences (much more practical than char-level)
+function findWordDifferences(stored, source) {
+  const storedNorm = normalizeText(stored);
+  const sourceNorm = normalizeText(source);
 
   if (storedNorm === sourceNorm) {
     return { identical: true, differences: [] };
   }
 
+  // Split into words
+  const storedWords = storedNorm.split(/\s+/);
+  const sourceWords = sourceNorm.split(/\s+/);
+
   const differences = [];
-  const minLen = Math.min(storedNorm.length, sourceNorm.length);
-  let i = 0;
 
-  while (i < minLen) {
-    if (storedNorm[i] !== sourceNorm[i]) {
-      const contextBefore = storedNorm.substring(Math.max(0, i - 30), i);
+  // Use LCS-style approach to find differences
+  let si = 0, ti = 0;
 
-      // Find resync point
-      let storedEnd = i + 1;
-      let sourceEnd = i + 1;
+  while (si < storedWords.length && ti < sourceWords.length) {
+    if (storedWords[si] === sourceWords[ti]) {
+      si++;
+      ti++;
+    } else {
+      // Found a difference - look ahead to find resync point
+      let foundSync = false;
 
-      for (let offset = 1; offset <= 100; offset++) {
-        let found = false;
-        for (let s = 0; s <= offset && !found; s++) {
-          for (let t = 0; t <= offset && !found; t++) {
-            if (i + s < storedNorm.length && i + t < sourceNorm.length) {
-              const sc = storedNorm.substring(i + s, i + s + 15);
-              const tc = sourceNorm.substring(i + t, i + t + 15);
-              if (sc.length >= 10 && sc === tc) {
-                storedEnd = i + s;
-                sourceEnd = i + t;
-                found = true;
+      for (let lookAhead = 1; lookAhead <= 20 && !foundSync; lookAhead++) {
+        // Check if stored word appears later in source
+        for (let j = 0; j <= lookAhead; j++) {
+          if (si + j < storedWords.length && ti + lookAhead < sourceWords.length) {
+            if (storedWords[si + j] === sourceWords[ti + lookAhead]) {
+              // Source has extra words
+              if (j === 0 && lookAhead > 0) {
+                const extraWords = sourceWords.slice(ti, ti + lookAhead).join(' ');
+                differences.push({
+                  type: 'missing_from_db',
+                  position: si,
+                  text: extraWords,
+                  context: storedWords.slice(Math.max(0, si - 3), si + 3).join(' ')
+                });
+                ti += lookAhead;
+                foundSync = true;
+                break;
+              }
+            }
+          }
+
+          if (ti + j < sourceWords.length && si + lookAhead < storedWords.length) {
+            if (sourceWords[ti + j] === storedWords[si + lookAhead]) {
+              // DB has extra words
+              if (j === 0 && lookAhead > 0) {
+                const extraWords = storedWords.slice(si, si + lookAhead).join(' ');
+                differences.push({
+                  type: 'extra_in_db',
+                  position: si,
+                  text: extraWords,
+                  context: sourceWords.slice(Math.max(0, ti - 3), ti + 3).join(' ')
+                });
+                si += lookAhead;
+                foundSync = true;
+                break;
               }
             }
           }
         }
-        if (found) break;
       }
 
-      const storedSeg = storedNorm.substring(i, storedEnd);
-      const sourceSeg = sourceNorm.substring(i, sourceEnd);
-      const contextAfter = storedNorm.substring(storedEnd, storedEnd + 30);
-
-      differences.push({
-        position: i,
-        stored: storedSeg,
-        source: sourceSeg,
-        context: { before: contextBefore, after: contextAfter }
-      });
-
-      i = Math.max(storedEnd, sourceEnd);
-    } else {
-      i++;
+      if (!foundSync) {
+        // Single word difference (replacement)
+        differences.push({
+          type: 'word_diff',
+          position: si,
+          stored: storedWords[si],
+          source: sourceWords[ti],
+          context: storedWords.slice(Math.max(0, si - 2), si + 3).join(' ')
+        });
+        si++;
+        ti++;
+      }
     }
   }
 
-  // Length difference
-  if (storedNorm.length !== sourceNorm.length) {
+  // Remaining words
+  if (si < storedWords.length) {
     differences.push({
-      type: 'length',
-      storedLength: storedNorm.length,
-      sourceLength: sourceNorm.length,
-      storedTail: storedNorm.length > sourceNorm.length
-        ? storedNorm.substring(sourceNorm.length, sourceNorm.length + 200)
-        : null,
-      sourceTail: sourceNorm.length > storedNorm.length
-        ? sourceNorm.substring(storedNorm.length, storedNorm.length + 200)
-        : null
+      type: 'extra_in_db_end',
+      text: storedWords.slice(si).join(' ').substring(0, 200)
+    });
+  }
+  if (ti < sourceWords.length) {
+    differences.push({
+      type: 'missing_from_db_end',
+      text: sourceWords.slice(ti).join(' ').substring(0, 200)
     });
   }
 
@@ -231,7 +254,7 @@ async function fetchUrl(url, retries = 3) {
         signal: controller.signal,
         headers: {
           'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36',
-          'Accept': 'text/html,application/xhtml+xml',
+          'Accept': 'text/html',
           'Accept-Language': 'ar,en'
         }
       });
@@ -240,13 +263,9 @@ async function fetchUrl(url, retries = 3) {
       return await response.text();
     } catch (error) {
       if (attempt === retries) throw error;
-      await sleep(1000 * attempt);
+      await new Promise(r => setTimeout(r, 1000 * attempt));
     }
   }
-}
-
-function sleep(ms) {
-  return new Promise(resolve => setTimeout(resolve, ms));
 }
 
 const articleSchema = new mongoose.Schema({
@@ -261,22 +280,18 @@ const articleSchema = new mongoose.Schema({
 async function main() {
   if (options.format === 'human') {
     log('Article Content Comparison');
-    log('='.repeat(60));
+    log('=' .repeat(60));
     log(`Started: ${new Date().toISOString()}\n`);
   }
 
   const mongoUri = process.env.MONGODB_URI;
   if (!mongoUri) {
-    console.error('ERROR: MONGODB_URI not set in .env');
+    console.error('ERROR: MONGODB_URI not set');
     process.exit(1);
   }
 
-  await mongoose.connect(mongoUri, {
-    readPreference: 'secondaryPreferred',
-    maxPoolSize: 5
-  });
-
-  if (options.format === 'human') log('Connected to database.\n');
+  await mongoose.connect(mongoUri, { maxPoolSize: 5 });
+  if (options.format === 'human') log('Connected.\n');
 
   const Article = mongoose.model('Article', articleSchema, 'articles');
 
@@ -292,10 +307,7 @@ async function main() {
   if (options.limit) articlesQuery = articlesQuery.limit(options.limit);
 
   const articles = await articlesQuery;
-
-  if (options.format === 'human') {
-    log(`Found ${articles.length} articles to check\n`);
-  }
+  if (options.format === 'human') log(`Found ${articles.length} articles\n`);
 
   const results = [];
   const stats = { total: 0, identical: 0, different: 0, errors: 0 };
@@ -320,42 +332,60 @@ async function main() {
       }
 
       if (!sourceContent) {
-        if (options.format === 'human') {
-          log(`\n#${article.shortId}: Could not extract source content`);
-        }
+        if (options.format === 'human') log(`\n#${article.shortId}: Could not extract source`);
         stats.errors++;
         continue;
       }
 
       const storedContent = htmlToText(article.content);
-      const result = findDifferences(storedContent, sourceContent);
+      const result = findWordDifferences(storedContent, sourceContent);
 
       if (result.identical) {
         stats.identical++;
       } else {
-        stats.different++;
+        // Filter out trivial differences
+        const meaningfulDiffs = result.differences.filter(d => {
+          if (d.type === 'word_diff') {
+            // Skip if just dash/quote differences after normalization
+            const s = normalizeText(d.stored);
+            const t = normalizeText(d.source);
+            return s !== t;
+          }
+          return true;
+        });
 
-        const articleDiff = {
-          shortId: article.shortId,
-          title: article.title,
-          sourceUrl: article.sourceUrl,
-          type: article.type,
-          wasEdited: !!article.lastEditedAt,
-          differences: result.differences
-        };
+        if (meaningfulDiffs.length === 0) {
+          stats.identical++;
+        } else {
+          stats.different++;
 
-        results.push(articleDiff);
+          const articleDiff = {
+            shortId: article.shortId,
+            title: article.title,
+            sourceUrl: article.sourceUrl,
+            differences: meaningfulDiffs
+          };
+          results.push(articleDiff);
 
-        if (options.format === 'human') {
-          log(`\n${'='.repeat(60)}`);
-          log(`#${article.shortId}: ${article.title.substring(0, 50)}`);
-          log(`Differences: ${result.differences.length}`);
+          if (options.format === 'human') {
+            log(`\n${'='.repeat(60)}`);
+            log(`#${article.shortId}: ${article.title.substring(0, 50)}`);
+            log(`Differences: ${meaningfulDiffs.length}`);
 
-          for (const d of result.differences) {
-            if (d.type === 'length') {
-              log(`  [LENGTH] DB:${d.storedLength} Source:${d.sourceLength}`);
-            } else {
-              log(`  @${d.position}: "${d.stored}" -> "${d.source}"`);
+            meaningfulDiffs.slice(0, 10).forEach(d => {
+              if (d.type === 'word_diff') {
+                log(`  CHANGED: "${d.stored}" -> "${d.source}"`);
+              } else if (d.type === 'extra_in_db') {
+                log(`  EXTRA IN DB: "${d.text.substring(0, 50)}..."`);
+              } else if (d.type === 'missing_from_db') {
+                log(`  MISSING FROM DB: "${d.text.substring(0, 50)}..."`);
+              } else {
+                log(`  ${d.type}: ${d.text?.substring(0, 50) || ''}`);
+              }
+            });
+
+            if (meaningfulDiffs.length > 10) {
+              log(`  ... and ${meaningfulDiffs.length - 10} more`);
             }
           }
         }
@@ -363,12 +393,10 @@ async function main() {
 
     } catch (error) {
       stats.errors++;
-      if (options.format === 'human') {
-        log(`\n#${article.shortId}: ERROR - ${error.message}`);
-      }
+      if (options.format === 'human') log(`\n#${article.shortId}: ERROR - ${error.message}`);
     }
 
-    await sleep(options.delay);
+    await new Promise(r => setTimeout(r, options.delay));
   }
 
   if (options.format === 'json' || options.format === 'jsonl') {
