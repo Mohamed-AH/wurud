@@ -3047,27 +3047,40 @@ router.post('/article-editors/add', isSuperAdmin, async (req, res) => {
       return res.status(400).json({ success: false, message: 'Email is required' });
     }
 
-    // Check if user already exists
-    let user = await Admin.findOne({ email: email.toLowerCase().trim() });
+    const normalizedEmail = email.toLowerCase().trim();
 
-    if (user) {
-      // Update existing user to articleEditor role
-      user.role = 'articleEditor';
-      user.isActive = true;
-      if (displayName) user.displayName = displayName;
-      await user.save();
+    // Check if user already exists - use findOneAndUpdate for atomicity
+    const existingUser = await Admin.findOneAndUpdate(
+      { email: normalizedEmail },
+      {
+        $set: {
+          role: 'articleEditor',
+          isActive: true,
+          ...(displayName && { displayName })
+        }
+      },
+      { new: true }
+    );
+
+    if (existingUser) {
       return res.json({ success: true, message: 'User updated to article editor' });
     }
 
-    // Create new article editor
-    user = new Admin({
-      email: email.toLowerCase().trim(),
-      displayName: displayName || email.split('@')[0],
-      role: 'articleEditor',
-      isActive: true
-    });
-
-    await user.save();
+    // Create new article editor using findOneAndUpdate with upsert
+    // This avoids the googleId null duplicate key issue
+    await Admin.findOneAndUpdate(
+      { email: normalizedEmail },
+      {
+        $setOnInsert: {
+          email: normalizedEmail,
+          displayName: displayName || normalizedEmail.split('@')[0],
+          role: 'articleEditor',
+          isActive: true
+          // Don't set googleId - let it be undefined (sparse index allows this)
+        }
+      },
+      { upsert: true, new: true }
+    );
 
     res.json({ success: true, message: 'Article editor added successfully' });
   } catch (error) {
