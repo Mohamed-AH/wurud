@@ -18,6 +18,7 @@ const isAuthenticated = (req, res, next) => {
 /**
  * Middleware to check if user is an active admin
  * Use this for admin-only routes
+ * Only allows 'admin' and 'editor' roles (NOT articleEditor)
  */
 const isAdmin = async (req, res, next) => {
   try {
@@ -38,8 +39,11 @@ const isAdmin = async (req, res, next) => {
       return;
     }
 
-    // NOTE: We don't check whitelist here anymore - database is the source of truth
-    // Whitelist is only checked during initial OAuth login in passport.js
+    // Check role - only admin and editor can access admin panel
+    // articleEditor role should use /article-editor routes instead
+    if (admin.role !== 'admin' && admin.role !== 'editor') {
+      return res.redirect('/article-editor');
+    }
 
     // User is authorized admin
     next();
@@ -67,6 +71,7 @@ const isAuthenticatedAPI = (req, res, next) => {
 
 /**
  * Middleware for admin API routes - returns JSON instead of redirecting
+ * Only allows 'admin' and 'editor' roles (NOT articleEditor)
  */
 const isAdminAPI = async (req, res, next) => {
   try {
@@ -86,8 +91,13 @@ const isAdminAPI = async (req, res, next) => {
       });
     }
 
-    // NOTE: We don't check whitelist here anymore - database is the source of truth
-    // Whitelist is only checked during initial OAuth login in passport.js
+    // Check role - only admin and editor can access admin API
+    if (admin.role !== 'admin' && admin.role !== 'editor') {
+      return res.status(403).json({
+        success: false,
+        message: 'Insufficient permissions'
+      });
+    }
 
     next();
   } catch (error) {
