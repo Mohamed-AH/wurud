@@ -11,7 +11,24 @@
 </header>
 
 <main class="editor-main">
+  <!-- Filter Tabs -->
+  <div class="filter-tabs">
+    <a href="/article-editor?filter=all${search ? '&search=' + encodeURIComponent(search) : ''}"
+       class="filter-tab ${!filter || filter === 'all' ? 'active' : ''}">
+      الكل (${stats.total})
+    </a>
+    <a href="/article-editor?filter=not-edited${search ? '&search=' + encodeURIComponent(search) : ''}"
+       class="filter-tab ${filter === 'not-edited' ? 'active' : ''}">
+      لم يُحرر (${stats.notEdited})
+    </a>
+    <a href="/article-editor?filter=edited${search ? '&search=' + encodeURIComponent(search) : ''}"
+       class="filter-tab ${filter === 'edited' ? 'active' : ''}">
+      تم التحرير (${stats.edited})
+    </a>
+  </div>
+
   <form class="search-box" method="GET" action="/article-editor">
+    <input type="hidden" name="filter" value="${filter || 'all'}">
     <input
       type="search"
       name="search"
@@ -20,7 +37,7 @@
       value="${search || ''}"
     >
     <button type="submit" class="btn btn-primary">بحث</button>
-    ${search ? `<a href="/article-editor" class="btn btn-outline">مسح</a>` : ''}
+    ${search ? `<a href="/article-editor?filter=${filter || 'all'}" class="btn btn-outline">مسح</a>` : ''}
   </form>
 
   <div class="card">
@@ -31,27 +48,31 @@
     ${articles.length > 0 ? `
       <div class="article-list">
         ${articles.map(article => `
-          <div class="article-item">
+          <a href="/article-editor/article/${article.shortId || article._id}" class="article-item">
+            <div class="article-number">#${article.shortId}</div>
             <div class="article-content">
               <div class="article-title">${article.title}</div>
               <div class="article-meta">
                 <span class="article-type">${article.type === 'Asdaa' ? 'أصداء' : 'تليجرام'}</span>
                 <span>${new Date(article.publishedAt).toLocaleDateString('ar-SA')}</span>
-                ${article.lastEditedBy ? `<span>آخر تعديل: ${article.lastEditedBy.displayName || article.lastEditedBy.email}</span>` : ''}
               </div>
             </div>
-            <div class="article-actions">
-              <a href="/article-editor/article/${article.shortId || article._id}" class="btn btn-primary">تحرير</a>
-              <a href="/article-editor/article/${article.shortId || article._id}/history" class="btn btn-outline">السجل</a>
+            <div class="article-status">
+              ${article.lastEditedAt ? `
+                <span class="status-badge edited">تم التحرير</span>
+                <span class="edited-info">${article.lastEditedBy?.displayName || 'محرر'} - ${timeAgo(new Date(article.lastEditedAt))}</span>
+              ` : `
+                <span class="status-badge not-edited">لم يُحرر</span>
+              `}
             </div>
-          </div>
+          </a>
         `).join('')}
       </div>
 
       ${pagination.totalPages > 1 ? `
         <nav class="pagination">
           ${pagination.hasPrev ? `
-            <a href="/article-editor?page=${pagination.page - 1}${search ? '&search=' + encodeURIComponent(search) : ''}" class="page-link">
+            <a href="/article-editor?page=${pagination.page - 1}&filter=${filter || 'all'}${search ? '&search=' + encodeURIComponent(search) : ''}" class="page-link">
               ←
             </a>
           ` : ''}
@@ -68,7 +89,7 @@
               pageNum = pagination.page - 2 + i;
             }
             return `
-              <a href="/article-editor?page=${pageNum}${search ? '&search=' + encodeURIComponent(search) : ''}"
+              <a href="/article-editor?page=${pageNum}&filter=${filter || 'all'}${search ? '&search=' + encodeURIComponent(search) : ''}"
                  class="page-link ${pageNum === pagination.page ? 'active' : ''}">
                 ${pageNum}
               </a>
@@ -76,7 +97,7 @@
           }).join('')}
 
           ${pagination.hasNext ? `
-            <a href="/article-editor?page=${pagination.page + 1}${search ? '&search=' + encodeURIComponent(search) : ''}" class="page-link">
+            <a href="/article-editor?page=${pagination.page + 1}&filter=${filter || 'all'}${search ? '&search=' + encodeURIComponent(search) : ''}" class="page-link">
               →
             </a>
           ` : ''}
@@ -90,4 +111,158 @@
     `}
   </div>
 </main>
+
+<style>
+  .filter-tabs {
+    display: flex;
+    gap: 8px;
+    margin-bottom: 16px;
+    flex-wrap: wrap;
+  }
+
+  .filter-tab {
+    padding: 8px 16px;
+    background: var(--card-bg);
+    border: 1px solid var(--border-gold);
+    border-radius: 20px;
+    color: var(--text-mid);
+    text-decoration: none;
+    font-size: 13px;
+    font-weight: 500;
+    transition: all 0.2s;
+  }
+
+  .filter-tab:hover {
+    background: var(--gold-light);
+  }
+
+  .filter-tab.active {
+    background: var(--gold-primary);
+    color: white;
+    border-color: var(--gold-primary);
+  }
+
+  .article-item {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 14px 16px;
+    background: var(--card-bg);
+    border: 1px solid var(--border-gold);
+    border-radius: 10px;
+    text-decoration: none;
+    color: inherit;
+    transition: all 0.2s;
+  }
+
+  .article-item:hover {
+    border-color: var(--gold-primary);
+    transform: translateY(-1px);
+  }
+
+  .article-number {
+    min-width: 50px;
+    padding: 8px 0;
+    text-align: center;
+    font-size: 14px;
+    font-weight: 700;
+    color: var(--gold-primary);
+    background: var(--gold-light);
+    border-radius: 6px;
+  }
+
+  .article-content {
+    flex: 1;
+    min-width: 0;
+  }
+
+  .article-title {
+    font-size: 14px;
+    font-weight: 600;
+    color: var(--text-dark);
+    margin-bottom: 4px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  .article-meta {
+    display: flex;
+    gap: 10px;
+    font-size: 11px;
+    color: var(--text-muted);
+  }
+
+  .article-status {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-end;
+    gap: 4px;
+    min-width: 90px;
+  }
+
+  .status-badge {
+    padding: 4px 10px;
+    border-radius: 12px;
+    font-size: 11px;
+    font-weight: 600;
+  }
+
+  .status-badge.edited {
+    background: #D4EDDA;
+    color: #155724;
+  }
+
+  .status-badge.not-edited {
+    background: #E9ECEF;
+    color: #6C757D;
+  }
+
+  .edited-info {
+    font-size: 10px;
+    color: var(--text-muted);
+    text-align: left;
+  }
+
+  @media (max-width: 600px) {
+    .article-item {
+      flex-wrap: wrap;
+    }
+
+    .article-number {
+      min-width: 45px;
+      font-size: 12px;
+    }
+
+    .article-content {
+      flex: 1 1 calc(100% - 60px);
+    }
+
+    .article-status {
+      width: 100%;
+      flex-direction: row;
+      justify-content: flex-start;
+      align-items: center;
+      margin-top: 8px;
+      padding-top: 8px;
+      border-top: 1px solid var(--border-gold);
+    }
+
+    .edited-info {
+      text-align: right;
+    }
+  }
+</style>
+
+<script>
+  function timeAgo(date) {
+    const seconds = Math.floor((new Date() - date) / 1000);
+
+    if (seconds < 60) return 'الآن';
+    if (seconds < 3600) return Math.floor(seconds / 60) + ' د';
+    if (seconds < 86400) return Math.floor(seconds / 3600) + ' س';
+    if (seconds < 604800) return Math.floor(seconds / 86400) + ' ي';
+    return date.toLocaleDateString('ar-SA');
+  }
+</script>
 ` }) %>

@@ -55,19 +55,36 @@ router.get('/', isArticleEditor, async (req, res) => {
     const limit = 20;
     const skip = (page - 1) * limit;
     const search = req.query.search || '';
+    const filter = req.query.filter || 'all';
 
-    // Build query
-    const query = { isPublished: true };
+    // Base query for published articles
+    const baseQuery = { isPublished: true };
     if (search) {
-      query.$or = [
+      baseQuery.$or = [
         { title: { $regex: search, $options: 'i' } },
         { summary: { $regex: search, $options: 'i' } }
       ];
     }
 
+    // Get stats for all filters (with search applied)
+    const [totalAll, totalEdited, totalNotEdited] = await Promise.all([
+      Article.countDocuments(baseQuery),
+      Article.countDocuments({ ...baseQuery, lastEditedAt: { $exists: true, $ne: null } }),
+      Article.countDocuments({ ...baseQuery, $or: [{ lastEditedAt: { $exists: false } }, { lastEditedAt: null }] })
+    ]);
+
+    // Build filtered query
+    const query = { ...baseQuery };
+    if (filter === 'edited') {
+      query.lastEditedAt = { $exists: true, $ne: null };
+    } else if (filter === 'not-edited') {
+      query.$and = query.$and || [];
+      query.$and.push({ $or: [{ lastEditedAt: { $exists: false } }, { lastEditedAt: null }] });
+    }
+
     const [articles, totalCount] = await Promise.all([
       Article.find(query)
-        .sort({ publishedAt: -1 })
+        .sort({ shortId: 1 }) // Sort by serial number for easier coordination
         .skip(skip)
         .limit(limit)
         .select('title summary type publishedAt lastEditedBy lastEditedAt shortId slug')
@@ -88,6 +105,12 @@ router.get('/', isArticleEditor, async (req, res) => {
         hasNext: page < totalPages,
         hasPrev: page > 1
       },
+      stats: {
+        total: totalAll,
+        edited: totalEdited,
+        notEdited: totalNotEdited
+      },
+      filter,
       search,
       user: req.user
     });
