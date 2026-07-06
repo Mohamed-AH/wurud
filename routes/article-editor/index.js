@@ -206,7 +206,10 @@ router.post('/article/:id', isArticleEditorAPI, async (req, res) => {
       });
     }
 
-    // Add to edit history
+    // Add to edit history (initialize array if it doesn't exist on older articles)
+    if (!article.editHistory) {
+      article.editHistory = [];
+    }
     article.editHistory.push({
       editedBy: req.user._id,
       editedAt: new Date(),

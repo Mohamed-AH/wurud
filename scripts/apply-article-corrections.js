@@ -233,7 +233,10 @@ async function main() {
       article.content = newContent;
       article.lastEditedAt = new Date();
 
-      // Add to edit history
+      // Add to edit history (initialize if missing on older articles)
+      if (!article.editHistory) {
+        article.editHistory = [];
+      }
       article.editHistory.push({
         editedAt: new Date(),
         fieldsChanged: ['content'],
