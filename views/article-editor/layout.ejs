@@ -205,12 +205,25 @@
     .ql-container {
       font-family: 'Cairo', sans-serif;
       font-size: 16px;
-      direction: rtl;
+      border-color: var(--border-gold) !important;
+      background: white;
+      border-radius: 0 0 8px 8px;
     }
 
     .ql-editor {
       min-height: 300px;
       line-height: 1.8;
+      direction: rtl;
+      text-align: right;
+    }
+
+    .ql-editor p,
+    .ql-editor h1,
+    .ql-editor h2,
+    .ql-editor h3,
+    .ql-editor li {
+      direction: rtl;
+      text-align: right;
     }
 
     .ql-toolbar {
@@ -218,12 +231,6 @@
       border-color: var(--border-gold) !important;
       background: white;
       border-radius: 8px 8px 0 0;
-    }
-
-    .ql-container {
-      border-color: var(--border-gold) !important;
-      background: white;
-      border-radius: 0 0 8px 8px;
     }
 
     /* Article list */
