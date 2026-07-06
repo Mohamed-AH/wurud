@@ -18,6 +18,7 @@ const { initSearchModels } = require('./models');
 const passport = require('./config/passport');
 const { i18nMiddleware } = require('./utils/i18n');
 const { trackPageView } = require('./middleware/analytics');
+const { attachSiteSettings } = require('./middleware/siteSettings');
 const { suppressConsoleInProduction } = require('./utils/logger');
 const { assetVersionMiddleware, noCacheMiddleware, ASSET_VERSION } = require('./utils/assetVersion');
 const { dbHealthMiddleware, dbErrorHandler, setupDbHealthListeners, getHealthStatus, isMongoError } = require('./middleware/dbHealth');
@@ -92,13 +93,13 @@ app.use(helmet({
   contentSecurityPolicy: {
     directives: {
       defaultSrc: ["'self'"],
-      scriptSrc: ["'self'", "'unsafe-inline'", "https://accounts.google.com", "https://apis.google.com", "https://unpkg.com"],
+      scriptSrc: ["'self'", "'unsafe-inline'", "https://accounts.google.com", "https://apis.google.com", "https://unpkg.com", "https://cdn.quilljs.com", "https://cdn.jsdelivr.net"],
       scriptSrcAttr: ["'unsafe-inline'"], // Allow onclick handlers
-      styleSrc: ["'self'", "'unsafe-inline'", "https://fonts.googleapis.com"],
+      styleSrc: ["'self'", "'unsafe-inline'", "https://fonts.googleapis.com", "https://cdn.quilljs.com", "https://cdn.jsdelivr.net"],
       fontSrc: ["'self'", "https://fonts.gstatic.com"],
       imgSrc: ["'self'", "data:", "https:", "blob:"],
       mediaSrc: ["'self'", "https://objectstorage.me-jeddah-1.oraclecloud.com"],
-      connectSrc: ["'self'", "https://objectstorage.me-jeddah-1.oraclecloud.com", "https://unpkg.com"],
+      connectSrc: ["'self'", "https://objectstorage.me-jeddah-1.oraclecloud.com", "https://unpkg.com", "https://cdn.quilljs.com", "https://cdn.jsdelivr.net"],
       frameSrc: ["https://accounts.google.com"],
       objectSrc: ["'none'"],
       upgradeInsecureRequests: isProduction ? [] : null,
@@ -211,6 +212,9 @@ app.use(cookieParser());
 // i18n middleware (must be before routes)
 app.use(i18nMiddleware);
 
+// Site settings middleware (makes settings available to all templates)
+app.use(attachSiteSettings);
+
 // Asset version middleware (makes version available to all templates)
 app.use(assetVersionMiddleware);
 
@@ -275,6 +279,7 @@ const downloadRoutes = require('./routes/download');
 const searchApiRoutes = require('./routes/search');
 const articlesRoutes = require('./routes/articles');
 const contactApiRoutes = require('./routes/api/contact');
+const articleEditorRoutes = require('./routes/article-editor');
 
 app.use('/', publicRoutes);
 app.use('/auth', authRoutes);
@@ -288,6 +293,7 @@ app.use('/download', downloadRoutes);
 app.use('/search', searchApiRoutes);
 app.use('/articles', articlesRoutes);
 app.use('/api/contact', contactApiRoutes);
+app.use('/article-editor', articleEditorRoutes);
 
 // The Sentry error handler must be registered before any other error middleware and after all controllers
 Sentry.setupExpressErrorHandler(app);

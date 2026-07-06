@@ -86,6 +86,12 @@
           <span class="icon">🎙️</span>
           <span><%= t('admin_lectures') %></span>
         </a>
+        <% if (user && user.role === 'admin') { %>
+          <a href="/admin/article-editors" class="quick-action-btn">
+            <span class="icon">👥</span>
+            <span><%= t('admin_article_editors') || 'Article Editors' %></span>
+          </a>
+        <% } %>
       </div>
     </section>
 

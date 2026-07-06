@@ -292,14 +292,24 @@
                 </td>
                 <td>
                   <% if (u._id.toString() !== user._id.toString()) { %>
-                    <button
-                      onclick="toggleActive('<%= u._id %>', <%= u.isActive %>)"
-                      class="btn <%= u.isActive ? 'btn-danger' : 'btn-success' %>"
-                    >
-                      <%= u.isActive ? (adminLocale === 'ar' ? '🚫 تعطيل' : '🚫 Deactivate') : (adminLocale === 'ar' ? '✅ تفعيل' : '✅ Activate') %>
-                    </button>
+                    <div class="actions">
+                      <button
+                        onclick="toggleActive('<%= u._id %>', <%= u.isActive %>)"
+                        class="btn <%= u.isActive ? 'btn-danger' : 'btn-success' %>"
+                        style="font-size: 12px; padding: 6px 10px;"
+                      >
+                        <%= u.isActive ? (adminLocale === 'ar' ? 'تعطيل' : 'Deactivate') : (adminLocale === 'ar' ? 'تفعيل' : 'Activate') %>
+                      </button>
+                      <button
+                        onclick="deleteUser('<%= u._id %>', '<%= u.email %>')"
+                        class="btn btn-danger"
+                        style="font-size: 12px; padding: 6px 10px; background: #721c24;"
+                      >
+                        <%= adminLocale === 'ar' ? 'حذف' : 'Delete' %>
+                      </button>
+                    </div>
                   <% } else { %>
-                    <button class="btn btn-primary" disabled><%= adminLocale === 'ar' ? 'المستخدم الحالي' : 'Current User' %></button>
+                    <span style="color: #6c757d; font-size: 13px;"><%= adminLocale === 'ar' ? 'أنت' : 'You' %></span>
                   <% } %>
                 </td>
               </tr>
@@ -327,7 +337,10 @@
       confirmActivate: '<%= adminLocale === "ar" ? "هل أنت متأكد من تفعيل هذا المستخدم؟" : "Are you sure you want to activate this user?" %>',
       userDeactivated: '<%= adminLocale === "ar" ? "✅ تم تعطيل المستخدم بنجاح" : "✅ User deactivated successfully" %>',
       userActivated: '<%= adminLocale === "ar" ? "✅ تم تفعيل المستخدم بنجاح" : "✅ User activated successfully" %>',
-      errorToggling: '<%= adminLocale === "ar" ? "❌ خطأ في تغيير الحالة" : "❌ Error toggling active status" %>'
+      errorToggling: '<%= adminLocale === "ar" ? "❌ خطأ في تغيير الحالة" : "❌ Error toggling active status" %>',
+      confirmDelete: '<%= adminLocale === "ar" ? "هل أنت متأكد من حذف هذا المستخدم نهائياً؟ لا يمكن التراجع!" : "Permanently delete this user? This cannot be undone!" %>',
+      userDeleted: '<%= adminLocale === "ar" ? "✅ تم حذف المستخدم نهائياً" : "✅ User permanently deleted" %>',
+      errorDeleting: '<%= adminLocale === "ar" ? "❌ خطأ في حذف المستخدم" : "❌ Error deleting user" %>'
     };
 
     function showMessage(text, type) {
@@ -438,6 +451,29 @@
       .catch(err => {
         console.error('Toggle active error:', err);
         showMessage(msgs.errorToggling, 'error');
+      });
+    }
+
+    function deleteUser(userId, email) {
+      if (!confirm(msgs.confirmDelete + '\n\n' + email)) {
+        return;
+      }
+
+      fetch(`/admin/users/${userId}/delete`, {
+        method: 'POST'
+      })
+      .then(res => res.json())
+      .then(data => {
+        if (data.success) {
+          showMessage(msgs.userDeleted, 'success');
+          setTimeout(() => window.location.reload(), 1000);
+        } else {
+          showMessage(msgs.errorPrefix + data.message, 'error');
+        }
+      })
+      .catch(err => {
+        console.error('Delete user error:', err);
+        showMessage(msgs.errorDeleting, 'error');
       });
     }
   </script>

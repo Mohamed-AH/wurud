@@ -1,0 +1,155 @@
+<%- include('layout', { body: `
+<header class="editor-header">
+  <a href="/article-editor" class="btn btn-secondary" style="padding: 8px 12px;">←</a>
+  <h1>تحرير المقال</h1>
+  <div class="header-actions">
+    <a href="/article-editor/article/${article.shortId || article._id}/history" class="btn btn-secondary">السجل</a>
+  </div>
+</header>
+
+<main class="editor-main" style="padding-bottom: 80px;">
+  <form id="editForm">
+    <div class="card">
+      <div class="form-group" style="margin-bottom: 0;">
+        <label class="form-label">عنوان المقال</label>
+        <input
+          type="text"
+          name="title"
+          id="titleInput"
+          class="form-input"
+          value="${article.title.replace(/"/g, '&quot;')}"
+          required
+        >
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-header">
+        <span class="card-title">محتوى المقال</span>
+      </div>
+      <div id="editor"></div>
+      <input type="hidden" name="content" id="contentInput">
+    </div>
+
+    <div class="card">
+      <div class="form-group" style="margin-bottom: 0;">
+        <label class="form-label">وصف التغييرات (اختياري)</label>
+        <input
+          type="text"
+          name="changeDescription"
+          id="changeDescriptionInput"
+          class="form-input"
+          placeholder="مثال: تصحيح الأخطاء الإملائية..."
+        >
+      </div>
+    </div>
+  </form>
+</main>
+
+<div class="save-bar">
+  <a href="/article-editor" class="btn btn-outline">إلغاء</a>
+  <button type="button" id="saveBtn" class="btn btn-primary" onclick="saveArticle()">
+    حفظ التغييرات
+  </button>
+</div>
+
+<script>
+  // Initialize Quill editor
+  const quill = new Quill('#editor', {
+    theme: 'snow',
+    modules: {
+      toolbar: [
+        [{ 'header': [1, 2, 3, false] }],
+        ['bold', 'italic', 'underline'],
+        [{ 'list': 'ordered'}, { 'list': 'bullet' }],
+        [{ 'align': [] }],
+        ['link'],
+        ['clean']
+      ]
+    },
+    placeholder: 'محتوى المقال...'
+  });
+
+  // Set initial content
+  quill.root.innerHTML = \`${article.content.replace(/`/g, '\\`').replace(/\\/g, '\\\\')}\`;
+
+  // Original values for change detection
+  const originalValues = {
+    title: \`${article.title.replace(/`/g, '\\`').replace(/\\/g, '\\\\')}\`,
+    content: quill.root.innerHTML
+  };
+
+  async function saveArticle() {
+    const saveBtn = document.getElementById('saveBtn');
+    const title = document.getElementById('titleInput').value.trim();
+    const content = quill.root.innerHTML;
+    const changeDescription = document.getElementById('changeDescriptionInput').value.trim();
+
+    if (!title) {
+      showToast('عنوان المقال مطلوب', 'error');
+      return;
+    }
+
+    // Check if there are actual changes
+    if (title === originalValues.title && content === originalValues.content) {
+      showToast('لا توجد تغييرات للحفظ', 'error');
+      return;
+    }
+
+    saveBtn.classList.add('loading');
+    saveBtn.textContent = 'جاري الحفظ...';
+
+    try {
+      const response = await fetch('/article-editor/article/${article.shortId || article._id}', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          title,
+          content,
+          changeDescription
+        })
+      });
+
+      const data = await response.json();
+
+      if (data.success) {
+        showToast(data.message, 'success');
+        // Update original values
+        originalValues.title = title;
+        originalValues.content = content;
+        // Clear change description
+        document.getElementById('changeDescriptionInput').value = '';
+      } else {
+        showToast(data.message || 'حدث خطأ', 'error');
+      }
+    } catch (error) {
+      console.error('Save error:', error);
+      showToast('حدث خطأ في الاتصال', 'error');
+    } finally {
+      saveBtn.classList.remove('loading');
+      saveBtn.textContent = 'حفظ التغييرات';
+    }
+  }
+
+  // Warn before leaving with unsaved changes
+  window.addEventListener('beforeunload', (e) => {
+    const title = document.getElementById('titleInput').value.trim();
+    const content = quill.root.innerHTML;
+
+    if (title !== originalValues.title || content !== originalValues.content) {
+      e.preventDefault();
+      e.returnValue = '';
+    }
+  });
+
+  // Keyboard shortcut: Ctrl+S to save
+  document.addEventListener('keydown', (e) => {
+    if ((e.ctrlKey || e.metaKey) && e.key === 's') {
+      e.preventDefault();
+      saveArticle();
+    }
+  });
+</script>
+` }) %>

@@ -5,6 +5,7 @@
 const mongoose = require('mongoose');
 const Lecture = require('../../../models/Lecture');
 const Sheikh = require('../../../models/Sheikh');
+const Counter = require('../../../models/Counter');
 const testDb = require('../../helpers/testDb');
 
 describe('Lecture Model', () => {
@@ -16,9 +17,17 @@ describe('Lecture Model', () => {
     await testDb.disconnect();
   });
 
+  beforeEach(async () => {
+    // Clean up before each test to ensure test isolation
+    await Lecture.deleteMany({});
+    await Sheikh.deleteMany({});
+    await Counter.deleteMany({});
+  });
+
   afterEach(async () => {
     await Lecture.deleteMany({});
     await Sheikh.deleteMany({});
+    await Counter.deleteMany({});
   });
 
   describe('Schema Validation', () => {
@@ -175,10 +184,14 @@ describe('Lecture Model', () => {
 
       await new Promise(resolve => setTimeout(resolve, 100));
 
-      lecture.titleArabic = 'Updated Lecture';
-      await lecture.save();
+      // Use findByIdAndUpdate to avoid DocumentNotFoundError with stale references
+      const updatedLecture = await Lecture.findByIdAndUpdate(
+        lecture._id,
+        { titleArabic: 'Updated Lecture' },
+        { new: true, runValidators: true }
+      );
 
-      expect(lecture.updatedAt.getTime()).toBeGreaterThan(originalUpdatedAt.getTime());
+      expect(updatedLecture.updatedAt.getTime()).toBeGreaterThan(originalUpdatedAt.getTime());
     });
   });
 

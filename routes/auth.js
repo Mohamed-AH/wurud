@@ -5,11 +5,15 @@ const passport = require('../config/passport');
 // @route   GET /auth/google
 // @desc    Initiate Google OAuth flow
 // @access  Public
-router.get('/google',
+router.get('/google', (req, res, next) => {
+  // Store returnTo in session for post-auth redirect
+  if (req.query.returnTo) {
+    req.session.returnTo = req.query.returnTo;
+  }
   passport.authenticate('google', {
     scope: ['profile', 'email']
-  })
-);
+  })(req, res, next);
+});
 
 // @route   GET /auth/google/callback
 // @desc    Google OAuth callback
@@ -20,8 +24,16 @@ router.get('/google/callback',
     failureMessage: true
   }),
   (req, res) => {
-    // Successful authentication
-    res.redirect('/admin/dashboard');
+    // Check for returnTo in session
+    const returnTo = req.session.returnTo;
+    delete req.session.returnTo;
+
+    // Redirect based on role
+    if (req.user && req.user.role === 'articleEditor') {
+      res.redirect(returnTo || '/article-editor');
+    } else {
+      res.redirect(returnTo || '/admin/dashboard');
+    }
   }
 );
 

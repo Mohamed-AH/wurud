@@ -34,6 +34,13 @@
               <%= locale === 'ar' ? 'تواصل معنا' : 'Contact Us' %>
             </a>
           </li>
+          <% if (siteSettings && siteSettings.articleEditor && siteSettings.articleEditor.showLoginLink) { %>
+          <li>
+            <a href="/article-editor" style="opacity: 0.6; font-size: 13px;">
+              <%= locale === 'ar' ? 'دخول المحررين' : 'Editor Login' %>
+            </a>
+          </li>
+          <% } %>
         </ul>
       </div>
 

@@ -54,6 +54,32 @@ const articleSchema = new mongoose.Schema({
     type: Boolean,
     default: true,
     index: true
+  },
+  // Edit history tracking
+  editHistory: [{
+    editedBy: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: 'Admin',
+      required: true
+    },
+    editedAt: {
+      type: Date,
+      default: Date.now
+    },
+    fieldsChanged: [String],
+    changes: [{
+      field: String,
+      oldValue: String,
+      newValue: String
+    }],
+    changeDescription: String
+  }],
+  lastEditedBy: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'Admin'
+  },
+  lastEditedAt: {
+    type: Date
   }
 }, {
   timestamps: true

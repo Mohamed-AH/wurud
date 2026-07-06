@@ -34,6 +34,7 @@ router.get('/login', (req, res) => {
   }
 
   res.render('admin/login', {
+    layout: false,
     title: 'Admin Login',
     errorMessage
   });
@@ -1888,6 +1889,35 @@ router.post('/users/:id/toggle-active', isSuperAdmin, async (req, res) => {
   }
 });
 
+// @route   POST /admin/users/:id/delete
+// @desc    Permanently delete a user
+// @access  Private (Super Admin only)
+router.post('/users/:id/delete', isSuperAdmin, async (req, res) => {
+  try {
+    const { Admin } = require('../../models');
+
+    // Prevent deleting own account
+    if (req.params.id === req.user._id.toString()) {
+      return res.status(400).json({
+        success: false,
+        message: 'Cannot delete your own account'
+      });
+    }
+
+    const user = await Admin.findById(req.params.id);
+    if (!user) {
+      return res.status(404).json({ success: false, message: 'User not found' });
+    }
+
+    await Admin.findByIdAndDelete(req.params.id);
+
+    res.json({ success: true, message: 'User permanently deleted' });
+  } catch (error) {
+    console.error('Delete user error:', error);
+    res.status(500).json({ success: false, message: 'Error deleting user' });
+  }
+});
+
 // ==========================================
 // Schedule Management Routes
 // ==========================================
@@ -3001,6 +3031,205 @@ router.post('/articles/bulk', isAdmin, async (req, res) => {
   } catch (error) {
     console.error('Bulk action error:', error);
     res.status(500).json({ success: false, message: 'Error performing bulk action' });
+  }
+});
+
+// ========================================
+// ARTICLE EDITORS MANAGEMENT ROUTES
+// ========================================
+
+// @route   GET /admin/article-editors
+// @desc    Manage article editors
+// @access  Private (Super Admin only)
+router.get('/article-editors', isSuperAdmin, async (req, res) => {
+  try {
+    const { Admin, SiteSettings } = require('../../models');
+
+    // Get all article editors
+    const editors = await Admin.find({ role: 'articleEditor' })
+      .sort({ createdAt: -1 })
+      .lean();
+
+    // Get site settings for login link toggle
+    const settings = await SiteSettings.getSettings();
+
+    res.render('admin/article-editors', {
+      title: 'Article Editors',
+      editors,
+      showLoginLink: settings.articleEditor?.showLoginLink ?? true,
+      user: req.user
+    });
+  } catch (error) {
+    console.error('Article editors list error:', error);
+    res.status(500).send('Error loading article editors');
+  }
+});
+
+// @route   POST /admin/article-editors/add
+// @desc    Add a new article editor
+// @access  Private (Super Admin only)
+router.post('/article-editors/add', isSuperAdmin, async (req, res) => {
+  try {
+    const { Admin } = require('../../models');
+    const { email, displayName } = req.body;
+
+    if (!email) {
+      return res.status(400).json({ success: false, message: 'Email is required' });
+    }
+
+    const normalizedEmail = email.toLowerCase().trim();
+
+    // Check if user already exists (read-only first to avoid overwriting admins)
+    const existingUser = await Admin.findOne({ email: normalizedEmail }, null, { lean: false });
+
+    if (existingUser) {
+      // Don't downgrade admins or editors
+      if (existingUser.role === 'admin' || existingUser.role === 'editor') {
+        return res.status(400).json({
+          success: false,
+          message: `This user is already a ${existingUser.role}. Cannot downgrade to article editor.`
+        });
+      }
+
+      // Already an article editor - just reactivate if needed
+      if (existingUser.role === 'articleEditor') {
+        if (existingUser.isActive) {
+          return res.status(400).json({ success: false, message: 'This user is already an article editor' });
+        }
+        // Reactivate
+        await Admin.findByIdAndUpdate(existingUser._id, { isActive: true });
+        return res.json({ success: true, message: 'Article editor reactivated' });
+      }
+    }
+
+    // Create new article editor
+    // Use a unique placeholder for googleId since the index is not sparse
+    // This gets replaced with the real Google ID when they first log in
+    const { randomUUID } = require('crypto');
+    const adminCollection = Admin.collection;
+    await adminCollection.insertOne({
+      googleId: `pending_${randomUUID()}`,
+      email: normalizedEmail,
+      displayName: displayName || normalizedEmail.split('@')[0],
+      role: 'articleEditor',
+      isActive: true,
+      createdAt: new Date(),
+      updatedAt: new Date()
+    });
+
+    res.json({ success: true, message: 'Article editor added successfully' });
+  } catch (error) {
+    console.error('Add article editor error:', error);
+    if (error.code === 11000) {
+      return res.status(400).json({ success: false, message: 'This email is already registered' });
+    }
+    res.status(500).json({ success: false, message: 'Error adding article editor' });
+  }
+});
+
+// @route   POST /admin/article-editors/:id/remove
+// @desc    Remove article editor access (deactivate)
+// @access  Private (Super Admin only)
+router.post('/article-editors/:id/remove', isSuperAdmin, async (req, res) => {
+  try {
+    const { Admin } = require('../../models');
+
+    const user = await Admin.findById(req.params.id);
+    if (!user) {
+      return res.status(404).json({ success: false, message: 'User not found' });
+    }
+
+    // Deactivate the user
+    user.isActive = false;
+    await user.save();
+
+    res.json({ success: true, message: 'Article editor access removed' });
+  } catch (error) {
+    console.error('Remove article editor error:', error);
+    res.status(500).json({ success: false, message: 'Error removing article editor' });
+  }
+});
+
+// @route   POST /admin/article-editors/:id/reactivate
+// @desc    Reactivate article editor
+// @access  Private (Super Admin only)
+router.post('/article-editors/:id/reactivate', isSuperAdmin, async (req, res) => {
+  try {
+    const { Admin } = require('../../models');
+
+    const user = await Admin.findById(req.params.id);
+    if (!user) {
+      return res.status(404).json({ success: false, message: 'User not found' });
+    }
+
+    user.isActive = true;
+    await user.save();
+
+    res.json({ success: true, message: 'Article editor reactivated' });
+  } catch (error) {
+    console.error('Reactivate article editor error:', error);
+    res.status(500).json({ success: false, message: 'Error reactivating article editor' });
+  }
+});
+
+// @route   POST /admin/article-editors/:id/delete
+// @desc    Permanently delete article editor from database
+// @access  Private (Super Admin only)
+router.post('/article-editors/:id/delete', isSuperAdmin, async (req, res) => {
+  try {
+    const { Admin } = require('../../models');
+
+    const user = await Admin.findById(req.params.id);
+    if (!user) {
+      return res.status(404).json({ success: false, message: 'User not found' });
+    }
+
+    // Only allow deleting articleEditor role users (safety check)
+    if (user.role !== 'articleEditor') {
+      return res.status(403).json({
+        success: false,
+        message: 'Can only delete articleEditor accounts from this page'
+      });
+    }
+
+    await Admin.findByIdAndDelete(req.params.id);
+
+    res.json({ success: true, message: 'Article editor permanently deleted' });
+  } catch (error) {
+    console.error('Delete article editor error:', error);
+    res.status(500).json({ success: false, message: 'Error deleting article editor' });
+  }
+});
+
+// @route   POST /admin/article-editors/toggle-login
+// @desc    Toggle article editor login link visibility
+// @access  Private (Super Admin only)
+router.post('/article-editors/toggle-login', isSuperAdmin, async (req, res) => {
+  try {
+    const { SiteSettings } = require('../../models');
+    const { invalidateCache } = require('../../middleware/siteSettings');
+
+    const settings = await SiteSettings.getSettings();
+    const currentValue = settings.articleEditor?.showLoginLink ?? true;
+
+    // Toggle the value
+    settings.articleEditor = settings.articleEditor || {};
+    settings.articleEditor.showLoginLink = !currentValue;
+    await settings.save();
+
+    // Invalidate cached settings
+    invalidateCache();
+
+    res.json({
+      success: true,
+      showLoginLink: settings.articleEditor.showLoginLink,
+      message: settings.articleEditor.showLoginLink
+        ? 'Login link is now visible'
+        : 'Login link is now hidden'
+    });
+  } catch (error) {
+    console.error('Toggle login link error:', error);
+    res.status(500).json({ success: false, message: 'Error toggling login link' });
   }
 });
 
