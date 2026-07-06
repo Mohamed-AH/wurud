@@ -164,7 +164,7 @@ router.post('/article/:id', isArticleEditorAPI, async (req, res) => {
     const { title, content, changeDescription } = req.body;
 
     const query = buildArticleQuery(req.params.id);
-    const article = await Article.findOne(query);
+    const article = await Article.findOne(query).lean();
 
     if (!article) {
       return res.status(404).json({
@@ -176,6 +176,7 @@ router.post('/article/:id', isArticleEditorAPI, async (req, res) => {
     // Track changes - only title and content allowed for editors
     const changes = [];
     const fieldsChanged = [];
+    const updateFields = {};
 
     if (title !== undefined && title !== article.title) {
       changes.push({
@@ -184,7 +185,7 @@ router.post('/article/:id', isArticleEditorAPI, async (req, res) => {
         newValue: title
       });
       fieldsChanged.push('title');
-      article.title = title;
+      updateFields.title = title;
     }
 
     if (content !== undefined && content !== article.content) {
@@ -194,10 +195,9 @@ router.post('/article/:id', isArticleEditorAPI, async (req, res) => {
         newValue: content
       });
       fieldsChanged.push('content');
-      article.content = content;
+      updateFields.content = content;
     }
 
-    // Only save if there are actual changes
     if (changes.length === 0) {
       return res.json({
         success: true,
@@ -206,23 +206,21 @@ router.post('/article/:id', isArticleEditorAPI, async (req, res) => {
       });
     }
 
-    // Add to edit history (initialize array if it doesn't exist on older articles)
-    if (!article.editHistory) {
-      article.editHistory = [];
-    }
-    article.editHistory.push({
-      editedBy: req.user._id,
-      editedAt: new Date(),
-      fieldsChanged,
-      changes,
-      changeDescription: changeDescription || ''
+    updateFields.lastEditedBy = req.user._id;
+    updateFields.lastEditedAt = new Date();
+
+    await Article.updateOne({ _id: article._id }, {
+      $set: updateFields,
+      $push: {
+        editHistory: {
+          editedBy: req.user._id,
+          editedAt: new Date(),
+          fieldsChanged,
+          changes,
+          changeDescription: changeDescription || ''
+        }
+      }
     });
-
-    // Update last edited info
-    article.lastEditedBy = req.user._id;
-    article.lastEditedAt = new Date();
-
-    await article.save();
 
     res.json({
       success: true,
