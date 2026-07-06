@@ -1889,6 +1889,35 @@ router.post('/users/:id/toggle-active', isSuperAdmin, async (req, res) => {
   }
 });
 
+// @route   POST /admin/users/:id/delete
+// @desc    Permanently delete a user
+// @access  Private (Super Admin only)
+router.post('/users/:id/delete', isSuperAdmin, async (req, res) => {
+  try {
+    const { Admin } = require('../../models');
+
+    // Prevent deleting own account
+    if (req.params.id === req.user._id.toString()) {
+      return res.status(400).json({
+        success: false,
+        message: 'Cannot delete your own account'
+      });
+    }
+
+    const user = await Admin.findById(req.params.id);
+    if (!user) {
+      return res.status(404).json({ success: false, message: 'User not found' });
+    }
+
+    await Admin.findByIdAndDelete(req.params.id);
+
+    res.json({ success: true, message: 'User permanently deleted' });
+  } catch (error) {
+    console.error('Delete user error:', error);
+    res.status(500).json({ success: false, message: 'Error deleting user' });
+  }
+});
+
 // ==========================================
 // Schedule Management Routes
 // ==========================================
