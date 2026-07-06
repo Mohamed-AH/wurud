@@ -77,9 +77,9 @@ function normalizeText(text) {
     .replace(/[‐-―−﹘﹣－⁃]/g, '-')
     .replace(/–/g, '-')
     .replace(/—/g, '-')
-    // Normalize quotes
-    .replace(/[''`]/g, "'")
-    .replace(/[""„]/g, '"')
+    // Normalize quotes (using Unicode escapes for reliability)
+    .replace(/[‘’‚‛`´]/g, "'")  // ' ' ‚ ‛ ` ´
+    .replace(/[“”„‟«»]/g, '"')  // " " „ ‟ « »
     // Normalize Arabic characters that are often confused
     .replace(/ى$/g, 'ي')  // Final yaa
     .replace(/ة$/g, 'ه')  // Taa marbuta at end of word
@@ -349,7 +349,14 @@ async function main() {
             // Skip if just dash/quote differences after normalization
             const s = normalizeText(d.stored);
             const t = normalizeText(d.source);
-            return s !== t;
+            if (s === t) return false;
+            // Debug: show what's actually different
+            if (options.format === 'human' && d.stored.length === 1 && d.source.length === 1) {
+              const sc = d.stored.charCodeAt(0).toString(16);
+              const tc = d.source.charCodeAt(0).toString(16);
+              console.log(`  [DEBUG] stored U+${sc} source U+${tc}`);
+            }
+            return true;
           }
           return true;
         });
