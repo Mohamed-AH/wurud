@@ -4,11 +4,8 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title><%= t('admin_login_title') %> - <%= t('admin_title') %></title>
-  <link rel="stylesheet" href="/css/admin.css">
-  <% if (adminIsRTL) { %>
   <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link href="https://fonts.googleapis.com/css2?family=Noto+Naskh+Arabic:wght@400;500;600;700&display=swap" rel="stylesheet">
-  <% } %>
+  <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;500;600;700&display=swap" rel="stylesheet">
   <style>
     * {
       margin: 0;
@@ -22,18 +19,14 @@
     }
 
     body {
+      font-family: 'Cairo', sans-serif;
       background: linear-gradient(135deg, #2C1508 0%, #5A6944 100%);
       min-height: 100vh;
+      min-height: 100dvh;
       display: flex;
       justify-content: center;
       align-items: center;
       padding: 20px;
-      position: fixed;
-      top: 0;
-      left: 0;
-      right: 0;
-      bottom: 0;
-      overflow: auto;
     }
 
     .login-container {
