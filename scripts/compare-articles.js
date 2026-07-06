@@ -3,7 +3,7 @@
  * Article Content Comparison Script
  *
  * Compares article body text stored in database against original source URLs.
- * Detects copy-paste errors by diffing the content.
+ * Shows exact character differences - NO normalization.
  *
  * STRICTLY READ-ONLY - Makes no changes to the database.
  *
@@ -14,16 +14,11 @@
  *   --limit N       Only check first N articles (default: all)
  *   --start N       Start from article shortId N (default: 1)
  *   --type TYPE     Only check articles of type (Asdaa|TelegramArticle)
- *   --verbose       Show detailed comparison output
  *   --output FILE   Write report to file (default: stdout)
  *   --delay MS      Delay between requests in ms (default: 500)
  *
  * Environment:
  *   MONGODB_URI     MongoDB connection string (from .env)
- *
- * Example:
- *   node scripts/compare-articles.js --limit 10 --verbose
- *   node scripts/compare-articles.js --type Asdaa --output report.txt
  */
 
 require('dotenv').config();
@@ -36,7 +31,6 @@ const options = {
   limit: null,
   start: 1,
   type: null,
-  verbose: false,
   output: null,
   delay: 500
 };
@@ -52,9 +46,6 @@ for (let i = 0; i < args.length; i++) {
     case '--type':
       options.type = args[++i];
       break;
-    case '--verbose':
-      options.verbose = true;
-      break;
     case '--output':
       options.output = args[++i];
       break;
@@ -65,7 +56,7 @@ for (let i = 0; i < args.length; i++) {
       console.log(`
 Article Content Comparison Script
 
-Compares article body text stored in database against original source URLs.
+Shows EXACT character differences between stored and source content.
 STRICTLY READ-ONLY - Makes no changes to the database.
 
 Usage: node scripts/compare-articles.js [options]
@@ -74,19 +65,14 @@ Options:
   --limit N       Only check first N articles (default: all)
   --start N       Start from article shortId N (default: 1)
   --type TYPE     Only check articles of type (Asdaa|TelegramArticle)
-  --verbose       Show detailed comparison output
   --output FILE   Write report to file (default: stdout)
   --delay MS      Delay between requests in ms (default: 500)
-
-Environment:
-  MONGODB_URI     MongoDB connection string (from .env)
 `);
       process.exit(0);
   }
 }
 
 // Output helper
-let outputStream = process.stdout;
 function log(msg) {
   if (options.output) {
     fs.appendFileSync(options.output, msg + '\n');
@@ -95,13 +81,14 @@ function log(msg) {
   }
 }
 
-// Strip HTML tags and normalize whitespace
+// Strip HTML tags only - preserve exact text
 function stripHtml(html) {
   if (!html) return '';
   return html
-    // Remove HTML tags
-    .replace(/<[^>]+>/g, ' ')
-    // Decode common HTML entities
+    .replace(/<br\s*\/?>/gi, '\n')
+    .replace(/<\/p>/gi, '\n')
+    .replace(/<\/div>/gi, '\n')
+    .replace(/<[^>]+>/g, '')
     .replace(/&nbsp;/gi, ' ')
     .replace(/&amp;/gi, '&')
     .replace(/&lt;/gi, '<')
@@ -111,55 +98,28 @@ function stripHtml(html) {
     .replace(/&mdash;/gi, '—')
     .replace(/&ndash;/gi, '–')
     .replace(/&hellip;/gi, '...')
-    .replace(/&#\d+;/g, '') // Remove numeric entities
-    // Normalize whitespace
-    .replace(/\s+/g, ' ')
-    .trim();
-}
-
-// Normalize Arabic text for comparison
-function normalizeArabic(text) {
-  if (!text) return '';
-  return text
-    // Normalize alef variants
-    .replace(/[أإآ]/g, 'ا')
-    // Normalize taa marbuta
-    .replace(/ة/g, 'ه')
-    // Normalize yaa
-    .replace(/ى/g, 'ي')
-    // Remove diacritics (tashkeel)
-    .replace(/[ً-ٟ]/g, '')
-    // Remove tatweel
-    .replace(/ـ/g, '')
-    // Normalize whitespace
-    .replace(/\s+/g, ' ')
+    .replace(/&#(\d+);/g, (_, code) => String.fromCharCode(code))
+    .replace(/\r\n/g, '\n')
+    .replace(/\n{3,}/g, '\n\n')
     .trim();
 }
 
 // Extract article content from Telegram post
 function extractTelegramContent(html) {
-  // Telegram posts have content in .tgme_widget_message_text
   const match = html.match(/<div[^>]*class="[^"]*tgme_widget_message_text[^"]*"[^>]*>([\s\S]*?)<\/div>/i);
   if (match) {
     return stripHtml(match[1]);
-  }
-  // Fallback: try to find any substantial text block
-  const textMatch = html.match(/<div[^>]*class="[^"]*message[^"]*"[^>]*>([\s\S]*?)<\/div>/i);
-  if (textMatch) {
-    return stripHtml(textMatch[1]);
   }
   return null;
 }
 
 // Extract article content from Asdaa page
 function extractAsdaaContent(html) {
-  // Asdaa articles typically have content in article or main content div
-  // Try various selectors
   const patterns = [
     /<article[^>]*>([\s\S]*?)<\/article>/i,
-    /<div[^>]*class="[^"]*content[^"]*"[^>]*>([\s\S]*?)<\/div>/i,
-    /<div[^>]*class="[^"]*post[^"]*"[^>]*>([\s\S]*?)<\/div>/i,
-    /<main[^>]*>([\s\S]*?)<\/main>/i
+    /<div[^>]*class="[^"]*entry-content[^"]*"[^>]*>([\s\S]*?)<\/div>/i,
+    /<div[^>]*class="[^"]*post-content[^"]*"[^>]*>([\s\S]*?)<\/div>/i,
+    /<div[^>]*class="[^"]*content[^"]*"[^>]*>([\s\S]*?)<\/div>/i
   ];
 
   for (const pattern of patterns) {
@@ -169,6 +129,70 @@ function extractAsdaaContent(html) {
     }
   }
   return null;
+}
+
+// Find all differences between two strings
+function findAllDifferences(stored, source) {
+  const diffs = [];
+
+  // Normalize line endings for comparison but preserve content
+  const storedLines = stored.split('\n').map(l => l.trim()).filter(l => l);
+  const sourceLines = source.split('\n').map(l => l.trim()).filter(l => l);
+
+  // Compare as single strings for character-level diff
+  const storedText = storedLines.join(' ');
+  const sourceText = sourceLines.join(' ');
+
+  if (storedText === sourceText) {
+    return { identical: true, diffs: [] };
+  }
+
+  // Find character-level differences
+  const minLen = Math.min(storedText.length, sourceText.length);
+  let diffStart = -1;
+
+  for (let i = 0; i < minLen; i++) {
+    if (storedText[i] !== sourceText[i]) {
+      if (diffStart === -1) diffStart = i;
+
+      // Capture this difference
+      const contextStart = Math.max(0, i - 15);
+      const contextEnd = Math.min(minLen, i + 15);
+
+      diffs.push({
+        position: i,
+        storedChar: storedText[i],
+        sourceChar: sourceText[i],
+        storedCharCode: storedText.charCodeAt(i),
+        sourceCharCode: sourceText.charCodeAt(i),
+        storedContext: storedText.substring(contextStart, contextEnd),
+        sourceContext: sourceText.substring(contextStart, contextEnd)
+      });
+
+      // Skip ahead to find next distinct difference (avoid reporting same region multiple times)
+      while (i < minLen - 1 && storedText[i + 1] !== sourceText[i + 1]) {
+        i++;
+      }
+    }
+  }
+
+  // Check for length difference
+  if (storedText.length !== sourceText.length) {
+    diffs.push({
+      type: 'length',
+      storedLength: storedText.length,
+      sourceLength: sourceText.length,
+      difference: storedText.length - sourceText.length,
+      storedExtra: storedText.length > sourceText.length
+        ? storedText.substring(sourceText.length, sourceText.length + 100)
+        : null,
+      sourceExtra: sourceText.length > storedText.length
+        ? sourceText.substring(storedText.length, storedText.length + 100)
+        : null
+    });
+  }
+
+  return { identical: false, diffs };
 }
 
 // Fetch content from URL with retry
@@ -203,59 +227,27 @@ async function fetchUrl(url, retries = 3) {
   }
 }
 
-// Simple diff - returns differences
-function findDifferences(stored, fetched) {
-  const storedNorm = normalizeArabic(stored);
-  const fetchedNorm = normalizeArabic(fetched);
-
-  if (storedNorm === fetchedNorm) {
-    return { identical: true };
-  }
-
-  // Calculate similarity percentage
-  const longer = storedNorm.length > fetchedNorm.length ? storedNorm : fetchedNorm;
-  const shorter = storedNorm.length > fetchedNorm.length ? fetchedNorm : storedNorm;
-
-  let matches = 0;
-  const windowSize = 50;
-
-  for (let i = 0; i < shorter.length - windowSize; i += windowSize) {
-    const chunk = shorter.substring(i, i + windowSize);
-    if (longer.includes(chunk)) {
-      matches += windowSize;
-    }
-  }
-
-  const similarity = shorter.length > 0 ? Math.round((matches / shorter.length) * 100) : 0;
-
-  // Find first difference position
-  let firstDiffPos = 0;
-  const minLen = Math.min(storedNorm.length, fetchedNorm.length);
-  for (let i = 0; i < minLen; i++) {
-    if (storedNorm[i] !== fetchedNorm[i]) {
-      firstDiffPos = i;
-      break;
-    }
-    firstDiffPos = i + 1;
-  }
-
-  return {
-    identical: false,
-    similarity,
-    storedLength: stored.length,
-    fetchedLength: fetched.length,
-    lengthDiff: Math.abs(stored.length - fetched.length),
-    firstDiffPos,
-    storedContext: stored.substring(Math.max(0, firstDiffPos - 20), firstDiffPos + 50),
-    fetchedContext: fetched.substring(Math.max(0, firstDiffPos - 20), firstDiffPos + 50)
-  };
-}
-
 function sleep(ms) {
   return new Promise(resolve => setTimeout(resolve, ms));
 }
 
-// Define Article schema inline (read-only, no model modification)
+// Format character for display
+function formatChar(char, code) {
+  if (char === ' ') return `[SPACE]`;
+  if (char === '\n') return `[NEWLINE]`;
+  if (char === '\t') return `[TAB]`;
+  // Show Arabic diacritics clearly
+  if (code >= 0x064B && code <= 0x0652) {
+    const names = {
+      0x064B: 'FATHATAN', 0x064C: 'DAMMATAN', 0x064D: 'KASRATAN',
+      0x064E: 'FATHA', 0x064F: 'DAMMA', 0x0650: 'KASRA',
+      0x0651: 'SHADDA', 0x0652: 'SUKUN'
+    };
+    return `[${names[code] || 'HARAKA'}]`;
+  }
+  return `"${char}" (U+${code.toString(16).toUpperCase().padStart(4, '0')})`;
+}
+
 const articleSchema = new mongoose.Schema({
   shortId: Number,
   type: String,
@@ -266,14 +258,12 @@ const articleSchema = new mongoose.Schema({
 }, { strict: false });
 
 async function main() {
-  log('='.repeat(60));
-  log('Article Content Comparison Tool');
-  log('='.repeat(60));
+  log('='.repeat(70));
+  log('Article Content Comparison - EXACT DIFF (No Normalization)');
+  log('='.repeat(70));
   log(`Started: ${new Date().toISOString()}`);
-  log(`Mode: READ-ONLY`);
-  log('');
+  log(`Mode: READ-ONLY\n`);
 
-  // Connect to database
   const mongoUri = process.env.MONGODB_URI;
   if (!mongoUri) {
     log('ERROR: MONGODB_URI not set in .env file');
@@ -282,16 +272,13 @@ async function main() {
 
   log('Connecting to database...');
   await mongoose.connect(mongoUri, {
-    // Read-only connection options
     readPreference: 'secondaryPreferred',
     maxPoolSize: 5
   });
-  log('Connected to database\n');
+  log('Connected.\n');
 
-  // Get Article model
   const Article = mongoose.model('Article', articleSchema, 'articles');
 
-  // Build query
   const query = { sourceUrl: { $exists: true, $ne: '' } };
   if (options.start > 1) {
     query.shortId = { $gte: options.start };
@@ -300,7 +287,6 @@ async function main() {
     query.type = options.type;
   }
 
-  // Fetch articles
   let articlesQuery = Article.find(query)
     .select('shortId type sourceUrl title content lastEditedAt')
     .sort({ shortId: 1 })
@@ -313,13 +299,6 @@ async function main() {
   const articles = await articlesQuery;
   log(`Found ${articles.length} articles to check\n`);
 
-  if (articles.length === 0) {
-    log('No articles to check.');
-    await mongoose.disconnect();
-    return;
-  }
-
-  // Statistics
   const stats = {
     total: articles.length,
     checked: 0,
@@ -329,27 +308,20 @@ async function main() {
     noSourceContent: 0
   };
 
-  const differences = [];
-
-  log('Checking articles...\n');
-  log('-'.repeat(60));
+  const allDifferences = [];
 
   for (const article of articles) {
     stats.checked++;
     const prefix = `[${stats.checked}/${stats.total}] #${article.shortId}`;
 
     try {
-      // Skip if no source URL
       if (!article.sourceUrl) {
-        log(`${prefix}: No source URL - skipped`);
         stats.noSourceContent++;
         continue;
       }
 
-      // Fetch source content
       const html = await fetchUrl(article.sourceUrl);
 
-      // Extract content based on type
       let sourceContent;
       if (article.type === 'TelegramArticle' || article.sourceUrl.includes('t.me')) {
         sourceContent = extractTelegramContent(html);
@@ -363,36 +335,50 @@ async function main() {
         continue;
       }
 
-      // Get stored content (strip HTML)
       const storedContent = stripHtml(article.content);
+      const result = findAllDifferences(storedContent, sourceContent);
 
-      // Compare
-      const diff = findDifferences(storedContent, sourceContent);
-
-      if (diff.identical) {
-        if (options.verbose) {
-          log(`${prefix}: OK (identical)`);
-        }
+      if (result.identical) {
         stats.identical++;
       } else {
-        const status = diff.similarity >= 90 ? 'MINOR' : 'MAJOR';
-        log(`${prefix}: ${status} DIFF (${diff.similarity}% similar, ${diff.lengthDiff} chars diff)`);
+        stats.different++;
 
-        if (options.verbose) {
-          log(`  Stored (${diff.storedLength} chars): "${diff.storedContext.substring(0, 80)}..."`);
-          log(`  Source (${diff.fetchedLength} chars): "${diff.fetchedContext.substring(0, 80)}..."`);
+        log('');
+        log('='.repeat(70));
+        log(`DIFFERENCES FOUND: #${article.shortId}`);
+        log(`Title: ${article.title}`);
+        log(`URL: ${article.sourceUrl}`);
+        log(`Edited: ${article.lastEditedAt ? 'YES' : 'NO'}`);
+        log('-'.repeat(70));
+
+        for (const diff of result.diffs) {
+          if (diff.type === 'length') {
+            log(`\nLENGTH DIFFERENCE:`);
+            log(`  Stored: ${diff.storedLength} chars`);
+            log(`  Source: ${diff.sourceLength} chars`);
+            log(`  Diff: ${diff.difference > 0 ? '+' : ''}${diff.difference} chars`);
+            if (diff.storedExtra) {
+              log(`  Extra in stored: "${diff.storedExtra}..."`);
+            }
+            if (diff.sourceExtra) {
+              log(`  Missing from stored: "${diff.sourceExtra}..."`);
+            }
+          } else {
+            log(`\nCHAR DIFF at position ${diff.position}:`);
+            log(`  Stored: ${formatChar(diff.storedChar, diff.storedCharCode)}`);
+            log(`  Source: ${formatChar(diff.sourceChar, diff.sourceCharCode)}`);
+            log(`  Context stored: "...${diff.storedContext}..."`);
+            log(`  Context source: "...${diff.sourceContext}..."`);
+          }
         }
 
-        differences.push({
+        allDifferences.push({
           shortId: article.shortId,
-          title: article.title.substring(0, 50),
-          sourceUrl: article.sourceUrl,
-          similarity: diff.similarity,
-          lengthDiff: diff.lengthDiff,
+          title: article.title,
+          url: article.sourceUrl,
+          diffCount: result.diffs.length,
           wasEdited: !!article.lastEditedAt
         });
-
-        stats.different++;
       }
 
     } catch (error) {
@@ -400,41 +386,30 @@ async function main() {
       stats.fetchError++;
     }
 
-    // Rate limiting
     await sleep(options.delay);
   }
 
-  // Summary
-  log('');
-  log('='.repeat(60));
+  log('\n');
+  log('='.repeat(70));
   log('SUMMARY');
-  log('='.repeat(60));
-  log(`Total articles:     ${stats.total}`);
-  log(`Checked:            ${stats.checked}`);
+  log('='.repeat(70));
+  log(`Total:              ${stats.total}`);
   log(`Identical:          ${stats.identical}`);
-  log(`Different:          ${stats.different}`);
+  log(`With differences:   ${stats.different}`);
   log(`Fetch errors:       ${stats.fetchError}`);
   log(`No source content:  ${stats.noSourceContent}`);
-  log('');
 
-  if (differences.length > 0) {
+  if (allDifferences.length > 0) {
+    log('\n');
     log('ARTICLES WITH DIFFERENCES:');
-    log('-'.repeat(60));
-    differences
-      .sort((a, b) => a.similarity - b.similarity) // Most different first
-      .forEach(d => {
-        const editMark = d.wasEdited ? ' [EDITED]' : '';
-        log(`#${d.shortId}: ${d.similarity}% similar, ${d.lengthDiff} chars diff${editMark}`);
-        log(`  Title: ${d.title}`);
-        log(`  URL: ${d.sourceUrl}`);
-        log('');
-      });
+    log('-'.repeat(70));
+    allDifferences.forEach(d => {
+      log(`#${d.shortId} (${d.diffCount} diffs)${d.wasEdited ? ' [EDITED]' : ''}: ${d.title.substring(0, 50)}`);
+    });
   }
 
-  log(`Completed: ${new Date().toISOString()}`);
-
+  log(`\nCompleted: ${new Date().toISOString()}`);
   await mongoose.disconnect();
-  log('Database connection closed.');
 }
 
 main().catch(err => {
