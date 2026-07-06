@@ -4,6 +4,7 @@
  * Usage: node scripts/restore-admin-role.js <email>
  */
 
+require('dotenv').config();
 const mongoose = require('mongoose');
 
 const email = process.argv[2];
