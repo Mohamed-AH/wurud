@@ -1,6 +1,6 @@
 <%- include('layout', { body: `
 <header class="editor-header">
-  <h1>لوحة تحرير المقالات</h1>
+  <h1>تحرير المقالات</h1>
   <div class="header-actions">
     <div class="user-info">
       ${user.profilePhoto ? `<img src="${user.profilePhoto}" alt="" class="user-avatar">` : ''}
@@ -11,258 +11,394 @@
 </header>
 
 <main class="editor-main">
-  <!-- Filter Tabs -->
-  <div class="filter-tabs">
-    <a href="/article-editor?filter=all${search ? '&search=' + encodeURIComponent(search) : ''}"
-       class="filter-tab ${!filter || filter === 'all' ? 'active' : ''}">
-      الكل (${stats.total})
-    </a>
-    <a href="/article-editor?filter=not-edited${search ? '&search=' + encodeURIComponent(search) : ''}"
-       class="filter-tab ${filter === 'not-edited' ? 'active' : ''}">
-      لم يُحرر (${stats.notEdited})
-    </a>
-    <a href="/article-editor?filter=edited${search ? '&search=' + encodeURIComponent(search) : ''}"
-       class="filter-tab ${filter === 'edited' ? 'active' : ''}">
-      تم التحرير (${stats.edited})
-    </a>
+  <!-- Progress Section -->
+  <div class="progress-section">
+    <div class="progress-stats">
+      <span class="progress-text"><strong>${stats.edited}</strong> / ${stats.total}</span>
+      <span class="progress-percent">${Math.round((stats.edited / stats.total) * 100)}%</span>
+    </div>
+    <div class="progress-bar">
+      <div class="progress-fill" style="width: ${(stats.edited / stats.total) * 100}%"></div>
+    </div>
   </div>
 
-  <form class="search-box" method="GET" action="/article-editor">
-    <input type="hidden" name="filter" value="${filter || 'all'}">
-    <input
-      type="search"
-      name="search"
-      class="search-input"
-      placeholder="ابحث في المقالات..."
-      value="${search || ''}"
-    >
-    <button type="submit" class="btn btn-primary">بحث</button>
-    ${search ? `<a href="/article-editor?filter=${filter || 'all'}" class="btn btn-outline">مسح</a>` : ''}
-  </form>
-
-  <div class="card">
-    <div class="card-header">
-      <span class="card-title">المقالات (${pagination.totalCount})</span>
+  <!-- Controls Row -->
+  <div class="controls-row">
+    <div class="filter-pills">
+      <a href="/article-editor?filter=all${search ? '&search=' + encodeURIComponent(search) : ''}"
+         class="pill ${!filter || filter === 'all' ? 'active' : ''}">الكل</a>
+      <a href="/article-editor?filter=not-edited${search ? '&search=' + encodeURIComponent(search) : ''}"
+         class="pill ${filter === 'not-edited' ? 'active' : ''}">متبقي ${stats.notEdited}</a>
+      <a href="/article-editor?filter=edited${search ? '&search=' + encodeURIComponent(search) : ''}"
+         class="pill ${filter === 'edited' ? 'active' : ''}">مكتمل ${stats.edited}</a>
     </div>
 
-    ${articles.length > 0 ? `
-      <div class="article-list">
-        ${articles.map(article => `
-          <a href="/article-editor/article/${article.shortId || article._id}" class="article-item">
-            <div class="article-number">#${article.shortId}</div>
-            <div class="article-content">
-              <div class="article-title">${article.title}</div>
-              <div class="article-meta">
-                <span class="article-type">${article.type === 'Asdaa' ? 'أصداء' : 'تليجرام'}</span>
-                <span>${new Date(article.publishedAt).toLocaleDateString('ar-SA')}</span>
-              </div>
-            </div>
-            <div class="article-status">
-              ${article.lastEditedAt ? `
-                <span class="status-badge edited">تم التحرير</span>
-                <span class="edited-info">${article.lastEditedBy?.displayName || 'محرر'} - ${timeAgo(new Date(article.lastEditedAt))}</span>
-              ` : `
-                <span class="status-badge not-edited">لم يُحرر</span>
-              `}
-            </div>
-          </a>
-        `).join('')}
-      </div>
-
-      ${pagination.totalPages > 1 ? `
-        <nav class="pagination">
-          ${pagination.hasPrev ? `
-            <a href="/article-editor?page=${pagination.page - 1}&filter=${filter || 'all'}${search ? '&search=' + encodeURIComponent(search) : ''}" class="page-link">
-              ←
-            </a>
-          ` : ''}
-
-          ${Array.from({length: Math.min(5, pagination.totalPages)}, (_, i) => {
-            let pageNum;
-            if (pagination.totalPages <= 5) {
-              pageNum = i + 1;
-            } else if (pagination.page <= 3) {
-              pageNum = i + 1;
-            } else if (pagination.page >= pagination.totalPages - 2) {
-              pageNum = pagination.totalPages - 4 + i;
-            } else {
-              pageNum = pagination.page - 2 + i;
-            }
-            return `
-              <a href="/article-editor?page=${pageNum}&filter=${filter || 'all'}${search ? '&search=' + encodeURIComponent(search) : ''}"
-                 class="page-link ${pageNum === pagination.page ? 'active' : ''}">
-                ${pageNum}
-              </a>
-            `;
-          }).join('')}
-
-          ${pagination.hasNext ? `
-            <a href="/article-editor?page=${pagination.page + 1}&filter=${filter || 'all'}${search ? '&search=' + encodeURIComponent(search) : ''}" class="page-link">
-              →
-            </a>
-          ` : ''}
-        </nav>
-      ` : ''}
-    ` : `
-      <div class="empty-state">
-        <div class="empty-state-icon">📄</div>
-        <p>${search ? 'لا توجد نتائج للبحث' : 'لا توجد مقالات'}</p>
-      </div>
-    `}
+    <form class="jump-form" onsubmit="jumpToArticle(event)">
+      <input type="number" id="jumpInput" placeholder="رقم #" min="1" max="${stats.total}">
+      <button type="submit" class="jump-btn">انتقال</button>
+    </form>
   </div>
+
+  <!-- Search -->
+  <form class="search-row" method="GET" action="/article-editor">
+    <input type="hidden" name="filter" value="${filter || 'all'}">
+    <input type="search" name="search" class="search-input" placeholder="بحث..." value="${search || ''}">
+    ${search ? `<a href="/article-editor?filter=${filter || 'all'}" class="clear-btn">×</a>` : ''}
+  </form>
+
+  <!-- Article Table -->
+  ${articles.length > 0 ? `
+    <div class="article-table">
+      ${articles.map(article => `
+        <a href="/article-editor/article/${article.shortId || article._id}" class="article-row">
+          <span class="col-num">${article.shortId}</span>
+          <span class="col-status">
+            <span class="status-dot ${article.lastEditedAt ? 'edited' : ''}"></span>
+          </span>
+          <span class="col-title">${article.title}</span>
+          <span class="col-arrow">←</span>
+        </a>
+      `).join('')}
+    </div>
+
+    ${pagination.totalPages > 1 ? `
+      <nav class="pagination">
+        ${pagination.hasPrev ? `
+          <a href="/article-editor?page=${pagination.page - 1}&filter=${filter || 'all'}${search ? '&search=' + encodeURIComponent(search) : ''}" class="page-btn">→</a>
+        ` : ''}
+
+        <span class="page-info">${pagination.page} / ${pagination.totalPages}</span>
+
+        ${pagination.hasNext ? `
+          <a href="/article-editor?page=${pagination.page + 1}&filter=${filter || 'all'}${search ? '&search=' + encodeURIComponent(search) : ''}" class="page-btn">←</a>
+        ` : ''}
+      </nav>
+    ` : ''}
+  ` : `
+    <div class="empty-state">
+      <p>${search ? 'لا توجد نتائج' : 'لا توجد مقالات'}</p>
+    </div>
+  `}
 </main>
 
 <style>
-  .filter-tabs {
+  .editor-main {
+    max-width: 700px;
+    padding: 16px;
+  }
+
+  /* Progress Section */
+  .progress-section {
+    background: var(--card-bg);
+    border: 1px solid var(--border-gold);
+    border-radius: 10px;
+    padding: 14px 16px;
+    margin-bottom: 12px;
+  }
+
+  .progress-stats {
     display: flex;
-    gap: 8px;
-    margin-bottom: 16px;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 8px;
+    font-size: 14px;
+    color: var(--text-mid);
+  }
+
+  .progress-text strong {
+    font-size: 18px;
+    color: var(--gold-primary);
+  }
+
+  .progress-percent {
+    font-weight: 600;
+    color: var(--gold-primary);
+  }
+
+  .progress-bar {
+    height: 8px;
+    background: var(--gold-light);
+    border-radius: 4px;
+    overflow: hidden;
+  }
+
+  .progress-fill {
+    height: 100%;
+    background: var(--gold-primary);
+    border-radius: 4px;
+    transition: width 0.3s;
+  }
+
+  /* Controls Row */
+  .controls-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 12px;
     flex-wrap: wrap;
   }
 
-  .filter-tab {
-    padding: 8px 16px;
-    background: var(--card-bg);
-    border: 1px solid var(--border-gold);
-    border-radius: 20px;
-    color: var(--text-mid);
-    text-decoration: none;
-    font-size: 13px;
-    font-weight: 500;
-    transition: all 0.2s;
+  .filter-pills {
+    display: flex;
+    gap: 6px;
   }
 
-  .filter-tab:hover {
+  .pill {
+    padding: 6px 12px;
+    background: var(--card-bg);
+    border: 1px solid var(--border-gold);
+    border-radius: 16px;
+    color: var(--text-mid);
+    text-decoration: none;
+    font-size: 12px;
+    font-weight: 500;
+    transition: all 0.2s;
+    white-space: nowrap;
+  }
+
+  .pill:hover {
     background: var(--gold-light);
   }
 
-  .filter-tab.active {
+  .pill.active {
     background: var(--gold-primary);
     color: white;
     border-color: var(--gold-primary);
   }
 
-  .article-item {
+  .jump-form {
+    display: flex;
+    gap: 6px;
+  }
+
+  .jump-form input {
+    width: 70px;
+    padding: 6px 10px;
+    border: 1px solid var(--border-gold);
+    border-radius: 6px;
+    font-size: 13px;
+    text-align: center;
+    font-family: inherit;
+  }
+
+  .jump-btn {
+    padding: 6px 12px;
+    background: var(--gold-primary);
+    color: white;
+    border: none;
+    border-radius: 6px;
+    font-size: 12px;
+    font-weight: 600;
+    cursor: pointer;
+    font-family: inherit;
+  }
+
+  /* Search Row */
+  .search-row {
+    display: flex;
+    gap: 8px;
+    margin-bottom: 12px;
+    position: relative;
+  }
+
+  .search-input {
+    flex: 1;
+    padding: 10px 14px;
+    border: 1px solid var(--border-gold);
+    border-radius: 8px;
+    font-size: 14px;
+    font-family: inherit;
+    background: var(--card-bg);
+  }
+
+  .search-input:focus {
+    outline: none;
+    border-color: var(--gold-primary);
+  }
+
+  .clear-btn {
+    position: absolute;
+    left: 10px;
+    top: 50%;
+    transform: translateY(-50%);
+    width: 24px;
+    height: 24px;
     display: flex;
     align-items: center;
-    gap: 12px;
-    padding: 14px 16px;
+    justify-content: center;
+    background: var(--text-muted);
+    color: white;
+    border-radius: 50%;
+    text-decoration: none;
+    font-size: 16px;
+    line-height: 1;
+  }
+
+  /* Article Table */
+  .article-table {
     background: var(--card-bg);
     border: 1px solid var(--border-gold);
     border-radius: 10px;
+    overflow: hidden;
+  }
+
+  .article-row {
+    display: flex;
+    align-items: center;
+    padding: 0 12px;
+    height: 44px;
     text-decoration: none;
     color: inherit;
-    transition: all 0.2s;
+    border-bottom: 1px solid var(--border-gold);
+    transition: background 0.15s;
   }
 
-  .article-item:hover {
-    border-color: var(--gold-primary);
-    transform: translateY(-1px);
+  .article-row:last-child {
+    border-bottom: none;
   }
 
-  .article-number {
-    min-width: 50px;
-    padding: 8px 0;
-    text-align: center;
-    font-size: 14px;
-    font-weight: 700;
-    color: var(--gold-primary);
+  .article-row:hover {
     background: var(--gold-light);
-    border-radius: 6px;
   }
 
-  .article-content {
-    flex: 1;
-    min-width: 0;
+  .article-row:active {
+    background: var(--border-gold);
   }
 
-  .article-title {
-    font-size: 14px;
+  .col-num {
+    min-width: 40px;
+    font-size: 13px;
     font-weight: 600;
+    color: var(--text-muted);
+  }
+
+  .col-status {
+    min-width: 24px;
+    display: flex;
+    align-items: center;
+  }
+
+  .status-dot {
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+    background: #D1D5DB;
+  }
+
+  .status-dot.edited {
+    background: #22C55E;
+  }
+
+  .col-title {
+    flex: 1;
+    font-size: 14px;
     color: var(--text-dark);
-    margin-bottom: 4px;
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
+    padding-left: 12px;
   }
 
-  .article-meta {
-    display: flex;
-    gap: 10px;
-    font-size: 11px;
+  .col-arrow {
     color: var(--text-muted);
+    font-size: 16px;
   }
 
-  .article-status {
+  /* Pagination */
+  .pagination {
     display: flex;
-    flex-direction: column;
-    align-items: flex-end;
-    gap: 4px;
-    min-width: 90px;
+    justify-content: center;
+    align-items: center;
+    gap: 16px;
+    margin-top: 16px;
+    padding: 12px;
   }
 
-  .status-badge {
-    padding: 4px 10px;
-    border-radius: 12px;
-    font-size: 11px;
-    font-weight: 600;
+  .page-btn {
+    width: 36px;
+    height: 36px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: var(--card-bg);
+    border: 1px solid var(--border-gold);
+    border-radius: 8px;
+    color: var(--text-mid);
+    text-decoration: none;
+    font-size: 18px;
+    transition: all 0.2s;
   }
 
-  .status-badge.edited {
-    background: #D4EDDA;
-    color: #155724;
+  .page-btn:hover {
+    background: var(--gold-light);
+    border-color: var(--gold-primary);
   }
 
-  .status-badge.not-edited {
-    background: #E9ECEF;
-    color: #6C757D;
+  .page-info {
+    font-size: 14px;
+    color: var(--text-mid);
+    font-weight: 500;
   }
 
-  .edited-info {
-    font-size: 10px;
+  /* Empty State */
+  .empty-state {
+    text-align: center;
+    padding: 48px 24px;
     color: var(--text-muted);
-    text-align: left;
+    background: var(--card-bg);
+    border: 1px solid var(--border-gold);
+    border-radius: 10px;
   }
 
-  @media (max-width: 600px) {
-    .article-item {
-      flex-wrap: wrap;
+  /* Mobile */
+  @media (max-width: 500px) {
+    .editor-main {
+      padding: 12px;
     }
 
-    .article-number {
-      min-width: 45px;
+    .controls-row {
+      flex-direction: column;
+      align-items: stretch;
+    }
+
+    .filter-pills {
+      justify-content: center;
+    }
+
+    .jump-form {
+      justify-content: center;
+    }
+
+    .article-row {
+      height: 48px;
+    }
+
+    .col-num {
+      min-width: 36px;
       font-size: 12px;
     }
 
-    .article-content {
-      flex: 1 1 calc(100% - 60px);
-    }
-
-    .article-status {
-      width: 100%;
-      flex-direction: row;
-      justify-content: flex-start;
-      align-items: center;
-      margin-top: 8px;
-      padding-top: 8px;
-      border-top: 1px solid var(--border-gold);
-    }
-
-    .edited-info {
-      text-align: right;
+    .col-title {
+      font-size: 13px;
     }
   }
 </style>
 
 <script>
-  function timeAgo(date) {
-    const seconds = Math.floor((new Date() - date) / 1000);
-
-    if (seconds < 60) return 'الآن';
-    if (seconds < 3600) return Math.floor(seconds / 60) + ' د';
-    if (seconds < 86400) return Math.floor(seconds / 3600) + ' س';
-    if (seconds < 604800) return Math.floor(seconds / 86400) + ' ي';
-    return date.toLocaleDateString('ar-SA');
+  function jumpToArticle(e) {
+    e.preventDefault();
+    const num = parseInt(document.getElementById('jumpInput').value);
+    if (num && num > 0) {
+      window.location.href = '/article-editor/article/' + num;
+    }
   }
+
+  // Auto-submit search on Enter
+  document.querySelector('.search-input').addEventListener('keyup', function(e) {
+    if (e.key === 'Enter') {
+      this.form.submit();
+    }
+  });
 </script>
 ` }) %>

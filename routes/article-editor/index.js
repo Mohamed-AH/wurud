@@ -52,7 +52,7 @@ router.get('/login', (req, res) => {
 router.get('/', isArticleEditor, async (req, res) => {
   try {
     const page = Math.max(1, parseInt(req.query.page) || 1);
-    const limit = 20;
+    const limit = 50;
     const skip = (page - 1) * limit;
     const search = req.query.search || '';
     const filter = req.query.filter || 'all';
