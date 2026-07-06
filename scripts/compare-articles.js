@@ -3,7 +3,7 @@
  * Article Content Comparison Script
  *
  * Compares article body text stored in database against original source URLs.
- * Shows exact character differences - NO normalization.
+ * Outputs machine-readable diff for automated corrections.
  *
  * STRICTLY READ-ONLY - Makes no changes to the database.
  *
@@ -14,74 +14,78 @@
  *   --limit N       Only check first N articles (default: all)
  *   --start N       Start from article shortId N (default: 1)
  *   --type TYPE     Only check articles of type (Asdaa|TelegramArticle)
- *   --output FILE   Write report to file (default: stdout)
+ *   --format FMT    Output format: json, jsonl, human (default: human)
+ *   --output FILE   Write to file (default: stdout)
  *   --delay MS      Delay between requests in ms (default: 500)
- *
- * Environment:
- *   MONGODB_URI     MongoDB connection string (from .env)
  */
 
 require('dotenv').config();
 const mongoose = require('mongoose');
 const fs = require('fs');
 
-// Parse command line arguments
 const args = process.argv.slice(2);
 const options = {
   limit: null,
   start: 1,
   type: null,
+  format: 'human',
   output: null,
   delay: 500
 };
 
 for (let i = 0; i < args.length; i++) {
   switch (args[i]) {
-    case '--limit':
-      options.limit = parseInt(args[++i], 10);
-      break;
-    case '--start':
-      options.start = parseInt(args[++i], 10);
-      break;
-    case '--type':
-      options.type = args[++i];
-      break;
-    case '--output':
-      options.output = args[++i];
-      break;
-    case '--delay':
-      options.delay = parseInt(args[++i], 10);
-      break;
+    case '--limit': options.limit = parseInt(args[++i], 10); break;
+    case '--start': options.start = parseInt(args[++i], 10); break;
+    case '--type': options.type = args[++i]; break;
+    case '--format': options.format = args[++i]; break;
+    case '--output': options.output = args[++i]; break;
+    case '--delay': options.delay = parseInt(args[++i], 10); break;
     case '--help':
       console.log(`
-Article Content Comparison Script
-
-Shows EXACT character differences between stored and source content.
-STRICTLY READ-ONLY - Makes no changes to the database.
+Article Content Comparison - Machine-Readable Output
 
 Usage: node scripts/compare-articles.js [options]
 
 Options:
-  --limit N       Only check first N articles (default: all)
-  --start N       Start from article shortId N (default: 1)
-  --type TYPE     Only check articles of type (Asdaa|TelegramArticle)
-  --output FILE   Write report to file (default: stdout)
-  --delay MS      Delay between requests in ms (default: 500)
+  --limit N       Only check first N articles
+  --start N       Start from article shortId N
+  --type TYPE     Filter by type (Asdaa|TelegramArticle)
+  --format FMT    Output format: json, jsonl, human (default: human)
+  --output FILE   Write to file (default: stdout)
+  --delay MS      Delay between requests (default: 500)
+
+Examples:
+  # JSON output for correction script
+  node scripts/compare-articles.js --format json --output diffs.json
+
+  # JSONL (one article per line) for streaming
+  node scripts/compare-articles.js --format jsonl --output diffs.jsonl
 `);
       process.exit(0);
   }
 }
 
-// Output helper
 function log(msg) {
-  if (options.output) {
+  if (options.output && options.format === 'human') {
     fs.appendFileSync(options.output, msg + '\n');
-  } else {
+  } else if (options.format === 'human') {
     console.log(msg);
   }
 }
 
-// Strip HTML tags only - preserve exact text
+function writeOutput(data) {
+  const content = options.format === 'json'
+    ? JSON.stringify(data, null, 2)
+    : data.map(d => JSON.stringify(d)).join('\n');
+
+  if (options.output) {
+    fs.writeFileSync(options.output, content);
+  } else {
+    console.log(content);
+  }
+}
+
 function stripHtml(html) {
   if (!html) return '';
   return html
@@ -104,16 +108,11 @@ function stripHtml(html) {
     .trim();
 }
 
-// Extract article content from Telegram post
 function extractTelegramContent(html) {
   const match = html.match(/<div[^>]*class="[^"]*tgme_widget_message_text[^"]*"[^>]*>([\s\S]*?)<\/div>/i);
-  if (match) {
-    return stripHtml(match[1]);
-  }
-  return null;
+  return match ? stripHtml(match[1]) : null;
 }
 
-// Extract article content from Asdaa page
 function extractAsdaaContent(html) {
   const patterns = [
     /<article[^>]*>([\s\S]*?)<\/article>/i,
@@ -121,107 +120,121 @@ function extractAsdaaContent(html) {
     /<div[^>]*class="[^"]*post-content[^"]*"[^>]*>([\s\S]*?)<\/div>/i,
     /<div[^>]*class="[^"]*content[^"]*"[^>]*>([\s\S]*?)<\/div>/i
   ];
-
   for (const pattern of patterns) {
     const match = html.match(pattern);
-    if (match) {
-      return stripHtml(match[1]);
-    }
+    if (match) return stripHtml(match[1]);
   }
   return null;
 }
 
-// Find all differences between two strings
-function findAllDifferences(stored, source) {
-  const diffs = [];
+// Find all character-level replacements needed
+function findReplacements(stored, source) {
+  const replacements = [];
 
-  // Normalize line endings for comparison but preserve content
-  const storedLines = stored.split('\n').map(l => l.trim()).filter(l => l);
-  const sourceLines = source.split('\n').map(l => l.trim()).filter(l => l);
-
-  // Compare as single strings for character-level diff
-  const storedText = storedLines.join(' ');
-  const sourceText = sourceLines.join(' ');
+  // Normalize to single line for position tracking
+  const storedText = stored.replace(/\s+/g, ' ').trim();
+  const sourceText = source.replace(/\s+/g, ' ').trim();
 
   if (storedText === sourceText) {
-    return { identical: true, diffs: [] };
+    return { identical: true, replacements: [] };
   }
 
-  // Find character-level differences
+  // Use longest common subsequence approach to find differences
   const minLen = Math.min(storedText.length, sourceText.length);
-  let diffStart = -1;
+  let i = 0;
 
-  for (let i = 0; i < minLen; i++) {
+  while (i < minLen) {
     if (storedText[i] !== sourceText[i]) {
-      if (diffStart === -1) diffStart = i;
+      // Found a difference - find the extent
+      let storedEnd = i;
+      let sourceEnd = i;
 
-      // Capture this difference
-      const contextStart = Math.max(0, i - 15);
-      const contextEnd = Math.min(minLen, i + 15);
-
-      diffs.push({
-        position: i,
-        storedChar: storedText[i],
-        sourceChar: sourceText[i],
-        storedCharCode: storedText.charCodeAt(i),
-        sourceCharCode: sourceText.charCodeAt(i),
-        storedContext: storedText.substring(contextStart, contextEnd),
-        sourceContext: sourceText.substring(contextStart, contextEnd)
-      });
-
-      // Skip ahead to find next distinct difference (avoid reporting same region multiple times)
-      while (i < minLen - 1 && storedText[i + 1] !== sourceText[i + 1]) {
-        i++;
+      // Look ahead to find where they sync up again
+      let synced = false;
+      for (let lookAhead = 1; lookAhead <= 50 && !synced; lookAhead++) {
+        // Try to find matching substring
+        for (let sOff = 0; sOff <= lookAhead; sOff++) {
+          for (let tOff = 0; tOff <= lookAhead; tOff++) {
+            if (i + sOff < storedText.length && i + tOff < sourceText.length) {
+              const storedChunk = storedText.substring(i + sOff, i + sOff + 10);
+              const sourceChunk = sourceText.substring(i + tOff, i + tOff + 10);
+              if (storedChunk === sourceChunk && storedChunk.length >= 5) {
+                storedEnd = i + sOff;
+                sourceEnd = i + tOff;
+                synced = true;
+                break;
+              }
+            }
+          }
+          if (synced) break;
+        }
       }
+
+      if (!synced) {
+        // Couldn't sync - just mark single char difference
+        storedEnd = i + 1;
+        sourceEnd = i + 1;
+      }
+
+      const storedSegment = storedText.substring(i, storedEnd);
+      const sourceSegment = sourceText.substring(i, sourceEnd);
+
+      if (storedSegment !== sourceSegment) {
+        replacements.push({
+          position: i,
+          stored: storedSegment,
+          source: sourceSegment,
+          storedCodes: [...storedSegment].map(c => c.charCodeAt(0)),
+          sourceCodes: [...sourceSegment].map(c => c.charCodeAt(0)),
+          context: {
+            before: storedText.substring(Math.max(0, i - 20), i),
+            after: storedText.substring(storedEnd, storedEnd + 20)
+          }
+        });
+      }
+
+      i = Math.max(storedEnd, sourceEnd);
+    } else {
+      i++;
     }
   }
 
-  // Check for length difference
+  // Handle length difference at end
   if (storedText.length !== sourceText.length) {
-    diffs.push({
-      type: 'length',
+    replacements.push({
+      type: 'length_diff',
       storedLength: storedText.length,
       sourceLength: sourceText.length,
-      difference: storedText.length - sourceText.length,
       storedExtra: storedText.length > sourceText.length
-        ? storedText.substring(sourceText.length, sourceText.length + 100)
+        ? storedText.substring(sourceText.length)
         : null,
       sourceExtra: sourceText.length > storedText.length
-        ? sourceText.substring(storedText.length, storedText.length + 100)
+        ? sourceText.substring(storedText.length)
         : null
     });
   }
 
-  return { identical: false, diffs };
+  return { identical: false, replacements };
 }
 
-// Fetch content from URL with retry
 async function fetchUrl(url, retries = 3) {
   for (let attempt = 1; attempt <= retries; attempt++) {
     try {
       const controller = new AbortController();
       const timeout = setTimeout(() => controller.abort(), 15000);
-
       const response = await fetch(url, {
         signal: controller.signal,
         headers: {
           'User-Agent': 'Mozilla/5.0 (compatible; ArticleChecker/1.0)',
-          'Accept': 'text/html,application/xhtml+xml',
-          'Accept-Language': 'ar,en;q=0.9'
+          'Accept': 'text/html',
+          'Accept-Language': 'ar,en'
         }
       });
-
       clearTimeout(timeout);
-
-      if (!response.ok) {
-        throw new Error(`HTTP ${response.status}`);
-      }
-
+      if (!response.ok) throw new Error(`HTTP ${response.status}`);
       return await response.text();
     } catch (error) {
-      if (attempt === retries) {
-        throw error;
-      }
+      if (attempt === retries) throw error;
       await sleep(1000 * attempt);
     }
   }
@@ -229,23 +242,6 @@ async function fetchUrl(url, retries = 3) {
 
 function sleep(ms) {
   return new Promise(resolve => setTimeout(resolve, ms));
-}
-
-// Format character for display
-function formatChar(char, code) {
-  if (char === ' ') return `[SPACE]`;
-  if (char === '\n') return `[NEWLINE]`;
-  if (char === '\t') return `[TAB]`;
-  // Show Arabic diacritics clearly
-  if (code >= 0x064B && code <= 0x0652) {
-    const names = {
-      0x064B: 'FATHATAN', 0x064C: 'DAMMATAN', 0x064D: 'KASRATAN',
-      0x064E: 'FATHA', 0x064F: 'DAMMA', 0x0650: 'KASRA',
-      0x0651: 'SHADDA', 0x0652: 'SUKUN'
-    };
-    return `[${names[code] || 'HARAKA'}]`;
-  }
-  return `"${char}" (U+${code.toString(16).toUpperCase().padStart(4, '0')})`;
 }
 
 const articleSchema = new mongoose.Schema({
@@ -258,67 +254,52 @@ const articleSchema = new mongoose.Schema({
 }, { strict: false });
 
 async function main() {
-  log('='.repeat(70));
-  log('Article Content Comparison - EXACT DIFF (No Normalization)');
-  log('='.repeat(70));
-  log(`Started: ${new Date().toISOString()}`);
-  log(`Mode: READ-ONLY\n`);
+  if (options.format === 'human') {
+    log('Article Content Comparison');
+    log('='.repeat(60));
+    log(`Started: ${new Date().toISOString()}\n`);
+  }
 
   const mongoUri = process.env.MONGODB_URI;
   if (!mongoUri) {
-    log('ERROR: MONGODB_URI not set in .env file');
+    console.error('ERROR: MONGODB_URI not set');
     process.exit(1);
   }
 
-  log('Connecting to database...');
   await mongoose.connect(mongoUri, {
     readPreference: 'secondaryPreferred',
     maxPoolSize: 5
   });
-  log('Connected.\n');
+
+  if (options.format === 'human') log('Connected to database.\n');
 
   const Article = mongoose.model('Article', articleSchema, 'articles');
 
   const query = { sourceUrl: { $exists: true, $ne: '' } };
-  if (options.start > 1) {
-    query.shortId = { $gte: options.start };
-  }
-  if (options.type) {
-    query.type = options.type;
-  }
+  if (options.start > 1) query.shortId = { $gte: options.start };
+  if (options.type) query.type = options.type;
 
   let articlesQuery = Article.find(query)
     .select('shortId type sourceUrl title content lastEditedAt')
     .sort({ shortId: 1 })
     .lean();
 
-  if (options.limit) {
-    articlesQuery = articlesQuery.limit(options.limit);
-  }
+  if (options.limit) articlesQuery = articlesQuery.limit(options.limit);
 
   const articles = await articlesQuery;
-  log(`Found ${articles.length} articles to check\n`);
 
-  const stats = {
-    total: articles.length,
-    checked: 0,
-    identical: 0,
-    different: 0,
-    fetchError: 0,
-    noSourceContent: 0
-  };
+  if (options.format === 'human') {
+    log(`Checking ${articles.length} articles...\n`);
+  }
 
-  const allDifferences = [];
+  const results = [];
+  const stats = { total: 0, identical: 0, different: 0, errors: 0 };
 
   for (const article of articles) {
-    stats.checked++;
-    const prefix = `[${stats.checked}/${stats.total}] #${article.shortId}`;
+    stats.total++;
 
     try {
-      if (!article.sourceUrl) {
-        stats.noSourceContent++;
-        continue;
-      }
+      if (!article.sourceUrl) continue;
 
       const html = await fetchUrl(article.sourceUrl);
 
@@ -330,89 +311,74 @@ async function main() {
       }
 
       if (!sourceContent) {
-        log(`${prefix}: Could not extract content from source`);
-        stats.noSourceContent++;
+        if (options.format === 'human') {
+          log(`#${article.shortId}: Could not extract source content`);
+        }
         continue;
       }
 
       const storedContent = stripHtml(article.content);
-      const result = findAllDifferences(storedContent, sourceContent);
+      const result = findReplacements(storedContent, sourceContent);
 
       if (result.identical) {
         stats.identical++;
+        if (options.format === 'human') {
+          // Skip identical in human mode for cleaner output
+        }
       } else {
         stats.different++;
 
-        log('');
-        log('='.repeat(70));
-        log(`DIFFERENCES FOUND: #${article.shortId}`);
-        log(`Title: ${article.title}`);
-        log(`URL: ${article.sourceUrl}`);
-        log(`Edited: ${article.lastEditedAt ? 'YES' : 'NO'}`);
-        log('-'.repeat(70));
-
-        for (const diff of result.diffs) {
-          if (diff.type === 'length') {
-            log(`\nLENGTH DIFFERENCE:`);
-            log(`  Stored: ${diff.storedLength} chars`);
-            log(`  Source: ${diff.sourceLength} chars`);
-            log(`  Diff: ${diff.difference > 0 ? '+' : ''}${diff.difference} chars`);
-            if (diff.storedExtra) {
-              log(`  Extra in stored: "${diff.storedExtra}..."`);
-            }
-            if (diff.sourceExtra) {
-              log(`  Missing from stored: "${diff.sourceExtra}..."`);
-            }
-          } else {
-            log(`\nCHAR DIFF at position ${diff.position}:`);
-            log(`  Stored: ${formatChar(diff.storedChar, diff.storedCharCode)}`);
-            log(`  Source: ${formatChar(diff.sourceChar, diff.sourceCharCode)}`);
-            log(`  Context stored: "...${diff.storedContext}..."`);
-            log(`  Context source: "...${diff.sourceContext}..."`);
-          }
-        }
-
-        allDifferences.push({
+        const articleDiff = {
           shortId: article.shortId,
           title: article.title,
-          url: article.sourceUrl,
-          diffCount: result.diffs.length,
-          wasEdited: !!article.lastEditedAt
-        });
+          sourceUrl: article.sourceUrl,
+          type: article.type,
+          wasEdited: !!article.lastEditedAt,
+          replacements: result.replacements
+        };
+
+        results.push(articleDiff);
+
+        if (options.format === 'human') {
+          log(`\n${'='.repeat(60)}`);
+          log(`#${article.shortId}: ${article.title.substring(0, 50)}`);
+          log(`URL: ${article.sourceUrl}`);
+          log(`Replacements needed: ${result.replacements.length}`);
+
+          for (const r of result.replacements) {
+            if (r.type === 'length_diff') {
+              log(`  LENGTH: stored=${r.storedLength}, source=${r.sourceLength}`);
+            } else {
+              log(`  @${r.position}: "${r.stored}" → "${r.source}"`);
+              log(`    Context: ...${r.context.before}[HERE]${r.context.after}...`);
+            }
+          }
+        }
       }
 
     } catch (error) {
-      log(`${prefix}: FETCH ERROR - ${error.message}`);
-      stats.fetchError++;
+      stats.errors++;
+      if (options.format === 'human') {
+        log(`#${article.shortId}: ERROR - ${error.message}`);
+      }
     }
 
     await sleep(options.delay);
   }
 
-  log('\n');
-  log('='.repeat(70));
-  log('SUMMARY');
-  log('='.repeat(70));
-  log(`Total:              ${stats.total}`);
-  log(`Identical:          ${stats.identical}`);
-  log(`With differences:   ${stats.different}`);
-  log(`Fetch errors:       ${stats.fetchError}`);
-  log(`No source content:  ${stats.noSourceContent}`);
-
-  if (allDifferences.length > 0) {
-    log('\n');
-    log('ARTICLES WITH DIFFERENCES:');
-    log('-'.repeat(70));
-    allDifferences.forEach(d => {
-      log(`#${d.shortId} (${d.diffCount} diffs)${d.wasEdited ? ' [EDITED]' : ''}: ${d.title.substring(0, 50)}`);
-    });
+  // Output results
+  if (options.format === 'json' || options.format === 'jsonl') {
+    writeOutput(results);
+  } else {
+    log(`\n${'='.repeat(60)}`);
+    log('SUMMARY');
+    log(`Total: ${stats.total}, Identical: ${stats.identical}, Different: ${stats.different}, Errors: ${stats.errors}`);
   }
 
-  log(`\nCompleted: ${new Date().toISOString()}`);
   await mongoose.disconnect();
 }
 
 main().catch(err => {
-  console.error('Fatal error:', err);
+  console.error('Fatal:', err);
   process.exit(1);
 });
