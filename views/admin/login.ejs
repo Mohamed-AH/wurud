@@ -37,14 +37,8 @@
     .login-container h1 {
       color: #2C3E35;
       font-size: 28px;
-      margin-bottom: 8px;
+      margin-bottom: 24px;
       font-weight: 600;
-    }
-
-    .subtitle {
-      color: #666;
-      font-size: 15px;
-      margin-bottom: 32px;
     }
 
     .error-message {
@@ -89,17 +83,6 @@
     .google-icon {
       width: 20px;
       height: 20px;
-    }
-
-    .info-text {
-      margin-top: 24px;
-      color: #666;
-      font-size: 13px;
-      line-height: 1.6;
-    }
-
-    .info-text strong {
-      color: #1A5F5A;
     }
 
     .login-lang-toggle {
@@ -150,7 +133,6 @@
   <div class="login-container">
     <div class="logo">🎙️</div>
     <h1><%= t('admin_login_title') %></h1>
-    <p class="subtitle"><%= t('admin_login_subtitle') %></p>
 
     <% if (typeof errorMessage !== 'undefined' && errorMessage) { %>
       <div class="error-message">
@@ -167,11 +149,6 @@
       </svg>
       <%= t('admin_login_google') %>
     </a>
-
-    <div class="info-text">
-      <strong><%= t('admin_login_admin_only') %></strong><br>
-      <%= t('admin_login_whitelist_info') %>
-    </div>
   </div>
 </body>
 </html>

@@ -34,6 +34,13 @@
               <%= locale === 'ar' ? 'تواصل معنا' : 'Contact Us' %>
             </a>
           </li>
+          <% if (siteSettings && siteSettings.articleEditor && siteSettings.articleEditor.showLoginLink) { %>
+          <li>
+            <a href="/article-editor" style="opacity: 0.6; font-size: 13px;">
+              <%= locale === 'ar' ? 'دخول المحررين' : 'Editor Login' %>
+            </a>
+          </li>
+          <% } %>
         </ul>
       </div>
 
@@ -59,13 +66,6 @@
       <p style="margin-top: 8px; font-size: 12px; opacity: 0.7;">
         <%= locale === 'ar' ? 'جامع الورود - جدة، المملكة العربية السعودية' : 'Masjid al-Wurud - Jeddah, Saudi Arabia' %>
       </p>
-      <% if (siteSettings && siteSettings.articleEditor && siteSettings.articleEditor.showLoginLink) { %>
-        <p style="margin-top: 12px;">
-          <a href="/article-editor" style="font-size: 11px; color: #A89070; text-decoration: none; opacity: 0.6;">
-            <%= locale === 'ar' ? 'دخول المحررين' : 'Editor Login' %>
-          </a>
-        </p>
-      <% } %>
     </div>
   </div>
 </footer>

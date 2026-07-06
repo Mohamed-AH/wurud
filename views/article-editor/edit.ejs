@@ -10,7 +10,7 @@
 <main class="editor-main" style="padding-bottom: 80px;">
   <form id="editForm">
     <div class="card">
-      <div class="form-group">
+      <div class="form-group" style="margin-bottom: 0;">
         <label class="form-label">عنوان المقال</label>
         <input
           type="text"
@@ -20,16 +20,6 @@
           value="${article.title.replace(/"/g, '&quot;')}"
           required
         >
-      </div>
-
-      <div class="form-group">
-        <label class="form-label">الملخص</label>
-        <textarea
-          name="summary"
-          id="summaryInput"
-          class="form-textarea"
-          rows="3"
-        >${article.summary || ''}</textarea>
       </div>
     </div>
 
@@ -86,14 +76,12 @@
   // Original values for change detection
   const originalValues = {
     title: \`${article.title.replace(/`/g, '\\`').replace(/\\/g, '\\\\')}\`,
-    summary: \`${(article.summary || '').replace(/`/g, '\\`').replace(/\\/g, '\\\\')}\`,
     content: quill.root.innerHTML
   };
 
   async function saveArticle() {
     const saveBtn = document.getElementById('saveBtn');
     const title = document.getElementById('titleInput').value.trim();
-    const summary = document.getElementById('summaryInput').value.trim();
     const content = quill.root.innerHTML;
     const changeDescription = document.getElementById('changeDescriptionInput').value.trim();
 
@@ -103,9 +91,7 @@
     }
 
     // Check if there are actual changes
-    if (title === originalValues.title &&
-        summary === originalValues.summary &&
-        content === originalValues.content) {
+    if (title === originalValues.title && content === originalValues.content) {
       showToast('لا توجد تغييرات للحفظ', 'error');
       return;
     }
@@ -121,7 +107,6 @@
         },
         body: JSON.stringify({
           title,
-          summary,
           content,
           changeDescription
         })
@@ -133,7 +118,6 @@
         showToast(data.message, 'success');
         // Update original values
         originalValues.title = title;
-        originalValues.summary = summary;
         originalValues.content = content;
         // Clear change description
         document.getElementById('changeDescriptionInput').value = '';
@@ -152,12 +136,9 @@
   // Warn before leaving with unsaved changes
   window.addEventListener('beforeunload', (e) => {
     const title = document.getElementById('titleInput').value.trim();
-    const summary = document.getElementById('summaryInput').value.trim();
     const content = quill.root.innerHTML;
 
-    if (title !== originalValues.title ||
-        summary !== originalValues.summary ||
-        content !== originalValues.content) {
+    if (title !== originalValues.title || content !== originalValues.content) {
       e.preventDefault();
       e.returnValue = '';
     }

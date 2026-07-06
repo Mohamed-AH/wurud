@@ -115,10 +115,12 @@ router.get('/article/:id', isArticleEditor, async (req, res) => {
 /**
  * POST /article-editor/article/:id
  * Save article changes with history tracking
+ * Note: Article editors can ONLY modify title and content (body text)
+ * Other fields (summary, slug, type, etc.) are admin-only
  */
 router.post('/article/:id', isArticleEditorAPI, async (req, res) => {
   try {
-    const { title, summary, content, changeDescription } = req.body;
+    const { title, content, changeDescription } = req.body;
 
     const article = await Article.findOne({
       $or: [
@@ -135,7 +137,7 @@ router.post('/article/:id', isArticleEditorAPI, async (req, res) => {
       });
     }
 
-    // Track changes
+    // Track changes - only title and content allowed for editors
     const changes = [];
     const fieldsChanged = [];
 
@@ -147,16 +149,6 @@ router.post('/article/:id', isArticleEditorAPI, async (req, res) => {
       });
       fieldsChanged.push('title');
       article.title = title;
-    }
-
-    if (summary !== undefined && summary !== article.summary) {
-      changes.push({
-        field: 'summary',
-        oldValue: article.summary || '',
-        newValue: summary
-      });
-      fieldsChanged.push('summary');
-      article.summary = summary;
     }
 
     if (content !== undefined && content !== article.content) {
