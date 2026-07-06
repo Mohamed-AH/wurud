@@ -5,8 +5,30 @@
 
 const express = require('express');
 const router = express.Router();
+const mongoose = require('mongoose');
 const { Article, Admin } = require('../../models');
 const { isArticleEditor, isArticleEditorAPI } = require('../../middleware/auth');
+
+// Helper to build article query - only include _id if valid ObjectId
+function buildArticleQuery(idParam) {
+  const query = { $or: [] };
+
+  // Only add _id condition if it's a valid ObjectId
+  if (mongoose.Types.ObjectId.isValid(idParam) && idParam.length === 24) {
+    query.$or.push({ _id: idParam });
+  }
+
+  // Try as shortId (numeric)
+  const shortId = parseInt(idParam);
+  if (!isNaN(shortId)) {
+    query.$or.push({ shortId: shortId });
+  }
+
+  // Try as slug
+  query.$or.push({ slug: idParam });
+
+  return query;
+}
 
 /**
  * GET /article-editor/login
@@ -84,13 +106,8 @@ router.get('/', isArticleEditor, async (req, res) => {
  */
 router.get('/article/:id', isArticleEditor, async (req, res) => {
   try {
-    const article = await Article.findOne({
-      $or: [
-        { _id: req.params.id },
-        { shortId: parseInt(req.params.id) },
-        { slug: req.params.id }
-      ]
-    }).lean();
+    const query = buildArticleQuery(req.params.id);
+    const article = await Article.findOne(query).lean();
 
     if (!article) {
       return res.status(404).render('article-editor/error', {
@@ -123,13 +140,8 @@ router.post('/article/:id', isArticleEditorAPI, async (req, res) => {
   try {
     const { title, content, changeDescription } = req.body;
 
-    const article = await Article.findOne({
-      $or: [
-        { _id: req.params.id },
-        { shortId: parseInt(req.params.id) },
-        { slug: req.params.id }
-      ]
-    });
+    const query = buildArticleQuery(req.params.id);
+    const article = await Article.findOne(query);
 
     if (!article) {
       return res.status(404).json({
@@ -206,13 +218,8 @@ router.post('/article/:id', isArticleEditorAPI, async (req, res) => {
  */
 router.get('/article/:id/history', isArticleEditor, async (req, res) => {
   try {
-    const article = await Article.findOne({
-      $or: [
-        { _id: req.params.id },
-        { shortId: parseInt(req.params.id) },
-        { slug: req.params.id }
-      ]
-    })
+    const query = buildArticleQuery(req.params.id);
+    const article = await Article.findOne(query)
       .select('title editHistory shortId slug')
       .populate('editHistory.editedBy', 'displayName email profilePhoto')
       .lean();
