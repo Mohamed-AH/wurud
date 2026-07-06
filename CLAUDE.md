@@ -701,6 +701,161 @@ Implemented full article management in admin panel:
 - Authentication requirements
 - Graceful skip when MongoDB unavailable (cloud env)
 
+---
+
+## Article Editor Feature (External Contributors)
+
+**Status**: 🔄 PLANNED
+
+Enable external article editors to fix typos and grammar errors with full edit history tracking.
+
+### Overview
+- New role: `articleEditor` (separate from audio `editor` role)
+- Rich text editor interface (responsive, mobile-friendly)
+- Edit history tracking (who changed what, when)
+- Temporary login button (can be disabled when editing phase complete)
+
+### Phase 1: Database Schema Updates
+**Status**: ⬜ NOT STARTED
+
+**1.1 Update Admin Model** (`models/Admin.js`):
+```javascript
+role: {
+  type: String,
+  enum: ['admin', 'editor', 'articleEditor'],  // Add articleEditor
+  default: 'editor'
+}
+```
+
+**1.2 Add Edit History to Article Model** (`models/Article.js`):
+```javascript
+// Add to schema:
+editHistory: [{
+  editedBy: { type: mongoose.Schema.Types.ObjectId, ref: 'Admin' },
+  editedAt: { type: Date, default: Date.now },
+  fieldChanged: String,      // 'title', 'content', 'summary'
+  previousValue: String,     // Store previous value for rollback
+  changeDescription: String  // Optional note about the change
+}],
+lastEditedBy: { type: mongoose.Schema.Types.ObjectId, ref: 'Admin' },
+lastEditedAt: { type: Date }
+```
+
+**Files to modify**:
+- `models/Admin.js` - Add 'articleEditor' to role enum
+- `models/Article.js` - Add editHistory array and tracking fields
+
+### Phase 2: Auth Middleware
+**Status**: ⬜ NOT STARTED
+
+**2.1 Create `isArticleEditor` middleware** (`middleware/auth.js`):
+- Allow access for: `admin`, `editor`, `articleEditor`
+- Only for article editing routes
+- API version: `isArticleEditorAPI`
+
+**Files to modify**:
+- `middleware/auth.js` - Add isArticleEditor, isArticleEditorAPI
+
+### Phase 3: Article Editor Routes
+**Status**: ⬜ NOT STARTED
+
+**3.1 Create Routes** (`routes/article-editor/index.js`):
+- GET `/article-editor` - Dashboard with article list
+- GET `/article-editor/article/:id` - Edit single article
+- POST `/article-editor/article/:id` - Save changes (track history)
+- GET `/article-editor/article/:id/history` - View edit history
+
+**3.2 Route Protection**:
+- Use `isArticleEditor` middleware
+- Register in `server.js`
+
+**Files to create**:
+- `routes/article-editor/index.js`
+
+**Files to modify**:
+- `server.js` - Register article-editor routes
+
+### Phase 4: Rich Text Editor Views
+**Status**: ⬜ NOT STARTED
+
+**4.1 Editor Library**: Use Quill.js (lightweight, RTL-friendly, mobile-responsive)
+- CDN: `https://cdn.quilljs.com/1.3.7/quill.min.js`
+- Themes: Snow (toolbar) or Bubble (tooltip)
+
+**4.2 Views to Create**:
+- `views/article-editor/layout.ejs` - Minimal layout for editor (no public nav)
+- `views/article-editor/dashboard.ejs` - Article list with search
+- `views/article-editor/edit.ejs` - Rich text editor page
+- `views/article-editor/history.ejs` - Edit history view
+
+**4.3 Mobile-First Design**:
+- Sticky save button
+- Collapsible toolbar on mobile
+- Full-screen editing mode
+- Touch-friendly controls
+
+**Files to create**:
+- `views/article-editor/layout.ejs`
+- `views/article-editor/dashboard.ejs`
+- `views/article-editor/edit.ejs`
+- `views/article-editor/history.ejs`
+- `public/css/article-editor.css`
+
+### Phase 5: Login Access
+**Status**: ⬜ NOT STARTED
+
+**5.1 Temporary Login Button**:
+- Add login link to footer (small, unobtrusive)
+- Route: `/article-editor/login`
+- Uses existing Google OAuth flow
+- Can be hidden via environment variable: `ARTICLE_EDITOR_LOGIN_VISIBLE=false`
+
+**5.2 Access Control**:
+- Article editors added by admin in admin panel
+- Admin panel: Manage Article Editors page (list, add, remove)
+
+**Files to modify**:
+- `views/partials/footer.ejs` - Add conditional login link
+- `routes/admin/index.js` - Add article editor management
+
+### Phase 6: Admin Panel Integration
+**Status**: ⬜ NOT STARTED
+
+**6.1 Article Editor Management** (Admin only):
+- List all article editors
+- Invite new editor (add email to whitelist)
+- Revoke access (set isActive=false)
+- View edit activity log
+
+**Files to modify**:
+- `routes/admin/index.js` - Add article editor management routes
+- `views/admin/partials/header.ejs` - Add "Article Editors" nav link
+
+**Files to create**:
+- `views/admin/article-editors.ejs` - Manage editors page
+
+### Implementation Order
+1. ⬜ Phase 1 - Schema updates (Admin role, Article editHistory)
+2. ⬜ Phase 2 - Auth middleware (isArticleEditor)
+3. ⬜ Phase 3 - Routes (article-editor/*)
+4. ⬜ Phase 4 - Views (editor UI with Quill.js)
+5. ⬜ Phase 5 - Login access (footer link, OAuth)
+6. ⬜ Phase 6 - Admin panel (editor management)
+
+### Security Considerations
+- Article editors can ONLY edit article content (title, summary, content)
+- Cannot delete articles
+- Cannot change article type, publishedAt, or isPublished status
+- All changes tracked with user ID and timestamp
+- Session timeout: 4 hours for article editors
+
+### Editor Whitelist
+Store article editor emails in:
+- Environment: `ARTICLE_EDITOR_EMAILS=editor1@example.com,editor2@example.com`
+- OR database: Admin documents with role='articleEditor'
+
+---
+
 ## Key Files Reference
 
 ### Models
