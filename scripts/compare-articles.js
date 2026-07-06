@@ -56,11 +56,8 @@ Options:
   --delay MS      Delay between requests (default: 500)
 
 Examples:
-  # JSON output for correction script
   node scripts/compare-articles.js --format json --output diffs.json
-
-  # JSONL (one article per line) for streaming
-  node scripts/compare-articles.js --format jsonl --output diffs.jsonl
+  node scripts/compare-articles.js --limit 10 --format human
 `);
       process.exit(0);
   }
@@ -86,112 +83,120 @@ function writeOutput(data) {
   }
 }
 
-function stripHtml(html) {
+// Convert HTML to plain text
+function htmlToText(html) {
   if (!html) return '';
   return html
-    .replace(/<br\s*\/?>/gi, '\n')
+    .replace(/<script[\s\S]*?<\/script>/gi, '')
+    .replace(/<style[\s\S]*?<\/style>/gi, '')
     .replace(/<\/p>/gi, '\n')
+    .replace(/<br\s*\/?>/gi, '\n')
     .replace(/<\/div>/gi, '\n')
+    .replace(/<\/h[1-6]>/gi, '\n')
+    .replace(/<\/li>/gi, '\n')
     .replace(/<[^>]+>/g, '')
+    // HTML entities
+    .replace(/&#8211;/g, '–')
+    .replace(/&#8212;/g, '—')
+    .replace(/&#8217;/g, ''')
+    .replace(/&#8220;/g, '"')
+    .replace(/&#8221;/g, '"')
     .replace(/&nbsp;/gi, ' ')
     .replace(/&amp;/gi, '&')
     .replace(/&lt;/gi, '<')
     .replace(/&gt;/gi, '>')
     .replace(/&quot;/gi, '"')
     .replace(/&#39;/gi, "'")
-    .replace(/&mdash;/gi, '—')
-    .replace(/&ndash;/gi, '–')
-    .replace(/&hellip;/gi, '...')
-    .replace(/&#(\d+);/g, (_, code) => String.fromCharCode(code))
+    .replace(/&#(\d+);/g, (_, c) => String.fromCharCode(parseInt(c, 10)))
+    .replace(/&[a-z]+;/gi, '')
+    // Normalize whitespace
     .replace(/\r\n/g, '\n')
+    .replace(/[ \t]+/g, ' ')
+    .replace(/ *\n */g, '\n')
     .replace(/\n{3,}/g, '\n\n')
     .trim();
 }
 
+// Extract Asdaa article content
+function extractAsdaaContent(html) {
+  // Find entry-content start
+  const startMatch = html.match(/<div[^>]*class="entry-content[^"]*"[^>]*>/i);
+  if (!startMatch) return null;
+
+  const startIndex = startMatch.index + startMatch[0].length;
+  const afterStart = html.substring(startIndex);
+
+  // Find end - before tags section or closing comment
+  let endIndex;
+  const tagsMatch = afterStart.match(/<div[^>]*class="post-bottom-meta/i);
+  if (tagsMatch) {
+    endIndex = tagsMatch.index;
+  } else {
+    const commentMatch = afterStart.match(/<\/div><!--\s*\.entry-content/i);
+    endIndex = commentMatch ? commentMatch.index : afterStart.indexOf('</article>');
+  }
+
+  if (endIndex <= 0) endIndex = afterStart.length;
+
+  return htmlToText(afterStart.substring(0, endIndex));
+}
+
+// Extract Telegram content
 function extractTelegramContent(html) {
   const match = html.match(/<div[^>]*class="[^"]*tgme_widget_message_text[^"]*"[^>]*>([\s\S]*?)<\/div>/i);
-  return match ? stripHtml(match[1]) : null;
+  return match ? htmlToText(match[1]) : null;
 }
 
-function extractAsdaaContent(html) {
-  const patterns = [
-    /<article[^>]*>([\s\S]*?)<\/article>/i,
-    /<div[^>]*class="[^"]*entry-content[^"]*"[^>]*>([\s\S]*?)<\/div>/i,
-    /<div[^>]*class="[^"]*post-content[^"]*"[^>]*>([\s\S]*?)<\/div>/i,
-    /<div[^>]*class="[^"]*content[^"]*"[^>]*>([\s\S]*?)<\/div>/i
-  ];
-  for (const pattern of patterns) {
-    const match = html.match(pattern);
-    if (match) return stripHtml(match[1]);
-  }
-  return null;
-}
+// Find character-level differences
+function findDifferences(stored, source) {
+  // Normalize whitespace for comparison
+  const storedNorm = stored.replace(/\s+/g, ' ').trim();
+  const sourceNorm = source.replace(/\s+/g, ' ').trim();
 
-// Find all character-level replacements needed
-function findReplacements(stored, source) {
-  const replacements = [];
-
-  // Normalize to single line for position tracking
-  const storedText = stored.replace(/\s+/g, ' ').trim();
-  const sourceText = source.replace(/\s+/g, ' ').trim();
-
-  if (storedText === sourceText) {
-    return { identical: true, replacements: [] };
+  if (storedNorm === sourceNorm) {
+    return { identical: true, differences: [] };
   }
 
-  // Use longest common subsequence approach to find differences
-  const minLen = Math.min(storedText.length, sourceText.length);
+  const differences = [];
+  const minLen = Math.min(storedNorm.length, sourceNorm.length);
   let i = 0;
 
   while (i < minLen) {
-    if (storedText[i] !== sourceText[i]) {
-      // Found a difference - find the extent
-      let storedEnd = i;
-      let sourceEnd = i;
+    if (storedNorm[i] !== sourceNorm[i]) {
+      const contextBefore = storedNorm.substring(Math.max(0, i - 30), i);
 
-      // Look ahead to find where they sync up again
-      let synced = false;
-      for (let lookAhead = 1; lookAhead <= 50 && !synced; lookAhead++) {
-        // Try to find matching substring
-        for (let sOff = 0; sOff <= lookAhead; sOff++) {
-          for (let tOff = 0; tOff <= lookAhead; tOff++) {
-            if (i + sOff < storedText.length && i + tOff < sourceText.length) {
-              const storedChunk = storedText.substring(i + sOff, i + sOff + 10);
-              const sourceChunk = sourceText.substring(i + tOff, i + tOff + 10);
-              if (storedChunk === sourceChunk && storedChunk.length >= 5) {
-                storedEnd = i + sOff;
-                sourceEnd = i + tOff;
-                synced = true;
-                break;
+      // Find resync point
+      let storedEnd = i + 1;
+      let sourceEnd = i + 1;
+
+      for (let offset = 1; offset <= 100; offset++) {
+        let found = false;
+        for (let s = 0; s <= offset && !found; s++) {
+          for (let t = 0; t <= offset && !found; t++) {
+            if (i + s < storedNorm.length && i + t < sourceNorm.length) {
+              const sc = storedNorm.substring(i + s, i + s + 15);
+              const tc = sourceNorm.substring(i + t, i + t + 15);
+              if (sc.length >= 10 && sc === tc) {
+                storedEnd = i + s;
+                sourceEnd = i + t;
+                found = true;
               }
             }
           }
-          if (synced) break;
         }
+        if (found) break;
       }
 
-      if (!synced) {
-        // Couldn't sync - just mark single char difference
-        storedEnd = i + 1;
-        sourceEnd = i + 1;
-      }
+      const storedSeg = storedNorm.substring(i, storedEnd);
+      const sourceSeg = sourceNorm.substring(i, sourceEnd);
+      const contextAfter = storedNorm.substring(storedEnd, storedEnd + 30);
 
-      const storedSegment = storedText.substring(i, storedEnd);
-      const sourceSegment = sourceText.substring(i, sourceEnd);
-
-      if (storedSegment !== sourceSegment) {
-        replacements.push({
-          position: i,
-          stored: storedSegment,
-          source: sourceSegment,
-          storedCodes: [...storedSegment].map(c => c.charCodeAt(0)),
-          sourceCodes: [...sourceSegment].map(c => c.charCodeAt(0)),
-          context: {
-            before: storedText.substring(Math.max(0, i - 20), i),
-            after: storedText.substring(storedEnd, storedEnd + 20)
-          }
-        });
-      }
+      differences.push({
+        position: i,
+        stored: storedSeg,
+        source: sourceSeg,
+        context: { before: contextBefore, after: contextAfter }
+      });
 
       i = Math.max(storedEnd, sourceEnd);
     } else {
@@ -199,34 +204,34 @@ function findReplacements(stored, source) {
     }
   }
 
-  // Handle length difference at end
-  if (storedText.length !== sourceText.length) {
-    replacements.push({
-      type: 'length_diff',
-      storedLength: storedText.length,
-      sourceLength: sourceText.length,
-      storedExtra: storedText.length > sourceText.length
-        ? storedText.substring(sourceText.length)
+  // Length difference
+  if (storedNorm.length !== sourceNorm.length) {
+    differences.push({
+      type: 'length',
+      storedLength: storedNorm.length,
+      sourceLength: sourceNorm.length,
+      storedTail: storedNorm.length > sourceNorm.length
+        ? storedNorm.substring(sourceNorm.length, sourceNorm.length + 200)
         : null,
-      sourceExtra: sourceText.length > storedText.length
-        ? sourceText.substring(storedText.length)
+      sourceTail: sourceNorm.length > storedNorm.length
+        ? sourceNorm.substring(storedNorm.length, storedNorm.length + 200)
         : null
     });
   }
 
-  return { identical: false, replacements };
+  return { identical: false, differences };
 }
 
 async function fetchUrl(url, retries = 3) {
   for (let attempt = 1; attempt <= retries; attempt++) {
     try {
       const controller = new AbortController();
-      const timeout = setTimeout(() => controller.abort(), 15000);
+      const timeout = setTimeout(() => controller.abort(), 20000);
       const response = await fetch(url, {
         signal: controller.signal,
         headers: {
-          'User-Agent': 'Mozilla/5.0 (compatible; ArticleChecker/1.0)',
-          'Accept': 'text/html',
+          'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36',
+          'Accept': 'text/html,application/xhtml+xml',
           'Accept-Language': 'ar,en'
         }
       });
@@ -262,7 +267,7 @@ async function main() {
 
   const mongoUri = process.env.MONGODB_URI;
   if (!mongoUri) {
-    console.error('ERROR: MONGODB_URI not set');
+    console.error('ERROR: MONGODB_URI not set in .env');
     process.exit(1);
   }
 
@@ -289,7 +294,7 @@ async function main() {
   const articles = await articlesQuery;
 
   if (options.format === 'human') {
-    log(`Checking ${articles.length} articles...\n`);
+    log(`Found ${articles.length} articles to check\n`);
   }
 
   const results = [];
@@ -300,6 +305,10 @@ async function main() {
 
     try {
       if (!article.sourceUrl) continue;
+
+      if (options.format === 'human') {
+        process.stdout.write(`\r[${stats.total}/${articles.length}] #${article.shortId}...`);
+      }
 
       const html = await fetchUrl(article.sourceUrl);
 
@@ -312,19 +321,17 @@ async function main() {
 
       if (!sourceContent) {
         if (options.format === 'human') {
-          log(`#${article.shortId}: Could not extract source content`);
+          log(`\n#${article.shortId}: Could not extract source content`);
         }
+        stats.errors++;
         continue;
       }
 
-      const storedContent = stripHtml(article.content);
-      const result = findReplacements(storedContent, sourceContent);
+      const storedContent = htmlToText(article.content);
+      const result = findDifferences(storedContent, sourceContent);
 
       if (result.identical) {
         stats.identical++;
-        if (options.format === 'human') {
-          // Skip identical in human mode for cleaner output
-        }
       } else {
         stats.different++;
 
@@ -334,7 +341,7 @@ async function main() {
           sourceUrl: article.sourceUrl,
           type: article.type,
           wasEdited: !!article.lastEditedAt,
-          replacements: result.replacements
+          differences: result.differences
         };
 
         results.push(articleDiff);
@@ -342,15 +349,13 @@ async function main() {
         if (options.format === 'human') {
           log(`\n${'='.repeat(60)}`);
           log(`#${article.shortId}: ${article.title.substring(0, 50)}`);
-          log(`URL: ${article.sourceUrl}`);
-          log(`Replacements needed: ${result.replacements.length}`);
+          log(`Differences: ${result.differences.length}`);
 
-          for (const r of result.replacements) {
-            if (r.type === 'length_diff') {
-              log(`  LENGTH: stored=${r.storedLength}, source=${r.sourceLength}`);
+          for (const d of result.differences) {
+            if (d.type === 'length') {
+              log(`  [LENGTH] DB:${d.storedLength} Source:${d.sourceLength}`);
             } else {
-              log(`  @${r.position}: "${r.stored}" → "${r.source}"`);
-              log(`    Context: ...${r.context.before}[HERE]${r.context.after}...`);
+              log(`  @${d.position}: "${d.stored}" -> "${d.source}"`);
             }
           }
         }
@@ -359,18 +364,17 @@ async function main() {
     } catch (error) {
       stats.errors++;
       if (options.format === 'human') {
-        log(`#${article.shortId}: ERROR - ${error.message}`);
+        log(`\n#${article.shortId}: ERROR - ${error.message}`);
       }
     }
 
     await sleep(options.delay);
   }
 
-  // Output results
   if (options.format === 'json' || options.format === 'jsonl') {
     writeOutput(results);
   } else {
-    log(`\n${'='.repeat(60)}`);
+    log(`\n\n${'='.repeat(60)}`);
     log('SUMMARY');
     log(`Total: ${stats.total}, Identical: ${stats.identical}, Different: ${stats.different}, Errors: ${stats.errors}`);
   }
