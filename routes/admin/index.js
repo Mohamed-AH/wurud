@@ -3049,21 +3049,27 @@ router.post('/article-editors/add', isSuperAdmin, async (req, res) => {
 
     const normalizedEmail = email.toLowerCase().trim();
 
-    // Check if user already exists - use findOneAndUpdate for atomicity
-    const existingUser = await Admin.findOneAndUpdate(
-      { email: normalizedEmail },
-      {
-        $set: {
-          role: 'articleEditor',
-          isActive: true,
-          ...(displayName && { displayName })
-        }
-      },
-      { new: true }
-    );
+    // Check if user already exists (read-only first to avoid overwriting admins)
+    const existingUser = await Admin.findOne({ email: normalizedEmail }, null, { lean: false });
 
     if (existingUser) {
-      return res.json({ success: true, message: 'User updated to article editor' });
+      // Don't downgrade admins or editors
+      if (existingUser.role === 'admin' || existingUser.role === 'editor') {
+        return res.status(400).json({
+          success: false,
+          message: `This user is already a ${existingUser.role}. Cannot downgrade to article editor.`
+        });
+      }
+
+      // Already an article editor - just reactivate if needed
+      if (existingUser.role === 'articleEditor') {
+        if (existingUser.isActive) {
+          return res.status(400).json({ success: false, message: 'This user is already an article editor' });
+        }
+        // Reactivate
+        await Admin.findByIdAndUpdate(existingUser._id, { isActive: true });
+        return res.json({ success: true, message: 'Article editor reactivated' });
+      }
     }
 
     // Create new article editor using findOneAndUpdate with upsert
@@ -3076,7 +3082,6 @@ router.post('/article-editors/add', isSuperAdmin, async (req, res) => {
           displayName: displayName || normalizedEmail.split('@')[0],
           role: 'articleEditor',
           isActive: true
-          // Don't set googleId - let it be undefined (sparse index allows this)
         }
       },
       { upsert: true, new: true }
