@@ -26,8 +26,16 @@ const isAdmin = async (req, res, next) => {
       return res.redirect('/admin/login');
     }
 
-    // Check if user exists and is active
-    const admin = await Admin.findById(req.user._id);
+    // Check if user exists and is active - query fresh from DB
+    const admin = await Admin.findById(req.user._id).select('+role').lean();
+
+    // DEBUG: Log role check
+    console.log('[AUTH DEBUG] isAdmin check:', {
+      userId: req.user._id,
+      email: admin?.email,
+      role: admin?.role,
+      isActive: admin?.isActive
+    });
 
     if (!admin || !admin.isActive) {
       req.logout((err) => {
@@ -42,6 +50,7 @@ const isAdmin = async (req, res, next) => {
     // Check role - only admin and editor can access admin panel
     // articleEditor role should use /article-editor routes instead
     if (admin.role !== 'admin' && admin.role !== 'editor') {
+      console.log('[AUTH DEBUG] Blocking articleEditor from admin panel, redirecting to /article-editor');
       return res.redirect('/article-editor');
     }
 
