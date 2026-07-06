@@ -138,6 +138,83 @@ const isEditor = async (req, res, next) => {
 };
 
 /**
+ * Middleware to check if user can edit articles
+ * Allows: admin, editor, articleEditor roles
+ * Use this for article editing routes
+ */
+const isArticleEditor = async (req, res, next) => {
+  try {
+    if (!req.isAuthenticated()) {
+      return res.redirect('/article-editor/login');
+    }
+
+    const admin = await Admin.findById(req.user._id);
+
+    if (!admin || !admin.isActive) {
+      req.logout((err) => {
+        if (err && !isProduction) {
+          console.error('Logout error:', err);
+        }
+        res.redirect('/article-editor/login?error=inactive');
+      });
+      return;
+    }
+
+    // Check role - admin, editor, and articleEditor can access
+    if (!['admin', 'editor', 'articleEditor'].includes(admin.role)) {
+      return res.status(403).send('Insufficient permissions');
+    }
+
+    next();
+  } catch (error) {
+    if (!isProduction) {
+      console.error('Article editor auth middleware error:', error);
+    }
+    res.status(500).send('Authentication error');
+  }
+};
+
+/**
+ * API version of isArticleEditor - returns JSON
+ */
+const isArticleEditorAPI = async (req, res, next) => {
+  try {
+    if (!req.isAuthenticated()) {
+      return res.status(401).json({
+        success: false,
+        message: 'Authentication required'
+      });
+    }
+
+    const admin = await Admin.findById(req.user._id);
+
+    if (!admin || !admin.isActive) {
+      return res.status(403).json({
+        success: false,
+        message: 'User is not active'
+      });
+    }
+
+    if (!['admin', 'editor', 'articleEditor'].includes(admin.role)) {
+      return res.status(403).json({
+        success: false,
+        message: 'Insufficient permissions for article editing'
+      });
+    }
+
+    next();
+  } catch (error) {
+    if (!isProduction) {
+      console.error('Article editor API auth middleware error:', error);
+    }
+    res.status(500).json({
+      success: false,
+      message: 'Authentication error'
+    });
+  }
+};
+
+/**
  * Middleware to check if user is a super admin (admin role)
  * Use this for admin/editor management routes only
  */
@@ -166,7 +243,9 @@ module.exports = {
   isAuthenticated,
   isAdmin,
   isEditor,
+  isArticleEditor,
   isSuperAdmin,
   isAuthenticatedAPI,
-  isAdminAPI
+  isAdminAPI,
+  isArticleEditorAPI
 };

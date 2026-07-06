@@ -1,0 +1,93 @@
+<%- include('layout', { body: `
+<header class="editor-header">
+  <h1>لوحة تحرير المقالات</h1>
+  <div class="header-actions">
+    <div class="user-info">
+      ${user.profilePhoto ? `<img src="${user.profilePhoto}" alt="" class="user-avatar">` : ''}
+      <span>${user.displayName || user.email}</span>
+    </div>
+    <a href="/article-editor/logout" class="btn btn-secondary">خروج</a>
+  </div>
+</header>
+
+<main class="editor-main">
+  <form class="search-box" method="GET" action="/article-editor">
+    <input
+      type="search"
+      name="search"
+      class="search-input"
+      placeholder="ابحث في المقالات..."
+      value="${search || ''}"
+    >
+    <button type="submit" class="btn btn-primary">بحث</button>
+    ${search ? `<a href="/article-editor" class="btn btn-outline">مسح</a>` : ''}
+  </form>
+
+  <div class="card">
+    <div class="card-header">
+      <span class="card-title">المقالات (${pagination.totalCount})</span>
+    </div>
+
+    ${articles.length > 0 ? `
+      <div class="article-list">
+        ${articles.map(article => `
+          <div class="article-item">
+            <div class="article-content">
+              <div class="article-title">${article.title}</div>
+              <div class="article-meta">
+                <span class="article-type">${article.type === 'Asdaa' ? 'أصداء' : 'تليجرام'}</span>
+                <span>${new Date(article.publishedAt).toLocaleDateString('ar-SA')}</span>
+                ${article.lastEditedBy ? `<span>آخر تعديل: ${article.lastEditedBy.displayName || article.lastEditedBy.email}</span>` : ''}
+              </div>
+            </div>
+            <div class="article-actions">
+              <a href="/article-editor/article/${article.shortId || article._id}" class="btn btn-primary">تحرير</a>
+              <a href="/article-editor/article/${article.shortId || article._id}/history" class="btn btn-outline">السجل</a>
+            </div>
+          </div>
+        `).join('')}
+      </div>
+
+      ${pagination.totalPages > 1 ? `
+        <nav class="pagination">
+          ${pagination.hasPrev ? `
+            <a href="/article-editor?page=${pagination.page - 1}${search ? '&search=' + encodeURIComponent(search) : ''}" class="page-link">
+              ←
+            </a>
+          ` : ''}
+
+          ${Array.from({length: Math.min(5, pagination.totalPages)}, (_, i) => {
+            let pageNum;
+            if (pagination.totalPages <= 5) {
+              pageNum = i + 1;
+            } else if (pagination.page <= 3) {
+              pageNum = i + 1;
+            } else if (pagination.page >= pagination.totalPages - 2) {
+              pageNum = pagination.totalPages - 4 + i;
+            } else {
+              pageNum = pagination.page - 2 + i;
+            }
+            return `
+              <a href="/article-editor?page=${pageNum}${search ? '&search=' + encodeURIComponent(search) : ''}"
+                 class="page-link ${pageNum === pagination.page ? 'active' : ''}">
+                ${pageNum}
+              </a>
+            `;
+          }).join('')}
+
+          ${pagination.hasNext ? `
+            <a href="/article-editor?page=${pagination.page + 1}${search ? '&search=' + encodeURIComponent(search) : ''}" class="page-link">
+              →
+            </a>
+          ` : ''}
+        </nav>
+      ` : ''}
+    ` : `
+      <div class="empty-state">
+        <div class="empty-state-icon">📄</div>
+        <p>${search ? 'لا توجد نتائج للبحث' : 'لا توجد مقالات'}</p>
+      </div>
+    `}
+  </div>
+</main>
+` }) %>
