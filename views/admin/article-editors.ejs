@@ -351,13 +351,16 @@
             <div class="editor-actions">
               <% if (editor.isActive) { %>
                 <button class="danger" onclick="removeEditor('<%= editor._id %>')">
-                  <%= adminLocale === 'ar' ? 'إلغاء الوصول' : 'Remove Access' %>
+                  <%= adminLocale === 'ar' ? 'إلغاء الوصول' : 'Deactivate' %>
                 </button>
               <% } else { %>
                 <button class="success" onclick="reactivateEditor('<%= editor._id %>')">
                   <%= adminLocale === 'ar' ? 'إعادة تفعيل' : 'Reactivate' %>
                 </button>
               <% } %>
+              <button class="danger" onclick="deleteEditor('<%= editor._id %>')" style="background: #721c24;">
+                <%= adminLocale === 'ar' ? 'حذف نهائي' : 'Delete' %>
+              </button>
             </div>
           </div>
         <% }) %>
@@ -466,6 +469,30 @@
     async function reactivateEditor(id) {
       try {
         const response = await fetch(`/admin/article-editors/${id}/reactivate`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' }
+        });
+
+        const data = await response.json();
+
+        if (data.success) {
+          showToast(data.message, 'success');
+          setTimeout(() => location.reload(), 1000);
+        } else {
+          showToast(data.message || 'Error', 'error');
+        }
+      } catch (error) {
+        showToast('Connection error', 'error');
+      }
+    }
+
+    async function deleteEditor(id) {
+      if (!confirm('<%= adminLocale === "ar" ? "هل أنت متأكد من الحذف النهائي؟ لا يمكن التراجع!" : "Permanently delete this editor? This cannot be undone!" %>')) {
+        return;
+      }
+
+      try {
+        const response = await fetch(`/admin/article-editors/${id}/delete`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' }
         });

@@ -3143,6 +3143,35 @@ router.post('/article-editors/:id/reactivate', isSuperAdmin, async (req, res) =>
   }
 });
 
+// @route   POST /admin/article-editors/:id/delete
+// @desc    Permanently delete article editor from database
+// @access  Private (Super Admin only)
+router.post('/article-editors/:id/delete', isSuperAdmin, async (req, res) => {
+  try {
+    const { Admin } = require('../../models');
+
+    const user = await Admin.findById(req.params.id);
+    if (!user) {
+      return res.status(404).json({ success: false, message: 'User not found' });
+    }
+
+    // Only allow deleting articleEditor role users (safety check)
+    if (user.role !== 'articleEditor') {
+      return res.status(403).json({
+        success: false,
+        message: 'Can only delete articleEditor accounts from this page'
+      });
+    }
+
+    await Admin.findByIdAndDelete(req.params.id);
+
+    res.json({ success: true, message: 'Article editor permanently deleted' });
+  } catch (error) {
+    console.error('Delete article editor error:', error);
+    res.status(500).json({ success: false, message: 'Error deleting article editor' });
+  }
+});
+
 // @route   POST /admin/article-editors/toggle-login
 // @desc    Toggle article editor login link visibility
 // @access  Private (Super Admin only)
