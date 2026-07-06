@@ -343,20 +343,12 @@ async function main() {
       if (result.identical) {
         stats.identical++;
       } else {
-        // Filter out trivial differences
+        // Filter out trivial differences (encoding/formatting only)
         const meaningfulDiffs = result.differences.filter(d => {
           if (d.type === 'word_diff') {
-            // Skip if just dash/quote differences after normalization
             const s = normalizeText(d.stored);
             const t = normalizeText(d.source);
-            if (s === t) return false;
-            // Debug: show what's actually different
-            if (options.format === 'human' && d.stored.length === 1 && d.source.length === 1) {
-              const sc = d.stored.charCodeAt(0).toString(16);
-              const tc = d.source.charCodeAt(0).toString(16);
-              console.log(`  [DEBUG] stored U+${sc} source U+${tc}`);
-            }
-            return true;
+            return s !== t;
           }
           return true;
         });
