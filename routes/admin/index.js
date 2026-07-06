@@ -3072,24 +3072,24 @@ router.post('/article-editors/add', isSuperAdmin, async (req, res) => {
       }
     }
 
-    // Create new article editor using findOneAndUpdate with upsert
-    // This avoids the googleId null duplicate key issue
-    await Admin.findOneAndUpdate(
-      { email: normalizedEmail },
-      {
-        $setOnInsert: {
-          email: normalizedEmail,
-          displayName: displayName || normalizedEmail.split('@')[0],
-          role: 'articleEditor',
-          isActive: true
-        }
-      },
-      { upsert: true, new: true }
-    );
+    // Create new article editor using direct collection insert
+    // This avoids Mongoose adding default null values for optional fields
+    const adminCollection = Admin.collection;
+    await adminCollection.insertOne({
+      email: normalizedEmail,
+      displayName: displayName || normalizedEmail.split('@')[0],
+      role: 'articleEditor',
+      isActive: true,
+      createdAt: new Date(),
+      updatedAt: new Date()
+    });
 
     res.json({ success: true, message: 'Article editor added successfully' });
   } catch (error) {
     console.error('Add article editor error:', error);
+    if (error.code === 11000) {
+      return res.status(400).json({ success: false, message: 'This email is already registered' });
+    }
     res.status(500).json({ success: false, message: 'Error adding article editor' });
   }
 });
