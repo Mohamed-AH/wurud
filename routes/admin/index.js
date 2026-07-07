@@ -2817,6 +2817,57 @@ router.get('/articles', isAdmin, async (req, res) => {
   }
 });
 
+// @route   POST /admin/articles/import-from-url
+// @desc    Fetch and extract article from Asdaa URL (AJAX)
+// @access  Private (Admin only)
+router.post('/articles/import-from-url', isAdmin, async (req, res) => {
+  try {
+    const { Article } = require('../../models');
+    const { extractFromUrl } = require('../../utils/asdaaExtractor');
+    const { url } = req.body;
+
+    if (!url || !url.trim()) {
+      return res.status(400).json({ success: false, message: 'الرابط مطلوب' });
+    }
+
+    const trimmedUrl = url.trim();
+
+    if (!trimmedUrl.includes('asdaa-alsaa.com')) {
+      return res.status(400).json({ success: false, message: 'يجب أن يكون الرابط من موقع أصداء (asdaa-alsaa.com)' });
+    }
+
+    const existing = await Article.findOne({
+      sourceUrl: { $regex: new RegExp(trimmedUrl.replace(/\/$/, '').replace(/[.*+?^${}()|[\]\\]/g, '\\$&'), 'i') }
+    }).select('shortId title isPublished').lean();
+
+    if (existing) {
+      return res.status(409).json({
+        success: false,
+        message: `هذا المقال تم استيراده مسبقاً (#${existing.shortId}: ${existing.title})`,
+        existing: { shortId: existing.shortId, title: existing.title, isPublished: existing.isPublished }
+      });
+    }
+
+    const result = await extractFromUrl(trimmedUrl);
+
+    res.json({
+      success: true,
+      data: {
+        title: result.title,
+        content: result.content,
+        publishedAt: result.publishedAt ? result.publishedAt.toISOString().split('T')[0] : null,
+        stats: result.stats
+      }
+    });
+  } catch (error) {
+    console.error('Import from URL error:', error);
+    res.status(500).json({
+      success: false,
+      message: error.message || 'فشل في استيراد المقال من الرابط'
+    });
+  }
+});
+
 // @route   GET /admin/articles/new
 // @desc    Create article form
 // @access  Private (Admin only)
