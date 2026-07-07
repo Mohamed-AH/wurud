@@ -165,6 +165,96 @@
       direction: rtl;
       text-align: right;
     }
+
+    /* Import from URL section */
+    .import-section {
+      background: #f0f7f0;
+      border: 2px dashed #6B7A4E;
+      border-radius: 10px;
+      padding: 20px;
+      margin-bottom: 24px;
+    }
+    .import-section h3 {
+      margin: 0 0 12px;
+      font-size: 16px;
+      color: #2C1508;
+    }
+    .import-row {
+      display: flex;
+      gap: 10px;
+    }
+    .import-row input {
+      flex: 1;
+      padding: 10px 12px;
+      border: 1px solid #6B7A4E;
+      border-radius: 6px;
+      font-size: 14px;
+      font-family: inherit;
+      direction: ltr;
+    }
+    .import-row input:focus {
+      outline: none;
+      border-color: #C49A3C;
+      box-shadow: 0 0 0 3px rgba(196, 154, 60, 0.15);
+    }
+    .btn-import {
+      background: #6B7A4E;
+      color: #fff;
+      padding: 10px 20px;
+      border-radius: 6px;
+      font-size: 14px;
+      font-weight: 600;
+      cursor: pointer;
+      border: none;
+      white-space: nowrap;
+      font-family: inherit;
+    }
+    .btn-import:hover {
+      background: #5a6944;
+    }
+    .btn-import:disabled {
+      opacity: 0.6;
+      cursor: not-allowed;
+    }
+    .import-status {
+      margin-top: 10px;
+      font-size: 13px;
+      padding: 8px 12px;
+      border-radius: 6px;
+      display: none;
+    }
+    .import-status.loading {
+      display: block;
+      background: #e8f0fe;
+      color: #1a56db;
+    }
+    .import-status.success {
+      display: block;
+      background: #def7ec;
+      color: #046c4e;
+    }
+    .import-status.error {
+      display: block;
+      background: #fde8e8;
+      color: #c00;
+    }
+    .import-stats {
+      display: flex;
+      gap: 12px;
+      margin-top: 8px;
+      flex-wrap: wrap;
+    }
+    .import-stat {
+      font-size: 12px;
+      padding: 3px 8px;
+      border-radius: 4px;
+      background: rgba(0,0,0,0.06);
+    }
+    @media (max-width: 600px) {
+      .import-row {
+        flex-direction: column;
+      }
+    }
   </style>
 </head>
 <body>
@@ -183,6 +273,19 @@
         <div class="alert alert-error">
           <%= t('admin_msg_error') %>: <%= error %>
         </div>
+      <% } %>
+
+      <% if (!isEdit) { %>
+      <div class="import-section">
+        <h3>استيراد من رابط أصداء</h3>
+        <div class="import-row">
+          <input type="url" id="importUrl" placeholder="https://asdaa-alsaa.com/..." dir="ltr">
+          <button type="button" class="btn-import" id="importBtn" onclick="importFromUrl()">
+            استيراد
+          </button>
+        </div>
+        <div class="import-status" id="importStatus"></div>
+      </div>
       <% } %>
 
       <form method="POST" action="<%= isEdit ? `/admin/articles/${article._id}/edit` : '/admin/articles/new' %>">
@@ -276,6 +379,86 @@
       </form>
     </div>
   </main>
+
+  <% if (!isEdit) { %>
+  <script>
+    async function importFromUrl() {
+      const urlInput = document.getElementById('importUrl');
+      const btn = document.getElementById('importBtn');
+      const status = document.getElementById('importStatus');
+      const url = urlInput.value.trim();
+
+      if (!url) {
+        showStatus('الرجاء إدخال رابط المقال', 'error');
+        return;
+      }
+
+      if (!url.includes('asdaa-alsaa.com')) {
+        showStatus('يجب أن يكون الرابط من موقع أصداء (asdaa-alsaa.com)', 'error');
+        return;
+      }
+
+      btn.disabled = true;
+      btn.textContent = 'جاري الاستيراد...';
+      showStatus('جاري جلب المقال من الرابط...', 'loading');
+
+      try {
+        const response = await fetch('/admin/articles/import-from-url', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ url })
+        });
+
+        const result = await response.json();
+
+        if (!result.success) {
+          showStatus(result.message, 'error');
+          return;
+        }
+
+        const { data } = result;
+
+        document.getElementById('title').value = data.title;
+        document.getElementById('content').value = data.content;
+        document.getElementById('sourceUrl').value = url;
+        document.getElementById('type').value = 'Asdaa';
+        if (data.publishedAt) {
+          document.getElementById('publishedAt').value = data.publishedAt;
+        }
+        document.getElementById('isPublished').checked = true;
+
+        let msg = 'تم استيراد المقال بنجاح';
+        const stats = [];
+        if (data.stats.paragraphs) stats.push(data.stats.paragraphs + ' فقرة');
+        if (data.stats.hasQuran) stats.push('آيات قرآنية');
+        if (data.stats.hasHadith) stats.push('أحاديث');
+        if (data.stats.hasHeaders) stats.push('عناوين فرعية');
+        if (stats.length) msg += ' — ' + stats.join('، ');
+
+        showStatus(msg, 'success');
+      } catch (error) {
+        console.error('Import error:', error);
+        showStatus('فشل الاتصال بالخادم', 'error');
+      } finally {
+        btn.disabled = false;
+        btn.textContent = 'استيراد';
+      }
+    }
+
+    function showStatus(msg, type) {
+      const el = document.getElementById('importStatus');
+      el.textContent = msg;
+      el.className = 'import-status ' + type;
+    }
+
+    document.getElementById('importUrl').addEventListener('keydown', function(e) {
+      if (e.key === 'Enter') {
+        e.preventDefault();
+        importFromUrl();
+      }
+    });
+  </script>
+  <% } %>
 
   <% if (isEdit) { %>
   <script>
