@@ -120,24 +120,39 @@ function extractPublishedDate(html) {
 }
 
 async function fetchPage(url) {
-  for (let attempt = 1; attempt <= 3; attempt++) {
+  const maxAttempts = 5;
+  for (let attempt = 1; attempt <= maxAttempts; attempt++) {
     try {
       const controller = new AbortController();
-      const timeout = setTimeout(() => controller.abort(), 20000);
+      const timeout = setTimeout(() => controller.abort(), 25000);
       const response = await fetch(url, {
         signal: controller.signal,
         headers: {
-          'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36',
-          'Accept': 'text/html',
-          'Accept-Language': 'ar,en'
+          'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/126.0.0.0 Safari/537.36',
+          'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8',
+          'Accept-Language': 'ar,en-US;q=0.9,en;q=0.8',
+          'Cache-Control': 'no-cache'
         }
       });
       clearTimeout(timeout);
+      if (response.status === 429) {
+        if (attempt === maxAttempts) {
+          throw new Error('الموقع يحد من الطلبات (429). حاول مرة أخرى بعد دقيقة');
+        }
+        const delay = Math.min(5000 * Math.pow(2, attempt - 1), 30000);
+        await new Promise(r => setTimeout(r, delay));
+        continue;
+      }
       if (!response.ok) throw new Error(`HTTP ${response.status}`);
       return await response.text();
     } catch (error) {
-      if (attempt === 3) throw error;
-      await new Promise(r => setTimeout(r, 1000 * attempt));
+      if (attempt === maxAttempts) throw error;
+      if (error.message.includes('429')) {
+        const delay = Math.min(5000 * Math.pow(2, attempt - 1), 30000);
+        await new Promise(r => setTimeout(r, delay));
+      } else {
+        await new Promise(r => setTimeout(r, 2000 * attempt));
+      }
     }
   }
 }

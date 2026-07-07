@@ -400,19 +400,27 @@
 
       btn.disabled = true;
       btn.textContent = 'جاري الاستيراد...';
-      showStatus('جاري جلب المقال من الرابط...', 'loading');
+      showStatus('جاري جلب المقال من الرابط... قد يستغرق ذلك نصف دقيقة', 'loading');
 
       try {
+        const controller = new AbortController();
+        const timeout = setTimeout(() => controller.abort(), 120000);
         const response = await fetch('/admin/articles/import-from-url', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ url })
+          body: JSON.stringify({ url }),
+          signal: controller.signal
         });
+        clearTimeout(timeout);
 
         const result = await response.json();
 
         if (!result.success) {
-          showStatus(result.message, 'error');
+          let errorMsg = result.message;
+          if (response.status === 429 || (errorMsg && errorMsg.includes('429'))) {
+            errorMsg = 'الموقع يحد من الطلبات. انتظر دقيقة ثم حاول مرة أخرى';
+          }
+          showStatus(errorMsg, 'error');
           return;
         }
 
