@@ -103,7 +103,6 @@
     color: #4A2010;
     font-size: 15px;
     line-height: 2;
-    white-space: pre-wrap;
     margin-bottom: 24px;
     direction: rtl;
     text-align: right;
@@ -111,6 +110,19 @@
 
   .article-body p {
     margin-bottom: 16px;
+  }
+
+  .article-body .quran {
+    color: #008000;
+  }
+
+  .article-body .hadith {
+    color: #0000CC;
+  }
+
+  .article-body .section-header {
+    color: #CC0000;
+    font-weight: 700;
   }
 
   .source-link-section {
@@ -267,7 +279,7 @@
     <h1 class="article-main-title"><%= article.title %></h1>
 
     <div class="article-body">
-      <%= article.content %>
+      <%- article.content %>
     </div>
 
     <% if (article.sourceUrl) { %>

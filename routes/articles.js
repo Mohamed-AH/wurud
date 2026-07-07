@@ -3,6 +3,19 @@ const router = express.Router();
 const { Article } = require('../models');
 const cache = require('../utils/cache');
 
+function sanitizeArticleHtml(html) {
+  if (!html) return '';
+  return html
+    .replace(/<script[\s\S]*?<\/script>/gi, '')
+    .replace(/<style[\s\S]*?<\/style>/gi, '')
+    .replace(/on\w+\s*=\s*"[^"]*"/gi, '')
+    .replace(/on\w+\s*=\s*'[^']*'/gi, '')
+    .replace(/<iframe[\s\S]*?<\/iframe>/gi, '')
+    .replace(/<object[\s\S]*?<\/object>/gi, '')
+    .replace(/<embed[^>]*>/gi, '')
+    .replace(/<form[\s\S]*?<\/form>/gi, '');
+}
+
 const CACHE_TTL = {
   ARTICLES_LIST: 600,
   ARTICLE_DETAIL: 1800
@@ -102,11 +115,14 @@ router.get('/:slugOrId', async (req, res) => {
       .select('shortId title summary slug publishedAt')
       .lean();
 
+    // Sanitize content for safe unescaped rendering
+    article.content = sanitizeArticleHtml(article.content);
+
     // Generate meta description (summary or first 160 chars of content)
     let metaDescription = article.summary;
     if (!metaDescription && article.content) {
-      metaDescription = article.content.replace(/\s+/g, ' ').trim().substring(0, 160);
-      if (article.content.length > 160) metaDescription += '...';
+      metaDescription = article.content.replace(/<[^>]+>/g, '').replace(/\s+/g, ' ').trim().substring(0, 160);
+      if (article.content.replace(/<[^>]+>/g, '').length > 160) metaDescription += '...';
     }
     metaDescription = metaDescription || article.title;
 
