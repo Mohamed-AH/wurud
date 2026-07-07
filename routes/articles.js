@@ -16,6 +16,16 @@ function sanitizeArticleHtml(html) {
     .replace(/<form[\s\S]*?<\/form>/gi, '');
 }
 
+function ensureHtmlParagraphs(content) {
+  if (!content) return '';
+  if (/<p[\s>]/i.test(content)) return content;
+  return content
+    .split(/\n/)
+    .filter(line => line.trim())
+    .map(line => `<p>${line.trim()}</p>`)
+    .join('\n');
+}
+
 const CACHE_TTL = {
   ARTICLES_LIST: 600,
   ARTICLE_DETAIL: 1800
@@ -115,8 +125,8 @@ router.get('/:slugOrId', async (req, res) => {
       .select('shortId title summary slug publishedAt')
       .lean();
 
-    // Sanitize content for safe unescaped rendering
-    article.content = sanitizeArticleHtml(article.content);
+    // Wrap plain-text content in <p> tags, then sanitize for safe rendering
+    article.content = sanitizeArticleHtml(ensureHtmlParagraphs(article.content));
 
     // Generate meta description (summary or first 160 chars of content)
     let metaDescription = article.summary;
