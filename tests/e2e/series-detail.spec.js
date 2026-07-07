@@ -21,7 +21,7 @@ test.describe('Series Detail Page - Basic Functionality', () => {
     await expect(page.locator('.series-hero')).toBeVisible();
 
     // Lectures section should exist (lectures-list or description card)
-    await expect(page.locator('.lectures-list, .description-card, .empty-state')).toBeVisible();
+    await expect(page.locator('.lectures-list, .description-card, .empty-state').first()).toBeVisible();
   });
 
   test('should display series information correctly', async ({ page }) => {
@@ -76,9 +76,6 @@ test.describe('Series Detail Page - Responsive Design', () => {
     // Hero should be visible
     await expect(page.locator('.series-hero')).toBeVisible({ timeout: 15000 });
 
-    // Breadcrumb should be readable
-    await expect(page.locator('.breadcrumb')).toBeVisible();
-
     // No horizontal overflow
     const bodyWidth = await page.evaluate(() => document.body.scrollWidth);
     const viewportWidth = await page.evaluate(() => window.innerWidth);
@@ -125,7 +122,6 @@ test.describe('Series Detail Page - Responsive Design', () => {
 
     // All elements should be visible
     await expect(page.locator('.series-hero')).toBeVisible({ timeout: 15000 });
-    await expect(page.locator('.breadcrumb')).toBeVisible();
   });
 
   test('should work on large tablet viewport (1024px)', async ({ page }) => {

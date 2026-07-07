@@ -20,6 +20,24 @@ const {
   isSuperAdmin
 } = require('../../middleware/auth');
 
+// Mongoose queries are chainable (findById().select().lean()).
+// These helpers return objects that mimic that chain and are also thenable.
+function mockQuery(value) {
+  const q = {};
+  q.select = jest.fn().mockReturnValue(q);
+  q.lean = jest.fn().mockResolvedValue(value);
+  q.then = (resolve, reject) => Promise.resolve(value).then(resolve, reject);
+  return q;
+}
+
+function mockQueryReject(error) {
+  const q = {};
+  q.select = jest.fn().mockReturnValue(q);
+  q.lean = jest.fn().mockRejectedValue(error);
+  q.then = (resolve, reject) => Promise.reject(error).then(resolve, reject);
+  return q;
+}
+
 describe('Auth Middleware', () => {
   let mockReq;
   let mockRes;
@@ -28,6 +46,7 @@ describe('Auth Middleware', () => {
   beforeEach(() => {
     jest.clearAllMocks();
     jest.spyOn(console, 'error').mockImplementation(() => {});
+    jest.spyOn(console, 'log').mockImplementation(() => {});
 
     mockReq = {
       isAuthenticated: jest.fn(() => false),
@@ -105,10 +124,11 @@ describe('Auth Middleware', () => {
 
     it('should call next() for active admin', async () => {
       mockReq.isAuthenticated.mockReturnValue(true);
-      Admin.findById.mockResolvedValue({
+      Admin.findById.mockReturnValue(mockQuery({
         _id: '507f1f77bcf86cd799439011',
-        isActive: true
-      });
+        isActive: true,
+        role: 'admin'
+      }));
 
       await isAdmin(mockReq, mockRes, mockNext);
 
@@ -116,9 +136,36 @@ describe('Auth Middleware', () => {
       expect(mockNext).toHaveBeenCalled();
     });
 
+    it('should call next() for active editor', async () => {
+      mockReq.isAuthenticated.mockReturnValue(true);
+      Admin.findById.mockReturnValue(mockQuery({
+        _id: '507f1f77bcf86cd799439011',
+        isActive: true,
+        role: 'editor'
+      }));
+
+      await isAdmin(mockReq, mockRes, mockNext);
+
+      expect(mockNext).toHaveBeenCalled();
+    });
+
+    it('should redirect articleEditor to /article-editor', async () => {
+      mockReq.isAuthenticated.mockReturnValue(true);
+      Admin.findById.mockReturnValue(mockQuery({
+        _id: '507f1f77bcf86cd799439011',
+        isActive: true,
+        role: 'articleEditor'
+      }));
+
+      await isAdmin(mockReq, mockRes, mockNext);
+
+      expect(mockRes.redirect).toHaveBeenCalledWith('/article-editor');
+      expect(mockNext).not.toHaveBeenCalled();
+    });
+
     it('should logout and redirect if admin not found', async () => {
       mockReq.isAuthenticated.mockReturnValue(true);
-      Admin.findById.mockResolvedValue(null);
+      Admin.findById.mockReturnValue(mockQuery(null));
 
       await isAdmin(mockReq, mockRes, mockNext);
 
@@ -129,10 +176,10 @@ describe('Auth Middleware', () => {
 
     it('should logout and redirect if admin is inactive', async () => {
       mockReq.isAuthenticated.mockReturnValue(true);
-      Admin.findById.mockResolvedValue({
+      Admin.findById.mockReturnValue(mockQuery({
         _id: '507f1f77bcf86cd799439011',
         isActive: false
-      });
+      }));
 
       await isAdmin(mockReq, mockRes, mockNext);
 
@@ -143,7 +190,7 @@ describe('Auth Middleware', () => {
 
     it('should handle logout errors gracefully', async () => {
       mockReq.isAuthenticated.mockReturnValue(true);
-      Admin.findById.mockResolvedValue({ isActive: false });
+      Admin.findById.mockReturnValue(mockQuery({ isActive: false }));
       mockReq.logout = jest.fn((cb) => cb(new Error('Logout error')));
 
       await isAdmin(mockReq, mockRes, mockNext);
@@ -153,7 +200,7 @@ describe('Auth Middleware', () => {
 
     it('should return 500 on database error', async () => {
       mockReq.isAuthenticated.mockReturnValue(true);
-      Admin.findById.mockRejectedValue(new Error('Database error'));
+      Admin.findById.mockReturnValue(mockQueryReject(new Error('Database error')));
 
       await isAdmin(mockReq, mockRes, mockNext);
 
@@ -177,10 +224,11 @@ describe('Auth Middleware', () => {
 
     it('should call next() for active admin', async () => {
       mockReq.isAuthenticated.mockReturnValue(true);
-      Admin.findById.mockResolvedValue({
+      Admin.findById.mockReturnValue(mockQuery({
         _id: '507f1f77bcf86cd799439011',
-        isActive: true
-      });
+        isActive: true,
+        role: 'admin'
+      }));
 
       await isAdminAPI(mockReq, mockRes, mockNext);
 
@@ -189,7 +237,7 @@ describe('Auth Middleware', () => {
 
     it('should return 403 if admin not found', async () => {
       mockReq.isAuthenticated.mockReturnValue(true);
-      Admin.findById.mockResolvedValue(null);
+      Admin.findById.mockReturnValue(mockQuery(null));
 
       await isAdminAPI(mockReq, mockRes, mockNext);
 
@@ -202,7 +250,7 @@ describe('Auth Middleware', () => {
 
     it('should return 403 if admin is inactive', async () => {
       mockReq.isAuthenticated.mockReturnValue(true);
-      Admin.findById.mockResolvedValue({ isActive: false });
+      Admin.findById.mockReturnValue(mockQuery({ isActive: false }));
 
       await isAdminAPI(mockReq, mockRes, mockNext);
 
@@ -215,7 +263,7 @@ describe('Auth Middleware', () => {
 
     it('should return 500 on database error', async () => {
       mockReq.isAuthenticated.mockReturnValue(true);
-      Admin.findById.mockRejectedValue(new Error('Database error'));
+      Admin.findById.mockReturnValue(mockQueryReject(new Error('Database error')));
 
       await isAdminAPI(mockReq, mockRes, mockNext);
 
@@ -238,10 +286,10 @@ describe('Auth Middleware', () => {
 
     it('should call next() for active admin', async () => {
       mockReq.isAuthenticated.mockReturnValue(true);
-      Admin.findById.mockResolvedValue({
+      Admin.findById.mockReturnValue(mockQuery({
         isActive: true,
         role: 'admin'
-      });
+      }));
 
       await isEditor(mockReq, mockRes, mockNext);
 
@@ -250,10 +298,10 @@ describe('Auth Middleware', () => {
 
     it('should call next() for active editor', async () => {
       mockReq.isAuthenticated.mockReturnValue(true);
-      Admin.findById.mockResolvedValue({
+      Admin.findById.mockReturnValue(mockQuery({
         isActive: true,
         role: 'editor'
-      });
+      }));
 
       await isEditor(mockReq, mockRes, mockNext);
 
@@ -262,7 +310,7 @@ describe('Auth Middleware', () => {
 
     it('should logout and redirect if admin not found', async () => {
       mockReq.isAuthenticated.mockReturnValue(true);
-      Admin.findById.mockResolvedValue(null);
+      Admin.findById.mockReturnValue(mockQuery(null));
 
       await isEditor(mockReq, mockRes, mockNext);
 
@@ -272,7 +320,7 @@ describe('Auth Middleware', () => {
 
     it('should logout and redirect if admin is inactive', async () => {
       mockReq.isAuthenticated.mockReturnValue(true);
-      Admin.findById.mockResolvedValue({ isActive: false });
+      Admin.findById.mockReturnValue(mockQuery({ isActive: false }));
 
       await isEditor(mockReq, mockRes, mockNext);
 
@@ -282,10 +330,10 @@ describe('Auth Middleware', () => {
 
     it('should return 403 for non-editor/non-admin roles', async () => {
       mockReq.isAuthenticated.mockReturnValue(true);
-      Admin.findById.mockResolvedValue({
+      Admin.findById.mockReturnValue(mockQuery({
         isActive: true,
         role: 'viewer'
-      });
+      }));
 
       await isEditor(mockReq, mockRes, mockNext);
 
@@ -295,7 +343,7 @@ describe('Auth Middleware', () => {
 
     it('should handle logout errors gracefully', async () => {
       mockReq.isAuthenticated.mockReturnValue(true);
-      Admin.findById.mockResolvedValue({ isActive: false });
+      Admin.findById.mockReturnValue(mockQuery({ isActive: false }));
       mockReq.logout = jest.fn((cb) => cb(new Error('Logout error')));
 
       await isEditor(mockReq, mockRes, mockNext);
@@ -305,7 +353,7 @@ describe('Auth Middleware', () => {
 
     it('should return 500 on database error', async () => {
       mockReq.isAuthenticated.mockReturnValue(true);
-      Admin.findById.mockRejectedValue(new Error('Database error'));
+      Admin.findById.mockReturnValue(mockQueryReject(new Error('Database error')));
 
       await isEditor(mockReq, mockRes, mockNext);
 
@@ -325,10 +373,10 @@ describe('Auth Middleware', () => {
 
     it('should call next() for active super admin', async () => {
       mockReq.isAuthenticated.mockReturnValue(true);
-      Admin.findById.mockResolvedValue({
+      Admin.findById.mockReturnValue(mockQuery({
         isActive: true,
         role: 'admin'
-      });
+      }));
 
       await isSuperAdmin(mockReq, mockRes, mockNext);
 
@@ -337,7 +385,7 @@ describe('Auth Middleware', () => {
 
     it('should return 403 for admin not found', async () => {
       mockReq.isAuthenticated.mockReturnValue(true);
-      Admin.findById.mockResolvedValue(null);
+      Admin.findById.mockReturnValue(mockQuery(null));
 
       await isSuperAdmin(mockReq, mockRes, mockNext);
 
@@ -347,10 +395,10 @@ describe('Auth Middleware', () => {
 
     it('should return 403 for inactive admin', async () => {
       mockReq.isAuthenticated.mockReturnValue(true);
-      Admin.findById.mockResolvedValue({
+      Admin.findById.mockReturnValue(mockQuery({
         isActive: false,
         role: 'admin'
-      });
+      }));
 
       await isSuperAdmin(mockReq, mockRes, mockNext);
 
@@ -360,10 +408,10 @@ describe('Auth Middleware', () => {
 
     it('should return 403 for non-admin role', async () => {
       mockReq.isAuthenticated.mockReturnValue(true);
-      Admin.findById.mockResolvedValue({
+      Admin.findById.mockReturnValue(mockQuery({
         isActive: true,
         role: 'editor'
-      });
+      }));
 
       await isSuperAdmin(mockReq, mockRes, mockNext);
 
@@ -373,7 +421,7 @@ describe('Auth Middleware', () => {
 
     it('should return 500 on database error', async () => {
       mockReq.isAuthenticated.mockReturnValue(true);
-      Admin.findById.mockRejectedValue(new Error('Database error'));
+      Admin.findById.mockReturnValue(mockQueryReject(new Error('Database error')));
 
       await isSuperAdmin(mockReq, mockRes, mockNext);
 
