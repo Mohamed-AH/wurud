@@ -17,8 +17,10 @@ describe('Lecture Model', () => {
     await testDb.disconnect();
   });
 
+  let sheikhSeq = 50000;
+
   beforeEach(async () => {
-    // Clean up before each test to ensure test isolation
+    sheikhSeq++;
     await Lecture.deleteMany({});
     await Sheikh.deleteMany({});
     await Counter.deleteMany({});
@@ -30,11 +32,13 @@ describe('Lecture Model', () => {
     await Counter.deleteMany({});
   });
 
+  function createSheikh(overrides = {}) {
+    return Sheikh.create({ nameArabic: 'Test Sheikh', shortId: sheikhSeq, ...overrides });
+  }
+
   describe('Schema Validation', () => {
     it('should create a valid lecture with required fields', async () => {
-      const sheikh = await Sheikh.create({
-        nameArabic: 'Test Sheikh'
-      });
+      const sheikh = await createSheikh();
 
       const lecture = await Lecture.create({
         titleArabic: 'Test Lecture',
@@ -46,9 +50,7 @@ describe('Lecture Model', () => {
     });
 
     it('should fail validation without required titleArabic', async () => {
-      const sheikh = await Sheikh.create({
-        nameArabic: 'Test Sheikh'
-      });
+      const sheikh = await createSheikh();
 
       const lecture = new Lecture({
         sheikhId: sheikh._id
@@ -68,9 +70,7 @@ describe('Lecture Model', () => {
 
   describe('Optional Fields', () => {
     it('should accept optional audioFileName', async () => {
-      const sheikh = await Sheikh.create({
-        nameArabic: 'Test Sheikh'
-      });
+      const sheikh = await createSheikh();
 
       const lecture = await Lecture.create({
         titleArabic: 'Test Lecture',
@@ -82,9 +82,7 @@ describe('Lecture Model', () => {
     });
 
     it('should accept optional descriptionArabic', async () => {
-      const sheikh = await Sheikh.create({
-        nameArabic: 'Test Sheikh'
-      });
+      const sheikh = await createSheikh();
 
       const lecture = await Lecture.create({
         titleArabic: 'Test Lecture',
@@ -96,9 +94,7 @@ describe('Lecture Model', () => {
     });
 
     it('should accept optional duration', async () => {
-      const sheikh = await Sheikh.create({
-        nameArabic: 'Test Sheikh'
-      });
+      const sheikh = await createSheikh();
 
       const lecture = await Lecture.create({
         titleArabic: 'Test Lecture',
@@ -110,9 +106,7 @@ describe('Lecture Model', () => {
     });
 
     it('should default duration to 0', async () => {
-      const sheikh = await Sheikh.create({
-        nameArabic: 'Test Sheikh'
-      });
+      const sheikh = await createSheikh();
 
       const lecture = await Lecture.create({
         titleArabic: 'Test Lecture',
@@ -125,9 +119,7 @@ describe('Lecture Model', () => {
 
   describe('Series and Lecture Number', () => {
     it('should accept seriesId reference', async () => {
-      const sheikh = await Sheikh.create({
-        nameArabic: 'Test Sheikh'
-      });
+      const sheikh = await createSheikh();
 
       const lecture = await Lecture.create({
         titleArabic: 'Test Lecture',
@@ -141,9 +133,7 @@ describe('Lecture Model', () => {
     });
 
     it('should accept null seriesId for standalone lectures', async () => {
-      const sheikh = await Sheikh.create({
-        nameArabic: 'Test Sheikh'
-      });
+      const sheikh = await createSheikh();
 
       const lecture = await Lecture.create({
         titleArabic: 'Test Lecture',
@@ -157,9 +147,7 @@ describe('Lecture Model', () => {
 
   describe('Timestamps', () => {
     it('should automatically add createdAt and updatedAt', async () => {
-      const sheikh = await Sheikh.create({
-        nameArabic: 'Test Sheikh'
-      });
+      const sheikh = await createSheikh();
 
       const lecture = await Lecture.create({
         titleArabic: 'Test Lecture',
@@ -171,9 +159,7 @@ describe('Lecture Model', () => {
     });
 
     it('should update updatedAt on modification', async () => {
-      const sheikh = await Sheikh.create({
-        nameArabic: 'Test Sheikh'
-      });
+      const sheikh = await createSheikh();
 
       const lecture = await Lecture.create({
         titleArabic: 'Test Lecture',
@@ -197,11 +183,8 @@ describe('Lecture Model', () => {
 
   describe('Population', () => {
     it('should populate sheikh reference', async () => {
-      // Create a unique sheikh for this test to avoid conflicts in CI
-      const uniqueName = `Test Sheikh ${Date.now()}`;
-      const sheikh = await Sheikh.create({
-        nameArabic: uniqueName
-      });
+      const uniqueName = `Test Sheikh ${sheikhSeq}`;
+      const sheikh = await createSheikh({ nameArabic: uniqueName });
 
       // Verify sheikh was created and persisted
       expect(sheikh._id).toBeDefined();

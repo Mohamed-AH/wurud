@@ -295,6 +295,56 @@ Complete desktop redesign to match design handoff:
 
 **Files Modified**: `views/public/series-detail.ejs`, `views/partials/lectureCard.ejs`
 
+### 20. Article Formatting & Import Pipeline
+
+**Article Content Rendering** (HTML with semantic CSS classes):
+- Articles render with `<%- %>` (unescaped) for HTML content
+- Server-side `sanitizeArticleHtml()` strips XSS vectors (scripts, iframes, event handlers, forms)
+- Server-side `ensureHtmlParagraphs()` wraps plain `\n`-separated text in `<p>` tags
+- CSS classes: `.quran` (green #2E6B3E), `.hadith` (blue #2B4C7E), `.section-header` (red #8B2500)
+
+**Files Modified**:
+- `routes/articles.js` — Added `sanitizeArticleHtml()`, `ensureHtmlParagraphs()`, exposed as `router._sanitizeArticleHtml` / `router._ensureHtmlParagraphs` for testing
+- `views/public/article-detail.ejs` — Uses `<%- %>` for content, removed `white-space: pre-wrap`, added semantic CSS
+
+**Asdaa Extractor Utility** (`utils/asdaaExtractor.js`):
+- Shared extraction logic for importing articles from asdaa-alsaa.com
+- `extractFromUrl(url)` — Fetches page, extracts title, content (with paragraph structure), published date, stats
+- `convertColorToClass(html)` — Converts inline color styles to semantic CSS classes (green→quran, blue→hadith, red→section-header)
+- `cleanHtml(html)` — Strips scripts, styles, images, links; decodes HTML entities
+- `fetchPage(url)` — HTTP fetch with 5 retries, exponential backoff for 429 rate limiting (5s base, 30s max)
+- Browser-like User-Agent headers to avoid bot detection
+
+**Admin Import from URL** (`routes/admin/index.js`):
+- `POST /admin/articles/import-from-url` — Accepts Asdaa URL, validates domain, checks for duplicates via sourceUrl regex, returns extracted article data
+- Duplicate detection handles trailing slash variations
+- Frontend in `views/admin/article-form.ejs` — Import section with URL input, auto-fills form fields on success, shows stats (paragraphs, quran, hadith, headers)
+
+**Quill Editor Custom Blots** (`views/article-editor/edit.ejs`):
+- Registered QuranBlot, HadithBlot, SectionHeaderBlot so Quill preserves `.quran`, `.hadith`, `.section-header` CSS classes
+- Custom toolbar buttons (قرآن/حديث/عنوان) with matching colors
+- `toggleFormat()` function for applying/removing semantic formatting
+
+**Reimport Script** (`scripts/reimport-asdaa.js`):
+- Re-imports existing Asdaa articles from source URLs with HTML formatting
+- Updates titles from original source
+- Dry-run by default, `--apply` to write to DB
+
+### 21. Test Fixes
+
+**E2E Fixes**:
+- `audio-player.spec.js:264` — Lowered touch target threshold from 30px to 26px (buttons are 28px on mobile by design)
+- `series-detail.spec.js:24` — Added `.first()` to multi-element locator (strict mode violation)
+- `series-detail.spec.js:80,128` — Removed breadcrumb visibility assertions on mobile/tablet (hidden by design in redesign)
+
+**Unit Test Fixes**:
+- `authMiddleware.test.js` — Updated mocks to use chainable query objects (`mockQuery`/`mockQueryReject`) that support `.select().lean()` chaining (needed after `isAdmin` middleware was updated). Added `role` field to mock data for admin role checks. Suppressed console.log for auth debug output.
+- `models/lecture.test.js` — Added `createSheikh()` helper with explicit `shortId` (50000+) to avoid E11000 duplicate key errors when parallel test files share the same MongoDB instance
+
+**New Test Suites**:
+- `tests/unit/asdaaExtractor.test.js` — 30 tests covering extractTitle, extractPublishedDate, extractContent (paragraph extraction, color-to-class conversion, HTML cleanup, entity decoding)
+- `tests/unit/articleHelpers.test.js` — 19 tests covering sanitizeArticleHtml (XSS prevention) and ensureHtmlParagraphs (plain text wrapping)
+
 ## Pending Tasks
 
 ### ACTIVE: Design Redesign Implementation (June 2026)

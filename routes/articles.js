@@ -157,4 +157,6 @@ router.get('/:slugOrId', async (req, res) => {
   }
 });
 
+router._sanitizeArticleHtml = sanitizeArticleHtml;
+router._ensureHtmlParagraphs = ensureHtmlParagraphs;
 module.exports = router;
