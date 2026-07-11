@@ -236,6 +236,7 @@ router.post('/lectures/:id/delete', isAdmin, async (req, res) => {
   try {
     const { Lecture, Series, Sheikh } = require('../../models');
     const { deleteFromOCI } = require('../../utils/ociStorage');
+    const { isR2Url, deleteFromR2 } = require('../../utils/r2Storage');
 
     const lecture = await Lecture.findById(req.params.id);
 
@@ -243,12 +244,16 @@ router.post('/lectures/:id/delete', isAdmin, async (req, res) => {
       return res.status(404).json({ success: false, message: 'Lecture not found' });
     }
 
-    // Delete audio from OCI if exists
+    // Delete audio from storage if exists
     if (lecture.audioFileName) {
       try {
-        await deleteFromOCI(lecture.audioFileName);
-      } catch (ociError) {
-        console.warn('Could not delete OCI file:', ociError.message);
+        if (lecture.audioUrl && isR2Url(lecture.audioUrl)) {
+          await deleteFromR2(lecture.audioFileName);
+        } else {
+          await deleteFromOCI(lecture.audioFileName);
+        }
+      } catch (storageError) {
+        console.warn('Could not delete storage file:', storageError.message);
       }
     }
 
