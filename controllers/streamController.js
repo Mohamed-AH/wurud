@@ -5,6 +5,7 @@ const { Lecture } = require('../models');
 const { getFilePath, fileExists } = require('../utils/fileManager');
 const { getMimeType, handleRangeRequest } = require('../middleware/streamHandler');
 const { getPublicUrl, isConfigured: isOciConfigured, createPreAuthenticatedRequest } = require('../utils/ociStorage');
+const { isR2Url, createR2PresignedUrl } = require('../utils/r2Storage');
 const { isValidObjectId } = require('../utils/validators');
 const { recordAudioPlay } = require('../utils/metrics');
 const sentryMetrics = require('../utils/sentryMetrics');
@@ -116,6 +117,16 @@ const streamAudio = async (req, res) => {
       sentryMetrics.audioPlay('oci');
 
       // Redirect to OCI Object Storage URL
+      return res.redirect(lecture.audioUrl);
+    }
+
+    // Check if lecture has an R2 URL
+    if (lecture.audioUrl && isR2Url(lecture.audioUrl)) {
+      Lecture.updateOne({ _id: lecture._id }, { $inc: { playCount: 1 } }).catch(err => {
+        console.error('Error incrementing play count:', err);
+      });
+      recordAudioPlay(lecture.audioFileName || lecture.titleArabic || 'unknown');
+      sentryMetrics.audioPlay('r2');
       return res.redirect(lecture.audioUrl);
     }
 
@@ -248,6 +259,22 @@ const downloadAudio = async (req, res) => {
           success: false,
           message: 'Download failed from cloud storage'
         });
+      }
+    }
+
+    // Check if lecture has R2 URL - use presigned URL for download
+    if (lecture.audioUrl && isR2Url(lecture.audioUrl)) {
+      try {
+        const presignedUrl = await createR2PresignedUrl(lecture.audioFileName, 3600);
+        res.redirect(302, presignedUrl);
+        Lecture.updateOne({ _id: lecture._id }, { $inc: { downloadCount: 1 } }).catch(err => {
+          console.error('Error incrementing download count:', err);
+        });
+        sentryMetrics.audioDownload('r2', lecture.fileSize ? lecture.fileSize / 1024 / 1024 : 0);
+        return;
+      } catch (err) {
+        console.error('R2 download error:', err);
+        return res.status(500).json({ success: false, message: 'Download failed from cloud storage' });
       }
     }
 
