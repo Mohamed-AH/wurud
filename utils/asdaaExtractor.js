@@ -152,7 +152,15 @@ async function fetchPage(url) {
         await new Promise(r => setTimeout(r, delay));
         continue;
       }
-      if (!response.ok) throw new Error(`HTTP ${response.status}`);
+      if (!response.ok) {
+        const respHeaders = Object.fromEntries(response.headers.entries());
+        let bodySnippet = '';
+        try { bodySnippet = (await response.text()).substring(0, 500); } catch (_) {}
+        console.error(`[asdaaExtractor] HTTP ${response.status} from ${url}`);
+        console.error(`[asdaaExtractor] Response headers:`, JSON.stringify(respHeaders, null, 2));
+        console.error(`[asdaaExtractor] Body snippet:`, bodySnippet);
+        throw new Error(`HTTP ${response.status}`);
+      }
       return await response.text();
     } catch (error) {
       if (attempt === maxAttempts) throw error;
