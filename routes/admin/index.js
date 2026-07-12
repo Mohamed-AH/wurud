@@ -2866,10 +2866,68 @@ router.post('/articles/import-from-url', isAdmin, async (req, res) => {
     });
   } catch (error) {
     console.error('Import from URL error:', error);
+    const is403 = error.message && error.message.includes('403');
     res.status(500).json({
       success: false,
-      message: error.message || 'فشل في استيراد المقال من الرابط'
+      message: error.message || 'فشل في استيراد المقال من الرابط',
+      showPasteOption: is403
     });
+  }
+});
+
+// @route   POST /admin/articles/import-from-html
+// @desc    Extract article from pasted HTML (fallback when server-side fetch is blocked)
+// @access  Private (Admin only)
+router.post('/articles/import-from-html', isAdmin, async (req, res) => {
+  try {
+    const { extractContent, extractTitle, extractPublishedDate } = require('../../utils/asdaaExtractor');
+    const { html, sourceUrl } = req.body;
+
+    if (!html || !html.trim()) {
+      return res.status(400).json({ success: false, message: 'HTML content is required' });
+    }
+
+    if (sourceUrl) {
+      const { Article } = require('../../models');
+      const existing = await Article.findOne({
+        sourceUrl: { $regex: new RegExp(sourceUrl.replace(/\/$/, '').replace(/[.*+?^${}()|[\]\\]/g, '\\$&'), 'i') }
+      }).select('shortId title').lean();
+
+      if (existing) {
+        return res.status(409).json({
+          success: false,
+          message: `هذا المقال تم استيراده مسبقاً (#${existing.shortId}: ${existing.title})`
+        });
+      }
+    }
+
+    const title = extractTitle(html);
+    const content = extractContent(html);
+    const publishedAt = extractPublishedDate(html);
+
+    if (!content) {
+      return res.status(400).json({ success: false, message: 'لم يتم العثور على محتوى المقال في HTML المُلصق' });
+    }
+
+    const paragraphCount = (content.match(/<p>/gi) || []).length;
+
+    res.json({
+      success: true,
+      data: {
+        title: title || '',
+        content,
+        publishedAt: publishedAt ? publishedAt.toISOString().split('T')[0] : null,
+        stats: {
+          paragraphs: paragraphCount,
+          hasQuran: content.includes('class="quran"'),
+          hasHadith: content.includes('class="hadith"'),
+          hasHeaders: content.includes('class="section-header"')
+        }
+      }
+    });
+  } catch (error) {
+    console.error('Import from HTML error:', error);
+    res.status(500).json({ success: false, message: error.message || 'فشل في معالجة HTML' });
   }
 });
 
