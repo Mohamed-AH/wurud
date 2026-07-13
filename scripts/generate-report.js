@@ -120,16 +120,16 @@ async function main() {
 <style>
   @import url('https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700&display=swap');
   * { margin: 0; padding: 0; box-sizing: border-box; }
-  body { font-family: 'Cairo', sans-serif; font-size: 12px; color: #222; background: #fff; padding: 20px; line-height: 1.6; }
-  h1 { font-size: 22px; text-align: center; margin-bottom: 4px; color: #2C1508; }
-  .subtitle { text-align: center; color: #666; font-size: 13px; margin-bottom: 20px; }
-  h2 { font-size: 16px; color: #2C1508; border-bottom: 2px solid #C49A3C; padding-bottom: 4px; margin: 24px 0 12px; page-break-after: avoid; }
-  h3 { font-size: 13px; color: #5A6944; margin: 16px 0 6px; page-break-after: avoid; }
+  body { font-family: 'Cairo', sans-serif; font-size: 14px; color: #222; background: #fff; padding: 20px; line-height: 1.6; }
+  h1 { font-size: 26px; text-align: center; margin-bottom: 4px; color: #2C1508; }
+  .subtitle { text-align: center; color: #666; font-size: 15px; margin-bottom: 20px; }
+  h2 { font-size: 20px; color: #2C1508; border-bottom: 2px solid #C49A3C; padding-bottom: 4px; margin: 24px 0 12px; page-break-after: avoid; }
+  h3 { font-size: 16px; color: #5A6944; margin: 16px 0 6px; page-break-after: avoid; }
 
   .stats-row { display: flex; gap: 12px; justify-content: center; flex-wrap: wrap; margin-bottom: 20px; }
   .stat-box { background: #FDF8F2; border: 1px solid #DEC99A; border-radius: 8px; padding: 10px 18px; text-align: center; min-width: 100px; }
-  .stat-num { font-size: 22px; font-weight: 700; color: #C49A3C; }
-  .stat-label { font-size: 11px; color: #7A5C3A; }
+  .stat-num { font-size: 24px; font-weight: 700; color: #C49A3C; }
+  .stat-label { font-size: 13px; color: #7A5C3A; }
 
   table { width: 100%; border-collapse: collapse; margin-bottom: 16px; font-size: 11px; }
   th { background: #2C1508; color: #fff; padding: 6px 8px; text-align: right; font-weight: 600; }
@@ -141,10 +141,10 @@ async function main() {
   .badge-published { background: #d4edda; color: #155724; }
   .badge-draft { background: #fff3cd; color: #856404; }
   .badge-no-audio { background: #f8d7da; color: #721c24; }
-  .section-box { background: #FDF8F2; border: 1px solid #DEC99A; border-radius: 8px; padding: 12px; margin-bottom: 10px; }
-  .section-series { margin: 4px 0 0 16px; font-size: 11px; color: #555; }
-  .notes-box { border: 1px dashed #C49A3C; border-radius: 8px; padding: 16px; margin-top: 8px; min-height: 60px; }
-  .notes-label { font-size: 10px; color: #999; }
+  .section-box { background: #FDF8F2; border: 1px solid #DEC99A; border-radius: 8px; padding: 16px; margin-bottom: 14px; font-size: 16px; }
+  .section-series { margin: 6px 0 0 16px; font-size: 14px; color: #555; line-height: 1.8; }
+  .notes-box { border: 1px dashed #C49A3C; border-radius: 8px; padding: 16px; margin-top: 10px; min-height: 60px; }
+  .notes-label { font-size: 13px; color: #999; }
 
   @media print {
     body { padding: 10px; font-size: 11px; }
@@ -159,7 +159,7 @@ async function main() {
 </head>
 <body>
 
-<h1>تقرير محتوى موقع وُرُود</h1>
+<h1>تقرير محتوى موقع الشيخ حسن بن محمد منصور الدغريري</h1>
 <p class="subtitle">تاريخ التقرير: ${dateStr}</p>
 
 <div class="stats-row">
@@ -295,7 +295,7 @@ async function main() {
 
   html += `
 <div style="text-align: center; margin-top: 30px; padding-top: 16px; border-top: 1px solid #ddd; color: #999; font-size: 10px;">
-  تم إنشاء هذا التقرير تلقائياً بتاريخ ${dateStr} — موقع وُرُود
+  تم إنشاء هذا التقرير تلقائياً بتاريخ ${dateStr} — موقع الشيخ حسن بن محمد منصور الدغريري
 </div>
 </body>
 </html>`;
