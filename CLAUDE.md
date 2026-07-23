@@ -46,7 +46,7 @@ alongside the existing site with **complete architectural separation**. Zero con
 | 2 | Najmi realm pages: `/najmi`, `/najmi/series`, `/najmi/series/:id`, `/najmi/bio` (teal) | ✅ DONE |
 | 3 | PDF Library `/najmi/library` — 4-category filter, cover cards, download + open-in-tab | ✅ DONE (built alongside Phase 2) |
 | 4 | Cross-archive banners + "العلماء" header link | ✅ DONE |
-| 5 | Admin CRUD for publications; dashboard counts | ⏳ TODO |
+| 5 | Admin: publications CRUD ✅, realm switcher + scoped forms 🔄, per-realm homepage config ⏳ | 🔄 IN PROGRESS |
 | 6 | SEO: sitemap, OG/JSON-LD, cache TTLs, report script | ⏳ TODO |
 
 ### Phase 2/3 — Najmi realm (DONE)
@@ -102,6 +102,22 @@ Admin can adjust any series category afterward. `فتاوى المرأة الم�
   header already shows a return link to `/`.
 - Import scripts' `findOrCreateSheikh` now fall back to `nameArabic: /النجمي/` so manually
   title-prefixing the stored name won't cause a duplicate sheikh on any future re-import.
+
+### Phase 5 plan (approved) — Admin & realm management
+Owner chose (all recommended): **(A)** Najmi homepage tailored to an archive (Hero + realm-scoped
+Featured Series sections + Library highlight + Series tab; NO weekly schedule, NO empty Standalone/Khutbas
+tabs — Najmi has no seriesId:null lectures and no khutba-tagged series); **(B)** realm switcher + realm-scoped
+admin forms + Najmi dashboard cards; **(C)** publications admin CRUD (built).
+
+**5A — Publications CRUD (DONE):** `routes/admin/index.js` (appended before module.exports) — GET
+`/admin/publications` (search/category/status/sort + pagination + stats), GET/POST `/publications/new`
+(PDF → R2 via `pdfUpload` multer + `uploadToR2(..., {disposition:'inline'})`), GET/POST `/publications/:id/edit`
+(metadata only), POST `/publications/:id/toggle-published` (AJAX), POST `/publications/:id/delete`
+(R2 cleanup via `r2KeyFromUrl` + `deleteFromR2`). Views `views/admin/publications-list.ejs` +
+`publication-form.ejs`. Nav link "مكتبة النجمي" in admin header. Dashboard: publications card +
+per-realm breakdown cards (Hasan/Najmi lectures·series·books). `utils/r2Storage.uploadToR2` now takes
+`options.disposition` ('inline'|'attachment').
+**5B/5C — TODO** (realm switcher in forms; per-realm homepage config for `/najmi`).
 
 ### Realm isolation on the Hasan (default) side — DONE
 The default site historically queried "all" content, so once Najmi was imported it leaked into
