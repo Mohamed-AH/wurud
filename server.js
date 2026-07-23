@@ -221,6 +221,9 @@ app.use(assetVersionMiddleware);
 // Realm middleware (sets res.locals.realm = 'najmi' | 'hasan' for two-realm theming)
 app.use(require('./middleware/realm'));
 
+// Expose the sheikh-name formatter to all templates (handles mixed title storage)
+app.locals.sheikhName = require('./utils/sheikhName').formatSheikhName;
+
 // No-cache headers for HTML pages (ensures users always get latest version)
 // Applied to all routes except static files (handled separately above)
 app.use((req, res, next) => {

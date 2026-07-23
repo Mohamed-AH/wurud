@@ -86,7 +86,7 @@ async function findOrCreateSheikh(name) {
     || await Sheikh.findOne({ nameArabic: name.replace('الشيخ ', '') });
   if (sheikh) return sheikh;
   if (DRY_RUN) return { _id: new mongoose.Types.ObjectId(), nameArabic: name, isNew: true };
-  sheikh = new Sheikh({ nameArabic: name, honorific: 'رحمه الله' });
+  sheikh = new Sheikh({ nameArabic: name, honorific: 'رحمه الله', titlePrefix: 'الشيخ العلامة', titlePrefixEnglish: 'Sheikh al-‘Allāmah' });
   await sheikh.save();
   console.log(`  ➕ Created sheikh: ${name} (shortId ${sheikh.shortId})`);
   return sheikh;

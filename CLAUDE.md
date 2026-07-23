@@ -92,6 +92,27 @@ node scripts/import-publications.js --catalog pdf_catalog_updated.csv --manifest
 `import-najmi-lectures.js` maps 54 series → {Aqeedah 286, Fiqh 678, Hadith 271, Tafsir 190, Other 113, Seerah 7 lectures}.
 Admin can adjust any series category afterward. `فتاوى المرأة المسلمة`, `فتاوى منوعة`, translated series → Other.
 
+### Realm isolation on the Hasan (default) side — DONE
+The default site historically queried "all" content, so once Najmi was imported it leaked into
+Hasan's homepage tabs, `/series`, `/browse`, `/sheikhs`, and the sitemap. Fixed by excluding the
+Najmi realm from every default-side query:
+- `utils/realmFilter.js` — `excludeNajmiBySheikh()` → `{ sheikhId: { $ne: najmiId } }`,
+  `excludeNajmiSheikhId()` → `{ _id: { $ne: najmiId } }` (empty if Najmi not resolved).
+- Applied in `routes/api/homepage.js` (series/standalone/khutbas/stats), `routes/index.js`
+  (`fetchHomepageData`, homepage lecture count, `/browse`, `/series`, `/sheikhs`, sitemap).
+- Najmi routes already filter to `sheikhId = najmi`, so the isolation is now two-way.
+
+### Scholar title prefixes — DONE
+Title storage is intentionally mixed and must not be normalized (Hasan's slug/links depend on his
+stored name): Hasan embeds "الشيخ" in `nameArabic`; Ahmed stores a bare name + a `titlePrefix`.
+- `models/Sheikh.js` — added `titlePrefix` + `titlePrefixEnglish` (default '').
+- `utils/sheikhName.js` — `formatSheikhName(sheikh, locale)` prepends `titlePrefix` ONLY when the
+  name doesn't already start with a title word (regex guard) → no double-titling. Exposed to all
+  views as `app.locals.sheikhName` (server.js).
+- Ahmed → `titlePrefix = "الشيخ العلامة"` (display "الشيخ العلامة أحمد بن يحيى النجمي").
+  Set via `scripts/set-najmi-title.js --apply` (owner runs it); import scripts also set it on create.
+- Used in the reused `public/series-detail.ejs` sheikh line; Najmi hero/header/bio hardcode the same.
+
 ### Constraints (unchanged)
 Production DB — no destructive ops. RTL-first (`html[dir="ltr"]` for LTR). Minify JS after edits.
 Realm pages must never query across realms (Najmi routes filter `sheikhId = najmi`).

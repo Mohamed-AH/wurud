@@ -17,7 +17,7 @@ async function getNajmiSheikh() {
   if (cached && (now - cachedAt) < TTL_MS) return cached;
 
   const sheikh = await Sheikh.findOne({ nameArabic: /النجمي/ })
-    .select('_id shortId nameArabic nameEnglish honorific bioArabic bioEnglish slug_en slug_ar photoUrl')
+    .select('_id shortId nameArabic nameEnglish honorific titlePrefix titlePrefixEnglish bioArabic bioEnglish slug_en slug_ar photoUrl')
     .lean();
 
   if (sheikh) {

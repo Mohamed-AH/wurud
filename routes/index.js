@@ -2,6 +2,7 @@ const express = require('express');
 const router = express.Router();
 const { Lecture, Sheikh, Series, Section, Schedule, SiteSettings, Article } = require('../models');
 const cache = require('../utils/cache');
+const { excludeNajmiBySheikh, excludeNajmiSheikhId } = require('../utils/realmFilter');
 
 // Cache TTLs (in seconds)
 const CACHE_TTL = {
@@ -14,8 +15,11 @@ const CACHE_TTL = {
 
 // Helper function to fetch homepage data (for caching)
 async function fetchHomepageData() {
+  // Exclude the Najmi realm from the default site
+  const notNajmi = await excludeNajmiBySheikh();
+
   // Fetch all visible series with their sheikhs
-  const series = await Series.find({ isVisible: { $ne: false } })
+  const series = await Series.find({ isVisible: { $ne: false }, ...notNajmi })
     .populate('sheikhId', 'nameArabic nameEnglish honorific')
     .sort({ createdAt: -1 })
     .lean();
@@ -79,7 +83,8 @@ async function fetchHomepageData() {
   // Get all standalone lectures (not in any series)
   const standaloneLectures = await Lecture.find({
     seriesId: null,
-    published: true
+    published: true,
+    ...notNajmi
   })
     .populate('sheikhId', 'nameArabic nameEnglish honorific')
     .sort({ dateRecorded: -1, createdAt: -1 })
@@ -88,7 +93,8 @@ async function fetchHomepageData() {
   // Get محاضرات متفرقة series (miscellaneous lectures)
   const miscSeries = await Series.findOne({
     titleArabic: /محاضرات متفرقة/i,
-    isVisible: { $ne: false }
+    isVisible: { $ne: false },
+    ...notNajmi
   })
     .populate('sheikhId', 'nameArabic nameEnglish honorific')
     .lean();
@@ -118,8 +124,8 @@ async function fetchHomepageData() {
     );
   });
 
-  // Get total lecture count
-  const totalLectureCount = await Lecture.countDocuments({ published: true });
+  // Get total lecture count (exclude Najmi realm)
+  const totalLectureCount = await Lecture.countDocuments({ published: true, ...notNajmi });
 
   return {
     seriesList: filteredSeries,
@@ -303,7 +309,7 @@ router.get('/', async (req, res) => {
     // PERFORMANCE: Execute all independent queries in parallel
     const [weeklySchedule, totalLectureCount, totalArticleCount, homepageSections, settings, recentArticles] = await Promise.all([
       cache.getOrSet('homepage:schedule', fetchScheduleData, CACHE_TTL.SCHEDULE),
-      cache.getOrSet('homepage:lectureCount', () => Lecture.countDocuments({ published: true }), CACHE_TTL.HOMEPAGE),
+      cache.getOrSet('homepage:lectureCount', async () => Lecture.countDocuments({ published: true, ...(await excludeNajmiBySheikh()) }), CACHE_TTL.HOMEPAGE),
       cache.getOrSet('homepage:articleCount', () => Article.countDocuments({ isPublished: true }), CACHE_TTL.ARTICLES),
       cache.getOrSet('homepage:sections', fetchSectionsData, CACHE_TTL.HOMEPAGE),
       SiteSettings.getSettings().catch(err => {
@@ -384,8 +390,9 @@ router.get('/browse', async (req, res) => {
     const limit = 50;
     const skip = (page - 1) * limit;
 
-    // Build query
-    const query = { published: true };
+    // Build query (exclude the Najmi realm from the default browse page)
+    const notNajmi = await excludeNajmiBySheikh();
+    const query = { published: true, ...notNajmi };
 
     // Category filter
     if (category) {
@@ -625,7 +632,9 @@ router.get('/lectures/:idOrSlug', async (req, res) => {
 // @access  Public
 router.get('/sheikhs', async (req, res) => {
   try {
-    const sheikhs = await Sheikh.find()
+    // Exclude the Najmi sheikh — he has his own realm at /najmi
+    const notNajmi = await excludeNajmiSheikhId();
+    const sheikhs = await Sheikh.find({ ...notNajmi })
       .sort({ nameArabic: 1 })
       .lean();
 
@@ -770,8 +779,9 @@ router.get('/sheikhs/:idOrSlug', async (req, res) => {
 // @access  Public
 router.get('/series', async (req, res) => {
   try {
-    // Only show visible series
-    const series = await Series.find({ isVisible: { $ne: false } })
+    // Only show visible series (exclude the Najmi realm)
+    const notNajmi = await excludeNajmiBySheikh();
+    const series = await Series.find({ isVisible: { $ne: false }, ...notNajmi })
       .sort({ titleArabic: 1 })
       .populate('sheikhId', 'nameArabic nameEnglish honorific')
       .lean();
@@ -1053,18 +1063,23 @@ function buildSitemapUrl(type, doc) {
 async function generateSitemap() {
   const baseUrl = 'https://rasmihassan.com';
 
+  // Exclude the Najmi realm — its pages live under /najmi/* (a dedicated sitemap
+  // for them is a Phase 6 task); listing them under /series/* here would be wrong.
+  const notNajmi = await excludeNajmiBySheikh();
+  const notNajmiSheikh = await excludeNajmiSheikhId();
+
   // Get all published lectures (include new fields for URL generation)
-  const lectures = await Lecture.find({ published: true })
+  const lectures = await Lecture.find({ published: true, ...notNajmi })
     .select('_id slug shortId slug_en slug_ar updatedAt')
     .lean();
 
   // Get all visible series (exclude hidden ones)
-  const series = await Series.find({ isVisible: { $ne: false } })
+  const series = await Series.find({ isVisible: { $ne: false }, ...notNajmi })
     .select('_id slug shortId slug_en slug_ar updatedAt')
     .lean();
 
   // Get all sheikhs
-  const sheikhs = await Sheikh.find()
+  const sheikhs = await Sheikh.find({ ...notNajmiSheikh })
     .select('_id slug shortId slug_en slug_ar updatedAt')
     .lean();
 
