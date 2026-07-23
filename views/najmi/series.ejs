@@ -1,0 +1,96 @@
+<%
+  // enum → Arabic label for filter chips
+  const CAT_LABELS = { Aqeedah:'العقيدة', Hadith:'الحديث', Fiqh:'الفقه', Tafsir:'التفسير', Seerah:'السيرة', Akhlaq:'الأخلاق', Other:'أخرى' };
+  const present = [...new Set((series||[]).map(s => s.category).filter(Boolean))];
+  const orderedCats = ['Aqeedah','Hadith','Fiqh','Tafsir','Seerah','Akhlaq','Other'].filter(c => present.includes(c));
+%>
+<style>
+  .najmi-list-page { background: #EEF5F1; min-height: 60vh; }
+  html[data-theme="dark"] .najmi-list-page { background: #14231D; }
+  .najmi-list-hero {
+    background: linear-gradient(135deg, #14231D 0%, #2E6E5B 100%); color: #fff;
+    padding: 30px 20px; text-align: center; border-bottom: 3px solid #3D8570;
+  }
+  .najmi-list-hero h1 { font-family: var(--font-cairo,'Cairo',sans-serif); font-size: 24px; font-weight: 800; }
+  .najmi-list-hero p { color: rgba(255,255,255,0.85); font-size: 13px; margin-top: 4px; }
+
+  .najmi-filter-bar {
+    display: flex; gap: 8px; padding: 16px 20px; max-width: 960px; margin: 0 auto;
+    overflow-x: auto; -webkit-overflow-scrolling: touch;
+  }
+  .najmi-filter-bar::-webkit-scrollbar { display: none; }
+  .najmi-chip {
+    white-space: nowrap; padding: 6px 14px; border-radius: 16px; font-size: 13px; font-weight: 600;
+    background: #fff; color: #3D8570; border: 1px solid #D4E8E0; cursor: pointer; transition: all .15s;
+  }
+  .najmi-chip.active { background: #2E6E5B; color: #fff; border-color: #2E6E5B; }
+
+  .najmi-series-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; max-width: 960px; margin: 0 auto; padding: 4px 20px 40px; }
+  .najmi-series-card {
+    background: #fff; border: 1px solid #D4E8E0; border-radius: 12px; padding: 16px; text-decoration: none;
+    display: block; transition: transform .15s, box-shadow .15s;
+  }
+  .najmi-series-card:hover { transform: translateY(-2px); box-shadow: 0 6px 18px rgba(20,35,29,0.10); }
+  .najmi-series-card .ic { color: #2E6E5B; margin-bottom: 6px; }
+  .najmi-series-card .t { font-size: 15px; font-weight: 700; color: #14231D; line-height: 1.45; margin-bottom: 8px; }
+  .najmi-series-card .meta { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+  .najmi-cat-badge { font-size: 10px; font-weight: 700; background: #D4E8E0; color: #14231D; padding: 2px 8px; border-radius: 5px; }
+  .najmi-count { font-size: 12px; color: #5f7168; }
+  html[data-theme="dark"] .najmi-series-card { background: #1C2A24; border-color: #2E4A40; }
+  html[data-theme="dark"] .najmi-series-card .t { color: #E8DDD0; }
+  .najmi-empty { text-align:center; color:#5f7168; padding: 30px; grid-column: 1/-1; }
+
+  @media (max-width: 900px) { .najmi-series-grid { grid-template-columns: repeat(2,1fr); } }
+  @media (max-width: 560px) { .najmi-series-grid { grid-template-columns: 1fr; } }
+</style>
+
+<div class="najmi-list-page">
+  <section class="najmi-list-hero">
+    <h1><%= locale === 'ar' ? 'سلاسل الشيخ أحمد النجمي' : 'Sheikh al-Najmi — Series' %></h1>
+    <p><%= series.length %> <%= locale === 'ar' ? 'سلسلة في العقيدة والحديث والفقه والتفسير' : 'series in Aqeedah, Hadith, Fiqh & Tafsir' %></p>
+  </section>
+
+  <div class="najmi-filter-bar" id="najmiFilterBar">
+    <button class="najmi-chip active" data-cat="all"><%= locale === 'ar' ? 'الكل' : 'All' %></button>
+    <% orderedCats.forEach(c => { %>
+      <button class="najmi-chip" data-cat="<%= c %>"><%= CAT_LABELS[c] || c %></button>
+    <% }) %>
+  </div>
+
+  <div class="najmi-series-grid" id="najmiSeriesGrid">
+    <% series.forEach(s => { %>
+      <a href="<%= s.url %>" class="najmi-series-card" data-cat="<%= s.category || 'Other' %>">
+        <div class="ic"><i data-lucide="mic"></i></div>
+        <div class="t"><%= s.titleArabic %></div>
+        <div class="meta">
+          <span class="najmi-cat-badge"><%= CAT_LABELS[s.category] || s.category || 'أخرى' %></span>
+          <span class="najmi-count"><%= (s.lectureCount || 0) %> <%= locale === 'ar' ? 'درس' : 'lessons' %></span>
+        </div>
+      </a>
+    <% }) %>
+    <div class="najmi-empty" id="najmiEmpty" style="display:none;"><%= locale === 'ar' ? 'لا توجد سلاسل في هذا التصنيف' : 'No series in this category' %></div>
+  </div>
+</div>
+
+<script>
+  (function () {
+    const bar = document.getElementById('najmiFilterBar');
+    const cards = Array.from(document.querySelectorAll('#najmiSeriesGrid .najmi-series-card'));
+    const empty = document.getElementById('najmiEmpty');
+    bar.addEventListener('click', function (e) {
+      const btn = e.target.closest('.najmi-chip');
+      if (!btn) return;
+      bar.querySelectorAll('.najmi-chip').forEach(c => c.classList.remove('active'));
+      btn.classList.add('active');
+      const cat = btn.dataset.cat;
+      let visible = 0;
+      cards.forEach(card => {
+        const show = cat === 'all' || card.dataset.cat === cat;
+        card.style.display = show ? '' : 'none';
+        if (show) visible++;
+      });
+      empty.style.display = visible ? 'none' : 'block';
+    });
+    if (window.lucide) lucide.createIcons();
+  })();
+</script>

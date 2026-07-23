@@ -1,0 +1,108 @@
+<style>
+  .najmi-lib-page { background: #EEF5F1; min-height: 60vh; }
+  html[data-theme="dark"] .najmi-lib-page { background: #14231D; }
+  .najmi-lib-hero {
+    background: linear-gradient(135deg, #14231D 0%, #2E6E5B 100%); color: #fff;
+    padding: 30px 20px; text-align: center; border-bottom: 3px solid #3D8570;
+  }
+  .najmi-lib-hero h1 { font-family: var(--font-cairo,'Cairo',sans-serif); font-size: 24px; font-weight: 800; }
+  .najmi-lib-hero p { color: rgba(255,255,255,0.85); font-size: 13px; margin-top: 4px; }
+
+  .najmi-filter-bar { display: flex; gap: 8px; padding: 16px 20px; max-width: 1040px; margin: 0 auto; overflow-x: auto; }
+  .najmi-filter-bar::-webkit-scrollbar { display: none; }
+  .najmi-chip {
+    white-space: nowrap; padding: 6px 14px; border-radius: 16px; font-size: 13px; font-weight: 600;
+    background: #fff; color: #3D8570; border: 1px solid #D4E8E0; cursor: pointer; transition: all .15s;
+  }
+  .najmi-chip.active { background: #2E6E5B; color: #fff; border-color: #2E6E5B; }
+
+  .najmi-lib-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px; max-width: 1040px; margin: 0 auto; padding: 4px 20px 48px; }
+  .najmi-book { display: flex; flex-direction: column; }
+  .najmi-book-cover {
+    aspect-ratio: 3/4; border-radius: 8px; margin-bottom: 8px; padding: 16px 12px;
+    background: linear-gradient(150deg, #2E6E5B 0%, #14231D 100%);
+    border-inline-start: 3px solid rgba(255,255,255,0.14);
+    display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center;
+    box-shadow: 0 4px 10px rgba(20,35,29,0.22);
+  }
+  .najmi-book-cover .bt { font-size: 12.5px; font-weight: 700; color: #fff; line-height: 1.5; }
+  .najmi-book-cover .bcat { margin-top: 10px; font-size: 9px; color: #A8CFC2; border: 1px solid rgba(168,207,194,0.4); padding: 1px 7px; border-radius: 9px; }
+  .najmi-book .bn { font-size: 12.5px; font-weight: 600; color: #14231D; line-height: 1.4; text-align: center; margin-bottom: 2px; }
+  .najmi-book .bm { font-size: 10px; color: #5f7168; text-align: center; margin-bottom: 8px; }
+  html[data-theme="dark"] .najmi-book .bn { color: #E8DDD0; }
+  .najmi-book-actions { display: flex; gap: 6px; justify-content: center; margin-top: auto; }
+  .najmi-book-actions a {
+    font-size: 11px; font-weight: 700; padding: 5px 11px; border-radius: 6px; text-decoration: none;
+    display: inline-flex; align-items: center; gap: 4px;
+  }
+  .najmi-book-actions .dl { background: #2E6E5B; color: #fff; }
+  .najmi-book-actions .rd { background: #D4E8E0; color: #14231D; }
+  .najmi-book-actions .lucide { width: 13px; height: 13px; }
+
+  .najmi-empty { text-align:center; color:#5f7168; padding: 30px; grid-column: 1/-1; }
+
+  @media (max-width: 1000px) { .najmi-lib-grid { grid-template-columns: repeat(3,1fr); } }
+  @media (max-width: 720px) { .najmi-lib-grid { grid-template-columns: repeat(2,1fr); } }
+  @media (max-width: 420px) { .najmi-lib-grid { grid-template-columns: 1fr; } }
+</style>
+
+<div class="najmi-lib-page">
+  <section class="najmi-lib-hero">
+    <h1><%= locale === 'ar' ? 'مكتبة الشيخ أحمد النجمي' : 'Sheikh al-Najmi — Library' %></h1>
+    <p><%= total %> <%= locale === 'ar' ? 'كتاباً ورسالة في أربعة أبواب' : 'books and letters in four categories' %></p>
+  </section>
+
+  <div class="najmi-filter-bar" id="najmiLibFilter">
+    <button class="najmi-chip active" data-cat="all"><%= locale === 'ar' ? 'الكل' : 'All' %> (<%= total %>)</button>
+    <% categories.forEach(c => { %>
+      <button class="najmi-chip" data-cat="<%= c.name %>"><%= c.name %> (<%= c.count %>)</button>
+    <% }) %>
+  </div>
+
+  <div class="najmi-lib-grid" id="najmiLibGrid">
+    <% publications.forEach(p => { %>
+      <div class="najmi-book" data-cat="<%= p.category %>">
+        <div class="najmi-book-cover">
+          <div class="bt"><%= p.title.length > 70 ? p.title.slice(0,70) + '…' : p.title %></div>
+          <div class="bcat"><%= p.category %></div>
+        </div>
+        <div class="bn"><%= p.title.length > 48 ? p.title.slice(0,48) + '…' : p.title %></div>
+        <div class="bm">
+          <% if (p.pageCount) { %><%= p.pageCount %> <%= locale === 'ar' ? 'صفحة' : 'pages' %><% } %>
+        </div>
+        <div class="najmi-book-actions">
+          <a class="dl" href="/najmi/library/<%= p.shortId %>/download" target="_blank" rel="noopener">
+            <i data-lucide="download"></i><%= locale === 'ar' ? 'تحميل' : 'Download' %>
+          </a>
+          <a class="rd" href="<%= p.fileUrl %>" target="_blank" rel="noopener">
+            <i data-lucide="book-open"></i><%= locale === 'ar' ? 'قراءة' : 'Read' %>
+          </a>
+        </div>
+      </div>
+    <% }) %>
+    <div class="najmi-empty" id="najmiLibEmpty" style="display:none;"><%= locale === 'ar' ? 'لا توجد كتب في هذا الباب' : 'No books in this category' %></div>
+  </div>
+</div>
+
+<script>
+  (function () {
+    const bar = document.getElementById('najmiLibFilter');
+    const cards = Array.from(document.querySelectorAll('#najmiLibGrid .najmi-book'));
+    const empty = document.getElementById('najmiLibEmpty');
+    bar.addEventListener('click', function (e) {
+      const btn = e.target.closest('.najmi-chip');
+      if (!btn) return;
+      bar.querySelectorAll('.najmi-chip').forEach(c => c.classList.remove('active'));
+      btn.classList.add('active');
+      const cat = btn.dataset.cat;
+      let visible = 0;
+      cards.forEach(card => {
+        const show = cat === 'all' || card.dataset.cat === cat;
+        card.style.display = show ? '' : 'none';
+        if (show) visible++;
+      });
+      empty.style.display = visible ? 'none' : 'block';
+    });
+    if (window.lucide) lucide.createIcons();
+  })();
+</script>

@@ -41,13 +41,24 @@ alongside the existing site with **complete architectural separation**. Zero con
 
 | Phase | Scope | Status |
 |-------|-------|--------|
-| 0 | Data layer: `Publication` model, realm middleware, context-aware partials | 🔄 IN PROGRESS |
-| 1 | Content import: scripts for PDF upload + publication/lecture import | 🔄 IN PROGRESS |
-| 2 | Najmi realm pages: `/najmi`, `/najmi/series`, `/najmi/series/:id`, `/najmi/bio` (teal) | ⏳ TODO |
-| 3 | PDF Library `/najmi/library` — 4-category filter, cover cards, download + open-in-tab | ⏳ TODO |
-| 4 | Cross-archive banners + "العلماء" header link | ⏳ TODO |
+| 0 | Data layer: `Publication` model, realm middleware, context-aware partials | ✅ DONE |
+| 1 | Content import: scripts for PDF upload + publication/lecture import | ✅ DONE (owner ran all steps: 1,545 lectures / 54 series / 116 PDFs imported + published) |
+| 2 | Najmi realm pages: `/najmi`, `/najmi/series`, `/najmi/series/:id`, `/najmi/bio` (teal) | ✅ DONE |
+| 3 | PDF Library `/najmi/library` — 4-category filter, cover cards, download + open-in-tab | ✅ DONE (built alongside Phase 2) |
+| 4 | Cross-archive banners + "العلماء" header link | 🔄 PARTIAL (Najmi→Hasan return banner + realm header nav done; Hasan→Najmi invite banner under Hasan's hero still TODO) |
 | 5 | Admin CRUD for publications; dashboard counts | ⏳ TODO |
 | 6 | SEO: sitemap, OG/JSON-LD, cache TTLs, report script | ⏳ TODO |
+
+### Phase 2/3 — Najmi realm (DONE)
+- `middleware/realm.js` — sets `res.locals.realm` ('najmi' for `/najmi/*`, else 'hasan'); registered in server.js before routes.
+- `utils/najmiSheikh.js` — resolves Sheikh Ahmed by `nameArabic /النجمي/`, 1h cache.
+- `routes/najmi/index.js` — `/najmi` (home), `/najmi/series`, `/najmi/series/:shortId/...` (reuses `public/series-detail` with realm=najmi + cross-realm 404 guard), `/najmi/library` (+`/library/:shortId/download` tracking redirect), `/najmi/bio`. Registered `app.use('/najmi', …)`.
+- `public/css/najmi.css` — teal overrides scoped to `[data-realm="najmi"]` (remaps `--accent-gold/--primary-brown/--sage/--primary-dark`, plus hardcoded header/bottom-nav/diamond-bg). Linked in layout.ejs.
+- `views/layout.ejs` — `<body data-realm="…">` + najmi.css link.
+- `views/partials/header.ejs` + `bottomNav.ejs` — realm-aware nav (Najmi: الرئيسية·السلاسل·بحث·المكتبة·السيرة; brand badge "رحمه الله"; return link to `/`).
+- `views/najmi/{index,series,library,bio}.ejs` — teal pages. Bio text embedded from `docs/najmi-bio.md` (source-accurate). Series/library have client-side category filters.
+- **Reuse note:** `/najmi/series/:id` renders the existing `public/series-detail.ejs`; teal comes from the `[data-realm]` CSS + `.series-hero` override. Inline audio playback keeps users in-realm. Child-series links still point to `/series/*` (minor, acceptable).
+- Verified: all modules require, all views compile + render (AR & EN), server boots with routes registered.
 
 ### Done so far (Phase 0 + 1 scaffolding)
 - ✅ `models/Publication.js` — PDF doc schema (title, category, fileUrl, pageCount, sheikhId, shortId, slugs). Registered in `models/index.js`.

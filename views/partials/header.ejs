@@ -1,18 +1,32 @@
+<% const _realm = (typeof realm !== 'undefined' ? realm : 'hasan'); %>
 <header class="header">
   <div class="header-content">
-    <a href="/" class="logo">
+    <a href="<%= _realm === 'najmi' ? '/najmi' : '/' %>" class="logo">
       <span class="logo-text">
-        <%= locale === 'ar' ? 'موقع الشيخ حسن بن محمد منصور الدغريري' : 'Sheikh Hasan bin Mohammed Mansour Dhaghriri' %>
+        <% if (_realm === 'najmi') { %>
+          <%= locale === 'ar' ? 'العلامة أحمد بن يحيى النجمي' : 'Sheikh Ahmad ibn Yahya al-Najmi' %>
+          <span class="realm-badge"><%= locale === 'ar' ? 'رحمه الله' : 'raḥimahu-llāh' %></span>
+        <% } else { %>
+          <%= locale === 'ar' ? 'موقع الشيخ حسن بن محمد منصور الدغريري' : 'Sheikh Hasan bin Mohammed Mansour Dhaghriri' %>
+        <% } %>
       </span>
     </a>
 
     <!-- Desktop Navigation -->
     <nav class="nav-desktop">
-      <a href="/" class="nav-link"><%= t('nav_home') %></a>
-      <a href="/browse" class="nav-link"><%= t('nav_lectures') %></a>
-      <a href="/series" class="nav-link"><%= t('nav_series') %></a>
-      <a href="/articles" class="nav-link"><%= locale === 'ar' ? 'مقالات' : 'Articles' %></a>
-      <a href="/sheikhs/حسن-بن-محمد-منصور-الدغريري" class="nav-link"><%= locale === 'ar' ? 'السيرة الذاتية' : 'Biography' %></a>
+      <% if (_realm === 'najmi') { %>
+        <a href="/najmi" class="nav-link"><%= t('nav_home') %></a>
+        <a href="/najmi/series" class="nav-link"><%= t('nav_series') %></a>
+        <a href="/najmi/library" class="nav-link"><%= locale === 'ar' ? 'المكتبة' : 'Library' %></a>
+        <a href="/najmi/bio" class="nav-link"><%= locale === 'ar' ? 'السيرة' : 'Biography' %></a>
+        <a href="/" class="nav-link"><%= locale === 'ar' ? 'الشيخ حسن ←' : '← Sheikh Hasan' %></a>
+      <% } else { %>
+        <a href="/" class="nav-link"><%= t('nav_home') %></a>
+        <a href="/browse" class="nav-link"><%= t('nav_lectures') %></a>
+        <a href="/series" class="nav-link"><%= t('nav_series') %></a>
+        <a href="/articles" class="nav-link"><%= locale === 'ar' ? 'مقالات' : 'Articles' %></a>
+        <a href="/sheikhs/حسن-بن-محمد-منصور-الدغريري" class="nav-link"><%= locale === 'ar' ? 'السيرة الذاتية' : 'Biography' %></a>
+      <% } %>
     </nav>
 
     <div class="header-actions">
@@ -33,10 +47,18 @@
 <!-- Mobile Navigation Overlay (outside header for proper fixed positioning) -->
 <div id="mobileNav" class="mobile-nav">
   <nav class="mobile-nav-content">
-    <a href="/" class="mobile-nav-link"><%= t('nav_home') %></a>
-    <a href="/browse" class="mobile-nav-link"><%= t('nav_lectures') %></a>
-    <a href="/series" class="mobile-nav-link"><%= t('nav_series') %></a>
-    <a href="/articles" class="mobile-nav-link"><%= locale === 'ar' ? 'مقالات' : 'Articles' %></a>
-    <a href="/sheikhs/حسن-بن-محمد-منصور-الدغريري" class="mobile-nav-link"><%= locale === 'ar' ? 'السيرة الذاتية' : 'Biography' %></a>
+    <% if (_realm === 'najmi') { %>
+      <a href="/najmi" class="mobile-nav-link"><%= t('nav_home') %></a>
+      <a href="/najmi/series" class="mobile-nav-link"><%= t('nav_series') %></a>
+      <a href="/najmi/library" class="mobile-nav-link"><%= locale === 'ar' ? 'المكتبة' : 'Library' %></a>
+      <a href="/najmi/bio" class="mobile-nav-link"><%= locale === 'ar' ? 'السيرة' : 'Biography' %></a>
+      <a href="/" class="mobile-nav-link"><%= locale === 'ar' ? 'العودة إلى أرشيف الشيخ حسن ←' : '← Sheikh Hasan archive' %></a>
+    <% } else { %>
+      <a href="/" class="mobile-nav-link"><%= t('nav_home') %></a>
+      <a href="/browse" class="mobile-nav-link"><%= t('nav_lectures') %></a>
+      <a href="/series" class="mobile-nav-link"><%= t('nav_series') %></a>
+      <a href="/articles" class="mobile-nav-link"><%= locale === 'ar' ? 'مقالات' : 'Articles' %></a>
+      <a href="/sheikhs/حسن-بن-محمد-منصور-الدغريري" class="mobile-nav-link"><%= locale === 'ar' ? 'السيرة الذاتية' : 'Biography' %></a>
+    <% } %>
   </nav>
 </div>
