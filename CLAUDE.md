@@ -27,8 +27,10 @@ alongside the existing site with **complete architectural separation**. Zero con
 **Content scale (from uploaded CSVs):**
 - Audio: **1,545 lectures / 54 series** — `lectures_metadata_final.csv`. NOTE: its `category` column
   is the **series name**; there is no sheikh column (all = Najmi). Real per-lecture titles exist.
-- PDFs: **116 files / 4 categories** — `pdf_catalog.csv`. Categories: **الكتب (62), التعليقات (38),
-  الرسائل (13), من السيرة الذاتية (3)**.
+- PDFs: **116 files / 4 categories** — `pdf_catalog_updated.csv` (has `page_count` + `relative_path`).
+  Categories: **الكتب (62), التعليقات (38), الرسائل (13), من السيرة الذاتية (3)**.
+  Files are nested in sub-folders (`book_lib/`, `comments/`, `messages/`, `cv_ar/`) — the uploader
+  walks them recursively and uses flat R2 keys (all 116 basenames are unique).
 - All hosted on the **existing R2 bucket** (no second bucket — full public URL stored per record,
   bucket is transparent to the app). CSP already allows `https://*.r2.dev`.
 
@@ -70,9 +72,9 @@ node scripts/upload-to-oci-verify.js --manifest upload-manifest.json
 node scripts/publish-batch.js --batch najmi
 node scripts/sync-lecture-counts.js
 
-# PDFs:
+# PDFs (source folder may contain sub-folders; uploader recurses, flat R2 keys):
 node scripts/upload-pdfs-to-r2.js /path/to/najmi-pdfs --skip-existing        # Local PC
-node scripts/import-publications.js --catalog pdf_catalog.csv --manifest pdf-upload-manifest.json  # Cloud VM
+node scripts/import-publications.js --catalog pdf_catalog_updated.csv --manifest pdf-upload-manifest.json  # Cloud VM (reads page_count)
 ```
 
 ### Category heuristic (audio series → enum)

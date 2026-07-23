@@ -103,6 +103,7 @@ async function main() {
     const title = String(row['title'] || '').trim();
     const category = normalizeCategory(row['category']);
     const sourceUrl = String(row['source-url'] || '').trim();
+    const pageCount = parseInt(row['page_count']) || 0;
 
     if (!fileName || !title) { stats.skipped++; continue; }
 
@@ -122,6 +123,7 @@ async function main() {
       fileUrl: up.url,
       fileName,
       fileSize: up.size || 0,
+      pageCount,
       sourceUrl,
       isPublished: !UNPUBLISHED
     };

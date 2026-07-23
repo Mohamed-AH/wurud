@@ -80,14 +80,30 @@ function getContentDisposition(filename) {
   return `inline; filename="${filename}"`;
 }
 
+// Walk a directory tree and collect every .pdf. Files may live in sub-folders
+// (e.g. book_lib/, comments/, messages/, cv_ar/); R2 keys stay flat (basename)
+// since all 116 basenames are unique. Duplicate basenames are reported and skipped.
 function getPdfFiles(directory) {
   if (!fs.existsSync(directory)) throw new Error(`Directory not found: ${directory}`);
-  return fs.readdirSync(directory)
-    .filter(f => path.extname(f).toLowerCase() === '.pdf')
-    .map(f => {
-      const p = path.join(directory, f);
-      return { name: f, path: p, size: fs.statSync(p).size };
-    });
+  const out = [];
+  const seen = new Map();
+  const dupes = [];
+  (function walk(dir) {
+    for (const entry of fs.readdirSync(dir, { withFileTypes: true })) {
+      const p = path.join(dir, entry.name);
+      if (entry.isDirectory()) { walk(p); continue; }
+      if (path.extname(entry.name).toLowerCase() !== '.pdf') continue;
+      if (seen.has(entry.name)) { dupes.push(`${p}  (already have ${seen.get(entry.name)})`); continue; }
+      seen.set(entry.name, p);
+      out.push({ name: entry.name, path: p, size: fs.statSync(p).size });
+    }
+  })(directory);
+  if (dupes.length) {
+    console.log(`\n⚠️  ${dupes.length} duplicate basename(s) skipped (flat keys require unique names):`);
+    dupes.forEach(d => console.log(`     ${d}`));
+    console.log('');
+  }
+  return out;
 }
 
 function initR2Client() {
