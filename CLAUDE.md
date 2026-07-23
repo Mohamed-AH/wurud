@@ -56,7 +56,8 @@ alongside the existing site with **complete architectural separation**. Zero con
 - `public/css/najmi.css` — teal overrides scoped to `[data-realm="najmi"]` (remaps `--accent-gold/--primary-brown/--sage/--primary-dark`, plus hardcoded header/bottom-nav/diamond-bg). Linked in layout.ejs.
 - `views/layout.ejs` — `<body data-realm="…">` + najmi.css link.
 - `views/partials/header.ejs` + `bottomNav.ejs` — realm-aware nav (Najmi: الرئيسية·السلاسل·بحث·المكتبة·السيرة; brand badge "رحمه الله"; return link to `/`).
-- `views/najmi/{index,series,library,bio}.ejs` — teal pages. Bio text embedded from `docs/najmi-bio.md` (source-accurate). Series/library have client-side category filters.
+- `views/najmi/{index,series,library,bio}.ejs` — teal pages. Bio text embedded from `docs/najmi-bio.md` (source-accurate). Series has client-side category filters.
+- **Library view** (`views/najmi/library.ejs`): row-list layout (not cover cards) — better for 116 items & mobile. Category chips + live title search (mirrors the Hasan articles-filter pattern), "shown/total" counter, per-row open (fileUrl) + download (tracking route). Download button collapses to icon-only under 560px.
 - **Reuse note:** `/najmi/series/:id` renders the existing `public/series-detail.ejs`; teal comes from the `[data-realm]` CSS + `.series-hero` override. Inline audio playback keeps users in-realm. Child-series links still point to `/series/*` (minor, acceptable).
 - Verified: all modules require, all views compile + render (AR & EN), server boots with routes registered.
 
