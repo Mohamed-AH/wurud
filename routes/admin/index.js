@@ -8,6 +8,30 @@ const cache = require('../../utils/cache');
 // Apply admin i18n middleware to all admin routes
 router.use(adminI18nMiddleware);
 
+// Admin realm context: which realm the admin is currently managing (Hasan | Najmi).
+// Exposes res.locals.adminRealm + res.locals.najmiSheikhId to every admin view so
+// sheikh dropdowns can default/group by realm.
+router.use(async (req, res, next) => {
+  res.locals.adminRealm = (req.session && req.session.adminRealm === 'najmi') ? 'najmi' : 'hasan';
+  res.locals.currentPath = (req.baseUrl || '') + (req.path || '');
+  try {
+    const n = await require('../../utils/najmiSheikh').getNajmiSheikh();
+    res.locals.najmiSheikhId = n ? String(n._id) : null;
+  } catch (_) {
+    res.locals.najmiSheikhId = null;
+  }
+  next();
+});
+
+// @route   GET /admin/set-realm?realm=najmi&return=/admin/...
+// @desc    Switch the admin's active realm (persisted in session)
+router.get('/set-realm', isAdmin, (req, res) => {
+  const realm = req.query.realm === 'najmi' ? 'najmi' : 'hasan';
+  if (req.session) req.session.adminRealm = realm;
+  const ret = (req.query.return && req.query.return.startsWith('/admin')) ? req.query.return : '/admin/dashboard';
+  res.redirect(ret);
+});
+
 // Helper function to invalidate homepage cache after admin changes
 function invalidateHomepageCache() {
   cache.invalidatePattern('homepage:*');

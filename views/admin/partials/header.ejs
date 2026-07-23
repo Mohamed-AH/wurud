@@ -13,6 +13,14 @@
     <% } %>
   </nav>
   <div class="admin-user-section">
+    <% var _curPath = (typeof currentPath !== 'undefined' && currentPath) ? currentPath : '/admin/dashboard'; %>
+    <% var _rn = (typeof adminRealm !== 'undefined') ? adminRealm : 'hasan'; %>
+    <div class="realm-toggle" title="<%= adminLocale === 'ar' ? 'العالِم الذي تديره' : 'Active realm' %>">
+      <a href="/admin/set-realm?realm=hasan&return=<%= encodeURIComponent(_curPath) %>"
+         class="<%= _rn === 'hasan' ? 'active gold' : '' %>"><%= adminLocale === 'ar' ? 'الشيخ حسن' : 'Hasan' %></a>
+      <a href="/admin/set-realm?realm=najmi&return=<%= encodeURIComponent(_curPath) %>"
+         class="<%= _rn === 'najmi' ? 'active teal' : '' %>"><%= adminLocale === 'ar' ? 'الشيخ النجمي' : 'Najmi' %></a>
+    </div>
     <div class="lang-toggle">
       <a href="?lang=en" class="<%= adminLocale === 'en' ? 'active' : '' %>">EN</a>
       <a href="?lang=ar" class="<%= adminLocale === 'ar' ? 'active' : '' %>">عربي</a>
