@@ -2253,8 +2253,11 @@ router.get('/sections', isAdmin, async (req, res) => {
   try {
     const { Section, Series } = require('../../models');
 
-    // Get all sections
-    const sections = await Section.find().sort({ displayOrder: 1 }).lean();
+    // Scope to the active realm (Najmi sections vs everything else)
+    const realmMatch = res.locals.adminRealm === 'najmi' ? { realm: 'najmi' } : { realm: { $ne: 'najmi' } };
+
+    // Get sections for this realm
+    const sections = await Section.find(realmMatch).sort({ displayOrder: 1 }).lean();
     const sectionIds = sections.map(s => s._id);
 
     // Bulk count series per section in ONE aggregation
@@ -2317,6 +2320,7 @@ router.post('/sections/new', isAdmin, async (req, res) => {
       icon: icon || '📚',
       maxVisible: parseInt(maxVisible) || 5,
       collapsedByDefault: collapsedByDefault === 'on',
+      realm: res.locals.adminRealm === 'najmi' ? 'najmi' : 'hasan',
       displayOrder
     });
 
@@ -2457,8 +2461,16 @@ router.get('/sections/:id/series', isAdmin, async (req, res) => {
       .sort({ sectionOrder: 1 })
       .lean();
 
-    // Get unassigned series for the "Add" dropdown
-    const unassignedSeries = await Series.find({ sectionId: null })
+    // Get unassigned series for the "Add" dropdown — scoped to the section's realm
+    // so a Najmi section only offers Najmi series (and vice versa).
+    const najmiSheikh = await require('../../utils/najmiSheikh').getNajmiSheikh();
+    const unassignedQuery = { sectionId: null };
+    if (najmiSheikh) {
+      unassignedQuery.sheikhId = section.realm === 'najmi'
+        ? najmiSheikh._id
+        : { $ne: najmiSheikh._id };
+    }
+    const unassignedSeries = await Series.find(unassignedQuery)
       .populate('sheikhId', 'nameArabic nameEnglish')
       .sort({ titleArabic: 1 })
       .lean();
@@ -2617,12 +2629,20 @@ router.get('/homepage-config', isAdmin, async (req, res) => {
     const { SiteSettings } = require('../../models');
 
     const settings = await SiteSettings.getSettings();
+    const najmiCfg = (settings.homepage && settings.homepage.najmi) || {};
 
     res.render('admin/homepage-config', {
       title: 'Homepage Configuration',
       user: req.user,
       settings: settings.homepage || {},
       seriesStatsSettings: settings.seriesStats || { minPlaysToShow: 100, showDuration: false },
+      najmiConfig: {
+        showFeaturedSeries: najmiCfg.showFeaturedSeries !== false,
+        featuredSeriesCount: najmiCfg.featuredSeriesCount || 6,
+        showLibrary: najmiCfg.showLibrary !== false,
+        showSections: najmiCfg.showSections !== false,
+        blockOrder: (najmiCfg.blockOrder && najmiCfg.blockOrder.length) ? najmiCfg.blockOrder : ['sections', 'featuredSeries', 'library']
+      },
       success: req.query.success,
       error: req.query.error
     });
@@ -2640,20 +2660,33 @@ router.post('/homepage-config', isAdmin, async (req, res) => {
     const { SiteSettings } = require('../../models');
 
     const settings = await SiteSettings.getSettings();
+    if (!settings.homepage) settings.homepage = {};
+    const realm = (req.session && req.session.adminRealm === 'najmi') ? 'najmi' : 'hasan';
 
-    settings.homepage = {
-      showSchedule: req.body.showSchedule === 'on',
-      scheduleLayout: req.body.scheduleLayout || 'cards',
-      showSeriesTab: req.body.showSeriesTab === 'on',
-      showStandaloneTab: req.body.showStandaloneTab === 'on',
-      showKhutbasTab: req.body.showKhutbasTab === 'on'
-    };
-
-    // Series detail page stats settings
-    settings.seriesStats = {
-      minPlaysToShow: parseInt(req.body.minPlaysToShow, 10) || 100,
-      showDuration: req.body.showDuration === 'on'
-    };
+    if (realm === 'najmi') {
+      // Update ONLY the Najmi sub-config; preserve all Hasan fields
+      if (!settings.homepage.najmi) settings.homepage.najmi = {};
+      settings.homepage.najmi.showFeaturedSeries = req.body.showFeaturedSeries === 'on';
+      settings.homepage.najmi.featuredSeriesCount = Math.min(12, Math.max(2, parseInt(req.body.featuredSeriesCount, 10) || 6));
+      settings.homepage.najmi.showLibrary = req.body.showLibrary === 'on';
+      settings.homepage.najmi.showSections = req.body.showSections === 'on';
+      const order = (req.body.blockOrder || '').split(',').map(s => s.trim()).filter(Boolean);
+      const valid = ['sections', 'featuredSeries', 'library'];
+      settings.homepage.najmi.blockOrder = order.filter(b => valid.includes(b)).length ? order.filter(b => valid.includes(b)) : valid;
+      settings.markModified('homepage');
+    } else {
+      // Hasan realm — preserve settings.homepage.najmi
+      settings.homepage.showSchedule = req.body.showSchedule === 'on';
+      settings.homepage.scheduleLayout = req.body.scheduleLayout || 'cards';
+      settings.homepage.showSeriesTab = req.body.showSeriesTab === 'on';
+      settings.homepage.showStandaloneTab = req.body.showStandaloneTab === 'on';
+      settings.homepage.showKhutbasTab = req.body.showKhutbasTab === 'on';
+      settings.seriesStats = {
+        minPlaysToShow: parseInt(req.body.minPlaysToShow, 10) || 100,
+        showDuration: req.body.showDuration === 'on'
+      };
+      settings.markModified('homepage');
+    }
 
     await settings.save();
     invalidateHomepageCache();

@@ -38,6 +38,32 @@ function najmiSeriesUrl(series) {
   return `/najmi/series/${series.shortId}/${en}/${ar}`.replace(/\/+$/,'');
 }
 
+// Admin-curated realm sections (Featured / etc.) with their assigned Najmi series.
+async function loadNajmiSections(sheikhId) {
+  const { Section } = require('../../models');
+  const sections = await Section.find({ realm: 'najmi', isVisible: true })
+    .sort({ displayOrder: 1 })
+    .select('title icon maxVisible collapsedByDefault')
+    .lean();
+  if (!sections.length) return [];
+
+  return Promise.all(sections.map(async (sec) => {
+    const seriesList = await Series.find({
+      sectionId: sec._id, sheikhId, isVisible: { $ne: false }
+    })
+      .sort({ sectionOrder: 1 })
+      .select('titleArabic titleEnglish category lectureCount shortId slug_en slug_ar')
+      .lean();
+    return {
+      title: sec.title,
+      icon: sec.icon,
+      maxVisible: sec.maxVisible || 5,
+      collapsedByDefault: !!sec.collapsedByDefault,
+      series: seriesList.map(s => ({ ...s, url: najmiSeriesUrl(s) }))
+    };
+  })).then(list => list.filter(s => s.series.length > 0));
+}
+
 // ---------------------------------------------------------------------------
 // GET /najmi — realm home
 // ---------------------------------------------------------------------------
@@ -45,20 +71,33 @@ router.get('/', requireNajmiSheikh, async (req, res) => {
   try {
     const sheikh = req.najmiSheikh;
 
-    const [seriesCount, lectureCount, pubCount, featuredSeries, featuredPubs] = await Promise.all([
+    // Homepage config (tailored to the archive) with safe defaults
+    const settings = await SiteSettings.getSettings().catch(() => null);
+    const cfgRaw = (settings && settings.homepage && settings.homepage.najmi) || {};
+    const cfg = {
+      showFeaturedSeries: cfgRaw.showFeaturedSeries !== false,
+      featuredSeriesCount: Math.min(12, Math.max(2, cfgRaw.featuredSeriesCount || 6)),
+      showLibrary: cfgRaw.showLibrary !== false,
+      showSections: cfgRaw.showSections !== false,
+      blockOrder: Array.isArray(cfgRaw.blockOrder) && cfgRaw.blockOrder.length
+        ? cfgRaw.blockOrder : ['sections', 'featuredSeries', 'library']
+    };
+
+    const [seriesCount, lectureCount, pubCount, featuredSeries, featuredPubs, najmiSections] = await Promise.all([
       Series.countDocuments({ sheikhId: sheikh._id, isVisible: { $ne: false } }),
       Lecture.countDocuments({ sheikhId: sheikh._id, published: true }),
       Publication.countDocuments({ sheikhId: sheikh._id, isPublished: { $ne: false } }),
       Series.find({ sheikhId: sheikh._id, isVisible: { $ne: false } })
         .sort({ lectureCount: -1, titleArabic: 1 })
-        .limit(6)
+        .limit(cfg.featuredSeriesCount)
         .select('titleArabic titleEnglish category lectureCount shortId slug_en slug_ar')
         .lean(),
       Publication.find({ sheikhId: sheikh._id, isPublished: { $ne: false } })
         .sort({ createdAt: -1 })
         .limit(6)
         .select('title category pageCount shortId slug_ar fileUrl')
-        .lean()
+        .lean(),
+      cfg.showSections ? loadNajmiSections(sheikh._id) : Promise.resolve([])
     ]);
 
     res.render('najmi/index', {
@@ -66,6 +105,8 @@ router.get('/', requireNajmiSheikh, async (req, res) => {
       metaDescription: 'أرشيف دروس ومحاضرات وكتب العلامة أحمد بن يحيى النجمي رحمه الله — أكثر من 1500 درس و54 سلسلة و116 كتاباً.',
       najmiSheikh: sheikh,
       stats: { seriesCount, lectureCount, pubCount },
+      config: cfg,
+      najmiSections,
       featuredSeries: featuredSeries.map(s => ({ ...s, url: najmiSeriesUrl(s) })),
       featuredPubs,
       canonicalPath: '/najmi'

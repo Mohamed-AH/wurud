@@ -118,30 +118,60 @@
     <a href="/" class="rb-cta"><%= locale === 'ar' ? 'أرشيف الشيخ حسن ←' : 'Sheikh Hasan archive →' %></a>
   </div>
 
-  <!-- Featured series -->
-  <% if (featuredSeries && featuredSeries.length) { %>
-  <section class="najmi-section">
-    <div class="najmi-section-head">
-      <h2><i data-lucide="star"></i> <%= locale === 'ar' ? 'السلاسل المميزة' : 'Featured Series' %></h2>
-      <a href="/najmi/series" class="see-all"><%= locale === 'ar' ? 'عرض الكل ←' : 'View all →' %></a>
-    </div>
-    <div class="najmi-series-grid">
-      <% featuredSeries.forEach(s => { %>
-        <a href="<%= s.url %>" class="najmi-series-card">
-          <div class="ic"><i data-lucide="mic"></i></div>
-          <div class="t"><%= s.titleArabic %></div>
-          <div class="meta">
-            <span class="najmi-cat-badge"><%= s.category %></span>
-            <span class="najmi-count"><%= (s.lectureCount || 0) %> <%= locale === 'ar' ? 'درس' : 'lessons' %></span>
-          </div>
-        </a>
-      <% }) %>
-    </div>
-  </section>
-  <% } %>
+  <%
+    // Admin-configurable blocks below the hero, rendered in the saved order.
+    var cfg = (typeof config !== 'undefined' && config) ? config
+      : { showFeaturedSeries:true, showLibrary:true, showSections:true, blockOrder:['sections','featuredSeries','library'] };
+    var secs = (typeof najmiSections !== 'undefined' && najmiSections) ? najmiSections : [];
+    var order = (cfg.blockOrder && cfg.blockOrder.length) ? cfg.blockOrder : ['sections','featuredSeries','library'];
+  %>
+  <% order.forEach(function(block) { %>
 
-  <!-- Featured library -->
-  <% if (featuredPubs && featuredPubs.length) { %>
+    <% if (block === 'sections' && cfg.showSections && secs.length) { %>
+      <% secs.forEach(function(sec) { %>
+      <section class="najmi-section">
+        <div class="najmi-section-head">
+          <h2><span style="margin-inline-end:6px;"><%= sec.icon || '📚' %></span><%= locale === 'ar' ? sec.title.ar : (sec.title.en || sec.title.ar) %></h2>
+        </div>
+        <div class="najmi-series-grid">
+          <% sec.series.slice(0, sec.maxVisible).forEach(function(s) { %>
+            <a href="<%= s.url %>" class="najmi-series-card">
+              <div class="ic"><i data-lucide="mic"></i></div>
+              <div class="t"><%= s.titleArabic %></div>
+              <div class="meta">
+                <span class="najmi-cat-badge"><%= s.category %></span>
+                <span class="najmi-count"><%= (s.lectureCount || 0) %> <%= locale === 'ar' ? 'درس' : 'lessons' %></span>
+              </div>
+            </a>
+          <% }) %>
+        </div>
+      </section>
+      <% }) %>
+    <% } %>
+
+    <% if (block === 'featuredSeries' && cfg.showFeaturedSeries && featuredSeries && featuredSeries.length) { %>
+    <section class="najmi-section">
+      <div class="najmi-section-head">
+        <h2><i data-lucide="star"></i> <%= locale === 'ar' ? 'السلاسل المميزة' : 'Featured Series' %></h2>
+        <a href="/najmi/series" class="see-all"><%= locale === 'ar' ? 'عرض الكل ←' : 'View all →' %></a>
+      </div>
+      <div class="najmi-series-grid">
+        <% featuredSeries.forEach(s => { %>
+          <a href="<%= s.url %>" class="najmi-series-card">
+            <div class="ic"><i data-lucide="mic"></i></div>
+            <div class="t"><%= s.titleArabic %></div>
+            <div class="meta">
+              <span class="najmi-cat-badge"><%= s.category %></span>
+              <span class="najmi-count"><%= (s.lectureCount || 0) %> <%= locale === 'ar' ? 'درس' : 'lessons' %></span>
+            </div>
+          </a>
+        <% }) %>
+      </div>
+    </section>
+    <% } %>
+
+    <% if (block === 'library' && cfg.showLibrary && featuredPubs && featuredPubs.length) { %>
+    <!-- Featured library -->
   <section class="najmi-section">
     <div class="najmi-section-head">
       <h2><i data-lucide="book-open"></i> <%= locale === 'ar' ? 'من المكتبة' : 'From the Library' %></h2>
@@ -163,7 +193,9 @@
       <% }) %>
     </div>
   </section>
-  <% } %>
+    <% } %>
+
+  <% }); %>
 </div>
 
 <script> if (window.lucide) lucide.createIcons(); </script>

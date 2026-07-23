@@ -46,7 +46,7 @@ alongside the existing site with **complete architectural separation**. Zero con
 | 2 | Najmi realm pages: `/najmi`, `/najmi/series`, `/najmi/series/:id`, `/najmi/bio` (teal) | ✅ DONE |
 | 3 | PDF Library `/najmi/library` — 4-category filter, cover cards, download + open-in-tab | ✅ DONE (built alongside Phase 2) |
 | 4 | Cross-archive banners + "العلماء" header link | ✅ DONE |
-| 5 | Admin: publications CRUD ✅, realm switcher + scoped forms 🔄, per-realm homepage config ⏳ | 🔄 IN PROGRESS |
+| 5 | Admin: publications CRUD ✅, realm switcher + scoped forms ✅, per-realm homepage config ✅ | ✅ DONE |
 | 6 | SEO: sitemap, OG/JSON-LD, cache TTLs, report script | ⏳ TODO |
 
 ### Phase 2/3 — Najmi realm (DONE)
@@ -117,7 +117,25 @@ admin forms + Najmi dashboard cards; **(C)** publications admin CRUD (built).
 `publication-form.ejs`. Nav link "مكتبة النجمي" in admin header. Dashboard: publications card +
 per-realm breakdown cards (Hasan/Najmi lectures·series·books). `utils/r2Storage.uploadToR2` now takes
 `options.disposition` ('inline'|'attachment').
-**5B/5C — TODO** (realm switcher in forms; per-realm homepage config for `/najmi`).
+**5B — Realm switcher + scoped forms (DONE):** admin realm context middleware sets
+`res.locals.adminRealm` (session, Hasan|Najmi) + `najmiSheikhId` + `currentPath`; GET `/admin/set-realm`
+switches. Realm toggle in `views/admin/partials/header.ejs` (gold/teal). `series-form.ejs` groups the
+sheikh dropdown into Najmi/Hasan optgroups + defaults to the active realm; `upload.ejs` labels + auto-selects
+the Najmi sheikh in that realm.
+
+**5C — Per-realm Najmi homepage config (DONE):**
+- `SiteSettings.homepage.najmi` = `{showFeaturedSeries, featuredSeriesCount, showLibrary, showSections, blockOrder}`.
+- `models/Section.js` gains `realm` ('hasan'|'najmi', default 'hasan'). Hasan `fetchSectionsData` now matches
+  `realm: {$ne:'najmi'}`; admin `/sections` list + create + section-series assignment are realm-scoped
+  (Najmi sections only offer Najmi series).
+- `routes/najmi/index.js` home reads the config, loads realm sections (`loadNajmiSections`), and passes
+  `config` + `najmiSections`; `views/najmi/index.ejs` renders Hero (fixed) then the configurable blocks
+  (sections / featuredSeries / library) in `blockOrder`, each guarded by its toggle.
+- `/admin/homepage-config` is realm-aware (header switcher drives it): Najmi shows its own toggles + layout
+  preview and saves ONLY `homepage.najmi` (Hasan fields preserved via `markModified`), and vice-versa.
+- **NOTE (owner action):** to use curated Najmi sections, switch the admin to the Najmi realm, create a
+  Section (it's saved with `realm:'najmi'`), and assign Najmi series to it. Otherwise the Featured Series
+  block covers the home automatically.
 
 ### Realm isolation on the Hasan (default) side — DONE
 The default site historically queried "all" content, so once Najmi was imported it leaked into

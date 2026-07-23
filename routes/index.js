@@ -257,7 +257,8 @@ async function fetchRecentArticles(limit = 10) {
 // Optimized: Uses aggregation pipeline instead of N+1 queries (55+ -> 1 query)
 async function fetchSectionsData() {
   const sections = await Section.aggregate([
-    { $match: { isVisible: true } },
+    // Exclude Najmi realm sections (they render on /najmi, not the Hasan homepage)
+    { $match: { isVisible: true, realm: { $ne: 'najmi' } } },
     { $sort: { displayOrder: 1 } },
     // Lookup series for each section
     {
