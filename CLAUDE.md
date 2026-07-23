@@ -8,6 +8,83 @@ Islamic audio archive website for Sheikh Hasan bin Mohammed Mansour Dhaghriri. S
 ## Current Branch
 `claude/fix-homepage-tests-ovChk`
 
+---
+
+# 🟢 ACTIVE PROJECT: Najmi Archive — Two Separate Realms
+
+**Goal:** Add the archive of العلامة أحمد بن يحيى النجمي (رحمه الله) — teacher of Sheikh Hasan —
+alongside the existing site with **complete architectural separation**. Zero content bleed.
+
+**Approved mockups:** `scratchpad/sheikh-najmi-plan.html` (artifact). Strategy & decisions locked:
+- **Two realms**: Sheikh Hasan = Gold/Brown (`#C49A3C`/`#2C1508`, default site). Sheikh Ahmed =
+  Deep Teal/Emerald realm under `/najmi/*` (`#2E6E5B` primary, `#14231D` forest).
+- **Route prefix**: `/najmi` (short — approved).
+- **Teal palette** (approved): `#14231D` `#2E6E5B` `#3D8570` `#A8CFC2` `#D4E8E0`.
+- **Cross-archive banners**: teal invite under Hasan's hero → `/najmi`; gold return under Najmi's hero → `/`.
+- **Dynamic context header**: accent + brand badge swap by realm (`res.locals.realm`).
+- **PDF reader**: Phase 1 = direct download + open-in-new-tab (approved). PDF.js reader deferred.
+
+**Content scale (from uploaded CSVs):**
+- Audio: **1,545 lectures / 54 series** — `lectures_metadata_final.csv`. NOTE: its `category` column
+  is the **series name**; there is no sheikh column (all = Najmi). Real per-lecture titles exist.
+- PDFs: **116 files / 4 categories** — `pdf_catalog.csv`. Categories: **الكتب (62), التعليقات (38),
+  الرسائل (13), من السيرة الذاتية (3)**.
+- All hosted on the **existing R2 bucket** (no second bucket — full public URL stored per record,
+  bucket is transparent to the app). CSP already allows `https://*.r2.dev`.
+
+**Biography:** `docs/najmi-bio.md` — AR + EN, sourced strictly from المجموع الندي & جهود العلامة النجمي
+(uploaded PDFs). No hallucination. Use for the Sheikh record + `/najmi/bio`.
+
+### Phase Status
+
+| Phase | Scope | Status |
+|-------|-------|--------|
+| 0 | Data layer: `Publication` model, realm middleware, context-aware partials | 🔄 IN PROGRESS |
+| 1 | Content import: scripts for PDF upload + publication/lecture import | 🔄 IN PROGRESS |
+| 2 | Najmi realm pages: `/najmi`, `/najmi/series`, `/najmi/series/:id`, `/najmi/bio` (teal) | ⏳ TODO |
+| 3 | PDF Library `/najmi/library` — 4-category filter, cover cards, download + open-in-tab | ⏳ TODO |
+| 4 | Cross-archive banners + "العلماء" header link | ⏳ TODO |
+| 5 | Admin CRUD for publications; dashboard counts | ⏳ TODO |
+| 6 | SEO: sitemap, OG/JSON-LD, cache TTLs, report script | ⏳ TODO |
+
+### Done so far (Phase 0 + 1 scaffolding)
+- ✅ `models/Publication.js` — PDF doc schema (title, category, fileUrl, pageCount, sheikhId, shortId, slugs). Registered in `models/index.js`.
+- ✅ `docs/najmi-bio.md` — accurate AR/EN biography from source PDFs.
+- ✅ `scripts/upload-pdfs-to-r2.js` — bulk PDF → R2 (prefix `pdf/`, inline disposition), outputs `pdf-upload-manifest.json`.
+- ✅ `scripts/import-publications.js` — joins `pdf_catalog.csv` + manifest → `Publication` docs (idempotent by sourceUrl/fileUrl).
+- ✅ `scripts/import-najmi-lectures.js` — imports the 1,545 lectures from CSV, **preserves real titles**,
+  auto-creates 54 series with heuristic category mapping, tags `najmi`. Reuses existing upload/verify/publish steps.
+
+### Najmi Import Workflow (what changed vs. generic pipeline)
+The generic `import-excel-generic.js` builds titles as "SeriesName - Sequence" and expects different column
+names, so **the import step uses `import-najmi-lectures.js` instead**. Upload/verify/publish steps are reused unchanged:
+```bash
+# 1. Import lectures (Cloud VM) — dry-run first
+node scripts/import-najmi-lectures.js lectures_metadata_final.csv --batch najmi --dry-run
+node scripts/import-najmi-lectures.js lectures_metadata_final.csv --batch najmi
+# 2. Upload audio (Local PC) — existing R2 script, same bucket
+node scripts/upload-to-r2-local.js /path/to/najmi-audio --skip-existing
+# 3. Link URLs (Cloud VM)
+node scripts/upload-to-oci-verify.js --manifest upload-manifest.json
+# 4. Publish + fix counts
+node scripts/publish-batch.js --batch najmi
+node scripts/sync-lecture-counts.js
+
+# PDFs:
+node scripts/upload-pdfs-to-r2.js /path/to/najmi-pdfs --skip-existing        # Local PC
+node scripts/import-publications.js --catalog pdf_catalog.csv --manifest pdf-upload-manifest.json  # Cloud VM
+```
+
+### Category heuristic (audio series → enum)
+`import-najmi-lectures.js` maps 54 series → {Aqeedah 286, Fiqh 678, Hadith 271, Tafsir 190, Other 113, Seerah 7 lectures}.
+Admin can adjust any series category afterward. `فتاوى المرأة المسلمة`, `فتاوى منوعة`, translated series → Other.
+
+### Constraints (unchanged)
+Production DB — no destructive ops. RTL-first (`html[dir="ltr"]` for LTR). Minify JS after edits.
+Realm pages must never query across realms (Najmi routes filter `sheikhId = najmi`).
+
+---
+
 ## Recent Work Completed
 
 ### 1. Fixed Featured Section Links (Commit: dce89f5)
