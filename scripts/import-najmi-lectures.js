@@ -83,7 +83,9 @@ function toM4a(fileName) {
 async function findOrCreateSheikh(name) {
   let sheikh = await Sheikh.findOne({ nameArabic: name })
     || await Sheikh.findOne({ nameArabic: `الشيخ ${name}` })
-    || await Sheikh.findOne({ nameArabic: name.replace('الشيخ ', '') });
+    || await Sheikh.findOne({ nameArabic: name.replace('الشيخ ', '') })
+    // Fallback: the record may store a title-prefixed name (e.g. "الشيخ العلامة … النجمي")
+    || await Sheikh.findOne({ nameArabic: /النجمي/ });
   if (sheikh) return sheikh;
   if (DRY_RUN) return { _id: new mongoose.Types.ObjectId(), nameArabic: name, isNew: true };
   sheikh = new Sheikh({ nameArabic: name, honorific: 'رحمه الله', titlePrefix: 'الشيخ العلامة', titlePrefixEnglish: 'Sheikh al-‘Allāmah' });

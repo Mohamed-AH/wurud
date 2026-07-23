@@ -26,6 +26,7 @@
         <a href="/series" class="nav-link"><%= t('nav_series') %></a>
         <a href="/articles" class="nav-link"><%= locale === 'ar' ? 'مقالات' : 'Articles' %></a>
         <a href="/sheikhs/حسن-بن-محمد-منصور-الدغريري" class="nav-link"><%= locale === 'ar' ? 'السيرة الذاتية' : 'Biography' %></a>
+        <a href="/najmi" class="nav-link nav-link-najmi"><%= locale === 'ar' ? 'العلماء' : 'Scholars' %></a>
       <% } %>
     </nav>
 
@@ -44,6 +45,13 @@
   </div>
 </header>
 
+<style>
+  /* "العلماء" link hints at the teal Najmi realm */
+  .nav-link-najmi { color: #A8CFC2 !important; }
+  .nav-link-najmi:hover { color: #D4E8E0 !important; }
+  .mobile-nav-link-najmi { color: #2E6E5B !important; }
+</style>
+
 <!-- Mobile Navigation Overlay (outside header for proper fixed positioning) -->
 <div id="mobileNav" class="mobile-nav">
   <nav class="mobile-nav-content">
@@ -59,6 +67,7 @@
       <a href="/series" class="mobile-nav-link"><%= t('nav_series') %></a>
       <a href="/articles" class="mobile-nav-link"><%= locale === 'ar' ? 'مقالات' : 'Articles' %></a>
       <a href="/sheikhs/حسن-بن-محمد-منصور-الدغريري" class="mobile-nav-link"><%= locale === 'ar' ? 'السيرة الذاتية' : 'Biography' %></a>
+      <a href="/najmi" class="mobile-nav-link mobile-nav-link-najmi"><%= locale === 'ar' ? 'العلماء' : 'Scholars' %></a>
     <% } %>
   </nav>
 </div>

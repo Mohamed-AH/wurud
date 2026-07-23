@@ -13,6 +13,21 @@ const CACHE_TTL = {
   ARTICLES: 600         // 10 minutes for articles
 };
 
+// Counts for the cross-archive invitation banner on Sheikh Hasan's homepage.
+// Returns null when the Najmi realm isn't available, so the banner is hidden.
+async function fetchNajmiArchiveCounts() {
+  const { getNajmiSheikh } = require('../utils/najmiSheikh');
+  const { Publication } = require('../models');
+  const najmi = await getNajmiSheikh();
+  if (!najmi) return null;
+  const [lectureCount, seriesCount, pubCount] = await Promise.all([
+    Lecture.countDocuments({ sheikhId: najmi._id, published: true }),
+    Series.countDocuments({ sheikhId: najmi._id, isVisible: { $ne: false } }),
+    Publication.countDocuments({ sheikhId: najmi._id, isPublished: { $ne: false } })
+  ]);
+  return { lectureCount, seriesCount, pubCount };
+}
+
 // Helper function to fetch homepage data (for caching)
 async function fetchHomepageData() {
   // Exclude the Najmi realm from the default site
@@ -307,7 +322,7 @@ async function fetchSectionsData() {
 router.get('/', async (req, res) => {
   try {
     // PERFORMANCE: Execute all independent queries in parallel
-    const [weeklySchedule, totalLectureCount, totalArticleCount, homepageSections, settings, recentArticles] = await Promise.all([
+    const [weeklySchedule, totalLectureCount, totalArticleCount, homepageSections, settings, recentArticles, najmiArchive] = await Promise.all([
       cache.getOrSet('homepage:schedule', fetchScheduleData, CACHE_TTL.SCHEDULE),
       cache.getOrSet('homepage:lectureCount', async () => Lecture.countDocuments({ published: true, ...(await excludeNajmiBySheikh()) }), CACHE_TTL.HOMEPAGE),
       cache.getOrSet('homepage:articleCount', () => Article.countDocuments({ isPublished: true }), CACHE_TTL.ARTICLES),
@@ -316,7 +331,8 @@ router.get('/', async (req, res) => {
         console.error('Failed to get site settings:', err.message);
         return null;
       }),
-      cache.getOrSet('homepage:articles', () => fetchRecentArticles(10), CACHE_TTL.ARTICLES)
+      cache.getOrSet('homepage:articles', () => fetchRecentArticles(10), CACHE_TTL.ARTICLES),
+      cache.getOrSet('homepage:najmiArchive', fetchNajmiArchiveCounts, CACHE_TTL.HOMEPAGE)
     ]);
 
     // Process site settings (handle null from catch)
@@ -369,7 +385,8 @@ router.get('/', async (req, res) => {
       showPublicStats,
       lazyLoadSeries: true,     // Flag for template to show loading state
       activeTab,                // Pass active tab for server-side rendering
-      recentArticles: recentArticles || []  // Recent articles for sidebar
+      recentArticles: recentArticles || [],  // Recent articles for sidebar
+      najmiArchive              // Counts for the cross-archive invitation banner
     });
   } catch (error) {
     console.error('Homepage error:', error);

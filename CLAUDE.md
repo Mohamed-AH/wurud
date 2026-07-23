@@ -45,7 +45,7 @@ alongside the existing site with **complete architectural separation**. Zero con
 | 1 | Content import: scripts for PDF upload + publication/lecture import | ✅ DONE (owner ran all steps: 1,545 lectures / 54 series / 116 PDFs imported + published) |
 | 2 | Najmi realm pages: `/najmi`, `/najmi/series`, `/najmi/series/:id`, `/najmi/bio` (teal) | ✅ DONE |
 | 3 | PDF Library `/najmi/library` — 4-category filter, cover cards, download + open-in-tab | ✅ DONE (built alongside Phase 2) |
-| 4 | Cross-archive banners + "العلماء" header link | 🔄 PARTIAL (Najmi→Hasan return banner + realm header nav done; Hasan→Najmi invite banner under Hasan's hero still TODO) |
+| 4 | Cross-archive banners + "العلماء" header link | ✅ DONE |
 | 5 | Admin CRUD for publications; dashboard counts | ⏳ TODO |
 | 6 | SEO: sitemap, OG/JSON-LD, cache TTLs, report script | ⏳ TODO |
 
@@ -91,6 +91,16 @@ node scripts/import-publications.js --catalog pdf_catalog_updated.csv --manifest
 ### Category heuristic (audio series → enum)
 `import-najmi-lectures.js` maps 54 series → {Aqeedah 286, Fiqh 678, Hadith 271, Tafsir 190, Other 113, Seerah 7 lectures}.
 Admin can adjust any series category afterward. `فتاوى المرأة المسلمة`, `فتاوى منوعة`, translated series → Other.
+
+### Phase 4 — Cross-archive banners + "العلماء" link (DONE)
+- **Hasan → Najmi invite banner**: teal card under Hasan's homepage hero (`views/public/index.ejs`),
+  links to `/najmi`. Counts are live via `fetchNajmiArchiveCounts()` (cached `homepage:najmiArchive`),
+  passed as `najmiArchive`; banner hidden if the Najmi realm can't be resolved.
+- **Najmi → Hasan return banner**: already on `/najmi` home (gold).
+- **"العلماء" header link** (Hasan desktop + mobile nav) → `/najmi`, subtle teal accent. Najmi realm
+  header already shows a return link to `/`.
+- Import scripts' `findOrCreateSheikh` now fall back to `nameArabic: /النجمي/` so manually
+  title-prefixing the stored name won't cause a duplicate sheikh on any future re-import.
 
 ### Realm isolation on the Hasan (default) side — DONE
 The default site historically queried "all" content, so once Najmi was imported it leaked into
