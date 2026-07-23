@@ -4,6 +4,7 @@ const mongoose = require('mongoose');
 const { Lecture, Series } = require('../../models');
 const cache = require('../../utils/cache');
 const { sanitizeSearchInput } = require('../../utils/validators');
+const { excludeNajmiBySheikh } = require('../../utils/realmFilter');
 
 const isProduction = process.env.NODE_ENV === 'production';
 
@@ -123,9 +124,11 @@ router.get('/series', async (req, res) => {
     const limitNum = Math.min(50, Math.max(1, isNaN(parsedLimit) ? 10 : parsedLimit));
     const skip = (pageNum - 1) * limitNum;
 
-    // Build base query
+    // Build base query (exclude the Najmi realm from the default site)
+    const notNajmi = await excludeNajmiBySheikh();
     const query = {
-      isVisible: { $ne: false }
+      isVisible: { $ne: false },
+      ...notNajmi
     };
 
     // Category filter
@@ -314,10 +317,12 @@ router.get('/standalone', async (req, res) => {
     const limitNum = Math.min(50, Math.max(1, isNaN(parsedLimit) ? 20 : parsedLimit));
     const skip = (pageNum - 1) * limitNum;
 
-    // Build base query for standalone lectures
+    // Build base query for standalone lectures (exclude Najmi realm)
+    const notNajmi = await excludeNajmiBySheikh();
     const query = {
       seriesId: null,
-      published: true
+      published: true,
+      ...notNajmi
     };
 
     // Category filter
@@ -425,9 +430,11 @@ router.get('/khutbas', async (req, res) => {
     const limitNum = Math.min(50, Math.max(1, isNaN(parsedLimit) ? 10 : parsedLimit));
     const skip = (pageNum - 1) * limitNum;
 
-    // Build base query
+    // Build base query (exclude Najmi realm)
+    const notNajmi = await excludeNajmiBySheikh();
     const query = {
-      isVisible: { $ne: false }
+      isVisible: { $ne: false },
+      ...notNajmi
     };
 
     // If searching, find series that match by title OR have lectures matching the search
@@ -581,8 +588,9 @@ router.get('/stats', async (req, res) => {
   try {
     const { category, type, search } = req.query;
 
-    // Build series query
-    const seriesQuery = { isVisible: { $ne: false } };
+    // Build series query (exclude Najmi realm)
+    const notNajmi = await excludeNajmiBySheikh();
+    const seriesQuery = { isVisible: { $ne: false }, ...notNajmi };
     if (category && category !== 'all') {
       seriesQuery.category = category;
     }
@@ -612,10 +620,11 @@ router.get('/stats', async (req, res) => {
     ]);
     const seriesCount = seriesWithLectures.length;
 
-    // Count standalone lectures
+    // Count standalone lectures (exclude Najmi realm)
     const standaloneQuery = {
       seriesId: null,
-      published: true
+      published: true,
+      ...notNajmi
     };
     if (category && category !== 'all') {
       standaloneQuery.category = category;
@@ -654,8 +663,8 @@ router.get('/stats', async (req, res) => {
     ]);
     const khutbaCount = khutbaWithLectures.length;
 
-    // Total lecture count
-    const totalLectures = await Lecture.countDocuments({ published: true });
+    // Total lecture count (exclude Najmi realm)
+    const totalLectures = await Lecture.countDocuments({ published: true, ...notNajmi });
 
     res.json({
       success: true,

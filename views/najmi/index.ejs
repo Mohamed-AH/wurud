@@ -1,0 +1,201 @@
+<style>
+  .najmi-home { background: #EEF5F1; }
+  html[data-theme] .najmi-home { background: #EEF5F1; }
+
+  .najmi-hero {
+    background: linear-gradient(135deg, #14231D 0%, #2E6E5B 100%);
+    color: #fff;
+    padding: 48px 20px 40px;
+    text-align: center;
+    border-bottom: 3px solid #3D8570;
+  }
+  .najmi-hero .hero-honorific { color: #A8CFC2; font-size: 15px; margin-bottom: 6px; }
+  .najmi-hero h1 {
+    font-family: var(--font-cairo, 'Cairo', sans-serif);
+    font-size: 34px; font-weight: 800; line-height: 1.25; margin-bottom: 12px;
+    text-shadow: 1px 2px 6px rgba(0,0,0,0.25);
+  }
+  .najmi-hero .hero-tagline { color: rgba(255,255,255,0.9); font-size: 15px; max-width: 620px; margin: 0 auto 22px; line-height: 1.7; }
+  .najmi-hero-stats { display: flex; gap: 28px; justify-content: center; flex-wrap: wrap; }
+  .najmi-hero-stat .n { font-size: 28px; font-weight: 800; color: #A8CFC2; }
+  .najmi-hero-stat .l { font-size: 12px; color: rgba(255,255,255,0.75); }
+
+  /* Gold return banner */
+  .najmi-return-banner {
+    display: flex; align-items: center; justify-content: space-between; gap: 14px;
+    max-width: 960px; margin: 0 auto; padding: 14px 20px;
+    background: linear-gradient(90deg, rgba(196,154,60,0.12), rgba(196,154,60,0.04));
+    border-inline-start: 4px solid #C49A3C;
+    border-bottom: 1px solid #E8D5A0;
+  }
+  .najmi-return-banner .rb-text { flex: 1; }
+  .najmi-return-banner .rb-eyebrow { font-size: 11px; font-weight: 800; color: #C49A3C; margin-bottom: 2px; }
+  .najmi-return-banner .rb-title { font-size: 14px; font-weight: 700; color: #2C1508; }
+  .najmi-return-banner .rb-cta {
+    white-space: nowrap; background: #C49A3C; color: #2C1508;
+    font-weight: 700; font-size: 13px; padding: 9px 16px; border-radius: 8px; text-decoration: none;
+  }
+  html[data-theme="dark"] .najmi-return-banner .rb-title { color: #E8DDD0; }
+
+  .najmi-section { max-width: 960px; margin: 0 auto; padding: 28px 20px; }
+  .najmi-section-head { display: flex; align-items: center; justify-content: space-between; margin-bottom: 16px; }
+  .najmi-section-head h2 {
+    font-family: var(--font-cairo, 'Cairo', sans-serif);
+    font-size: 20px; font-weight: 800; color: #14231D; display: flex; align-items: center; gap: 8px;
+  }
+  html[data-theme="dark"] .najmi-section-head h2 { color: #A8CFC2; }
+  .najmi-section-head .see-all { color: #2E6E5B; font-weight: 700; font-size: 13px; text-decoration: none; }
+
+  .najmi-series-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 12px; }
+  .najmi-series-card {
+    background: #fff; border: 1px solid #D4E8E0; border-radius: 12px; padding: 16px;
+    text-decoration: none; display: block; transition: transform .15s, box-shadow .15s;
+  }
+  .najmi-series-card:hover { transform: translateY(-2px); box-shadow: 0 6px 18px rgba(20,35,29,0.10); }
+  .najmi-series-card .ic { color: #2E6E5B; margin-bottom: 6px; }
+  .najmi-series-card .t { font-size: 15px; font-weight: 700; color: #14231D; line-height: 1.45; margin-bottom: 8px; }
+  .najmi-series-card .meta { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+  .najmi-cat-badge { font-size: 10px; font-weight: 700; background: #D4E8E0; color: #14231D; padding: 2px 8px; border-radius: 5px; }
+  .najmi-count { font-size: 12px; color: #5f7168; }
+  html[data-theme="dark"] .najmi-series-card { background: #1C2A24; border-color: #2E4A40; }
+  html[data-theme="dark"] .najmi-series-card .t { color: #E8DDD0; }
+
+  /* Book cards — mirror the Hasan "Latest Articles" card layout */
+  .najmi-book-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 14px; }
+  .najmi-book-card {
+    background: #fff; border: 1px solid #D4E8E0; border-radius: 13px; padding: 16px;
+    text-decoration: none; display: flex; flex-direction: column; transition: all .2s ease;
+  }
+  .najmi-book-card:hover { border-color: #2E6E5B; transform: translateY(-2px); box-shadow: 0 4px 16px rgba(20,35,29,0.08); }
+  html[data-theme="dark"] .najmi-book-card { background: #1C2A24; border-color: #2E4A40; }
+  .nb-meta { display: flex; justify-content: space-between; align-items: flex-start; gap: 6px; margin-bottom: 11px; }
+  .nb-cat { background: #D4E8E0; color: #14231D; font-size: 10px; font-weight: 700; padding: 3px 9px; border-radius: 7px; white-space: nowrap; }
+  html[data-theme="dark"] .nb-cat { background: #22392F; color: #A8CFC2; }
+  .nb-pages { color: #8aa79c; font-size: 10px; padding-top: 2px; flex-shrink: 0; font-variant-numeric: tabular-nums; }
+  .nb-title {
+    color: #14231D; font-size: 14px; font-weight: 700; line-height: 1.55; margin: 0 0 9px; flex: 1;
+    text-wrap: pretty; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden;
+    direction: rtl; text-align: right;
+  }
+  html[data-theme="dark"] .nb-title { color: #E8DDD0; }
+  html[dir="ltr"] .najmi-book-card { text-align: left; }
+  .nb-footer { border-top: 1px solid #E4EFEA; padding-top: 11px; display: flex; align-items: center; justify-content: flex-end; gap: 5px; margin-top: auto; }
+  html[data-theme="dark"] .nb-footer { border-top-color: #2E4A40; }
+  .nb-read { color: #2E6E5B; font-size: 12px; font-weight: 700; }
+  .nb-footer svg { stroke: #2E6E5B; }
+  html[dir="ltr"] .nb-footer svg { transform: scaleX(-1); }
+
+  @media (max-width: 1024px) { .najmi-book-grid { grid-template-columns: repeat(2, 1fr); } }
+  @media (max-width: 640px) {
+    .najmi-hero h1 { font-size: 26px; }
+    .najmi-series-grid { grid-template-columns: 1fr; }
+  }
+</style>
+
+<div class="najmi-home">
+  <!-- Hero -->
+  <section class="najmi-hero">
+    <div class="hero-honorific"><%= locale === 'ar' ? 'رحمه الله' : 'raḥimahu-llāh' %></div>
+    <h1><%= locale === 'ar' ? 'الشيخ العلامة أحمد بن يحيى النجمي' : 'Sheikh al-‘Allāmah Ahmad ibn Yahya al-Najmi' %></h1>
+    <p class="hero-tagline">
+      <%= locale === 'ar'
+        ? 'المحدّث الفقيه مفتي منطقة جازان، شيخ الشيخ حسن الدغريري — دروسه ومحاضراته وكتبه.'
+        : 'Hadith scholar and jurist, Mufti of the Jazan region, and teacher of Sheikh Hasan al-Daghreeri.' %>
+    </p>
+    <div class="najmi-hero-stats">
+      <div class="najmi-hero-stat"><div class="n"><%= stats.lectureCount.toLocaleString(locale === 'ar' ? 'ar-EG' : 'en') %></div><div class="l"><%= locale === 'ar' ? 'درساً' : 'lectures' %></div></div>
+      <div class="najmi-hero-stat"><div class="n"><%= stats.seriesCount.toLocaleString(locale === 'ar' ? 'ar-EG' : 'en') %></div><div class="l"><%= locale === 'ar' ? 'سلسلة' : 'series' %></div></div>
+      <div class="najmi-hero-stat"><div class="n"><%= stats.pubCount.toLocaleString(locale === 'ar' ? 'ar-EG' : 'en') %></div><div class="l"><%= locale === 'ar' ? 'كتاباً' : 'books' %></div></div>
+    </div>
+  </section>
+
+  <!-- Gold return banner → Sheikh Hasan -->
+  <div class="najmi-return-banner">
+    <div class="rb-text">
+      <div class="rb-eyebrow"><%= locale === 'ar' ? '↩ العودة' : '↩ Back' %></div>
+      <div class="rb-title"><%= locale === 'ar' ? 'دروس الشيخ حسن بن محمد الدغريري حفظه الله' : 'Lectures of Sheikh Hasan al-Daghreeri' %></div>
+    </div>
+    <a href="/" class="rb-cta"><%= locale === 'ar' ? 'أرشيف الشيخ حسن ←' : 'Sheikh Hasan archive →' %></a>
+  </div>
+
+  <%
+    // Admin-configurable blocks below the hero, rendered in the saved order.
+    var cfg = (typeof config !== 'undefined' && config) ? config
+      : { showFeaturedSeries:true, showLibrary:true, showSections:true, blockOrder:['sections','featuredSeries','library'] };
+    var secs = (typeof najmiSections !== 'undefined' && najmiSections) ? najmiSections : [];
+    var order = (cfg.blockOrder && cfg.blockOrder.length) ? cfg.blockOrder : ['sections','featuredSeries','library'];
+  %>
+  <% order.forEach(function(block) { %>
+
+    <% if (block === 'sections' && cfg.showSections && secs.length) { %>
+      <% secs.forEach(function(sec) { %>
+      <section class="najmi-section">
+        <div class="najmi-section-head">
+          <h2><span style="margin-inline-end:6px;"><%= sec.icon || '📚' %></span><%= locale === 'ar' ? sec.title.ar : (sec.title.en || sec.title.ar) %></h2>
+        </div>
+        <div class="najmi-series-grid">
+          <% sec.series.slice(0, sec.maxVisible).forEach(function(s) { %>
+            <a href="<%= s.url %>" class="najmi-series-card">
+              <div class="ic"><i data-lucide="mic"></i></div>
+              <div class="t"><%= s.titleArabic %></div>
+              <div class="meta">
+                <span class="najmi-cat-badge"><%= s.category %></span>
+                <span class="najmi-count"><%= (s.lectureCount || 0) %> <%= locale === 'ar' ? 'درس' : 'lessons' %></span>
+              </div>
+            </a>
+          <% }) %>
+        </div>
+      </section>
+      <% }) %>
+    <% } %>
+
+    <% if (block === 'featuredSeries' && cfg.showFeaturedSeries && featuredSeries && featuredSeries.length) { %>
+    <section class="najmi-section">
+      <div class="najmi-section-head">
+        <h2><i data-lucide="star"></i> <%= locale === 'ar' ? 'السلاسل المميزة' : 'Featured Series' %></h2>
+        <a href="/najmi/series" class="see-all"><%= locale === 'ar' ? 'عرض الكل ←' : 'View all →' %></a>
+      </div>
+      <div class="najmi-series-grid">
+        <% featuredSeries.forEach(s => { %>
+          <a href="<%= s.url %>" class="najmi-series-card">
+            <div class="ic"><i data-lucide="mic"></i></div>
+            <div class="t"><%= s.titleArabic %></div>
+            <div class="meta">
+              <span class="najmi-cat-badge"><%= s.category %></span>
+              <span class="najmi-count"><%= (s.lectureCount || 0) %> <%= locale === 'ar' ? 'درس' : 'lessons' %></span>
+            </div>
+          </a>
+        <% }) %>
+      </div>
+    </section>
+    <% } %>
+
+    <% if (block === 'library' && cfg.showLibrary && featuredPubs && featuredPubs.length) { %>
+    <!-- Featured library -->
+  <section class="najmi-section">
+    <div class="najmi-section-head">
+      <h2><i data-lucide="book-open"></i> <%= locale === 'ar' ? 'من المكتبة' : 'From the Library' %></h2>
+      <a href="/najmi/library" class="see-all"><%= locale === 'ar' ? 'عرض المكتبة ←' : 'Browse library →' %></a>
+    </div>
+    <div class="najmi-book-grid">
+      <% featuredPubs.slice(0, 4).forEach(p => { %>
+        <a href="/najmi/library/<%= p.shortId %>/download" target="_blank" rel="noopener" class="najmi-book-card">
+          <div class="nb-meta">
+            <% if (p.pageCount) { %><span class="nb-pages"><%= p.pageCount %> <%= locale === 'ar' ? 'صفحة' : 'pp' %></span><% } else { %><span></span><% } %>
+            <span class="nb-cat"><%= p.category %></span>
+          </div>
+          <h3 class="nb-title"><%= p.title %></h3>
+          <div class="nb-footer">
+            <span class="nb-read"><%= locale === 'ar' ? 'قراءة الكتاب' : 'Read book' %></span>
+            <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="15,18 9,12 15,6"/></svg>
+          </div>
+        </a>
+      <% }) %>
+    </div>
+  </section>
+    <% } %>
+
+  <% }); %>
+</div>
+
+<script> if (window.lucide) lucide.createIcons(); </script>

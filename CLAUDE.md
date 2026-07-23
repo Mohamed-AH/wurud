@@ -8,6 +8,162 @@ Islamic audio archive website for Sheikh Hasan bin Mohammed Mansour Dhaghriri. S
 ## Current Branch
 `claude/fix-homepage-tests-ovChk`
 
+---
+
+# 🟢 ACTIVE PROJECT: Najmi Archive — Two Separate Realms
+
+**Goal:** Add the archive of العلامة أحمد بن يحيى النجمي (رحمه الله) — teacher of Sheikh Hasan —
+alongside the existing site with **complete architectural separation**. Zero content bleed.
+
+**Approved mockups:** `scratchpad/sheikh-najmi-plan.html` (artifact). Strategy & decisions locked:
+- **Two realms**: Sheikh Hasan = Gold/Brown (`#C49A3C`/`#2C1508`, default site). Sheikh Ahmed =
+  Deep Teal/Emerald realm under `/najmi/*` (`#2E6E5B` primary, `#14231D` forest).
+- **Route prefix**: `/najmi` (short — approved).
+- **Teal palette** (approved): `#14231D` `#2E6E5B` `#3D8570` `#A8CFC2` `#D4E8E0`.
+- **Cross-archive banners**: teal invite under Hasan's hero → `/najmi`; gold return under Najmi's hero → `/`.
+- **Dynamic context header**: accent + brand badge swap by realm (`res.locals.realm`).
+- **PDF reader**: Phase 1 = direct download + open-in-new-tab (approved). PDF.js reader deferred.
+
+**Content scale (from uploaded CSVs):**
+- Audio: **1,545 lectures / 54 series** — `lectures_metadata_final.csv`. NOTE: its `category` column
+  is the **series name**; there is no sheikh column (all = Najmi). Real per-lecture titles exist.
+- PDFs: **116 files / 4 categories** — `pdf_catalog_updated.csv` (has `page_count` + `relative_path`).
+  Categories: **الكتب (62), التعليقات (38), الرسائل (13), من السيرة الذاتية (3)**.
+  Files are nested in sub-folders (`book_lib/`, `comments/`, `messages/`, `cv_ar/`) — the uploader
+  walks them recursively and uses flat R2 keys (all 116 basenames are unique).
+- All hosted on the **existing R2 bucket** (no second bucket — full public URL stored per record,
+  bucket is transparent to the app). CSP already allows `https://*.r2.dev`.
+
+**Biography:** `docs/najmi-bio.md` — AR + EN, sourced strictly from المجموع الندي & جهود العلامة النجمي
+(uploaded PDFs). No hallucination. Use for the Sheikh record + `/najmi/bio`.
+
+### Phase Status
+
+| Phase | Scope | Status |
+|-------|-------|--------|
+| 0 | Data layer: `Publication` model, realm middleware, context-aware partials | ✅ DONE |
+| 1 | Content import: scripts for PDF upload + publication/lecture import | ✅ DONE (owner ran all steps: 1,545 lectures / 54 series / 116 PDFs imported + published) |
+| 2 | Najmi realm pages: `/najmi`, `/najmi/series`, `/najmi/series/:id`, `/najmi/bio` (teal) | ✅ DONE |
+| 3 | PDF Library `/najmi/library` — 4-category filter, cover cards, download + open-in-tab | ✅ DONE (built alongside Phase 2) |
+| 4 | Cross-archive banners + "العلماء" header link | ✅ DONE |
+| 5 | Admin: publications CRUD ✅, realm switcher + scoped forms ✅, per-realm homepage config ✅ | ✅ DONE |
+| 6 | SEO: sitemap, OG/JSON-LD, cache TTLs, report script | ⏳ TODO |
+
+### Phase 2/3 — Najmi realm (DONE)
+- `middleware/realm.js` — sets `res.locals.realm` ('najmi' for `/najmi/*`, else 'hasan'); registered in server.js before routes.
+- `utils/najmiSheikh.js` — resolves Sheikh Ahmed by `nameArabic /النجمي/`, 1h cache.
+- `routes/najmi/index.js` — `/najmi` (home), `/najmi/series`, `/najmi/series/:shortId/...` (reuses `public/series-detail` with realm=najmi + cross-realm 404 guard), `/najmi/library` (+`/library/:shortId/download` tracking redirect), `/najmi/bio`. Registered `app.use('/najmi', …)`.
+- `public/css/najmi.css` — teal overrides scoped to `[data-realm="najmi"]` (remaps `--accent-gold/--primary-brown/--sage/--primary-dark`, plus hardcoded header/bottom-nav/diamond-bg). Linked in layout.ejs.
+- `views/layout.ejs` — `<body data-realm="…">` + najmi.css link.
+- `views/partials/header.ejs` + `bottomNav.ejs` — realm-aware nav (Najmi: الرئيسية·السلاسل·بحث·المكتبة·السيرة; brand badge "رحمه الله"; return link to `/`).
+- `views/najmi/{index,series,library,bio}.ejs` — teal pages. Bio text embedded from `docs/najmi-bio.md` (source-accurate). Series has client-side category filters.
+- **Library view** (`views/najmi/library.ejs`): row-list layout (not cover cards) — better for 116 items & mobile. Category chips + live title search (mirrors the Hasan articles-filter pattern), "shown/total" counter, per-row open (fileUrl) + download (tracking route). Download button collapses to icon-only under 560px.
+- **Reuse note:** `/najmi/series/:id` renders the existing `public/series-detail.ejs`; teal comes from the `[data-realm]` CSS + `.series-hero` override. Inline audio playback keeps users in-realm. Child-series links still point to `/series/*` (minor, acceptable).
+- Verified: all modules require, all views compile + render (AR & EN), server boots with routes registered.
+
+### Done so far (Phase 0 + 1 scaffolding)
+- ✅ `models/Publication.js` — PDF doc schema (title, category, fileUrl, pageCount, sheikhId, shortId, slugs). Registered in `models/index.js`.
+- ✅ `docs/najmi-bio.md` — accurate AR/EN biography from source PDFs.
+- ✅ `scripts/upload-pdfs-to-r2.js` — bulk PDF → R2 (prefix `pdf/`, inline disposition), outputs `pdf-upload-manifest.json`.
+- ✅ `scripts/import-publications.js` — joins `pdf_catalog.csv` + manifest → `Publication` docs (idempotent by sourceUrl/fileUrl).
+- ✅ `scripts/import-najmi-lectures.js` — imports the 1,545 lectures from CSV, **preserves real titles**,
+  auto-creates 54 series with heuristic category mapping, tags `najmi`. Reuses existing upload/verify/publish steps.
+
+### Najmi Import Workflow (what changed vs. generic pipeline)
+The generic `import-excel-generic.js` builds titles as "SeriesName - Sequence" and expects different column
+names, so **the import step uses `import-najmi-lectures.js` instead**. Upload/verify/publish steps are reused unchanged:
+```bash
+# 1. Import lectures (Cloud VM) — dry-run first
+node scripts/import-najmi-lectures.js lectures_metadata_final.csv --batch najmi --dry-run
+node scripts/import-najmi-lectures.js lectures_metadata_final.csv --batch najmi
+# 2. Upload audio (Local PC) — existing R2 script, same bucket
+node scripts/upload-to-r2-local.js /path/to/najmi-audio --skip-existing
+# 3. Link URLs (Cloud VM)
+node scripts/upload-to-oci-verify.js --manifest upload-manifest.json
+# 4. Publish + fix counts
+node scripts/publish-batch.js --batch najmi
+node scripts/sync-lecture-counts.js
+
+# PDFs (source folder may contain sub-folders; uploader recurses, flat R2 keys):
+node scripts/upload-pdfs-to-r2.js /path/to/najmi-pdfs --skip-existing        # Local PC
+node scripts/import-publications.js --catalog pdf_catalog_updated.csv --manifest pdf-upload-manifest.json  # Cloud VM (reads page_count)
+```
+
+### Category heuristic (audio series → enum)
+`import-najmi-lectures.js` maps 54 series → {Aqeedah 286, Fiqh 678, Hadith 271, Tafsir 190, Other 113, Seerah 7 lectures}.
+Admin can adjust any series category afterward. `فتاوى المرأة المسلمة`, `فتاوى منوعة`, translated series → Other.
+
+### Phase 4 — Cross-archive banners + "العلماء" link (DONE)
+- **Hasan → Najmi invite banner**: teal card under Hasan's homepage hero (`views/public/index.ejs`),
+  links to `/najmi`. Counts are live via `fetchNajmiArchiveCounts()` (cached `homepage:najmiArchive`),
+  passed as `najmiArchive`; banner hidden if the Najmi realm can't be resolved.
+- **Najmi → Hasan return banner**: already on `/najmi` home (gold).
+- **"العلماء" header link** (Hasan desktop + mobile nav) → `/najmi`, subtle teal accent. Najmi realm
+  header already shows a return link to `/`.
+- Import scripts' `findOrCreateSheikh` now fall back to `nameArabic: /النجمي/` so manually
+  title-prefixing the stored name won't cause a duplicate sheikh on any future re-import.
+
+### Phase 5 plan (approved) — Admin & realm management
+Owner chose (all recommended): **(A)** Najmi homepage tailored to an archive (Hero + realm-scoped
+Featured Series sections + Library highlight + Series tab; NO weekly schedule, NO empty Standalone/Khutbas
+tabs — Najmi has no seriesId:null lectures and no khutba-tagged series); **(B)** realm switcher + realm-scoped
+admin forms + Najmi dashboard cards; **(C)** publications admin CRUD (built).
+
+**5A — Publications CRUD (DONE):** `routes/admin/index.js` (appended before module.exports) — GET
+`/admin/publications` (search/category/status/sort + pagination + stats), GET/POST `/publications/new`
+(PDF → R2 via `pdfUpload` multer + `uploadToR2(..., {disposition:'inline'})`), GET/POST `/publications/:id/edit`
+(metadata only), POST `/publications/:id/toggle-published` (AJAX), POST `/publications/:id/delete`
+(R2 cleanup via `r2KeyFromUrl` + `deleteFromR2`). Views `views/admin/publications-list.ejs` +
+`publication-form.ejs`. Nav link "مكتبة النجمي" in admin header. Dashboard: publications card +
+per-realm breakdown cards (Hasan/Najmi lectures·series·books). `utils/r2Storage.uploadToR2` now takes
+`options.disposition` ('inline'|'attachment').
+**5B — Realm switcher + scoped forms (DONE):** admin realm context middleware sets
+`res.locals.adminRealm` (session, Hasan|Najmi) + `najmiSheikhId` + `currentPath`; GET `/admin/set-realm`
+switches. Realm toggle in `views/admin/partials/header.ejs` (gold/teal). `series-form.ejs` groups the
+sheikh dropdown into Najmi/Hasan optgroups + defaults to the active realm; `upload.ejs` labels + auto-selects
+the Najmi sheikh in that realm.
+
+**5C — Per-realm Najmi homepage config (DONE):**
+- `SiteSettings.homepage.najmi` = `{showFeaturedSeries, featuredSeriesCount, showLibrary, showSections, blockOrder}`.
+- `models/Section.js` gains `realm` ('hasan'|'najmi', default 'hasan'). Hasan `fetchSectionsData` now matches
+  `realm: {$ne:'najmi'}`; admin `/sections` list + create + section-series assignment are realm-scoped
+  (Najmi sections only offer Najmi series).
+- `routes/najmi/index.js` home reads the config, loads realm sections (`loadNajmiSections`), and passes
+  `config` + `najmiSections`; `views/najmi/index.ejs` renders Hero (fixed) then the configurable blocks
+  (sections / featuredSeries / library) in `blockOrder`, each guarded by its toggle.
+- `/admin/homepage-config` is realm-aware (header switcher drives it): Najmi shows its own toggles + layout
+  preview and saves ONLY `homepage.najmi` (Hasan fields preserved via `markModified`), and vice-versa.
+- **NOTE (owner action):** to use curated Najmi sections, switch the admin to the Najmi realm, create a
+  Section (it's saved with `realm:'najmi'`), and assign Najmi series to it. Otherwise the Featured Series
+  block covers the home automatically.
+
+### Realm isolation on the Hasan (default) side — DONE
+The default site historically queried "all" content, so once Najmi was imported it leaked into
+Hasan's homepage tabs, `/series`, `/browse`, `/sheikhs`, and the sitemap. Fixed by excluding the
+Najmi realm from every default-side query:
+- `utils/realmFilter.js` — `excludeNajmiBySheikh()` → `{ sheikhId: { $ne: najmiId } }`,
+  `excludeNajmiSheikhId()` → `{ _id: { $ne: najmiId } }` (empty if Najmi not resolved).
+- Applied in `routes/api/homepage.js` (series/standalone/khutbas/stats), `routes/index.js`
+  (`fetchHomepageData`, homepage lecture count, `/browse`, `/series`, `/sheikhs`, sitemap).
+- Najmi routes already filter to `sheikhId = najmi`, so the isolation is now two-way.
+
+### Scholar title prefixes — DONE
+Title storage is intentionally mixed and must not be normalized (Hasan's slug/links depend on his
+stored name): Hasan embeds "الشيخ" in `nameArabic`; Ahmed stores a bare name + a `titlePrefix`.
+- `models/Sheikh.js` — added `titlePrefix` + `titlePrefixEnglish` (default '').
+- `utils/sheikhName.js` — `formatSheikhName(sheikh, locale)` prepends `titlePrefix` ONLY when the
+  name doesn't already start with a title word (regex guard) → no double-titling. Exposed to all
+  views as `app.locals.sheikhName` (server.js).
+- Ahmed → `titlePrefix = "الشيخ العلامة"` (display "الشيخ العلامة أحمد بن يحيى النجمي").
+  Set via `scripts/set-najmi-title.js --apply` (owner runs it); import scripts also set it on create.
+- Used in the reused `public/series-detail.ejs` sheikh line; Najmi hero/header/bio hardcode the same.
+
+### Constraints (unchanged)
+Production DB — no destructive ops. RTL-first (`html[dir="ltr"]` for LTR). Minify JS after edits.
+Realm pages must never query across realms (Najmi routes filter `sheikhId = najmi`).
+
+---
+
 ## Recent Work Completed
 
 ### 1. Fixed Featured Section Links (Commit: dce89f5)

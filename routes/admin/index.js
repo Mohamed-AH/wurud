@@ -8,6 +8,30 @@ const cache = require('../../utils/cache');
 // Apply admin i18n middleware to all admin routes
 router.use(adminI18nMiddleware);
 
+// Admin realm context: which realm the admin is currently managing (Hasan | Najmi).
+// Exposes res.locals.adminRealm + res.locals.najmiSheikhId to every admin view so
+// sheikh dropdowns can default/group by realm.
+router.use(async (req, res, next) => {
+  res.locals.adminRealm = (req.session && req.session.adminRealm === 'najmi') ? 'najmi' : 'hasan';
+  res.locals.currentPath = (req.baseUrl || '') + (req.path || '');
+  try {
+    const n = await require('../../utils/najmiSheikh').getNajmiSheikh();
+    res.locals.najmiSheikhId = n ? String(n._id) : null;
+  } catch (_) {
+    res.locals.najmiSheikhId = null;
+  }
+  next();
+});
+
+// @route   GET /admin/set-realm?realm=najmi&return=/admin/...
+// @desc    Switch the admin's active realm (persisted in session)
+router.get('/set-realm', isAdmin, (req, res) => {
+  const realm = req.query.realm === 'najmi' ? 'najmi' : 'hasan';
+  if (req.session) req.session.adminRealm = realm;
+  const ret = (req.query.return && req.query.return.startsWith('/admin')) ? req.query.return : '/admin/dashboard';
+  res.redirect(ret);
+});
+
 // Helper function to invalidate homepage cache after admin changes
 function invalidateHomepageCache() {
   cache.invalidatePattern('homepage:*');
@@ -45,7 +69,8 @@ router.get('/login', (req, res) => {
 // @access  Private (Admin only)
 router.get('/dashboard', isAdmin, async (req, res) => {
   try {
-    const { Lecture, Sheikh, Series, Article } = require('../../models');
+    const { Lecture, Sheikh, Series, Article, Publication } = require('../../models');
+    const { getNajmiSheikh } = require('../../utils/najmiSheikh');
 
     // Get statistics
     const stats = {
@@ -54,6 +79,7 @@ router.get('/dashboard', isAdmin, async (req, res) => {
       totalSheikhs: await Sheikh.countDocuments(),
       totalSeries: await Series.countDocuments(),
       totalArticles: await Article.countDocuments(),
+      totalPublications: await Publication.countDocuments(),
       totalPlays: await Lecture.aggregate([
         { $group: { _id: null, total: { $sum: '$playCount' } } }
       ]).then(result => result[0]?.total || 0),
@@ -61,6 +87,22 @@ router.get('/dashboard', isAdmin, async (req, res) => {
         { $group: { _id: null, total: { $sum: '$downloadCount' } } }
       ]).then(result => result[0]?.total || 0)
     };
+
+    // Per-realm breakdown (Najmi vs default Hasan)
+    const najmi = await getNajmiSheikh();
+    let realmStats = null;
+    if (najmi) {
+      const [nLect, nSeries, nPubs] = await Promise.all([
+        Lecture.countDocuments({ sheikhId: najmi._id }),
+        Series.countDocuments({ sheikhId: najmi._id }),
+        Publication.countDocuments({ sheikhId: najmi._id })
+      ]);
+      realmStats = {
+        najmi: { lectures: nLect, series: nSeries, publications: nPubs },
+        hasan: { lectures: stats.totalLectures - nLect, series: stats.totalSeries - nSeries }
+      };
+    }
+    stats.realmStats = realmStats;
 
     // Get recent lectures
     const recentLectures = await Lecture.find()
@@ -160,13 +202,22 @@ router.get('/manage', isAdmin, async (req, res) => {
   try {
     const { Lecture, Series } = require('../../models');
 
-    const lectures = await Lecture.find()
+    // Scope to the active realm: Najmi → only the Najmi sheikh; Hasan → everyone else
+    const najmiSheikh = await require('../../utils/najmiSheikh').getNajmiSheikh();
+    let realmFilter = {};
+    if (najmiSheikh) {
+      realmFilter = res.locals.adminRealm === 'najmi'
+        ? { sheikhId: najmiSheikh._id }
+        : { sheikhId: { $ne: najmiSheikh._id } };
+    }
+
+    const lectures = await Lecture.find(realmFilter)
       .sort({ createdAt: -1 })
       .populate('sheikhId', 'nameArabic nameEnglish')
       .populate('seriesId', 'titleArabic titleEnglish')
       .lean();
 
-    const series = await Series.find()
+    const series = await Series.find(realmFilter)
       .sort({ createdAt: -1 })
       .populate('sheikhId', 'nameArabic nameEnglish')
       .lean();
@@ -175,7 +226,8 @@ router.get('/manage', isAdmin, async (req, res) => {
       title: 'Manage Lectures',
       user: req.user,
       lectures,
-      series
+      series,
+      adminRealm: res.locals.adminRealm
     });
   } catch (error) {
     console.error('Manage error:', error);
@@ -2211,8 +2263,11 @@ router.get('/sections', isAdmin, async (req, res) => {
   try {
     const { Section, Series } = require('../../models');
 
-    // Get all sections
-    const sections = await Section.find().sort({ displayOrder: 1 }).lean();
+    // Scope to the active realm (Najmi sections vs everything else)
+    const realmMatch = res.locals.adminRealm === 'najmi' ? { realm: 'najmi' } : { realm: { $ne: 'najmi' } };
+
+    // Get sections for this realm
+    const sections = await Section.find(realmMatch).sort({ displayOrder: 1 }).lean();
     const sectionIds = sections.map(s => s._id);
 
     // Bulk count series per section in ONE aggregation
@@ -2275,6 +2330,7 @@ router.post('/sections/new', isAdmin, async (req, res) => {
       icon: icon || '📚',
       maxVisible: parseInt(maxVisible) || 5,
       collapsedByDefault: collapsedByDefault === 'on',
+      realm: res.locals.adminRealm === 'najmi' ? 'najmi' : 'hasan',
       displayOrder
     });
 
@@ -2415,8 +2471,16 @@ router.get('/sections/:id/series', isAdmin, async (req, res) => {
       .sort({ sectionOrder: 1 })
       .lean();
 
-    // Get unassigned series for the "Add" dropdown
-    const unassignedSeries = await Series.find({ sectionId: null })
+    // Get unassigned series for the "Add" dropdown — scoped to the section's realm
+    // so a Najmi section only offers Najmi series (and vice versa).
+    const najmiSheikh = await require('../../utils/najmiSheikh').getNajmiSheikh();
+    const unassignedQuery = { sectionId: null };
+    if (najmiSheikh) {
+      unassignedQuery.sheikhId = section.realm === 'najmi'
+        ? najmiSheikh._id
+        : { $ne: najmiSheikh._id };
+    }
+    const unassignedSeries = await Series.find(unassignedQuery)
       .populate('sheikhId', 'nameArabic nameEnglish')
       .sort({ titleArabic: 1 })
       .lean();
@@ -2575,12 +2639,20 @@ router.get('/homepage-config', isAdmin, async (req, res) => {
     const { SiteSettings } = require('../../models');
 
     const settings = await SiteSettings.getSettings();
+    const najmiCfg = (settings.homepage && settings.homepage.najmi) || {};
 
     res.render('admin/homepage-config', {
       title: 'Homepage Configuration',
       user: req.user,
       settings: settings.homepage || {},
       seriesStatsSettings: settings.seriesStats || { minPlaysToShow: 100, showDuration: false },
+      najmiConfig: {
+        showFeaturedSeries: najmiCfg.showFeaturedSeries !== false,
+        featuredSeriesCount: najmiCfg.featuredSeriesCount || 6,
+        showLibrary: najmiCfg.showLibrary !== false,
+        showSections: najmiCfg.showSections !== false,
+        blockOrder: (najmiCfg.blockOrder && najmiCfg.blockOrder.length) ? najmiCfg.blockOrder : ['sections', 'featuredSeries', 'library']
+      },
       success: req.query.success,
       error: req.query.error
     });
@@ -2598,20 +2670,33 @@ router.post('/homepage-config', isAdmin, async (req, res) => {
     const { SiteSettings } = require('../../models');
 
     const settings = await SiteSettings.getSettings();
+    if (!settings.homepage) settings.homepage = {};
+    const realm = (req.session && req.session.adminRealm === 'najmi') ? 'najmi' : 'hasan';
 
-    settings.homepage = {
-      showSchedule: req.body.showSchedule === 'on',
-      scheduleLayout: req.body.scheduleLayout || 'cards',
-      showSeriesTab: req.body.showSeriesTab === 'on',
-      showStandaloneTab: req.body.showStandaloneTab === 'on',
-      showKhutbasTab: req.body.showKhutbasTab === 'on'
-    };
-
-    // Series detail page stats settings
-    settings.seriesStats = {
-      minPlaysToShow: parseInt(req.body.minPlaysToShow, 10) || 100,
-      showDuration: req.body.showDuration === 'on'
-    };
+    if (realm === 'najmi') {
+      // Update ONLY the Najmi sub-config; preserve all Hasan fields
+      if (!settings.homepage.najmi) settings.homepage.najmi = {};
+      settings.homepage.najmi.showFeaturedSeries = req.body.showFeaturedSeries === 'on';
+      settings.homepage.najmi.featuredSeriesCount = Math.min(12, Math.max(2, parseInt(req.body.featuredSeriesCount, 10) || 6));
+      settings.homepage.najmi.showLibrary = req.body.showLibrary === 'on';
+      settings.homepage.najmi.showSections = req.body.showSections === 'on';
+      const order = (req.body.blockOrder || '').split(',').map(s => s.trim()).filter(Boolean);
+      const valid = ['sections', 'featuredSeries', 'library'];
+      settings.homepage.najmi.blockOrder = order.filter(b => valid.includes(b)).length ? order.filter(b => valid.includes(b)) : valid;
+      settings.markModified('homepage');
+    } else {
+      // Hasan realm — preserve settings.homepage.najmi
+      settings.homepage.showSchedule = req.body.showSchedule === 'on';
+      settings.homepage.scheduleLayout = req.body.scheduleLayout || 'cards';
+      settings.homepage.showSeriesTab = req.body.showSeriesTab === 'on';
+      settings.homepage.showStandaloneTab = req.body.showStandaloneTab === 'on';
+      settings.homepage.showKhutbasTab = req.body.showKhutbasTab === 'on';
+      settings.seriesStats = {
+        minPlaysToShow: parseInt(req.body.minPlaysToShow, 10) || 100,
+        showDuration: req.body.showDuration === 'on'
+      };
+      settings.markModified('homepage');
+    }
 
     await settings.save();
     invalidateHomepageCache();
@@ -3344,6 +3429,219 @@ router.post('/article-editors/toggle-login', isSuperAdmin, async (req, res) => {
   } catch (error) {
     console.error('Toggle login link error:', error);
     res.status(500).json({ success: false, message: 'Error toggling login link' });
+  }
+});
+
+// ===========================================================================
+// PUBLICATIONS (Sheikh Najmi PDF library) — admin CRUD
+// ===========================================================================
+const multer = require('multer');
+const pdfUpload = multer({
+  storage: multer.diskStorage({
+    destination: (req, file, cb) => cb(null, process.env.UPLOAD_DIR || './uploads'),
+    filename: (req, file, cb) => {
+      const ext = require('path').extname(file.originalname) || '.pdf';
+      cb(null, `pub-${Date.now()}-${Math.round(Math.random() * 1e9)}${ext}`);
+    }
+  }),
+  fileFilter: (req, file, cb) => {
+    const ok = file.mimetype === 'application/pdf' || require('path').extname(file.originalname).toLowerCase() === '.pdf';
+    cb(ok ? null : new Error('Only PDF files are allowed'), ok);
+  },
+  limits: { fileSize: 100 * 1024 * 1024, files: 1 } // 100MB
+});
+
+const PUB_CATEGORIES = ['الكتب', 'التعليقات', 'الرسائل', 'من السيرة الذاتية'];
+
+// Derive the R2 object key from a stored public fileUrl (for deletion)
+function r2KeyFromUrl(fileUrl) {
+  const base = process.env.R2_PUBLIC_URL;
+  if (!base || !fileUrl || !fileUrl.startsWith(base)) return null;
+  const rel = fileUrl.slice(base.replace(/\/$/, '').length + 1); // strip "base/"
+  try { return decodeURIComponent(rel); } catch (_) { return rel; }
+}
+
+// @route   GET /admin/publications  — list with search / category / status filters
+router.get('/publications', isAdmin, async (req, res) => {
+  try {
+    const { Publication } = require('../../models');
+    const { search, category, status, sort, page = 1 } = req.query;
+    const limit = 20;
+    const skip = (parseInt(page) - 1) * limit;
+
+    const query = {};
+    if (search) query.$or = [
+      { title: { $regex: search, $options: 'i' } },
+      { titleEnglish: { $regex: search, $options: 'i' } }
+    ];
+    if (category && category !== 'all') query.category = category;
+    if (status === 'published') query.isPublished = true;
+    else if (status === 'draft') query.isPublished = false;
+
+    let sortOption = { createdAt: -1 };
+    if (sort === 'title') sortOption = { title: 1 };
+    else if (sort === 'pages') sortOption = { pageCount: -1 };
+    else if (sort === 'downloads') sortOption = { downloadCount: -1 };
+
+    const [publications, totalCount] = await Promise.all([
+      Publication.find(query).sort(sortOption).skip(skip).limit(limit).lean(),
+      Publication.countDocuments(query)
+    ]);
+
+    const byCat = {};
+    for (const c of PUB_CATEGORIES) byCat[c] = await Publication.countDocuments({ category: c });
+
+    res.render('admin/publications-list', {
+      title: 'Publications', user: req.user, activePage: 'publications',
+      publications,
+      categories: PUB_CATEGORIES,
+      stats: {
+        total: await Publication.countDocuments(),
+        published: await Publication.countDocuments({ isPublished: true }),
+        draft: await Publication.countDocuments({ isPublished: false }),
+        byCat
+      },
+      filters: { search: search || '', category: category || 'all', status: status || 'all', sort: sort || 'newest' },
+      pagination: {
+        currentPage: parseInt(page), totalPages: Math.ceil(totalCount / limit), totalCount,
+        hasNext: parseInt(page) * limit < totalCount, hasPrev: parseInt(page) > 1
+      },
+      success: req.query.success, error: req.query.error
+    });
+  } catch (error) {
+    console.error('Publications list error:', error);
+    res.status(500).send('Error loading publications');
+  }
+});
+
+// @route   GET /admin/publications/new
+router.get('/publications/new', isAdmin, (req, res) => {
+  res.render('admin/publication-form', {
+    title: 'New Publication', user: req.user, activePage: 'publications',
+    isEdit: false, publication: {}, categories: PUB_CATEGORIES, error: req.query.error
+  });
+});
+
+// @route   POST /admin/publications/new  — upload PDF to R2 + create doc
+router.post('/publications/new', isAdmin, (req, res) => {
+  pdfUpload.single('pdfFile')(req, res, async (err) => {
+    const fs = require('fs');
+    try {
+      if (err) return res.redirect('/admin/publications/new?error=' + encodeURIComponent(err.message));
+      const { Publication } = require('../../models');
+      const { getNajmiSheikh } = require('../../utils/najmiSheikh');
+      const { uploadToR2 } = require('../../utils/r2Storage');
+      const { title, titleEnglish, category, pageCount, volumeCount, description } = req.body;
+
+      const sheikh = await getNajmiSheikh();
+      if (!sheikh) return res.redirect('/admin/publications/new?error=' + encodeURIComponent('Najmi sheikh not found'));
+      if (!title || !req.file) return res.redirect('/admin/publications/new?error=' + encodeURIComponent('Title and PDF file are required'));
+
+      // Upload to R2 under pdf/ with an inline disposition (open-in-tab friendly)
+      const objectName = 'pdf/' + req.file.originalname.replace(/\s+/g, '-');
+      const result = await uploadToR2(req.file.path, objectName, { contentType: 'application/pdf', disposition: 'inline' });
+      fs.unlink(req.file.path, () => {});
+
+      await new Publication({
+        sheikhId: sheikh._id,
+        title: title.trim(),
+        titleEnglish: (titleEnglish || '').trim(),
+        category: PUB_CATEGORIES.includes(category) ? category : 'الكتب',
+        fileUrl: result.url,
+        fileName: req.file.originalname,
+        fileSize: result.size || 0,
+        pageCount: parseInt(pageCount) || 0,
+        volumeCount: parseInt(volumeCount) || 1,
+        description: (description || '').trim(),
+        isPublished: req.body.isPublished === 'on'
+      }).save();
+
+      invalidateHomepageCache();
+      res.redirect('/admin/publications?success=created');
+    } catch (e) {
+      console.error('Create publication error:', e);
+      if (req.file) fs.unlink(req.file.path, () => {});
+      res.redirect('/admin/publications/new?error=' + encodeURIComponent('Create failed'));
+    }
+  });
+});
+
+// @route   GET /admin/publications/:id/edit
+router.get('/publications/:id/edit', isAdmin, async (req, res) => {
+  try {
+    const { Publication } = require('../../models');
+    const publication = await Publication.findById(req.params.id).lean();
+    if (!publication) return res.status(404).send('Publication not found');
+    res.render('admin/publication-form', {
+      title: 'Edit Publication', user: req.user, activePage: 'publications',
+      isEdit: true, publication, categories: PUB_CATEGORIES, error: req.query.error
+    });
+  } catch (error) {
+    console.error('Edit publication load error:', error);
+    res.status(500).send('Error loading publication');
+  }
+});
+
+// @route   POST /admin/publications/:id/edit  — metadata only (not the file)
+router.post('/publications/:id/edit', isAdmin, async (req, res) => {
+  try {
+    const { Publication } = require('../../models');
+    const pub = await Publication.findById(req.params.id);
+    if (!pub) return res.status(404).send('Publication not found');
+    const { title, titleEnglish, category, pageCount, volumeCount, description } = req.body;
+    if (title) pub.title = title.trim();
+    pub.titleEnglish = (titleEnglish || '').trim();
+    if (PUB_CATEGORIES.includes(category)) pub.category = category;
+    pub.pageCount = parseInt(pageCount) || 0;
+    pub.volumeCount = parseInt(volumeCount) || 1;
+    pub.description = (description || '').trim();
+    pub.isPublished = req.body.isPublished === 'on';
+    await pub.save();
+    invalidateHomepageCache();
+    res.redirect('/admin/publications?success=updated');
+  } catch (error) {
+    console.error('Update publication error:', error);
+    res.redirect('/admin/publications/' + req.params.id + '/edit?error=' + encodeURIComponent('Update failed'));
+  }
+});
+
+// @route   POST /admin/publications/:id/toggle-published  (AJAX)
+router.post('/publications/:id/toggle-published', isAdmin, async (req, res) => {
+  try {
+    const { Publication } = require('../../models');
+    const pub = await Publication.findById(req.params.id);
+    if (!pub) return res.status(404).json({ success: false });
+    pub.isPublished = !pub.isPublished;
+    await pub.save();
+    invalidateHomepageCache();
+    res.json({ success: true, isPublished: pub.isPublished });
+  } catch (error) {
+    console.error('Toggle publication error:', error);
+    res.status(500).json({ success: false });
+  }
+});
+
+// @route   POST /admin/publications/:id/delete  — remove R2 object + doc
+router.post('/publications/:id/delete', isAdmin, async (req, res) => {
+  try {
+    const { Publication } = require('../../models');
+    const { deleteFromR2, isR2Url } = require('../../utils/r2Storage');
+    const pub = await Publication.findById(req.params.id);
+    if (!pub) return res.status(404).send('Publication not found');
+
+    if (isR2Url(pub.fileUrl)) {
+      const key = r2KeyFromUrl(pub.fileUrl);
+      if (key) {
+        try { await deleteFromR2(key); }
+        catch (e) { console.error('R2 delete failed (continuing):', e.message); }
+      }
+    }
+    await Publication.deleteOne({ _id: pub._id });
+    invalidateHomepageCache();
+    res.redirect('/admin/publications?success=deleted');
+  } catch (error) {
+    console.error('Delete publication error:', error);
+    res.redirect('/admin/publications?error=' + encodeURIComponent('Delete failed'));
   }
 });
 

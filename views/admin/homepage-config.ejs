@@ -223,6 +223,23 @@
       </div>
     <% } %>
 
+    <% var _realm = (typeof adminRealm !== 'undefined') ? adminRealm : 'hasan'; %>
+
+    <div style="padding:10px 16px;border-radius:8px;margin-bottom:16px;font-weight:600;font-size:13px;<%= _realm === 'najmi' ? 'background:#14231D;color:#A8CFC2;' : 'background:#2C1508;color:#DEC99A;' %>">
+      <%= _realm === 'najmi'
+        ? (adminLocale === 'ar' ? '🟢 تُحرِّر إعدادات صفحة الشيخ أحمد النجمي (/najmi). بدِّل العالِم من الأعلى.' : '🟢 Editing the Sheikh Ahmad al-Najmi homepage (/najmi). Switch scholar from the top bar.')
+        : (adminLocale === 'ar' ? '🟡 تُحرِّر إعدادات صفحة الشيخ حسن الرئيسية. بدِّل العالِم من الأعلى.' : '🟡 Editing the Sheikh Hasan homepage. Switch scholar from the top bar.') %>
+    </div>
+
+    <% if (_realm === 'najmi') { %>
+    <div class="layout-preview">
+      <h4><%= adminLocale === 'ar' ? 'ترتيب صفحة الشيخ النجمي' : 'Najmi Homepage Layout Order' %></h4>
+      <div class="layout-item active">1. <%= adminLocale === 'ar' ? 'القسم الرئيسي (Hero) + شريط العودة' : 'Hero + return banner' %></div>
+      <div class="layout-item <%= najmiConfig.showSections ? 'active' : 'inactive' %>">2. <%= adminLocale === 'ar' ? 'أقسام مُنسَّقة (Featured...)' : 'Curated sections (Featured...)' %></div>
+      <div class="layout-item <%= najmiConfig.showFeaturedSeries ? 'active' : 'inactive' %>">3. <%= adminLocale === 'ar' ? 'السلاسل المميزة' : 'Featured Series' %></div>
+      <div class="layout-item <%= najmiConfig.showLibrary ? 'active' : 'inactive' %>">4. <%= adminLocale === 'ar' ? 'من المكتبة (PDF)' : 'From the Library (PDF)' %></div>
+    </div>
+    <% } else { %>
     <div class="layout-preview">
       <h4><%= adminLocale === 'ar' ? 'ترتيب الصفحة الرئيسية' : 'Homepage Layout Order' %></h4>
       <div class="layout-item active">1. <%= adminLocale === 'ar' ? 'القسم الرئيسي (Hero)' : 'Hero Section' %></div>
@@ -232,10 +249,70 @@
       <div class="layout-item <%= settings.showStandaloneTab !== false ? 'active' : 'inactive' %>" id="preview-standalone">4b. <%= adminLocale === 'ar' ? 'تبويب المحاضرات المنفردة' : 'Standalone Tab' %></div>
       <div class="layout-item <%= settings.showKhutbasTab !== false ? 'active' : 'inactive' %>" id="preview-khutbas">4c. <%= adminLocale === 'ar' ? 'تبويب الخطب' : 'Khutbas Tab' %></div>
     </div>
+    <% } %>
 
     <div class="config-card">
       <form method="POST" action="/admin/homepage-config">
 
+        <% if (_realm === 'najmi') { %>
+        <!-- ===== Najmi realm config ===== -->
+        <div class="config-section">
+          <h3><%= adminLocale === 'ar' ? 'أقسام صفحة النجمي' : 'Najmi Page Blocks' %></h3>
+
+          <div class="toggle-row">
+            <div class="toggle-info">
+              <div class="toggle-title"><%= adminLocale === 'ar' ? 'الأقسام المُنسَّقة' : 'Curated Sections' %></div>
+              <div class="toggle-desc"><%= adminLocale === 'ar' ? 'أقسام السلاسل التي تنشئها وتُسنِد إليها سلاسل النجمي' : 'Realm sections you create and assign Najmi series to' %></div>
+            </div>
+            <label class="toggle-switch">
+              <input type="checkbox" name="showSections" <%= najmiConfig.showSections ? 'checked' : '' %>>
+              <span class="toggle-slider"></span>
+            </label>
+          </div>
+
+          <div class="toggle-row">
+            <div class="toggle-info">
+              <div class="toggle-title"><%= adminLocale === 'ar' ? 'السلاسل المميزة' : 'Featured Series' %></div>
+              <div class="toggle-desc"><%= adminLocale === 'ar' ? 'أعلى السلاسل حسب عدد الدروس' : 'Top series by lecture count' %></div>
+            </div>
+            <label class="toggle-switch">
+              <input type="checkbox" name="showFeaturedSeries" <%= najmiConfig.showFeaturedSeries ? 'checked' : '' %>>
+              <span class="toggle-slider"></span>
+            </label>
+          </div>
+
+          <div class="toggle-row">
+            <div class="toggle-info">
+              <div class="toggle-title"><%= adminLocale === 'ar' ? 'عدد السلاسل المميزة' : 'Featured Series Count' %></div>
+              <div class="toggle-desc"><%= adminLocale === 'ar' ? 'كم سلسلة تُعرض (2–12)' : 'How many to show (2–12)' %></div>
+            </div>
+            <input type="number" name="featuredSeriesCount" value="<%= najmiConfig.featuredSeriesCount %>" min="2" max="12" style="width:80px;padding:6px 10px;border:1px solid #ddd;border-radius:4px;font-size:14px;">
+          </div>
+
+          <div class="toggle-row">
+            <div class="toggle-info">
+              <div class="toggle-title"><%= adminLocale === 'ar' ? 'من المكتبة (PDF)' : 'From the Library (PDF)' %></div>
+              <div class="toggle-desc"><%= adminLocale === 'ar' ? 'عرض بطاقات من مكتبة الكتب' : 'Show cards from the PDF library' %></div>
+            </div>
+            <label class="toggle-switch">
+              <input type="checkbox" name="showLibrary" <%= najmiConfig.showLibrary ? 'checked' : '' %>>
+              <span class="toggle-slider"></span>
+            </label>
+          </div>
+
+          <div class="toggle-row">
+            <div class="toggle-info">
+              <div class="toggle-title"><%= adminLocale === 'ar' ? 'ترتيب الأقسام' : 'Block Order' %></div>
+              <div class="toggle-desc"><%= adminLocale === 'ar' ? 'رتّب: sections، featuredSeries، library (مفصولة بفاصلة)' : 'Order of: sections, featuredSeries, library (comma-separated)' %></div>
+            </div>
+            <input type="text" name="blockOrder" value="<%= najmiConfig.blockOrder.join(', ') %>" style="width:240px;padding:6px 10px;border:1px solid #ddd;border-radius:4px;font-size:13px;direction:ltr;">
+          </div>
+        </div>
+
+        <button type="submit" class="btn-save"><%= adminLocale === 'ar' ? 'حفظ إعدادات النجمي' : 'Save Najmi Settings' %></button>
+
+        <% } else { %>
+        <!-- ===== Hasan realm config ===== -->
         <div class="config-section">
           <h3><%= adminLocale === 'ar' ? 'أقسام الصفحة' : 'Page Sections' %></h3>
 
@@ -323,6 +400,7 @@
         </div>
 
         <button type="submit" class="btn-save"><%= adminLocale === 'ar' ? 'حفظ الإعدادات' : 'Save Settings' %></button>
+        <% } %>
       </form>
     </div>
   </main>

@@ -1,0 +1,99 @@
+/**
+ * Najmi Realm — Teal / Emerald theme overrides
+ * Scoped entirely to [data-realm="najmi"] so the default gold site is untouched.
+ *
+ * Palette (approved): #14231D forest · #2E6E5B primary · #3D8570 mid
+ *                     #A8CFC2 light · #D4E8E0 pale
+ */
+
+/* 1. Re-map the accent design tokens to teal.
+   Components that use var(--accent-gold) / var(--primary-brown) / var(--sage)
+   (buttons, badges, links, page hero gradients) turn teal automatically. */
+[data-realm="najmi"] {
+  --primary-dark: #14231D;
+  --primary-brown: #2E6E5B;
+  --accent-gold: #2E6E5B;
+  --accent-amber: #3D8570;
+  --sage: #3D8570;
+  --shadow-warm: rgba(20, 35, 29, 0.18);
+
+  --teal-forest: #14231D;
+  --teal-primary: #2E6E5B;
+  --teal-mid: #3D8570;
+  --teal-light: #A8CFC2;
+  --teal-pale: #D4E8E0;
+  --teal-cream: #EEF5F1;
+}
+
+/* 2. Header — critical CSS hardcodes the brown gradient, so override explicitly */
+[data-realm="najmi"] .header {
+  background: linear-gradient(135deg, #14231D 0%, #2E6E5B 100%);
+  border-bottom-color: #3D8570;
+}
+[data-realm="najmi"] .nav-link:hover,
+[data-realm="najmi"] .nav-link.active {
+  color: #A8CFC2;
+}
+[data-realm="najmi"] .btn-secondary {
+  border-color: #A8CFC2;
+}
+
+/* Realm brand badge in the header logo */
+[data-realm="najmi"] .realm-badge {
+  display: inline-block;
+  font-size: 10px;
+  font-weight: 700;
+  vertical-align: middle;
+  margin-inline-start: 8px;
+  padding: 2px 9px;
+  border-radius: 11px;
+  background: rgba(168, 207, 194, 0.18);
+  color: #A8CFC2;
+  letter-spacing: 0.02em;
+}
+
+/* 3. Bottom navigation — hardcoded brown/gold in the partial, override for teal */
+[data-realm="najmi"] .bottom-nav {
+  background: #14231D;
+  border-top-color: rgba(168, 207, 194, 0.18);
+}
+[data-realm="najmi"] .bottom-nav-item.active .bottom-nav-icon,
+[data-realm="najmi"] .bottom-nav-item.active .bottom-nav-label {
+  color: #A8CFC2;
+}
+[data-realm="najmi"] .bottom-nav-item.active::after {
+  background: #A8CFC2;
+}
+[data-realm="najmi"] .bottom-nav-search .bottom-nav-icon {
+  background: rgba(168, 207, 194, 0.16);
+}
+
+/* 4. Decorative diamond background → teal tint */
+[data-realm="najmi"] body::before,
+[data-realm="najmi"].has-pattern body::before {
+  background-image:
+    repeating-linear-gradient(45deg, transparent, transparent 16px, rgba(46, 110, 91, 0.10) 16px, rgba(46, 110, 91, 0.10) 16.5px),
+    repeating-linear-gradient(-45deg, transparent, transparent 16px, rgba(46, 110, 91, 0.10) 16px, rgba(46, 110, 91, 0.10) 16.5px);
+}
+
+/* 5. Series-detail page reused under /najmi — retint the gold hero + accents.
+   The view uses var(--primary-brown)/var(--sage) for its hero gradient, already
+   remapped above; these catch any remaining hardcoded gold. */
+[data-realm="najmi"] .series-hero,
+[data-realm="najmi"] .lecture-hero {
+  background: linear-gradient(to left, #14231D 0%, #1C3329 30%, #2E6E5B 70%, #3D8570 100%);
+}
+[data-realm="najmi"] .category-badge {
+  background: #2E6E5B;
+  color: #fff;
+}
+[data-realm="najmi"] .sort-chip,
+[data-realm="najmi"] .sort-chip.active {
+  color: #2E6E5B;
+}
+
+/* LTR: flip the series hero gradient direction */
+html[dir="ltr"] [data-realm="najmi"] .series-hero,
+html[dir="ltr"] [data-realm="najmi"] .lecture-hero {
+  background: linear-gradient(to right, #14231D 0%, #1C3329 30%, #2E6E5B 70%, #3D8570 100%);
+}
