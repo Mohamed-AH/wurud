@@ -202,13 +202,22 @@ router.get('/manage', isAdmin, async (req, res) => {
   try {
     const { Lecture, Series } = require('../../models');
 
-    const lectures = await Lecture.find()
+    // Scope to the active realm: Najmi → only the Najmi sheikh; Hasan → everyone else
+    const najmiSheikh = await require('../../utils/najmiSheikh').getNajmiSheikh();
+    let realmFilter = {};
+    if (najmiSheikh) {
+      realmFilter = res.locals.adminRealm === 'najmi'
+        ? { sheikhId: najmiSheikh._id }
+        : { sheikhId: { $ne: najmiSheikh._id } };
+    }
+
+    const lectures = await Lecture.find(realmFilter)
       .sort({ createdAt: -1 })
       .populate('sheikhId', 'nameArabic nameEnglish')
       .populate('seriesId', 'titleArabic titleEnglish')
       .lean();
 
-    const series = await Series.find()
+    const series = await Series.find(realmFilter)
       .sort({ createdAt: -1 })
       .populate('sheikhId', 'nameArabic nameEnglish')
       .lean();
@@ -217,7 +226,8 @@ router.get('/manage', isAdmin, async (req, res) => {
       title: 'Manage Lectures',
       user: req.user,
       lectures,
-      series
+      series,
+      adminRealm: res.locals.adminRealm
     });
   } catch (error) {
     console.error('Manage error:', error);

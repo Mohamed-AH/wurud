@@ -44,51 +44,50 @@
       <div class="alert-error"><%= error %></div>
     <% } %>
 
-    <form class="pub-form" method="POST"
-          action="<%= isEdit ? '/admin/publications/' + publication._id + '/edit' : '/admin/publications/new' %>"
-          <%= isEdit ? '' : 'enctype="multipart/form-data"' %>>
+    <form class="pub-form" method="POST" enctype="multipart/form-data"
+          action="<%= isEdit ? '/admin/publications/' + publication._id + '/edit' : '/admin/publications/new' %>">
 
       <div class="field">
-        <label><%= adminLocale === 'ar' ? 'العنوان (عربي)' : 'Title (Arabic)' %> *</label>
-        <input type="text" name="title" required dir="rtl" value="<%= publication.title || '' %>">
+        <label for="pubTitle"><%= adminLocale === 'ar' ? 'العنوان (عربي)' : 'Title (Arabic)' %> *</label>
+        <input type="text" id="pubTitle" name="title" required dir="rtl" value="<%= publication.title || '' %>">
       </div>
 
       <div class="field">
-        <label><%= adminLocale === 'ar' ? 'العنوان (إنجليزي)' : 'Title (English)' %></label>
-        <input type="text" name="titleEnglish" value="<%= publication.titleEnglish || '' %>">
+        <label for="pubTitleEn"><%= adminLocale === 'ar' ? 'العنوان (إنجليزي)' : 'Title (English)' %></label>
+        <input type="text" id="pubTitleEn" name="titleEnglish" value="<%= publication.titleEnglish || '' %>">
       </div>
 
       <div class="row2">
         <div class="field">
-          <label><%= adminLocale === 'ar' ? 'الباب' : 'Category' %></label>
-          <select name="category">
+          <label for="pubCategory"><%= adminLocale === 'ar' ? 'الباب' : 'Category' %></label>
+          <select id="pubCategory" name="category">
             <% categories.forEach(c => { %>
               <option value="<%= c %>" <%= publication.category === c ? 'selected' : '' %>><%= c %></option>
             <% }) %>
           </select>
         </div>
         <div class="field">
-          <label><%= adminLocale === 'ar' ? 'عدد الصفحات' : 'Page count' %></label>
-          <input type="number" name="pageCount" min="0" value="<%= publication.pageCount || '' %>">
+          <label for="pubPageCount"><%= adminLocale === 'ar' ? 'عدد الصفحات' : 'Page count' %></label>
+          <input type="number" id="pubPageCount" name="pageCount" min="0" value="<%= publication.pageCount || '' %>">
         </div>
       </div>
 
       <div class="row2">
         <div class="field">
-          <label><%= adminLocale === 'ar' ? 'عدد المجلدات' : 'Volume count' %></label>
-          <input type="number" name="volumeCount" min="1" value="<%= publication.volumeCount || 1 %>">
+          <label for="pubVolumeCount"><%= adminLocale === 'ar' ? 'عدد المجلدات' : 'Volume count' %></label>
+          <input type="number" id="pubVolumeCount" name="volumeCount" min="1" value="<%= publication.volumeCount || 1 %>">
         </div>
         <div class="field" style="align-self:end;">
-          <label class="check">
-            <input type="checkbox" name="isPublished" <%= (isEdit ? publication.isPublished : true) ? 'checked' : '' %>>
+          <label class="check" for="pubIsPublished">
+            <input type="checkbox" id="pubIsPublished" name="isPublished" <%= (isEdit ? publication.isPublished : true) ? 'checked' : '' %>>
             <span><%= adminLocale === 'ar' ? 'منشور' : 'Published' %></span>
           </label>
         </div>
       </div>
 
       <div class="field">
-        <label><%= adminLocale === 'ar' ? 'وصف (اختياري)' : 'Description (optional)' %></label>
-        <textarea name="description" dir="rtl"><%= publication.description || '' %></textarea>
+        <label for="pubDescription"><%= adminLocale === 'ar' ? 'وصف (اختياري)' : 'Description (optional)' %></label>
+        <textarea id="pubDescription" name="description" dir="rtl"><%= publication.description || '' %></textarea>
       </div>
 
       <% if (isEdit) { %>
@@ -99,8 +98,8 @@
         </div>
       <% } else { %>
         <div class="field">
-          <label><%= adminLocale === 'ar' ? 'ملف PDF' : 'PDF file' %> *</label>
-          <input type="file" name="pdfFile" accept="application/pdf,.pdf" required>
+          <label for="pubPdfFile"><%= adminLocale === 'ar' ? 'ملف PDF' : 'PDF file' %> *</label>
+          <input type="file" id="pubPdfFile" name="pdfFile" accept="application/pdf,.pdf" required>
           <div class="hint"><%= adminLocale === 'ar' ? 'سيُرفع إلى التخزين السحابي (R2) ويُفتح داخل المتصفح.' : 'Uploaded to R2 cloud storage; opens inline in the browser.' %></div>
         </div>
       <% } %>
