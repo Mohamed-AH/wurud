@@ -2765,8 +2765,8 @@
     </span>
     <span class="najmi-invite-meta">
       <%= najmiArchive.lectureCount.toLocaleString(locale === 'ar' ? 'ar-EG' : 'en') %> <%= locale === 'ar' ? 'درساً' : 'lectures' %>
-      &middot; <%= najmiArchive.seriesCount %> <%= locale === 'ar' ? 'سلسلة' : 'series' %>
-      &middot; <%= najmiArchive.pubCount %> <%= locale === 'ar' ? 'كتاباً' : 'books' %>
+      &middot; <%= najmiArchive.seriesCount.toLocaleString(locale === 'ar' ? 'ar-EG' : 'en') %> <%= locale === 'ar' ? 'سلسلة' : 'series' %>
+      &middot; <%= najmiArchive.pubCount.toLocaleString(locale === 'ar' ? 'ar-EG' : 'en') %> <%= locale === 'ar' ? 'كتاباً' : 'books' %>
     </span>
   </div>
   <span class="najmi-invite-cta">
