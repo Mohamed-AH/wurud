@@ -194,3 +194,9 @@ html[dir="ltr"] [data-realm="najmi"] .lecture-hero {
 [data-realm="najmi"] .hamburger-btn { background: rgba(168, 207, 194, 0.15); }
 [data-realm="najmi"] .hamburger-btn:hover,
 [data-realm="najmi"] .hamburger-btn:focus { background: rgba(168, 207, 194, 0.30); }
+
+/* 10. Footer — background is the warm-brown --text-primary; retint to forest teal.
+   The Telegram social link carries an inline gold color, so override with !important.
+   (Section headings + link hovers already turn teal via the --accent-gold remap.) */
+[data-realm="najmi"] .footer { background: #14231D; }
+[data-realm="najmi"] .footer-social a { color: #A8CFC2 !important; }
