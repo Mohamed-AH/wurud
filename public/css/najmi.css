@@ -104,10 +104,9 @@
   background: #2E6E5B;
   color: #fff;
 }
-[data-realm="najmi"] .sort-chip,
-[data-realm="najmi"] .sort-chip.active {
-  color: #2E6E5B;
-}
+/* Active sort chip = white text on the teal fill (was teal-on-teal, unreadable);
+   inactive chips fall back to the remapped --redesign-text-mid (teal-gray). */
+[data-realm="najmi"] .sort-chip.active { color: #fff; }
 
 /* LTR: flip the series hero gradient direction */
 html[dir="ltr"] [data-realm="najmi"] .series-hero,
@@ -181,3 +180,17 @@ html[dir="ltr"] [data-realm="najmi"] .lecture-hero {
 /* Mobile mini-player */
 [data-realm="najmi"] .audio-player .mini-player { background: linear-gradient(180deg, #1C3329 0%, #14231D 100%); }
 [data-realm="najmi"] .audio-player .mini-play-btn { background: #2E6E5B; color: #fff; }
+
+/* Play-circle glow was a gold box-shadow — retint teal (full + mini player) */
+[data-realm="najmi"] .audio-player .play-btn { box-shadow: 0 4px 16px rgba(46, 110, 91, 0.45); }
+[data-realm="najmi"] .audio-player .play-btn:hover { box-shadow: 0 6px 20px rgba(46, 110, 91, 0.55); }
+[data-realm="najmi"] .audio-player .mini-play-btn { box-shadow: 0 4px 16px rgba(46, 110, 91, 0.45); }
+
+/* 8. Lecture "play" buttons (series page) — the hover state used a hardcoded brown */
+[data-realm="najmi"] .btn-play:hover { background: #245A4A; }
+
+/* 9. Decorative header controls that stayed gold/brown */
+[data-realm="najmi"] #langToggle { border-color: #A8CFC2; color: #EAF3EE; }
+[data-realm="najmi"] .hamburger-btn { background: rgba(168, 207, 194, 0.15); }
+[data-realm="najmi"] .hamburger-btn:hover,
+[data-realm="najmi"] .hamburger-btn:focus { background: rgba(168, 207, 194, 0.30); }
