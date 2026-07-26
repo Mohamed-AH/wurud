@@ -38,82 +38,77 @@ function najmiSeriesUrl(series) {
   return `/najmi/series/${series.shortId}/${en}/${ar}`.replace(/\/+$/,'');
 }
 
-// Admin-curated realm sections (Featured / etc.) with their assigned Najmi series.
-async function loadNajmiSections(sheikhId) {
-  const { Section } = require('../../models');
-  const sections = await Section.find({ realm: 'najmi', isVisible: true })
-    .sort({ displayOrder: 1 })
-    .select('title icon maxVisible collapsedByDefault')
-    .lean();
-  if (!sections.length) return [];
+// Category enum → Arabic/English label + fixed display order
+const NAJMI_CATEGORY_ORDER = ['Aqeedah', 'Hadith', 'Fiqh', 'Tafsir', 'Seerah', 'Akhlaq', 'Other'];
+const NAJMI_CATEGORY_LABELS = {
+  Aqeedah: { ar: 'العقيدة', en: 'Aqeedah' }, Hadith: { ar: 'الحديث', en: 'Hadith' },
+  Fiqh: { ar: 'الفقه', en: 'Fiqh' }, Tafsir: { ar: 'التفسير', en: 'Tafsir' },
+  Seerah: { ar: 'السيرة', en: 'Seerah' }, Akhlaq: { ar: 'الأخلاق', en: 'Akhlaq' },
+  Other: { ar: 'أخرى', en: 'Other' }
+};
 
-  return Promise.all(sections.map(async (sec) => {
-    const seriesList = await Series.find({
-      sectionId: sec._id, sheikhId, isVisible: { $ne: false }
-    })
-      .sort({ sectionOrder: 1 })
-      .select('titleArabic titleEnglish category lectureCount shortId slug_en slug_ar')
-      .lean();
-    return {
-      title: sec.title,
-      icon: sec.icon,
-      maxVisible: sec.maxVisible || 5,
-      collapsedByDefault: !!sec.collapsedByDefault,
-      series: seriesList.map(s => ({ ...s, url: najmiSeriesUrl(s) }))
-    };
-  })).then(list => list.filter(s => s.series.length > 0));
+// Group the sheikh's visible series by category; show up to `perCat` per group
+// (highest lecture count first), with the total count for the "view all" link.
+async function loadSeriesByCategory(sheikhId, perCat) {
+  const all = await Series.find({ sheikhId, isVisible: { $ne: false } })
+    .sort({ lectureCount: -1, titleArabic: 1 })
+    .select('titleArabic titleEnglish category lectureCount shortId slug_en slug_ar')
+    .lean();
+
+  const groups = {};
+  for (const s of all) {
+    const cat = NAJMI_CATEGORY_LABELS[s.category] ? s.category : 'Other';
+    (groups[cat] = groups[cat] || []).push({ ...s, url: najmiSeriesUrl(s) });
+  }
+
+  return NAJMI_CATEGORY_ORDER
+    .filter(cat => groups[cat] && groups[cat].length)
+    .map(cat => ({
+      key: cat,
+      label: NAJMI_CATEGORY_LABELS[cat],
+      total: groups[cat].length,
+      series: groups[cat].slice(0, perCat)
+    }));
 }
 
 // ---------------------------------------------------------------------------
-// GET /najmi — realm home
+// GET /najmi — the "Content" page (merged: About + series-by-category)
 // ---------------------------------------------------------------------------
 router.get('/', requireNajmiSheikh, async (req, res) => {
   try {
     const sheikh = req.najmiSheikh;
 
-    // Homepage config (tailored to the archive) with safe defaults
+    // Config: featuredSeriesCount is reused as "series shown per category"
     const settings = await SiteSettings.getSettings().catch(() => null);
     const cfgRaw = (settings && settings.homepage && settings.homepage.najmi) || {};
-    const cfg = {
-      showFeaturedSeries: cfgRaw.showFeaturedSeries !== false,
-      featuredSeriesCount: Math.min(12, Math.max(2, cfgRaw.featuredSeriesCount || 6)),
-      showLibrary: cfgRaw.showLibrary !== false,
-      showSections: cfgRaw.showSections !== false,
-      blockOrder: Array.isArray(cfgRaw.blockOrder) && cfgRaw.blockOrder.length
-        ? cfgRaw.blockOrder : ['sections', 'featuredSeries', 'library']
-    };
+    const perCategory = Math.min(12, Math.max(2, cfgRaw.featuredSeriesCount || 4));
+    const showLibrary = cfgRaw.showLibrary !== false;
 
-    const [seriesCount, lectureCount, pubCount, featuredSeries, featuredPubs, najmiSections] = await Promise.all([
+    const [seriesCount, lectureCount, pubCount, categories, booksTeaser] = await Promise.all([
       Series.countDocuments({ sheikhId: sheikh._id, isVisible: { $ne: false } }),
       Lecture.countDocuments({ sheikhId: sheikh._id, published: true }),
       Publication.countDocuments({ sheikhId: sheikh._id, isPublished: { $ne: false } }),
-      Series.find({ sheikhId: sheikh._id, isVisible: { $ne: false } })
-        .sort({ lectureCount: -1, titleArabic: 1 })
-        .limit(cfg.featuredSeriesCount)
-        .select('titleArabic titleEnglish category lectureCount shortId slug_en slug_ar')
-        .lean(),
-      Publication.find({ sheikhId: sheikh._id, isPublished: { $ne: false } })
-        .sort({ createdAt: -1 })
-        .limit(6)
-        .select('title category pageCount shortId slug_ar fileUrl')
-        .lean(),
-      cfg.showSections ? loadNajmiSections(sheikh._id) : Promise.resolve([])
+      loadSeriesByCategory(sheikh._id, perCategory),
+      showLibrary
+        ? Publication.find({ sheikhId: sheikh._id, isPublished: { $ne: false } })
+            .sort({ createdAt: -1 }).limit(4)
+            .select('title category pageCount shortId slug_ar fileUrl').lean()
+        : Promise.resolve([])
     ]);
 
     res.render('najmi/index', {
-      title: 'أرشيف العلامة أحمد بن يحيى النجمي',
-      metaDescription: 'أرشيف دروس ومحاضرات وكتب العلامة أحمد بن يحيى النجمي رحمه الله — أكثر من 1500 درس و54 سلسلة و116 كتاباً.',
+      title: 'الشيخ العلامة أحمد بن يحيى النجمي',
+      metaDescription: 'سيرة العلامة أحمد بن يحيى النجمي رحمه الله ودروسه ومحاضراته — أكثر من 1500 درس في 54 سلسلة و116 كتاباً.',
       najmiSheikh: sheikh,
       stats: { seriesCount, lectureCount, pubCount },
-      config: cfg,
-      najmiSections,
-      featuredSeries: featuredSeries.map(s => ({ ...s, url: najmiSeriesUrl(s) })),
-      featuredPubs,
+      categories,
+      booksTeaser,
+      showLibrary,
       canonicalPath: '/najmi'
     });
   } catch (err) {
-    console.error('Najmi home error:', err);
-    res.status(500).send('Error loading Najmi home');
+    console.error('Najmi content page error:', err);
+    res.status(500).send('Error loading Najmi content');
   }
 });
 
@@ -128,11 +123,16 @@ router.get('/series', requireNajmiSheikh, async (req, res) => {
       .select('titleArabic titleEnglish category lectureCount shortId slug_en slug_ar')
       .lean();
 
+    // Optional pre-filter from the Content page category "view all" links
+    const validCats = ['Aqeedah', 'Hadith', 'Fiqh', 'Tafsir', 'Seerah', 'Akhlaq', 'Other'];
+    const initialCat = validCats.includes(req.query.cat) ? req.query.cat : 'all';
+
     res.render('najmi/series', {
       title: 'سلاسل الشيخ أحمد النجمي',
       metaDescription: 'جميع سلاسل دروس العلامة أحمد بن يحيى النجمي رحمه الله في العقيدة والحديث والفقه والتفسير.',
       najmiSheikh: sheikh,
       series: series.map(s => ({ ...s, url: najmiSeriesUrl(s) })),
+      initialCat,
       canonicalPath: '/najmi/series'
     });
   } catch (err) {
@@ -279,28 +279,8 @@ router.get('/library/:shortId(\\d+)/download', requireNajmiSheikh, async (req, r
 });
 
 // ---------------------------------------------------------------------------
-// GET /najmi/bio — biography
+// GET /najmi/bio — merged into the Content page (/najmi). Redirect for old links.
 // ---------------------------------------------------------------------------
-router.get('/bio', requireNajmiSheikh, async (req, res) => {
-  try {
-    const sheikh = req.najmiSheikh;
-    const [seriesCount, lectureCount, pubCount] = await Promise.all([
-      Series.countDocuments({ sheikhId: sheikh._id, isVisible: { $ne: false } }),
-      Lecture.countDocuments({ sheikhId: sheikh._id, published: true }),
-      Publication.countDocuments({ sheikhId: sheikh._id, isPublished: { $ne: false } })
-    ]);
-
-    res.render('najmi/bio', {
-      title: 'سيرة العلامة أحمد بن يحيى النجمي',
-      metaDescription: 'سيرة العلامة المحدث الفقيه أحمد بن يحيى النجمي رحمه الله، مفتي منطقة جازان.',
-      najmiSheikh: sheikh,
-      stats: { seriesCount, lectureCount, pubCount },
-      canonicalPath: '/najmi/bio'
-    });
-  } catch (err) {
-    console.error('Najmi bio error:', err);
-    res.status(500).send('Error loading biography');
-  }
-});
+router.get('/bio', (req, res) => res.redirect(301, '/najmi'));
 
 module.exports = router;

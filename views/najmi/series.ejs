@@ -82,10 +82,11 @@
   </div>
   <div class="najmi-search-info" id="najmiSearchInfo"></div>
 
+  <% var _initCat = (typeof initialCat !== 'undefined' && initialCat) ? initialCat : 'all'; %>
   <div class="najmi-filter-bar" id="najmiFilterBar">
-    <button class="najmi-chip active" data-cat="all"><%= locale === 'ar' ? 'الكل' : 'All' %></button>
+    <button class="najmi-chip<%= _initCat === 'all' ? ' active' : '' %>" data-cat="all"><%= locale === 'ar' ? 'الكل' : 'All' %></button>
     <% orderedCats.forEach(c => { %>
-      <button class="najmi-chip" data-cat="<%= c %>"><%= CAT_LABELS[c] || c %></button>
+      <button class="najmi-chip<%= _initCat === c ? ' active' : '' %>" data-cat="<%= c %>"><%= CAT_LABELS[c] || c %></button>
     <% }) %>
   </div>
 
@@ -121,7 +122,7 @@
     const cards = Array.from(document.querySelectorAll('#najmiSeriesGrid .najmi-series-card'));
     const total = cards.length;
     const isArabic = '<%= locale %>' === 'ar';
-    let cat = 'all';
+    let cat = '<%= _initCat %>';
 
     function normalizeArabic(t) {
       return t.replace(/[أإآا]/g,'ا').replace(/ة/g,'ه').replace(/ى/g,'ي').replace(/ؤ/g,'و').replace(/ئ/g,'ي').trim();
@@ -159,6 +160,8 @@
     searchInput.addEventListener('input', apply);
     searchClear.addEventListener('click', function () { searchInput.value = ''; apply(); searchInput.focus(); });
     searchInput.addEventListener('keydown', function (e) { if (e.key === 'Escape') { searchInput.value = ''; apply(); } });
+    // Apply an initial category filter passed from the Content page "view all" links
+    if (cat !== 'all') apply();
     if (window.lucide) lucide.createIcons();
   })();
 </script>
