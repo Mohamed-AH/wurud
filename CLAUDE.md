@@ -48,6 +48,44 @@ alongside the existing site with **complete architectural separation**. Zero con
 | 4 | Cross-archive banners + "العلماء" header link | ✅ DONE |
 | 5 | Admin: publications CRUD ✅, realm switcher + scoped forms ✅, per-realm homepage config ✅ | ✅ DONE |
 | 6 | SEO: sitemap, OG/JSON-LD, cache TTLs, report script | ⏳ TODO |
+| 7 | Najmi realm consolidation: merge Home+About+Series into one Content page; simplify nav | ✅ DONE |
+
+### Phase 7 plan (approved) — Najmi realm consolidation
+Owner feedback after live use: two homepages + separate About/Series pages feel redundant. Consolidate.
+- **`/najmi` = the "Content" page** (merged Home + About + Series): Hero → **About Sheikh** (full bio, at top)
+  → **Series grouped by category** (a few series per category + "عرض الكل" link to the full filtered list).
+- **Navigation** (header + bottom nav, both desktop & mobile): only **الرئيسية → `/` (Hasan home)**,
+  **المحتوى → `/najmi`**, **الكتب → `/najmi/library`**. Removed the separate Series & Bio nav items.
+  The single "Home" now returns to the Hasan homepage — no second homepage.
+- **`/najmi/series`** stays as the full list (now accepts `?cat=<enum>` to pre-filter); reachable via the
+  category "عرض الكل" links, not from nav.
+- **`/najmi/bio`** → 301 redirect to `/najmi` (About is merged in).
+- **Bio source line (#4)**: replace "المصدر: … متوفران كاملين في المكتبة" with a forward-looking
+  "سِيَر أكثر تفصيلاً متوفرة في قسم الكتب" / "More detailed biographies are available in the Books section."
+  Removed the "this was taken from / المصدر" phrasing.
+- **Admin Najmi homepage-config**: `featuredSeriesCount` is reused as **series-per-category** (2–12);
+  `showLibrary` toggles a books teaser at the bottom. The old featuredSeries/sections/blockOrder toggles no
+  longer apply to the new fixed layout (kept in the model, trimmed from the Najmi admin form).
+
+Sub-phases: **7A** merged Content page (route `loadSeriesByCategory` + `views/najmi/index.ejs` rewrite +
+#4 fix). **7B** nav (header + bottomNav) + `/najmi/series?cat=` + `/najmi/bio` redirect. **7C** admin config
+trim + docs.
+
+### Phase 7 — DONE
+- `routes/najmi/index.js`: `/najmi` now renders the Content page via `loadSeriesByCategory(sheikhId, perCat)`
+  (groups visible series by the Category enum, top-N by lectureCount, with a per-category total). Config
+  `homepage.najmi.featuredSeriesCount` = series-per-category (default 4); `showLibrary` = books teaser.
+  `/najmi/series` accepts `?cat=<enum>` (`initialCat`). `/najmi/bio` → `res.redirect(301,'/najmi')`.
+- `views/najmi/index.ejs`: rewritten — Hero → About (full bio, reworded note #4 → "سِيَر أكثر تفصيلاً
+  متوفّرة في قسم الكتب") → series-by-category sections (each: label + total + "عرض الكل" → `/najmi/series?cat=`)
+  → optional books teaser → subtle return link to `/`.
+- `views/najmi/series.ejs`: honors `initialCat` (pre-selects the chip + applies filter on load).
+- Nav (`header.ejs` desktop+mobile, `bottomNav.ejs`): Najmi realm = الرئيسية→`/` · المحتوى→`/najmi` ·
+  الكتب→`/najmi/library`. Old Series/Bio/second-home items removed.
+- `views/admin/homepage-config.ejs`: Najmi form trimmed to **series-per-category** + **library teaser**;
+  layout preview shows Hero → About → Series-by-category → Library. (Old showFeaturedSeries/showSections/
+  blockOrder fields remain in the model but are unused by the new fixed layout.)
+- `views/najmi/bio.ejs` is now orphaned (route redirects); left in place, harmless.
 
 ### Phase 2/3 — Najmi realm (DONE)
 - `middleware/realm.js` — sets `res.locals.realm` ('najmi' for `/najmi/*`, else 'hasan'); registered in server.js before routes.

@@ -2,25 +2,17 @@
 <% const _navRealm = (typeof realm !== 'undefined' ? realm : 'hasan'); %>
 <% if (_navRealm === 'najmi') { %>
 <nav class="bottom-nav" id="bottomNav">
-  <a href="/najmi" class="bottom-nav-item<%= typeof currentPath !== 'undefined' && currentPath === '/najmi' ? ' active' : '' %>">
+  <a href="/" class="bottom-nav-item">
     <span class="bottom-nav-icon"><i data-lucide="home"></i></span>
     <span class="bottom-nav-label"><%= locale === 'ar' ? 'الرئيسية' : 'Home' %></span>
   </a>
-  <a href="/najmi/series" class="bottom-nav-item<%= typeof currentPath !== 'undefined' && currentPath.startsWith('/najmi/series') ? ' active' : '' %>">
-    <span class="bottom-nav-icon"><i data-lucide="library"></i></span>
-    <span class="bottom-nav-label"><%= locale === 'ar' ? 'السلاسل' : 'Series' %></span>
-  </a>
-  <a href="/najmi#search" class="bottom-nav-item bottom-nav-search" onclick="focusSearch(event)">
-    <span class="bottom-nav-icon"><i data-lucide="search"></i></span>
-    <span class="bottom-nav-label"><%= locale === 'ar' ? 'بحث' : 'Search' %></span>
+  <a href="/najmi" class="bottom-nav-item<%= typeof currentPath !== 'undefined' && currentPath === '/najmi' ? ' active' : '' %>">
+    <span class="bottom-nav-icon"><i data-lucide="layout-list"></i></span>
+    <span class="bottom-nav-label"><%= locale === 'ar' ? 'المحتوى' : 'Content' %></span>
   </a>
   <a href="/najmi/library" class="bottom-nav-item<%= typeof currentPath !== 'undefined' && currentPath.startsWith('/najmi/library') ? ' active' : '' %>">
     <span class="bottom-nav-icon"><i data-lucide="book-open"></i></span>
-    <span class="bottom-nav-label"><%= locale === 'ar' ? 'المكتبة' : 'Library' %></span>
-  </a>
-  <a href="/najmi/bio" class="bottom-nav-item<%= typeof currentPath !== 'undefined' && currentPath.startsWith('/najmi/bio') ? ' active' : '' %>">
-    <span class="bottom-nav-icon"><i data-lucide="user"></i></span>
-    <span class="bottom-nav-label"><%= locale === 'ar' ? 'السيرة' : 'Biography' %></span>
+    <span class="bottom-nav-label"><%= locale === 'ar' ? 'الكتب' : 'Books' %></span>
   </a>
 </nav>
 <% } else { %>

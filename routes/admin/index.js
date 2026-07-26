@@ -3483,24 +3483,32 @@ router.get('/publications', isAdmin, async (req, res) => {
     else if (sort === 'pages') sortOption = { pageCount: -1 };
     else if (sort === 'downloads') sortOption = { downloadCount: -1 };
 
-    const [publications, totalCount] = await Promise.all([
+    // Single aggregation for all stat counts (avoids N+1 sequential countDocuments)
+    const [publications, totalCount, statsAgg] = await Promise.all([
       Publication.find(query).sort(sortOption).skip(skip).limit(limit).lean(),
-      Publication.countDocuments(query)
+      Publication.countDocuments(query),
+      Publication.aggregate([{
+        $facet: {
+          byCategory: [{ $group: { _id: '$category', count: { $sum: 1 } } }],
+          byStatus: [{ $group: { _id: '$isPublished', count: { $sum: 1 } } }],
+          total: [{ $count: 'n' }]
+        }
+      }])
     ]);
 
+    const facet = statsAgg[0] || {};
     const byCat = {};
-    for (const c of PUB_CATEGORIES) byCat[c] = await Publication.countDocuments({ category: c });
+    PUB_CATEGORIES.forEach(c => { byCat[c] = 0; });
+    (facet.byCategory || []).forEach(r => { if (r._id != null && byCat[r._id] !== undefined) byCat[r._id] = r.count; });
+    let published = 0, draft = 0;
+    (facet.byStatus || []).forEach(r => { if (r._id === true) published = r.count; else draft += r.count; });
+    const total = (facet.total && facet.total[0] && facet.total[0].n) || 0;
 
     res.render('admin/publications-list', {
       title: 'Publications', user: req.user, activePage: 'publications',
       publications,
       categories: PUB_CATEGORIES,
-      stats: {
-        total: await Publication.countDocuments(),
-        published: await Publication.countDocuments({ isPublished: true }),
-        draft: await Publication.countDocuments({ isPublished: false }),
-        byCat
-      },
+      stats: { total, published, draft, byCat },
       filters: { search: search || '', category: category || 'all', status: status || 'all', sort: sort || 'newest' },
       pagination: {
         currentPage: parseInt(page), totalPages: Math.ceil(totalCount / limit), totalCount,

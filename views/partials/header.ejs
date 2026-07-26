@@ -15,11 +15,9 @@
     <!-- Desktop Navigation -->
     <nav class="nav-desktop">
       <% if (_realm === 'najmi') { %>
-        <a href="/najmi" class="nav-link"><%= t('nav_home') %></a>
-        <a href="/najmi/series" class="nav-link"><%= t('nav_series') %></a>
-        <a href="/najmi/library" class="nav-link"><%= locale === 'ar' ? 'المكتبة' : 'Library' %></a>
-        <a href="/najmi/bio" class="nav-link"><%= locale === 'ar' ? 'السيرة' : 'Biography' %></a>
-        <a href="/" class="nav-link"><%= locale === 'ar' ? 'الشيخ حسن ←' : '← Sheikh Hasan' %></a>
+        <a href="/" class="nav-link"><%= t('nav_home') %></a>
+        <a href="/najmi" class="nav-link"><%= locale === 'ar' ? 'المحتوى' : 'Content' %></a>
+        <a href="/najmi/library" class="nav-link"><%= locale === 'ar' ? 'الكتب' : 'Books' %></a>
       <% } else { %>
         <a href="/" class="nav-link"><%= t('nav_home') %></a>
         <a href="/browse" class="nav-link"><%= t('nav_lectures') %></a>
@@ -56,11 +54,9 @@
 <div id="mobileNav" class="mobile-nav">
   <nav class="mobile-nav-content">
     <% if (_realm === 'najmi') { %>
-      <a href="/najmi" class="mobile-nav-link"><%= t('nav_home') %></a>
-      <a href="/najmi/series" class="mobile-nav-link"><%= t('nav_series') %></a>
-      <a href="/najmi/library" class="mobile-nav-link"><%= locale === 'ar' ? 'المكتبة' : 'Library' %></a>
-      <a href="/najmi/bio" class="mobile-nav-link"><%= locale === 'ar' ? 'السيرة' : 'Biography' %></a>
-      <a href="/" class="mobile-nav-link"><%= locale === 'ar' ? 'العودة إلى أرشيف الشيخ حسن ←' : '← Sheikh Hasan archive' %></a>
+      <a href="/" class="mobile-nav-link"><%= t('nav_home') %></a>
+      <a href="/najmi" class="mobile-nav-link"><%= locale === 'ar' ? 'المحتوى' : 'Content' %></a>
+      <a href="/najmi/library" class="mobile-nav-link"><%= locale === 'ar' ? 'الكتب' : 'Books' %></a>
     <% } else { %>
       <a href="/" class="mobile-nav-link"><%= t('nav_home') %></a>
       <a href="/browse" class="mobile-nav-link"><%= t('nav_lectures') %></a>
