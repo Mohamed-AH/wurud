@@ -1189,6 +1189,47 @@ async function generateSitemap() {
 `;
   }
 
+  // Najmi realm (dedicated /najmi/* pages) — Content, Library, Series list + each series
+  try {
+    const { getNajmiSheikh } = require('../utils/najmiSheikh');
+    const najmi = await getNajmiSheikh();
+    if (najmi) {
+      xml += `  <url>
+    <loc>${baseUrl}/najmi</loc>
+    <changefreq>weekly</changefreq>
+    <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>${baseUrl}/najmi/series</loc>
+    <changefreq>weekly</changefreq>
+    <priority>0.7</priority>
+  </url>
+  <url>
+    <loc>${baseUrl}/najmi/library</loc>
+    <changefreq>weekly</changefreq>
+    <priority>0.7</priority>
+  </url>
+`;
+      const najmiSeries = await Series.find({ sheikhId: najmi._id, isVisible: { $ne: false } })
+        .select('slug shortId slug_en slug_ar updatedAt').lean();
+      for (const s of najmiSeries) {
+        const lastmod = s.updatedAt ? new Date(s.updatedAt).toISOString().split('T')[0] : '';
+        const en = s.slug_en || '';
+        const ar = s.slug_ar ? encodeURIComponent(s.slug_ar) : '';
+        const url = `/najmi/series/${s.shortId}/${en}/${ar}`.replace(/\/+$/, '');
+        xml += `  <url>
+    <loc>${baseUrl}${url}</loc>
+    ${lastmod ? `<lastmod>${lastmod}</lastmod>` : ''}
+    <changefreq>monthly</changefreq>
+    <priority>0.7</priority>
+  </url>
+`;
+      }
+    }
+  } catch (e) {
+    console.error('Sitemap Najmi section error:', e.message);
+  }
+
   xml += `</urlset>`;
   return xml;
 }
