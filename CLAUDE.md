@@ -47,7 +47,7 @@ alongside the existing site with **complete architectural separation**. Zero con
 | 3 | PDF Library `/najmi/library` — 4-category filter, cover cards, download + open-in-tab | ✅ DONE (built alongside Phase 2) |
 | 4 | Cross-archive banners + "العلماء" header link | ✅ DONE |
 | 5 | Admin: publications CRUD ✅, realm switcher + scoped forms ✅, per-realm homepage config ✅ | ✅ DONE |
-| 6 | SEO: sitemap, OG/JSON-LD, cache TTLs, report script | ⏳ TODO |
+| 6 | SEO: sitemap ✅, OG/JSON-LD, cache TTLs, report script | 🔄 IN PROGRESS |
 | 7 | Najmi realm consolidation: merge Home+About+Series into one Content page; simplify nav | ✅ DONE |
 
 ### Phase 7 plan (approved) — Najmi realm consolidation
@@ -70,6 +70,50 @@ Owner feedback after live use: two homepages + separate About/Series pages feel 
 Sub-phases: **7A** merged Content page (route `loadSeriesByCategory` + `views/najmi/index.ejs` rewrite +
 #4 fix). **7B** nav (header + bottomNav) + `/najmi/series?cat=` + `/najmi/bio` redirect. **7C** admin config
 trim + docs.
+
+### Najmi realm colour-matching (DONE, post-Phase 7)
+All scoped to `[data-realm="najmi"]` in `public/css/najmi.css` (Hasan untouched, all screen sizes):
+- Remapped the `--redesign-*` token family (fixes reused series-detail page + lecture cards).
+- Audio player (desktop bar + mobile mini-player): container/gradient, play button, progress fill/handle,
+  skip/action/speed/volume/close, popups, and the play-circle glow (was gold box-shadow → teal).
+- Mobile hamburger menu panel (`.mobile-nav`) + `.hamburger-btn` brown tint + `#langToggle` gold ring.
+- Bug fixes: sort-chip active text was teal-on-teal (→ white); `.btn-play:hover` hardcoded brown (→ teal).
+- Footer: `.footer` bg was `--text-primary` brown (→ `#14231D`); Telegram social link inline gold (→ teal `!important`).
+
+### Phase 6 — SEO (plan)
+- **Sitemap ✅ DONE**: `routes/index.js generateSitemap()` now appends the Najmi realm — `/najmi`,
+  `/najmi/series`, `/najmi/library`, and each visible Najmi series (`/najmi/series/:shortId/...`), guarded by
+  `getNajmiSheikh()`. The default-side queries still exclude Najmi (so no duplicate `/series/*` entries).
+- **TODO**:
+  - OpenGraph + JSON-LD for the Najmi realm. `views/layout.ejs` currently hardcodes Hasan's Person/WebSite
+    JSON-LD + OG for all pages. Make it realm-aware: on `/najmi/*` emit `og:site_name`/author = Sheikh Ahmed,
+    a `Person` (al-Najmi) + `CollectionPage`/`Book` JSON-LD; canonical already per-page. Pass `realm` (already
+    in `res.locals`) + a per-page `ogType`/`jsonld` block from the Najmi routes.
+  - Per-realm meta description/keywords (Najmi routes already pass `metaDescription`; add `metaKeywords`).
+  - Cache TTLs: wrap the Najmi home/series/library queries in `cache.getOrSet` (keys `najmi:home`, `najmi:series`,
+    `najmi:library`) with a 10-min TTL; invalidate on admin publication/series changes (extend
+    `invalidateHomepageCache()` to also clear `najmi:*`).
+  - `scripts/generate-report.js`: extend to cover both archives (Hasan + Najmi) with a realm column.
+  - Submit the updated sitemap to Search Console (owner action).
+
+### Failing unit tests — diagnosis & plan
+- **Root cause (not a code bug):** DB-dependent suites can't start `MongoMemoryServer` — it downloads MongoDB
+  **7.0.11** for `ubuntu2204`, which returns **403 (version/platform not available)**. Pure unit suites pass
+  (asdaaExtractor + articleHelpers: 49/49).
+- **Applied:** bumped the default `MONGOMS_VERSION` `7.0.11 → 7.0.14` (a real ubuntu2204 release) in
+  `tests/globalSetup.js` + `tests/envSetup.js`. **Needs verification where fastdl.mongodb.org is reachable**
+  (this sandbox blocks the download, so it can't be confirmed here).
+- **Plan (if the bump alone isn't enough in CI):**
+  1. Cache the memory-server binary in CI (`~/.cache/mongodb-binaries`) so it downloads once.
+  2. Or point `MONGOMS_DOWNLOAD_MIRROR` at an accessible mirror, or pre-install the binary in the CI image.
+  3. Or add a GitHub Actions `mongodb` service container and set `MONGODB_URI`/`SKIP_MEMORY_SERVER` so tests
+     use a real Mongo instead of memory-server (`tests/helpers/testDb.js` already degrades gracefully).
+  4. Once Mongo is reachable, run the integration/model suites and fix any real assertions; add coverage for the
+     new Najmi routes + `Publication` model / admin publications CRUD.
+
+### Minified files — in sync
+This session touched only CSS/EJS/server routes. Re-minifying `audioPlayer.js`/`homepage.js` produces no diff
+vs the committed `.min.js` — no minification needed.
 
 ### Phase 7 — DONE
 - `routes/najmi/index.js`: `/najmi` now renders the Content page via `loadSeriesByCategory(sheikhId, perCat)`
