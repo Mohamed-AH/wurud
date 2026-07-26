@@ -47,7 +47,7 @@ alongside the existing site with **complete architectural separation**. Zero con
 | 3 | PDF Library `/najmi/library` — 4-category filter, cover cards, download + open-in-tab | ✅ DONE (built alongside Phase 2) |
 | 4 | Cross-archive banners + "العلماء" header link | ✅ DONE |
 | 5 | Admin: publications CRUD ✅, realm switcher + scoped forms ✅, per-realm homepage config ✅ | ✅ DONE |
-| 6 | SEO: sitemap ✅, OG/JSON-LD, cache TTLs, report script | 🔄 IN PROGRESS |
+| 6 | SEO: sitemap ✅, OG/JSON-LD ✅, cache TTLs ✅, report script ✅ | ✅ DONE (Rich-Results validation = owner action) |
 | 7 | Najmi realm consolidation: merge Home+About+Series into one Content page; simplify nav | ✅ DONE |
 
 ### Phase 7 plan (approved) — Najmi realm consolidation
@@ -80,7 +80,35 @@ All scoped to `[data-realm="najmi"]` in `public/css/najmi.css` (Hasan untouched,
 - Bug fixes: sort-chip active text was teal-on-teal (→ white); `.btn-play:hover` hardcoded brown (→ teal).
 - Footer: `.footer` bg was `--text-primary` brown (→ `#14231D`); Telegram social link inline gold (→ teal `!important`).
 
-### Phase 6 — SEO (plan)
+### Failing CI tests — REAL regression found + fixed
+GitHub Actions "Unit & Integration Tests" failed: **1 suite (`tests/unit/homepageApi.test.js`), 64 tests**,
+all `TypeError: Cannot read properties of undefined (reading 'findOne')` at `utils/najmiSheikh.js:19`.
+Cause: Phase-5 realm isolation added `excludeNajmiBySheikh()` → `getNajmiSheikh()` → `Sheikh.findOne` into
+the homepage API path, but that suite mocks `../models` **without** a Sheikh model. **Fix:** `getNajmiSheikh()`
+now returns `null` when `Sheikh` is unavailable (guard `!Sheikh || typeof Sheikh.findOne !== 'function'`), so
+`realmFilter` skips Najmi filtering instead of throwing. Verified `homepageApi.test.js` 68/68. (The other 590
+CI tests passed — so CI's Mongo works; the earlier `MONGOMS_VERSION` bump is just a local-env nicety.)
+
+### Phase 6 — SEO (DONE — implemented per external review)
+- **Sitemap** ✅: Najmi realm appended (`/najmi`, `/najmi/series`, `/najmi/library`, each series detail with
+  `<lastmod>`), guarded by `getNajmiSheikh()`; default-side still excludes Najmi (no canonical dupes).
+- **OG + JSON-LD realm-aware** ✅ (`views/layout.ejs`): a computed vars block (`_realm/_brand/_person/_personId`)
+  drives the title, OG (`og:site_name`/`og:title`/`article:author`) and Twitter tags. JSON-LD branches by realm
+  with **distinct Person `@id`** IRIs (`#person-hasan` vs `#person-najmi`) so the Knowledge Graph disambiguates
+  authors on the shared domain; Najmi emits `CollectionPage` + `Person` (deathDate, sameAs alnajmi.net). A
+  route-level `jsonld` local can inject per-page schema (`<%- jsonld %>`), and an `ogImage` local adds
+  `og:image`/`twitter:image` + upgrades the card to `summary_large_image` (realm-specific images = owner asset TODO).
+  Article JSON-LD author `@id` updated to `#person-hasan`. Verified both realms emit valid JSON.
+- **Per-realm meta** ✅: Najmi routes pass `metaKeywords` (AR/EN).
+- **Caching** ✅: `/najmi` home, `/najmi/series`, `/najmi/library` data wrapped in `cache.getOrSet` (keys
+  `najmi:home/series/library`, 10-min TTL). `invalidateHomepageCache()` (admin) now also clears `najmi:*`, so
+  any admin publication/series/config change refreshes all Najmi pages.
+- **Report script** ✅: `scripts/generate-report.js` adds an "العالِم" (scholar) column to the series table +
+  a per-realm breakdown line (each series/lecture attributed once — no double counting).
+- **Owner action**: validate a Najmi page in Google's Rich Results Test + inspect OG output, then resubmit the
+  sitemap to Search Console.
+
+### Phase 6 — SEO (earlier plan, now superseded by the DONE section above)
 - **Sitemap ✅ DONE**: `routes/index.js generateSitemap()` now appends the Najmi realm — `/najmi`,
   `/najmi/series`, `/najmi/library`, and each visible Najmi series (`/najmi/series/:shortId/...`), guarded by
   `getNajmiSheikh()`. The default-side queries still exclude Najmi (so no duplicate `/series/*` entries).
