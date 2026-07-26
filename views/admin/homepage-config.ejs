@@ -233,10 +233,10 @@
 
     <% if (_realm === 'najmi') { %>
     <div class="layout-preview">
-      <h4><%= adminLocale === 'ar' ? 'ترتيب صفحة الشيخ النجمي' : 'Najmi Homepage Layout Order' %></h4>
-      <div class="layout-item active">1. <%= adminLocale === 'ar' ? 'القسم الرئيسي (Hero) + شريط العودة' : 'Hero + return banner' %></div>
-      <div class="layout-item <%= najmiConfig.showSections ? 'active' : 'inactive' %>">2. <%= adminLocale === 'ar' ? 'أقسام مُنسَّقة (Featured...)' : 'Curated sections (Featured...)' %></div>
-      <div class="layout-item <%= najmiConfig.showFeaturedSeries ? 'active' : 'inactive' %>">3. <%= adminLocale === 'ar' ? 'السلاسل المميزة' : 'Featured Series' %></div>
+      <h4><%= adminLocale === 'ar' ? 'ترتيب صفحة المحتوى (الشيخ النجمي)' : 'Najmi Content Page Layout' %></h4>
+      <div class="layout-item active">1. <%= adminLocale === 'ar' ? 'القسم الرئيسي (Hero)' : 'Hero' %></div>
+      <div class="layout-item active">2. <%= adminLocale === 'ar' ? 'نبذة عن الشيخ' : 'About the Sheikh' %></div>
+      <div class="layout-item active">3. <%= adminLocale === 'ar' ? 'السلاسل مُرتَّبة حسب التصنيف' : 'Series grouped by category' %></div>
       <div class="layout-item <%= najmiConfig.showLibrary ? 'active' : 'inactive' %>">4. <%= adminLocale === 'ar' ? 'من المكتبة (PDF)' : 'From the Library (PDF)' %></div>
     </div>
     <% } else { %>
@@ -255,57 +255,32 @@
       <form method="POST" action="/admin/homepage-config">
 
         <% if (_realm === 'najmi') { %>
-        <!-- ===== Najmi realm config ===== -->
+        <!-- ===== Najmi realm config (Content page) ===== -->
         <div class="config-section">
-          <h3><%= adminLocale === 'ar' ? 'أقسام صفحة النجمي' : 'Najmi Page Blocks' %></h3>
+          <h3><%= adminLocale === 'ar' ? 'إعدادات صفحة المحتوى' : 'Content Page Settings' %></h3>
+          <p style="font-size:13px;color:#777;margin:-4px 0 14px;">
+            <%= adminLocale === 'ar'
+              ? 'صفحة المحتوى ثابتة البنية: هيرو ثم نبذة عن الشيخ ثم السلاسل مُرتَّبة حسب التصنيف.'
+              : 'The Content page has a fixed structure: Hero, then About, then series grouped by category.' %>
+          </p>
 
           <div class="toggle-row">
             <div class="toggle-info">
-              <div class="toggle-title"><%= adminLocale === 'ar' ? 'الأقسام المُنسَّقة' : 'Curated Sections' %></div>
-              <div class="toggle-desc"><%= adminLocale === 'ar' ? 'أقسام السلاسل التي تنشئها وتُسنِد إليها سلاسل النجمي' : 'Realm sections you create and assign Najmi series to' %></div>
-            </div>
-            <label class="toggle-switch">
-              <input type="checkbox" name="showSections" <%= najmiConfig.showSections ? 'checked' : '' %>>
-              <span class="toggle-slider"></span>
-            </label>
-          </div>
-
-          <div class="toggle-row">
-            <div class="toggle-info">
-              <div class="toggle-title"><%= adminLocale === 'ar' ? 'السلاسل المميزة' : 'Featured Series' %></div>
-              <div class="toggle-desc"><%= adminLocale === 'ar' ? 'أعلى السلاسل حسب عدد الدروس' : 'Top series by lecture count' %></div>
-            </div>
-            <label class="toggle-switch">
-              <input type="checkbox" name="showFeaturedSeries" <%= najmiConfig.showFeaturedSeries ? 'checked' : '' %>>
-              <span class="toggle-slider"></span>
-            </label>
-          </div>
-
-          <div class="toggle-row">
-            <div class="toggle-info">
-              <div class="toggle-title"><%= adminLocale === 'ar' ? 'عدد السلاسل المميزة' : 'Featured Series Count' %></div>
-              <div class="toggle-desc"><%= adminLocale === 'ar' ? 'كم سلسلة تُعرض (2–12)' : 'How many to show (2–12)' %></div>
+              <div class="toggle-title"><%= adminLocale === 'ar' ? 'عدد السلاسل لكل تصنيف' : 'Series per Category' %></div>
+              <div class="toggle-desc"><%= adminLocale === 'ar' ? 'كم سلسلة تُعرض في كل تصنيف قبل رابط «عرض الكل» (2–12)' : 'How many series to show per category before the "view all" link (2–12)' %></div>
             </div>
             <input type="number" name="featuredSeriesCount" value="<%= najmiConfig.featuredSeriesCount %>" min="2" max="12" style="width:80px;padding:6px 10px;border:1px solid #ddd;border-radius:4px;font-size:14px;">
           </div>
 
           <div class="toggle-row">
             <div class="toggle-info">
-              <div class="toggle-title"><%= adminLocale === 'ar' ? 'من المكتبة (PDF)' : 'From the Library (PDF)' %></div>
-              <div class="toggle-desc"><%= adminLocale === 'ar' ? 'عرض بطاقات من مكتبة الكتب' : 'Show cards from the PDF library' %></div>
+              <div class="toggle-title"><%= adminLocale === 'ar' ? 'قسم «من المكتبة»' : 'Library Teaser' %></div>
+              <div class="toggle-desc"><%= adminLocale === 'ar' ? 'عرض بطاقات كتب في أسفل صفحة المحتوى' : 'Show a few book cards at the bottom of the Content page' %></div>
             </div>
             <label class="toggle-switch">
               <input type="checkbox" name="showLibrary" <%= najmiConfig.showLibrary ? 'checked' : '' %>>
               <span class="toggle-slider"></span>
             </label>
-          </div>
-
-          <div class="toggle-row">
-            <div class="toggle-info">
-              <div class="toggle-title"><%= adminLocale === 'ar' ? 'ترتيب الأقسام' : 'Block Order' %></div>
-              <div class="toggle-desc"><%= adminLocale === 'ar' ? 'رتّب: sections، featuredSeries، library (مفصولة بفاصلة)' : 'Order of: sections, featuredSeries, library (comma-separated)' %></div>
-            </div>
-            <input type="text" name="blockOrder" value="<%= najmiConfig.blockOrder.join(', ') %>" style="width:240px;padding:6px 10px;border:1px solid #ddd;border-radius:4px;font-size:13px;direction:ltr;">
           </div>
         </div>
 
