@@ -5,6 +5,20 @@ const { convertToHijri } = require('../../utils/dateUtils');
 const { adminI18nMiddleware, invalidateNoticeBannerCache } = require('../../utils/i18n');
 const cache = require('../../utils/cache');
 
+// Admin views are complete HTML documents — never wrap them in the public
+// layout.ejs (that caused the public site header/footer + main.css to bleed onto
+// admin pages). Default layout:false for every admin render unless one opts in.
+router.use((req, res, next) => {
+  const _render = res.render.bind(res);
+  res.render = function (view, options, callback) {
+    if (typeof options === 'function') { callback = options; options = {}; }
+    options = options || {};
+    if (options.layout === undefined) options.layout = false;
+    return _render(view, options, callback);
+  };
+  next();
+});
+
 // Apply admin i18n middleware to all admin routes
 router.use(adminI18nMiddleware);
 
