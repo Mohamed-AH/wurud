@@ -14,7 +14,10 @@
       ? (locale === 'ar' ? 'الشيخ العلامة أحمد بن يحيى النجمي' : 'Sheikh al-‘Allāmah Ahmad ibn Yahya al-Najmi')
       : (locale === 'ar' ? 'الشيخ حسن بن محمد منصور الدغريري' : 'Sheikh Hasan bin Mohammed Mansour Dhaghriri');
     var _personId = _isNajmi ? 'https://rasmihassan.com/#person-najmi' : 'https://rasmihassan.com/#person-hasan';
-    var _ogImage = (typeof ogImage !== 'undefined' && ogImage) ? ogImage : '';
+    // Realm-specific social share image. Owner uploads these two files to /public:
+    //   public/og-hasan.png  and  public/og-najmi.png  (1200×630 PNG).
+    var _ogImage = (typeof ogImage !== 'undefined' && ogImage) ? ogImage
+      : (_isNajmi ? 'https://rasmihassan.com/og-najmi.png' : 'https://rasmihassan.com/og-hasan.png');
   %>
   <title><%= title %> - <%= _brand %></title>
 

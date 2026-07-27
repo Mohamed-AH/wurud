@@ -1217,3 +1217,12 @@ Tests use MongoDB Memory Server which may fail in this environment due to downlo
 ## Design Handoff Location
 `/tmp/design-handoff/audio-archives-redesign/project/Audio Archive Redesign.dc.html`
 Contains all screen mockups and developer notes.
+
+### Admin pages — public-layout bleed fix (DONE)
+`app.set('layout','layout')` wrapped every render in the public `layout.ejs` unless `layout:false` was passed;
+only the admin login opted out, so all admin pages were double-wrapped (public header/footer + main.css bleeding
+onto them → second header, beige diamond bg, white-on-white lectures-list title). Fix: a one-line `res.render`
+shim at the top of `routes/admin/index.js` defaults `layout:false` for every admin render (all 30 admin views are
+full HTML documents; login's explicit `layout:false` still honored). This clears the bleed across ALL admin pages.
+`views/layout.ejs` now also emits a realm-specific `og:image` default (`/og-hasan.png` | `/og-najmi.png`) —
+**owner uploads those two 1200×630 PNGs to `public/`.**
