@@ -6,7 +6,54 @@ Islamic audio archive website for Sheikh Hasan bin Mohammed Mansour Dhaghriri. S
 **CRITICAL: This is a PRODUCTION database. Do not run destructive operations.**
 
 ## Current Branch
-`claude/fix-homepage-tests-ovChk`
+`claude/fix-homepage-tests-ovChk`  (all work pushed; working tree clean)
+
+---
+
+## 📌 RESUME HERE — latest state & remaining work (Najmi realm project)
+
+**Big picture:** Added the archive of العلامة أحمد بن يحيى النجمي (رحمه الله) as a dedicated **teal `/najmi/*` realm**
+parallel to Sheikh Hasan's default **gold** site. Complete architectural separation, zero content bleed.
+**Phases 0–7 + SEO (Phase 6) are all DONE and pushed.** Details for each are in the sections further below.
+
+### ✅ Done (high level)
+- **Phase 0–1** data layer + import (owner imported 1,545 lectures / 54 series / 116 PDFs to the existing R2 bucket).
+- **Phase 2–3** teal realm pages + PDF library. **Phase 4** cross-archive banners + "العلماء" link.
+- **Phase 5** admin: publications CRUD, realm switcher + scoped forms, per-realm homepage config.
+- **Phase 7** consolidation: `/najmi` = single **Content page** (Hero → About → series-by-category); nav simplified
+  to الرئيسية→`/` · المحتوى→`/najmi` · الكتب→`/najmi/library`; `/najmi/bio` 301→`/najmi`.
+- **Colour-matching** (all `[data-realm="najmi"]` scoped, Hasan untouched): series-detail + lecture cards (via
+  `--redesign-*` remap), audio player (desktop + mini), mobile menu, footer, sort chips, play buttons, glows/rings.
+- **SEO**: sitemap includes Najmi; realm-aware OG + JSON-LD with distinct Person `@id` (`#person-hasan` /
+  `#person-najmi`); `worksFor`→Organization (validator error fixed); og:image + width/height/type/alt tags; Najmi
+  route caching (`najmi:home/series/library`, invalidated via `invalidateHomepageCache`); report script realm column.
+- **Bug fixes**: Sentry N+1 in publications list (→ `$facet`); **CI test regression** (`getNajmiSheikh` guard so the
+  mocked homepage API suite passes 68/68); **admin pages were double-wrapped in the public layout** — fixed with a
+  `res.render` shim (`layout:false`) in `routes/admin/index.js` (removed the second header + main.css bleed).
+
+### ⏳ Remaining / optional (not yet done)
+1. **OWNER — deploy the OG images**: `public/og-hasan.png` + `public/og-najmi.png` (1200×630) are **NOT in git yet**
+   — must be `git add`ed + pushed so Render serves them. Verify at `https://rasmihassan.com/og-hasan.png` (not 404).
+   **WhatsApp only shows the preview if the image is < ~300 KB** — compress or use `.jpg` (if switched to .jpg, update
+   the `_ogImage` default paths in `views/layout.ejs`). Then Scrape Again in FB Sharing Debugger to bust the cache.
+2. **OWNER — SEO validation**: paste each realm URL into `validator.schema.org` (Code-snippet tab, since Cloudflare
+   challenges third-party fetchers) → expect 0 errors after the `worksFor` fix. Re-submit `sitemap.xml` in Search Console.
+3. **OWNER — set Najmi title in DB** (if not already): owner said they'd manually prefix the name; `getNajmiSheikh`
+   matches `/النجمي/` and `formatSheikhName` guards against double-titling, so either the `titlePrefix` field OR a
+   manually-prefixed `nameArabic` works. (`scripts/set-najmi-title.js --apply` failed earlier only because the running
+   server hadn't picked up the new schema field.)
+4. **OPTIONAL — offered, awaiting OK**: add **`BreadcrumbList`** JSON-LD to Najmi pages (makes Rich Results Test show a
+   detected item + enables SERP breadcrumbs) and/or per-item **Book/AudioObject** schema on publication/series pages.
+5. **DEFERRED (approved)**: PDF.js in-browser reader (Phase-1 download + open-in-tab shipped; Phase-2 reader later).
+6. **VERIFY IN CI**: the `MONGOMS_VERSION` 7.0.11→7.0.14 bump (sandbox blocks the download; CI has real Mongo so the
+   64 failures were the `getNajmiSheikh` regression, now fixed — next CI run should be green).
+
+### Cannot test here
+No MongoDB and no live network to `fastdl.mongodb.org` in this sandbox — DB-backed suites + live rendering must be
+verified on deploy. Everything above was verified via: `node -c` syntax, EJS compile, JSON-LD JSON.parse, server boot,
+and the pure/mocked unit suites (asdaaExtractor+articleHelpers 49/49, homepageApi 68/68).
+
+---
 
 ---
 
