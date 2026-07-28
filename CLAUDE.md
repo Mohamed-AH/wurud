@@ -42,8 +42,15 @@ parallel to Sheikh Hasan's default **gold** site. Complete architectural separat
    matches `/النجمي/` and `formatSheikhName` guards against double-titling, so either the `titlePrefix` field OR a
    manually-prefixed `nameArabic` works. (`scripts/set-najmi-title.js --apply` failed earlier only because the running
    server hadn't picked up the new schema field.)
-4. **OPTIONAL — offered, awaiting OK**: add **`BreadcrumbList`** JSON-LD to Najmi pages (makes Rich Results Test show a
-   detected item + enables SERP breadcrumbs) and/or per-item **Book/AudioObject** schema on publication/series pages.
+4. ✅ **DONE**: **`BreadcrumbList`** JSON-LD on all Najmi pages (Content, series list, library, series detail) +
+   **`Book`** ItemList on `/najmi/library` + **`AudioObject`** ItemList (capped 50) on Najmi series detail. Built by
+   helpers in `routes/najmi/index.js` (`jsonldGraph`/`breadcrumb`/`bookList`/`audioList`, `<` escaped for `</script>`
+   safety), passed as the `jsonld` local → inlined via `<%- jsonld %>` (a 2nd JSON-LD script alongside the layout's
+   realm CollectionPage+Person). Now the Rich Results Test will detect **Breadcrumbs** on Najmi pages. Hasan pages
+   don't emit breadcrumbs yet (scoped to Najmi as approved).
+   - **Verified**: `invalidateHomepageCache()` in the publications CRUD is fine — hoisted fn in `routes/admin/index.js`
+     (no separate `publications.js`), `cache` imported, called on create/edit/toggle/delete; module requires with no
+     ReferenceError. Uses the shared `utils/cache` singleton (same as `articles.js`); also clears `najmi:*`.
 5. **DEFERRED (approved)**: PDF.js in-browser reader (Phase-1 download + open-in-tab shipped; Phase-2 reader later).
 6. **VERIFY IN CI**: the `MONGOMS_VERSION` 7.0.11→7.0.14 bump (sandbox blocks the download; CI has real Mongo so the
    64 failures were the `getNajmiSheikh` regression, now fixed — next CI run should be green).
